@@ -1,0 +1,22 @@
+OASISFormat: 0.4
+Name:        biokepi
+Version:     0.0.0-alpha
+Synopsis:    Bioinformatics Ketrew Pipelines
+Authors:     Sebastien Monde <seb@mondet.org>
+License:     Apache-2.0
+Plugins:     META (0.4)
+
+Library biokepi
+  Path:       src/lib
+  BuildTools: ocamlbuild
+  BuildDepends: ketrew, threads
+  Modules:    Biokepi_common
+
+Executable biokepi_tests
+  Path: src/test/
+  BuildTools: ocamlbuild
+  CompiledObject: best
+  BuildDepends: biokepi, threads
+  Install: false
+  MainIs:     main.ml
+

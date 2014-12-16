@@ -1,4 +1,11 @@
-biokepi
-=======
+Biokepi: Bioinformatics Ketrew Pipelines
+========================================
 
-Bioinformatics Ketrew Pipelines
+
+Build
+-----
+
+Just use:
+
+    make configure
+    make
