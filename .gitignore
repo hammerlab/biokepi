@@ -7,3 +7,8 @@
 *.cmx
 *.cmxs
 *.cmxa
+/_build/
+/biokepi_tests
+/setup.data
+/setup.log
+/setup.ml
