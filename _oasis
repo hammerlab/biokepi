@@ -10,7 +10,7 @@ Library biokepi
   Path:       src/lib
   BuildTools: ocamlbuild
   BuildDepends: ketrew, threads
-  Modules:    Biokepi_common
+  Modules:    Biokepi_common, Biokepi_region
 
 Executable biokepi_tests
   Path: src/test/
