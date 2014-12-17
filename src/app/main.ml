@@ -41,6 +41,35 @@ let dump_dumb_pipeline_example () =
      |> Yojson.Basic.pretty_to_string ~std:true)
 
 
+module Ssh_box = struct
+
+  let create ~mutect_jar_location ~b37 ~ssh_hostname ~meta_playground =
+    let open Ketrew.EDSL in
+    let playground = meta_playground // "ketrew_playground" in
+    let host = Host.ssh ssh_hostname ~playground in
+    let run_program ?(name="biokepi-ssh-box") ?(processors=1) program =
+      daemonize ~using:`Python_daemon ~host program in
+    let open Biokepi_run_environment in
+    Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
+      ~get_reference_genome:(function `B37 -> b37)
+      ~host
+      ~get_tool:(function
+        | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground
+        | "samtools" -> Tool_providers.samtools ~host ~meta_playground
+        | "vcftools" -> Tool_providers.vcftools ~host ~meta_playground
+        | "mutect" ->
+          Tool_providers.mutect_tool ~host ~meta_playground mutect_jar_location
+        | "picard" -> Tool_providers.picard_tool ~host ~meta_playground
+        | "somaticsniper" ->
+          Tool_providers.somaticsniper_tool ~host ~meta_playground
+        | "varscan" -> Tool_providers.varscan_tool ~host ~meta_playground
+        | other -> failwithf "ssh-box: get_tool: unknown tool: %s" other)
+      ~run_program
+      ~quick_command:(fun program -> run_program program)
+      ~work_dir:(meta_playground // "work")
+
+end
+
 let () =
   let open Cmdliner in
   let version = "0.0.0" in
