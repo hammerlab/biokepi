@@ -25,3 +25,10 @@ Executable biokepi_tests
   Install: false
   MainIs:     main.ml
 
+
+Executable biokepi
+  Path: src/app/
+  BuildTools: ocamlbuild
+  CompiledObject: best
+  BuildDepends: biokepi, threads
+  MainIs:     main.ml

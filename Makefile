@@ -11,7 +11,8 @@ configure: distclean
 build:
 	ocaml setup.ml -build && \
 	    rm -f main.byte main.native  && \
-	    mv _build/src/test/main.native biokepi_tests
+	    mv _build/src/test/main.native test_biokepi && \
+	    mv _build/src/app/main.native biokepi
 
 apidoc:
 	mkdir -p _apidoc && \
@@ -32,7 +33,7 @@ doc: apidoc build
 	    oredoc
 
 clean:
-	rm -fr _build biokepi_tests
+	rm -fr _build test_biokepi biokepi
 
 distclean: clean
 	ocaml setup.ml -distclean || echo OK ; \

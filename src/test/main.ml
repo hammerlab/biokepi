@@ -28,44 +28,7 @@ let test_region () =
   ];
   ()
 
-let pipeline_example ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi_pipeline.Construct in
-  let normal = input_fastq ~dataset normal_fastqs in
-  let tumor = input_fastq ~dataset tumor_fastqs in
-  let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
-    let normal = bwa ?gap_open_penalty ?gap_extension_penalty normal in
-    let tumor = bwa ?gap_open_penalty ?gap_extension_penalty tumor in
-    pair ~normal ~tumor in
-  let bam_pairs = [
-    bam_pair ();
-    bam_pair ~gap_open_penalty:10 ~gap_extension_penalty:7 ();
-  ] in
-  let vcfs =
-    List.concat_map bam_pairs ~f:(fun bam_pair ->
-        [
-          mutect bam_pair;
-          somaticsniper bam_pair;
-          somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
-          varscan bam_pair;
-        ])
-  in
-  vcfs
-
-let dump_dumb_pipeline_example () =
-  let dumb_fastq name =
-    Ketrew.EDSL.file_target (sprintf "/path/to/dump-%s.fastq.gz" name) ~name in
-  let normal_fastqs =
-    `Paired_end ([dumb_fastq "R1-L001"; dumb_fastq "R1-L002"],
-                 [dumb_fastq "R2-L001"; dumb_fastq "R2-L002"]) in
-  let tumor_fastqs =
-    `Single_end [dumb_fastq "R1-L001"; dumb_fastq "R1-L002"] in
-  let vcfs = pipeline_example  ~normal_fastqs ~tumor_fastqs ~dataset:"DUMB" in
-  say "Dumb examples dumped:\n%s"
-    (`List (List.map ~f:Biokepi_pipeline.to_json vcfs)
-     |> Yojson.Basic.pretty_to_string ~std:true)
-
 let () =
   test_region ();
-  dump_dumb_pipeline_example ();
   say "Done."
 
