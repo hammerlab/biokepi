@@ -269,12 +269,12 @@ end
 module Picard = struct
   let create_dict ~(run_with:Machine.t) fasta =
     let open Ketrew.EDSL in
-    let picard_create_dict = Machine.get_tool run_with "picard-create-dict" in
+    let picard_create_dict = Machine.get_tool run_with "picard" in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" (Filename.chop_suffix src ".fasta") "dict" in
     let program =
       Program.(Tool.(init picard_create_dict) &&
-               shf "java -jar $picard_create_dict_jar R= %s O= %s"
+               shf "java -jar $PICARD_JAR CreateSequenceDictionary R= %s O= %s"
                  (Filename.quote src) (Filename.quote dest)) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in

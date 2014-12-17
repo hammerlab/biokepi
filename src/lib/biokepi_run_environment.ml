@@ -183,4 +183,61 @@ module Tool_providers = struct
     in
     let init = Program.(shf "export VARSCAN_JAR=%s" jar) in
     Tool.create "varscan" ~ensure ~init
+
+  let picard_tool ~host ~meta_playground =
+    let url =
+      "https://github.com/broadinstitute/picard/releases/download/1.127/picard-tools-1.127.zip"
+    in
+    let install_path = meta_playground // "picard"  in
+    let jar = install_path // "picard-tools-1.127" // "picard.jar" in
+    let ensure =
+      file_target jar ~host
+        ~make:(daemonize ~host ~using:`Python_daemon
+                 Program.(
+                   exec ["mkdir"; "-p"; install_path]
+                   && exec ["cd"; install_path]
+                   && exec ["wget"; url]
+                   && exec ["unzip"; Filename.basename url]
+                 ))
+    in
+    let init = Program.(shf "export PICARD_JAR=%s" jar) in
+    Tool.create "picard" ~ensure ~init
+
+  type broad_jar_location = [
+    | `Scp of string
+    | `Wget of string
+  ]
+  (**
+   Mutect (and some other tools) are behind some web-login annoying thing:
+   c.f. <http://www.broadinstitute.org/cancer/cga/mutect_download>
+   So the user of the lib must provide an SSH or HTTP URL (or
+   reimplement the `Tool.t` is some other way).
+  *)
+
+  let get_broad_jar ~host ~install_path loc =
+    let jar_name =
+      match loc with
+      | `Scp s -> Filename.basename s
+      | `Wget s -> Filename.basename s in
+    let local_box_path = install_path // jar_name in
+    let open Ketrew.EDSL in
+    file_target local_box_path ~name:(sprintf "get-%s" jar_name)
+      ~if_fails_activate:[rm_path ~host local_box_path]
+      ~make:(daemonize ~using:`Python_daemon ~host
+               Program.(
+                 shf "mkdir -p %s" install_path
+                 && begin match loc with
+                 | `Scp s ->
+                   shf "scp %s %s"
+                     (Filename.quote s) (Filename.quote local_box_path)
+                 | `Wget s ->
+                   shf "wget %s -O %s"
+                     (Filename.quote s) (Filename.quote local_box_path)
+                 end))
+
+  let mutect_tool ~host ~meta_playground loc =
+    let install_path = meta_playground // "mutect" in
+    let get_mutect = get_broad_jar ~host ~install_path loc in
+    Tool.create "mutect" ~ensure:get_mutect
+      ~init:Program.(shf "export mutect_HOME=%s" install_path)
 end
