@@ -3,6 +3,10 @@ open Biokepi_common
 
 let say fmt = ksprintf (printf "%s\n%!") fmt
 
+let get_env s =
+  try Sys.getenv s with _ -> failwithf "Missing environment variable: %s" s
+let get_opt s =
+  try Some (Sys.getenv s) with _ -> None
 
 let pipeline_example ~normal_fastqs ~tumor_fastqs ~dataset =
   let open Biokepi_pipeline.Construct in
@@ -40,36 +44,74 @@ let dump_dumb_pipeline_example () =
     (`List (List.map ~f:Biokepi_pipeline.to_json vcfs)
      |> Yojson.Basic.pretty_to_string ~std:true)
 
+let environmental_box () : Biokepi_run_environment.Machine.t =
+  let box_uri = get_env "BIOKEPI_SSH_BOX_URI" |> Uri.of_string in
+  let ssh_name =
+    Uri.host box_uri |> Option.value_exn ~msg:"URI has no hostname" in
+  let meta_playground = Uri.path box_uri in
+  let mutect_jar_location () =
+    begin match get_opt "BIOKEPI_MUTECT_JAR_SCP" with
+    | Some s -> `Scp s
+    | None ->
+      begin match get_opt "BIOKEPI_MUTECT_JAR_WGET" with
+      | Some s -> `Wget s
+      | None ->
+        failwithf "BIOKEPI_MUTECT_JAR_SCP or BIOKEPI_MUTECT_JAR_WGET \
+                   are required when you wanna run Mutect"
+      end
+      
+    end  
+  in
+  Biokepi_run_environment.Ssh_box.create
+    ~mutect_jar_location ~meta_playground ssh_name
 
-module Ssh_box = struct
+let with_environmental_dataset make_pipe_line =
+  let dataset = get_env "BIOKEPI_DATASET_NAME" in
+  let get_list kind =
+    get_env (sprintf "BIOKEPI_%s" kind)
+    |> String.split ~on:(`Character ',')
+    |> List.map ~f:(String.strip ~on:`Both)
+    |> List.map ~f:(fun f ->
+        let name = sprintf "Input: %s (%s)" dataset kind in
+        Ketrew.EDSL.file_target f ~name)
+  in
+  let normal_fastqs =
+    `Paired_end (get_list "NORMAL_R1", get_list "NORMAL_R2") in
+  let tumor_fastqs =
+    `Paired_end (get_list "TUMOR_R1", get_list "TUMOR_R2") in
+  (dataset, make_pipe_line ~normal_fastqs ~tumor_fastqs ~dataset)
 
-  let create ~mutect_jar_location ~b37 ~ssh_hostname ~meta_playground =
-    let open Ketrew.EDSL in
-    let playground = meta_playground // "ketrew_playground" in
-    let host = Host.ssh ssh_hostname ~playground in
-    let run_program ?(name="biokepi-ssh-box") ?(processors=1) program =
-      daemonize ~using:`Python_daemon ~host program in
-    let open Biokepi_run_environment in
-    Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
-      ~get_reference_genome:(function `B37 -> b37)
-      ~host
-      ~get_tool:(function
-        | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground
-        | "samtools" -> Tool_providers.samtools ~host ~meta_playground
-        | "vcftools" -> Tool_providers.vcftools ~host ~meta_playground
-        | "mutect" ->
-          Tool_providers.mutect_tool ~host ~meta_playground mutect_jar_location
-        | "picard" -> Tool_providers.picard_tool ~host ~meta_playground
-        | "somaticsniper" ->
-          Tool_providers.somaticsniper_tool ~host ~meta_playground
-        | "varscan" -> Tool_providers.varscan_tool ~host ~meta_playground
-        | other -> failwithf "ssh-box: get_tool: unknown tool: %s" other)
-      ~run_program
-      ~quick_command:(fun program -> run_program program)
-      ~work_dir:(meta_playground // "work")
+let dumb_pipeline_example_target () =
+  let machine = environmental_box () in
+  let dataset, pipelines =
+    with_environmental_dataset pipeline_example in
+  let work_dir =
+    Biokepi_run_environment.Machine.work_dir machine
+    // sprintf "pipeline-dumb-on-%s" dataset in
+  let compiled =
+    List.map pipelines
+      ~f:(fun pl ->
+          let t =
+            Biokepi_pipeline.compile_variant_caller_step
+              ~work_dir ~machine pl in
+          `Target t,
+          `Json_blob (
+            `Assoc [
+              "target-name", `String t#name;
+              "target-id", `String t#id;
+              "pipeline", Biokepi_pipeline.to_json pl;
+            ]))
+  in
+  let whole_json =
+    `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in
+  Ketrew.EDSL.target (sprintf "dumb on %s: common ancestor" dataset)
+    ~dependencies:(List.map compiled (fun (`Target t, _) -> t))
+    ~metadata:(`String (Yojson.Basic.pretty_to_string whole_json))
 
-end
-
+let run_dumb_pipeline_example () =
+  let target = dumb_pipeline_example_target () in
+  Ketrew.EDSL.run target
+    
 let () =
   let open Cmdliner in
   let version = "0.0.0" in
@@ -90,6 +132,18 @@ let () =
           $ name_flag
         )
   in
+  let run_pipeline =
+    sub_command
+      ~info:("run-pipeline",
+             "Run a pipeline the SSH-BOX defined by the environment")
+      ~term:Term.(
+          pure (fun name ->
+              match name with
+              | "dumb" -> run_dumb_pipeline_example ()
+              | s -> failwithf "unknown pipeline: %S" s)
+          $ name_flag
+        )
+  in
   let default_cmd =
     let doc = "Bio-related Ketrew Workflows – Example Application" in
     let man = [
@@ -103,7 +157,7 @@ let () =
       ret (pure (`Help (`Plain, None))),
       info "biokepi" ~version ~doc ~man)
   in
-  let cmds = [dump_pipeline] in
+  let cmds = [dump_pipeline; run_pipeline] in
   match Term.eval_choice default_cmd cmds with
   | `Ok () -> ()
   | `Error _ -> failwithf "cmdliner error"
