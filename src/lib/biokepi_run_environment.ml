@@ -40,6 +40,10 @@ module Tool = struct
 end
 
 module Machine = struct
+
+  type run_function = ?name:string -> ?processors:int -> Program.t ->
+    Ketrew_target.Build_process.t
+
   type t = {
     name: string;
     ssh_name: string;
@@ -47,8 +51,7 @@ module Machine = struct
     get_reference_genome: [`B37] -> Biokepi_reference_genome.t;
     get_tool: string -> Tool.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
-    run_program: ?name:string -> ?processors:int -> Program.t ->
-      Ketrew_target.Build_process.t;
+    run_program: run_function;
     work_dir: string;
   }
   let create
@@ -241,4 +244,104 @@ module Tool_providers = struct
     let get_mutect = get_broad_jar ~host ~install_path loc in
     Tool.create "mutect" ~ensure:get_mutect
       ~init:Program.(shf "export mutect_HOME=%s" install_path)
+end
+
+module Data_providers = struct
+
+
+  let wget_gunzip ~host ~(run_program : Machine.run_function) ~destination url =
+    let open Ketrew.EDSL in
+    let wget path =
+      let name = "wget-" ^ Filename.basename path in
+      file_target path ~host ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(
+              exec ["mkdir"; "-p"; Filename.dirname path]
+              && shf "wget %s -O %s"
+                       (Filename.quote url) (Filename.quote path)))
+        ~if_fails_activate:[rm_path ~host path]
+    in
+    let is_gz = Filename.check_suffix url ".gz" in
+    if is_gz then (
+      let name = "gunzip-" ^ (destination ^ ".gz") in
+      let wgot = wget (destination ^ ".gz") in
+      file_target destination ~host ~dependencies:[wgot] ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(shf "gunzip -c %s > %s"
+                       (Filename.quote wgot#product#path)
+                       (Filename.quote destination)))
+        ~if_fails_activate:[rm_path ~host destination]
+    ) else (
+      wget destination
+    )
+
+  (*
+http://gatkforums.broadinstitute.org/discussion/2226/cosmic-and-dbsnp-files-for-mutect
+     
+ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
+
+  *)
+  let b37_broad_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/human_g1k_v37.fasta.gz"
+  let b37_alt_url =
+    "ftp://ftp.sanger.ac.uk/pub/1000genomes/tk2/\
+     main_project_reference/human_g1k_v37.fasta.gz"
+  let dbsnp_broad_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/dbsnp_138.b37.vcf.gz"
+  let dbsnp_alt_url =
+    "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/VCF/v4.0/00-All.vcf.gz"
+  let cosmic_broad_url =
+    "http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"
+
+  let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
+    let fasta =
+      wget_gunzip ~host ~run_program b37_broad_url
+        ~destination:(destination_path // "b37.fasta") in
+    let dbsnp =
+      wget_gunzip ~host ~run_program dbsnp_broad_url
+        ~destination:(destination_path // "dbsnp.vcf") in
+    let cosmic =
+      wget_gunzip ~host ~run_program cosmic_broad_url
+        ~destination:(destination_path // "cosmic.vcf") in
+    Biokepi_reference_genome.create  "B37" fasta ~dbsnp ~cosmic
+
+end
+
+module Ssh_box = struct
+ 
+  let create ~mutect_jar_location ?b37 ~meta_playground ssh_hostname =
+    let open Ketrew.EDSL in
+    let playground = meta_playground // "ketrew_playground" in
+    let host = Host.ssh ssh_hostname ~playground in
+    let run_program: Machine.run_function =
+      fun ?(name="biokepi-ssh-box") ?(processors=1) program ->
+        daemonize ~using:`Python_daemon ~host program in
+    let actual_b37 =
+      match b37 with
+      | None  ->
+        let destination_path = meta_playground // "B37-reference-genome" in
+        Data_providers.pull_b37 ~host ~run_program ~destination_path
+      | Some s -> s
+    in
+    Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
+      ~get_reference_genome:(function `B37 -> actual_b37)
+      ~host
+      ~get_tool:(function
+        | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground
+        | "samtools" -> Tool_providers.samtools ~host ~meta_playground
+        | "vcftools" -> Tool_providers.vcftools ~host ~meta_playground
+        | "mutect" ->
+          Tool_providers.mutect_tool
+            ~host ~meta_playground (mutect_jar_location ())
+        | "picard" -> Tool_providers.picard_tool ~host ~meta_playground
+        | "somaticsniper" ->
+          Tool_providers.somaticsniper_tool ~host ~meta_playground
+        | "varscan" -> Tool_providers.varscan_tool ~host ~meta_playground
+        | other -> failwithf "ssh-box: get_tool: unknown tool: %s" other)
+      ~run_program
+      ~quick_command:(fun program -> run_program program)
+      ~work_dir:(meta_playground // "work")
+
 end
