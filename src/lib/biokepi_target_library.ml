@@ -157,11 +157,13 @@ module Gunzip = struct
   let concat ~(run_with : Machine.t) bunch_of_fastq_dot_gzs ~result_path =
     let open Ketrew.EDSL in
     let program =
-      Program.(shf "gunzip -c  %s > %s"
-                 (List.map bunch_of_fastq_dot_gzs
-                    ~f:(fun o -> Filename.quote o#product#path)
-                  |> String.concat ~sep:" ")
-                 result_path) in
+      Program.(
+        exec ["mkdir"; "-p"; Filename.dirname result_path]
+        && shf "gunzip -c  %s > %s"
+          (List.map bunch_of_fastq_dot_gzs
+             ~f:(fun o -> Filename.quote o#product#path)
+           |> String.concat ~sep:" ") result_path
+      ) in
     let name =
       sprintf "gunzipcat-%s" (Filename.basename result_path) in
     file_target result_path ~host:Machine.(as_host run_with) ~name
