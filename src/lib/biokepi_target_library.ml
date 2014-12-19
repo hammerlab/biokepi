@@ -78,9 +78,9 @@ module Bwa = struct
                    && shf "bwa index %s"
                      (Filename.quote reference_fasta#product#path)))
     in
-    let bwa_aln read =
+    let bwa_aln read_number read =
       let name = sprintf "bwa-aln-%s" (Filename.basename read#product#path) in
-      let result = sprintf "%s.sai" result_prefix in
+      let result = sprintf "%s-R%d.sai" result_prefix read_number in
       let processors = 4 in
       let bwa_command =
         String.concat ~sep:" " [
@@ -103,8 +103,8 @@ module Bwa = struct
                    && sh bwa_command
                  ))
     in
-    let r1_sai = bwa_aln r1 in
-    let r2_sai_opt = Option.map r2 ~f:(fun r -> (bwa_aln r, r))in
+    let r1_sai = bwa_aln 1 r1 in
+    let r2_sai_opt = Option.map r2 ~f:(fun r -> (bwa_aln 2 r, r))in
     let sam =
       let name = sprintf "bwa-sam-%s" (Filename.basename result_prefix) in
       let result = sprintf "%s.sam" result_prefix in
