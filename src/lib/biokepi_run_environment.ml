@@ -103,7 +103,8 @@ module Tool_providers = struct
     let ensure =
       install_bwa_like ~host "bwa"
         ~url:"http://downloads.sourceforge.net/project/bio-bwa/\
-              0.7.10/bwa-0.7.10.tar.bz2"
+              bwa-0.7.10.tar.bz2"
+        (*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)
         ~install_path in
     Tool.create "bwa" ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
