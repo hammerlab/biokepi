@@ -311,13 +311,20 @@ end
 
 module Ssh_box = struct
  
-  let create ~mutect_jar_location ?b37 ~meta_playground ssh_hostname =
+  let default_run_program : host:Ketrew.EDSL.Host.t -> Machine.run_function =
+      fun ~host ?(name="biokepi-ssh-box") ?(processors=1) program ->
+        daemonize ~using:`Python_daemon ~host program
+
+  let create
+      ~mutect_jar_location ?run_program ?b37 ~meta_playground ssh_hostname =
     let open Ketrew.EDSL in
     let playground = meta_playground // "ketrew_playground" in
     let host = Host.ssh ssh_hostname ~playground in
-    let run_program: Machine.run_function =
-      fun ?(name="biokepi-ssh-box") ?(processors=1) program ->
-        daemonize ~using:`Python_daemon ~host program in
+    let run_program =
+      match run_program with
+      | None -> default_run_program ~host
+      | Some r -> r
+    in
     let actual_b37 =
       match b37 with
       | None  ->
