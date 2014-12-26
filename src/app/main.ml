@@ -81,7 +81,7 @@ let with_environmental_dataset make_pipe_line =
     `Paired_end (get_list "TUMOR_R1", get_list "TUMOR_R2") in
   (dataset, make_pipe_line ~normal_fastqs ~tumor_fastqs ~dataset)
 
-let dumb_pipeline_example_target () =
+let dumb_pipeline_example_target ~push_result () =
   let machine = environmental_box () in
   let dataset, pipelines =
     with_environmental_dataset pipeline_example in
@@ -102,14 +102,25 @@ let dumb_pipeline_example_target () =
               "pipeline", Biokepi_pipeline.to_json pl;
             ]))
   in
+  let dependencies =
+    List.map compiled (function
+      | (`Target vcf, _) when push_result ->
+        let witness_output =
+          Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
+        Biokepi_target_library.Cycledash.post_vcf ~run_with:machine
+          ~vcf ~variant_caller_name:vcf#name ~dataset_name:dataset
+          ~witness_output
+          (get_env "BIOKEPI_CYCLEDASH_URL")
+      | (`Target t, _) -> t
+      ) in
   let whole_json =
-    `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in
+    `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in (*  *)
   Ketrew.EDSL.target (sprintf "dumb on %s: common ancestor" dataset)
-    ~dependencies:(List.map compiled (fun (`Target t, _) -> t))
+    ~dependencies
     ~metadata:(`String (Yojson.Basic.pretty_to_string whole_json))
 
-let run_dumb_pipeline_example () =
-  let target = dumb_pipeline_example_target () in
+let run_dumb_pipeline_example ~push_result () =
+  let target = dumb_pipeline_example_target ~push_result () in
   Ketrew.EDSL.run target
     
 let () =
@@ -121,6 +132,9 @@ let () =
   let name_flag =
     Arg.(required & opt (some string) None & info ["N"; "name"]
            ~doc:"Give a name to the pipeline") in
+  let push_to_cycledash_flag =
+    Arg.(value & flag & info ["P"; "push-result"]
+           ~doc:"Push the result to a running Cycledash.") in
   let dump_pipeline =
     sub_command
       ~info:("dump-pipeline", "Dump the JSON blob of a pipeline")
@@ -137,11 +151,12 @@ let () =
       ~info:("run-pipeline",
              "Run a pipeline the SSH-BOX defined by the environment")
       ~term:Term.(
-          pure (fun name ->
+          pure (fun name push_result ->
               match name with
-              | "dumb" -> run_dumb_pipeline_example ()
+              | "dumb" -> run_dumb_pipeline_example ~push_result ()
               | s -> failwithf "unknown pipeline: %S" s)
           $ name_flag
+          $ push_to_cycledash_flag
         )
   in
   let default_cmd =

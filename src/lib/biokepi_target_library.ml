@@ -531,3 +531,61 @@ module Varscan = struct
     let final_vcf = result_prefix ^ "-merged.vcf" in
     Vcftools.vcf_concat ~run_with targets ~final_vcf
 end
+
+module Cycledash = struct
+
+  let post_to_cycledash_script = "https://cdn.rawgit.com/smondet/4beec3cbd7c6a3a922bc/raw/"
+
+  let post_vcf
+      ~run_with
+      ~vcf
+      ~variant_caller_name
+      ~dataset_name
+      ?truth_vcf
+      ?normal_bam
+      ?tumor_bam
+      ?params
+      ?witness_output
+      url =
+    let open Ketrew.EDSL in
+    let unik_script = sprintf "/tmp/upload_to_cycledash_%s" (Unique_id.create ()) in
+    let script_options =
+      let with_path opt s = opt, s#product#path in
+      List.filter_opt [
+        Some ("-V", vcf#product#path);
+        Some ("-v", variant_caller_name);
+        Some ("-d", dataset_name);
+        Option.map truth_vcf ~f:(with_path "-T"); 
+        Some ("-U", url);
+        Option.map tumor_bam ~f:(with_path "-t");
+        Option.map normal_bam ~f:(with_path "-n");
+        Option.map params ~f:(fun p -> "-p", p);
+        Some ("-w", Option.value witness_output ~default:"/tmp/www")
+      ]
+      |> List.concat_map ~f:(fun (x, y) -> [x; y]) in
+    let name = sprintf "upload+cycledash: %s" vcf#name in
+    let make =
+      Machine.run_program run_with
+        ~name ~processors:1 Program.(
+            shf "curl -f %s > %s"
+              (Filename.quote post_to_cycledash_script)
+              (Filename.quote unik_script)
+            && 
+            exec ("sh" :: unik_script :: script_options)
+          )
+    in
+    let dependencies =
+      let optional o = Option.value_map o ~f:(fun o -> [o]) ~default:[] in
+      [vcf]
+      @ optional truth_vcf
+      @ optional normal_bam
+      @ optional tumor_bam
+    in
+    match witness_output with
+    | None ->
+      target name ~make ~dependencies
+    | Some path ->
+      file_target path ~name ~make ~dependencies
+
+
+end

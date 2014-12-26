@@ -27,3 +27,7 @@ let (//) = Filename.concat
 let dbg fmt = ksprintf (eprintf "biokepi-debug: %s\n%!") fmt
 
 let failwithf fmt = ksprintf failwith fmt
+
+module Unique_id = struct
+  include Ketrew_pervasives.Unique_id
+end
