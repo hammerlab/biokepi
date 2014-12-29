@@ -2,7 +2,7 @@ OASISFormat: 0.4
 Name:        biokepi
 Version:     0.0.0-alpha
 Synopsis:    Bioinformatics Ketrew Pipelines
-Authors:     Sebastien Monde <seb@mondet.org>
+Authors:     Sebastien Mondet <seb@mondet.org>
 License:     Apache-2.0
 Plugins:     META (0.4)
 
