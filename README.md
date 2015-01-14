@@ -34,7 +34,7 @@ The application is meant to show how to program with the library, especially
 building pipelines with `Biokepi_pipeline`.
 
 For now the demo pipeline looks like a somatic variant calling pipeline (hence
-the use of the words “tumor,” “normal,” ..etc) but they have not been debugged
+the use of the words “tumor,” “normal,” etc.) but they have not been debugged
 enough to be used.
 
 It is configured with environment variables. It will run the pipelines on a
@@ -50,8 +50,8 @@ debug-level = 2
   token = "netok"
 ```
 
-If it is not in the [default location]
-(https://github.com/rleonid/ketrew/blob/review/src/doc/The_Configuration_File.md)
+If it is not in the
+[default location](http://seb.mondet.org/software/ketrew/The_Configuration_File.html)
 you may force it with:
 `export KETREW_CONFIGURATION=client-config-file.toml`.
 
