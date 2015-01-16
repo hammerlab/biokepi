@@ -55,9 +55,11 @@ module Construct = struct
   ]
 
   let input_fastq ~dataset (fastqs: input_fastq) =
+    let is_fastq_gz p =
+      Filename.check_suffix p "fastq.gz" || Filename.check_suffix p "fq.gz"  in
     let bring_to_single_fastq l =
       match l with
-      | h :: _ as more when Filename.check_suffix h#product#path "fastq.gz" ->
+      | h :: _ as more when is_fastq_gz h#product#path ->
         Gunzip_concat  (List.map more (fun f -> Fastq_gz f))
       | _ -> failwith "for now, a sample must be a list of fastq.gz"
     in
