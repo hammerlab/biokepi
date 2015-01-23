@@ -534,7 +534,10 @@ end
 
 module Cycledash = struct
 
-  let post_to_cycledash_script = "https://cdn.rawgit.com/smondet/4beec3cbd7c6a3a922bc/raw/"
+  let post_to_cycledash_script =
+    (* we use rawgit.com and not cdn.rawgit.com because the CDN caches
+       old version for ever *)
+    "https://gist.githubusercontent.com/smondet/4beec3cbd7c6a3a922bc/raw"
 
   let post_vcf
       ~run_with
