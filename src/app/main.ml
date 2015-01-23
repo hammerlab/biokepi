@@ -104,12 +104,13 @@ let dumb_pipeline_example_target ~push_result () =
   in
   let dependencies =
     List.map compiled (function
-      | (`Target vcf, _) when push_result ->
+      | (`Target vcf, `Json_blob json) when push_result ->
         let witness_output =
           Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
+        let params = Yojson.Basic.pretty_to_string json in
         Biokepi_target_library.Cycledash.post_vcf ~run_with:machine
           ~vcf ~variant_caller_name:vcf#name ~dataset_name:dataset
-          ~witness_output
+          ~witness_output ~params
           (get_env "BIOKEPI_CYCLEDASH_URL")
       | (`Target t, _) -> t
       ) in
