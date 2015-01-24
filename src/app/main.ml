@@ -49,21 +49,23 @@ let environmental_box () : Biokepi_run_environment.Machine.t =
   let ssh_name =
     Uri.host box_uri |> Option.value_exn ~msg:"URI has no hostname" in
   let meta_playground = Uri.path box_uri in
-  let mutect_jar_location () =
-    begin match get_opt "BIOKEPI_MUTECT_JAR_SCP" with
+  let jar_location name () =
+    begin match ksprintf get_opt "BIOKEPI_%s_JAR_SCP" name with
     | Some s -> `Scp s
     | None ->
-      begin match get_opt "BIOKEPI_MUTECT_JAR_WGET" with
+      begin match ksprintf get_opt "BIOKEPI_%s_JAR_WGET" name with
       | Some s -> `Wget s
       | None ->
-        failwithf "BIOKEPI_MUTECT_JAR_SCP or BIOKEPI_MUTECT_JAR_WGET \
-                   are required when you wanna run Mutect"
+        failwithf "BIOKEPI_%s_JAR_SCP or BIOKEPI_%s_JAR_WGET \
+                   are required when you wanna run %s" name name name
       end
       
     end  
   in
+  let mutect_jar_location = jar_location "MUTECT" in
+  let gatk_jar_location = jar_location "GATK" in
   Biokepi_run_environment.Ssh_box.create
-    ~mutect_jar_location ~meta_playground ssh_name
+    ~gatk_jar_location ~mutect_jar_location ~meta_playground ssh_name
 
 let with_environmental_dataset make_pipe_line =
   let dataset = get_env "BIOKEPI_DATASET_NAME" in

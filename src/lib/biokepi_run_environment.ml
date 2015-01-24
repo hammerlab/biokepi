@@ -244,6 +244,13 @@ module Tool_providers = struct
     let get_mutect = get_broad_jar ~host ~install_path loc in
     Tool.create "mutect" ~ensure:get_mutect
       ~init:Program.(shf "export mutect_HOME=%s" install_path)
+
+  let gatk_tool ~host ~meta_playground loc =
+    let install_path = meta_playground // "gatk" in
+    let ensure = get_broad_jar ~host ~install_path loc in
+    Tool.create "mutect" ~ensure
+      ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
+
 end
 
 module Data_providers = struct
@@ -316,7 +323,9 @@ module Ssh_box = struct
         daemonize ~using:`Python_daemon ~host program
 
   let create
-      ~mutect_jar_location ?run_program ?b37 ~meta_playground ssh_hostname =
+    ~gatk_jar_location
+    ~mutect_jar_location
+    ?run_program ?b37 ~meta_playground ssh_hostname =
     let open Ketrew.EDSL in
     let playground = meta_playground // "ketrew_playground" in
     let host = Host.ssh ssh_hostname ~playground in
@@ -342,6 +351,9 @@ module Ssh_box = struct
         | "mutect" ->
           Tool_providers.mutect_tool
             ~host ~meta_playground (mutect_jar_location ())
+        | "gatk" ->
+          Tool_providers.gatk_tool
+            ~host ~meta_playground (gatk_jar_location ())
         | "picard" -> Tool_providers.picard_tool ~host ~meta_playground
         | "somaticsniper" ->
           Tool_providers.somaticsniper_tool ~host ~meta_playground
