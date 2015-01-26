@@ -42,6 +42,7 @@ type _ t =
   | Gunzip_concat: fastq_gz  t list -> fastq  t
   | Concat_text: fastq  t list -> fastq  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
+  | Gatk_indel_realigner: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
@@ -75,6 +76,8 @@ module Construct = struct
       fastq =
     let params = {gap_open_penalty; gap_extension_penalty} in
     Bwa (params, fastq)
+
+  let gatk_indel_realigner bam = Gatk_indel_realigner bam
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
   let mutect bam_pair = Mutect bam_pair
@@ -118,6 +121,9 @@ let rec to_file_prefix:
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-gap%d-gep%d"
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
+    | Gatk_indel_realigner bam ->
+      sprintf "%s-indelrealigned"
+        (to_file_prefix ?is ?read bam)
     | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
     | Mutect bp -> sprintf "%s-mutect" (to_file_prefix bp)
     | Somaticsniper (`S s, `T t, bp) ->
@@ -152,6 +158,9 @@ let rec to_json: type a. a t -> json =
     | Bwa (params, input) ->
       let input_json = to_json input in
       call "BWA" [bwa_params params input_json]
+    | Gatk_indel_realigner bam ->
+      let input_json = to_json bam in
+      call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
     | Bam_pair (normal, tumor) ->
       call "Bam-pair" [`Assoc ["normal", to_json normal; "tumor", to_json tumor]]
     | Mutect bam_pair ->
@@ -169,7 +178,7 @@ let rec to_json: type a. a t -> json =
           "input", to_json bam_pair;
         ]]
 
-let compile_aligner_step
+let rec compile_aligner_step
     ~work_dir ?(is:[`Normal | `Tumor] option) ~machine (t : bam t) =
   let gunzip_concat ?read (t: fastq  t) =
     match t with
@@ -185,6 +194,11 @@ let compile_aligner_step
   let result_prefix = work_dir // to_file_prefix ?is t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
+  | Gatk_indel_realigner bam ->
+    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let output_bam = result_prefix ^ ".bam" in
+    Gatk.indel_realigner ~run_with:machine input_bam ~compress:false
+      ~output_bam
   | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
     let r1, r2 =
       match what with

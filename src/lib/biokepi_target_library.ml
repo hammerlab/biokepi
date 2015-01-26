@@ -309,6 +309,56 @@ module Vcftools = struct
     vcf_concat
 end
 
+module Gatk = struct
+
+  (*
+     For now we have the two steps in the same target but this could
+     be split in two.
+
+     c.f. https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php
+  *)
+  let indel_realigner
+      ?(compress=false)
+      ~run_with input_bam ~output_bam =
+    let open Ketrew.EDSL in
+    let name = sprintf "gatk-%s" (Filename.basename output_bam) in
+    let gatk = Machine.get_tool run_with "gatk" in
+    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let fasta = Reference_genome.fasta reference_genome in
+    let intervals_file =
+      Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
+    in
+    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let make =
+      Machine.run_program run_with ~name
+        Program.(
+          Tool.(init gatk)
+          && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s"
+            fasta#product#path
+            sorted_bam#product#path
+            intervals_file
+          && shf "java -jar $GATK_JAR -T IndelRealigner %s -R %s -I %s -o %s \
+                  -targetIntervals %s"
+            (if compress then "" else "-compress 0")
+            fasta#product#path
+            sorted_bam#product#path
+            output_bam
+            intervals_file
+        ) in
+    let sequence_dict = Picard.create_dict ~run_with fasta in
+    file_target ~name output_bam
+      ~host:Machine.(as_host run_with)
+      ~make  ~dependencies:[Tool.(ensure gatk); fasta;
+                            sorted_bam;
+                            Samtools.index_to_bai ~run_with sorted_bam;
+                            input_bam; sequence_dict]
+      ~if_fails_activate:[
+        Remove.file ~run_with output_bam;
+        Remove.file ~run_with intervals_file;
+      ]
+
+end
+
 module Mutect = struct
   let run ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
     let open Ketrew.EDSL in

@@ -13,8 +13,14 @@ let pipeline_example ~normal_fastqs ~tumor_fastqs ~dataset =
   let normal = input_fastq ~dataset normal_fastqs in
   let tumor = input_fastq ~dataset tumor_fastqs in
   let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
-    let normal = bwa ?gap_open_penalty ?gap_extension_penalty normal in
-    let tumor = bwa ?gap_open_penalty ?gap_extension_penalty tumor in
+    let normal =
+      bwa ?gap_open_penalty ?gap_extension_penalty normal
+      |> gatk_indel_realigner
+    in
+    let tumor =
+      bwa ?gap_open_penalty ?gap_extension_penalty tumor
+      |> gatk_indel_realigner
+    in
     pair ~normal ~tumor in
   let bam_pairs = [
     bam_pair ();
