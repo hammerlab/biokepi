@@ -100,6 +100,12 @@ let rec to_file_prefix:
   ?read:[ `R1 of string | `R2 of string ] ->
   a t -> string =
   fun ?is ?read w ->
+    let is_suffix =
+      match is with
+      | None  -> ""
+      | Some `Normal -> "-normal"
+      | Some `Tumor -> "-tumor"
+    in
     begin match w with
     | Fastq_gz _ -> failwith "TODO"
     | Fastq _ -> failwith "TODO"
@@ -107,17 +113,13 @@ let rec to_file_prefix:
     | Gunzip_concat [] -> failwith "TODO"
     | Gunzip_concat (_ :: _) ->
       begin match read with
-      | None -> "cat"
-      | Some (`R1 s) -> sprintf "%s-R1-cat" s
-      | Some (`R2 s) -> sprintf "%s-R2-cat" s
+      | None -> is_suffix ^ "-cat"
+      | Some (`R1 s) -> sprintf "%s%s-R1-cat" s is_suffix
+      | Some (`R2 s) -> sprintf "%s%s-R2-cat" s is_suffix
       end
     | Concat_text _ -> failwith "TODO"
     | Paired_end_sample (name, _ , _) ->
-      name
-      ^ (match is with
-        | None  -> ""
-        | Some `Normal -> "-normal"
-        | Some `Tumor -> "-tumor")
+      name ^ is_suffix
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-gap%d-gep%d"
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
