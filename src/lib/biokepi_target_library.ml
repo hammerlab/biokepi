@@ -285,6 +285,30 @@ module Picard = struct
       ~host ~make
       ~dependencies:[fasta; Tool.(ensure picard_create_dict)]
       ~if_fails_activate:[Remove.file ~run_with dest]
+
+  let mark_duplicates ~(run_with:Machine.t) ~input_bam output_bam =
+    let open Ketrew.EDSL in
+    let picard_jar = Machine.get_tool run_with "picard" in
+    let metrics_path =
+      sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
+    let program =
+      Program.(Tool.(init picard_jar) &&
+               shf "java -jar $PICARD_JAR MarkDuplicates \
+                    VALIDATION_STRINGENCY=LENIENT \
+                    INPUT=%s OUTPUT=%s METRICS_FILE=%s"
+                 (Filename.quote input_bam#product#path)
+                 (Filename.quote output_bam)
+                 metrics_path) in
+    let make = Machine.run_program run_with program in
+    let host = Machine.(as_host run_with) in
+    file_target output_bam
+      ~name:(sprintf "picard-markdups-%s"
+               Filename.(basename input_bam#product#path))
+      ~host ~make
+      ~dependencies:[input_bam; Tool.(ensure picard_jar)]
+      ~if_fails_activate:[Remove.file ~run_with output_bam;
+                          Remove.file ~run_with metrics_path;]
+    
 end
 
 module Vcftools = struct

@@ -43,6 +43,7 @@ type _ t =
   | Concat_text: fastq  t list -> fastq  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
+  | Picard_mark_duplicates: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
@@ -78,6 +79,7 @@ module Construct = struct
     Bwa (params, fastq)
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
+  let picard_mark_duplicates bam = Picard_mark_duplicates bam
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
   let mutect bam_pair = Mutect bam_pair
@@ -124,8 +126,9 @@ let rec to_file_prefix:
       sprintf "%s-bwa-gap%d-gep%d"
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
     | Gatk_indel_realigner bam ->
-      sprintf "%s-indelrealigned"
-        (to_file_prefix ?is ?read bam)
+      sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
+    | Picard_mark_duplicates bam ->
+      sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
     | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
     | Mutect bp -> sprintf "%s-mutect" (to_file_prefix bp)
     | Somaticsniper (`S s, `T t, bp) ->
@@ -163,6 +166,8 @@ let rec to_json: type a. a t -> json =
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
+    | Picard_mark_duplicates bam ->
+      call "Picard_mark_duplicates" [`Assoc ["input", to_json bam]]
     | Bam_pair (normal, tumor) ->
       call "Bam-pair" [`Assoc ["normal", to_json normal; "tumor", to_json tumor]]
     | Mutect bam_pair ->
@@ -201,6 +206,11 @@ let rec compile_aligner_step
     let output_bam = result_prefix ^ ".bam" in
     Gatk.indel_realigner ~run_with:machine input_bam ~compress:false
       ~output_bam
+  | Picard_mark_duplicates bam ->
+    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let output_bam = result_prefix ^ ".bam" in
+    Picard.mark_duplicates
+      ~run_with:machine ~input_bam output_bam
   | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
     let r1, r2 =
       match what with
