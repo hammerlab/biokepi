@@ -168,7 +168,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
 
 let run_pipeline_example ~push_result ~pipeline_name pipeline =
   let target = pipeline_example_target ~push_result ~pipeline_name pipeline in
-  Ketrew.EDSL.run target
+  Ketrew_client.submit target
     
 let () =
   let open Cmdliner in
