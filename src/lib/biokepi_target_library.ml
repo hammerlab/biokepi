@@ -381,6 +381,54 @@ module Gatk = struct
         Remove.file ~run_with intervals_file;
       ]
 
+  (* Again doing two steps in one target for now:
+     http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator
+     https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php
+  *)
+  let call_gatk ~analysis args =
+    let open Ketrew.EDSL.Program in
+    let escaped_args = List.map ~f:Filename.quote args in
+    sh (String.concat ~sep:" "
+          ("java -jar $GATK_JAR -T " :: analysis :: escaped_args))
+
+  let base_quality_score_recalibrator ~run_with ~input_bam ~output_bam =
+    let open Ketrew.EDSL in
+    let name = sprintf "gatk-%s" (Filename.basename output_bam) in
+    let gatk = Machine.get_tool run_with "gatk" in
+    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let fasta = Reference_genome.fasta reference_genome in
+    let db_snp = Reference_genome.dbsnp_exn reference_genome in
+    let recal_data_table =
+      Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
+    in
+    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let make =
+      Machine.run_program run_with ~name
+        Program.(
+          Tool.(init gatk)
+          && call_gatk ~analysis:"BaseRecalibrator" [
+            "-I"; sorted_bam#product#path;
+            "-R"; fasta#product#path;
+            "-knownSites"; db_snp#product#path;
+            "-o"; recal_data_table;
+          ]
+          && call_gatk ~analysis:"PrintReads" [
+            "-R"; fasta#product#path;
+            "-I"; sorted_bam#product#path;
+            "-BQSR"; recal_data_table;
+            "-o"; output_bam;
+          ]
+        ) in
+    file_target ~name output_bam
+      ~host:Machine.(as_host run_with)
+      ~make  ~dependencies:[Tool.(ensure gatk); fasta; db_snp;
+                            sorted_bam;
+                            Samtools.index_to_bai ~run_with sorted_bam;]
+      ~if_fails_activate:[
+        Remove.file ~run_with output_bam;
+        Remove.file ~run_with recal_data_table;
+      ]
+
 end
 
 module Mutect = struct

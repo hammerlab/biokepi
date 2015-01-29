@@ -44,6 +44,7 @@ type _ t =
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
   | Picard_mark_duplicates: bam t -> bam t
+  | Gatk_bqsr: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
@@ -80,6 +81,7 @@ module Construct = struct
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
   let picard_mark_duplicates bam = Picard_mark_duplicates bam
+  let gatk_bqsr bam = Gatk_bqsr bam
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
   let mutect bam_pair = Mutect bam_pair
@@ -127,6 +129,8 @@ let rec to_file_prefix:
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
     | Gatk_indel_realigner bam ->
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
+    | Gatk_bqsr bam ->
+      sprintf "%s-bqsr" (to_file_prefix ?is ?read bam)
     | Picard_mark_duplicates bam ->
       sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
     | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
@@ -166,6 +170,9 @@ let rec to_json: type a. a t -> json =
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
+    | Gatk_bqsr bam ->
+      let input_json = to_json bam in
+      call "Gatk_bqsr" [`Assoc ["input", input_json]]
     | Picard_mark_duplicates bam ->
       call "Picard_mark_duplicates" [`Assoc ["input", to_json bam]]
     | Bam_pair (normal, tumor) ->
@@ -206,6 +213,11 @@ let rec compile_aligner_step
     let output_bam = result_prefix ^ ".bam" in
     Gatk.indel_realigner ~run_with:machine input_bam ~compress:false
       ~output_bam
+  | Gatk_bqsr bam ->
+    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let output_bam = result_prefix ^ ".bam" in
+    Gatk.base_quality_score_recalibrator
+      ~run_with:machine ~input_bam ~output_bam
   | Picard_mark_duplicates bam ->
     let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in

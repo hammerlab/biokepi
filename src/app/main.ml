@@ -17,11 +17,13 @@ let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
       bwa ?gap_open_penalty ?gap_extension_penalty normal
       |> gatk_indel_realigner
       |> picard_mark_duplicates
+      |> gatk_bqsr
     in
     let tumor =
       bwa ?gap_open_penalty ?gap_extension_penalty tumor
       |> gatk_indel_realigner
       |> picard_mark_duplicates
+      |> gatk_bqsr
     in
     pair ~normal ~tumor in
   let bam_pairs = [
@@ -44,7 +46,7 @@ let simple_somatic_example ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset
   let normal = input_fastq ~dataset normal_fastqs in
   let tumor = input_fastq ~dataset tumor_fastqs in
   let make_bam data =
-    data |> bwa |> gatk_indel_realigner |> picard_mark_duplicates
+    data |> bwa |> gatk_indel_realigner |> picard_mark_duplicates |> gatk_bqsr
   in
   let vc_input =
     pair ~normal:(make_bam normal) ~tumor:(make_bam tumor) in
