@@ -67,6 +67,14 @@ let global_named_examples: (string * example_pipeline) list = [
   `Somatic_from_fastqs
     (simple_somatic_example
        ~variant_caller:Biokepi_pipeline.Construct.somaticsniper);
+  "somatic-simple-varscan",
+  `Somatic_from_fastqs
+    (simple_somatic_example
+       ~variant_caller:Biokepi_pipeline.Construct.varscan);
+  "somatic-simple-mutect",
+  `Somatic_from_fastqs
+    (simple_somatic_example
+       ~variant_caller:Biokepi_pipeline.Construct.mutect);
 ]
 
 
@@ -132,7 +140,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
       with_environmental_dataset pipeline_example in
     let work_dir =
       Biokepi_run_environment.Machine.work_dir machine
-      // sprintf "pipeline-%s-on-%s" pipeline_name dataset in
+      // sprintf "on-%s" dataset in
     let compiled =
       List.map pipelines
         ~f:(fun pl ->
