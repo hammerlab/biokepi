@@ -79,6 +79,13 @@ let rm_path ~host path =
 
 module Tool_providers = struct
 
+  let download_url_program ?output_filename url =
+    Ketrew.EDSL.Program.exec [
+      "wget";
+      "-O"; Option.value output_filename ~default:Filename.(basename url);
+      url
+    ]
+
   let install_bwa_like ~host ?install_command ?witness ~install_path ~url tool_name =
     let archive = Filename.basename url in
     let install_program =
@@ -93,7 +100,7 @@ module Tool_providers = struct
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && shf "wget %s" Filename.(quote url)
+            && download_url_program url
             && shf "tar xvf%s %s" tar_option archive
             && shf "cd %s*" tool_name
             && sh "make"
@@ -152,7 +159,7 @@ module Tool_providers = struct
                Program.(
                  exec ["mkdir"; "-p"; path]
                  && exec ["cd"; path]
-                 && exec ["wget"; deb_url]
+                 && download_url_program deb_url
                  && exec ["ar"; "x"; deb_file]
                  && exec ["tar"; "xvfz"; "data.tar.gz"]
                ))
@@ -183,7 +190,7 @@ module Tool_providers = struct
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
                    && exec ["cd"; install_path]
-                   && exec ["wget"; url]))
+                   && download_url_program url))
     in
     let init = Program.(shf "export VARSCAN_JAR=%s" jar) in
     Tool.create "varscan" ~ensure ~init
@@ -200,7 +207,7 @@ module Tool_providers = struct
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
                    && exec ["cd"; install_path]
-                   && exec ["wget"; url]
+                   && download_url_program url
                    && exec ["unzip"; Filename.basename url]
                  ))
     in
