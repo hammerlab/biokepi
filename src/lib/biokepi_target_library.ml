@@ -113,8 +113,13 @@ module Bwa = struct
         let read_group_header_option =
           (* this option should magically make the sam file compatible
              mutect and other GATK-like pieces of software
-             http://seqanswers.com/forums/showthread.php?t=17233 *)
-          "-r \"@RG\tID:bwa\tSM:SM\tPL:Illumina\"" in
+             http://seqanswers.com/forums/showthread.php?t=17233
+
+             The `LB` one seems “necessary” for somatic sniper:
+             `[bam_header_parse] missing LB tag in @RG lines.`
+          *)
+          "-r \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
+        in
         match r2_sai_opt with
         | Some (r2_sai, r2) ->
           Program.(
