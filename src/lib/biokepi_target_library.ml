@@ -547,7 +547,7 @@ module Somaticsniper = struct
                  output_file]
             ))
     in
-    file_target output_file ~name ~make
+    file_target output_file ~name ~make ~host:Machine.(as_host run_with)
       ~metadata:(`String name)
       ~tags:[Target_tags.variant_caller; "somaticsniper"]
       ~dependencies:[ Tool.ensure sniper; sorted_normal; sorted_tumor;
@@ -716,6 +716,6 @@ module Cycledash = struct
       target name ~make ~dependencies
     | Some path ->
       file_target path ~name ~make ~dependencies
-
+        ~host:Machine.(as_host run_with)
 
 end
