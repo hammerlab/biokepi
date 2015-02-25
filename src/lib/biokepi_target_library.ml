@@ -695,8 +695,7 @@ module Cycledash = struct
       |> List.concat_map ~f:(fun (x, y) -> [x; y]) in
     let name = sprintf "upload+cycledash: %s" vcf#name in
     let make =
-      Machine.run_program run_with
-        ~name ~processors:1 Program.(
+      Machine.quick_command run_with Program.(
             shf "curl -f %s > %s"
               (Filename.quote post_to_cycledash_script)
               (Filename.quote unik_script)
