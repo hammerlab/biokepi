@@ -380,6 +380,8 @@ module Gatk = struct
       ~make  ~dependencies:[Tool.(ensure gatk); fasta;
                             sorted_bam;
                             Samtools.index_to_bai ~run_with sorted_bam;
+                            (* RealignerTargetCreator wants the `.fai`: *)
+                            Samtools.faidx ~run_with fasta;
                             input_bam; sequence_dict]
       ~if_fails_activate:[
         Remove.file ~run_with output_bam;
