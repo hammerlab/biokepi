@@ -74,7 +74,6 @@ module Bwa = struct
         ~make:(Machine.run_program run_with ~processors:1 ~name
                  Program.(
                    Tool.(init bwa_tool)
-                   && in_work_dir
                    && shf "bwa index %s"
                      (Filename.quote reference_fasta#product#path)))
     in
