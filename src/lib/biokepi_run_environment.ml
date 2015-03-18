@@ -282,6 +282,24 @@ module Tool_providers = struct
     let init = Program.(shf "export STRELKA_BIN=%s" strelka_bin) in
     Tool.create "strelka" ~ensure ~init
 
+  let virmid_tool ~host ~meta_playground =
+    let url =
+      "http://downloads.sourceforge.net/project/virmid/virmid-1.1.1.tar.gz" in
+    let install_path = meta_playground // "virmid.1.1.1"  in
+    let jar = install_path // "Virmid-1.1.1" // "Virmid.jar" in
+    let ensure =
+      file_target jar ~host
+        ~make:(daemonize ~host ~using:`Python_daemon
+                 Program.(
+                   exec ["mkdir"; "-p"; install_path]
+                   && exec ["cd"; install_path]
+                   && download_url_program url
+                   && shf "tar xvfz %s" (Filename.basename url)
+                 ))
+    in
+    let init = Program.(shf "export VIRMID_JAR=%s" jar) in
+    Tool.create "virmid" ~ensure ~init
+
 end
 
 module Data_providers = struct
