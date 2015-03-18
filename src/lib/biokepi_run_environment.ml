@@ -258,6 +258,30 @@ module Tool_providers = struct
     Tool.create "mutect" ~ensure
       ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
 
+  let strelka_tool ~host ~meta_playground =
+    let url =
+      "ftp://strelka:%27%27@ftp.illumina.com/v1-branch/v1.0.14/strelka_workflow-1.0.14.tar.gz"
+    in
+    let install_path = meta_playground // "strelka.1.0.14"  in
+    let strelka_bin = install_path // "usr" // "bin" in
+    let witness = strelka_bin // "configureStrelkaWorkflow.pl" in
+    let ensure =
+      (* C.f. ftp://ftp.illumina.com/v1-branch/v1.0.14/README *)
+      file_target witness ~host
+        ~make:(daemonize ~host ~using:`Python_daemon
+                 Program.(
+                   exec ["mkdir"; "-p"; install_path]
+                   && exec ["cd"; install_path]
+                   && download_url_program url
+                   && shf "tar xvfz %s" (Filename.basename url)
+                   && sh "cd strelka_workflow-1.0.14/"
+                   && shf "./configure --prefix=%s" (install_path // "usr")
+                   && sh "make && make install"
+                 ))
+    in
+    let init = Program.(shf "export STRELKA_BIN=%s" strelka_bin) in
+    Tool.create "strelka" ~ensure ~init
+
 end
 
 module Data_providers = struct

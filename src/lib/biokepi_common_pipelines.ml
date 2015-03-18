@@ -28,6 +28,7 @@ module Somatic = struct
 
   let crazy_example ~normal_fastqs ~tumor_fastqs ~dataset =
     let open Biokepi_pipeline.Construct in
+    let open Biokepi_target_library in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
@@ -55,6 +56,7 @@ module Somatic = struct
             somaticsniper bam_pair;
             somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
             varscan bam_pair;
+            strelka ~configuration:Strelka.Configuration.exome_default bam_pair;
           ])
     in
     vcfs

@@ -49,6 +49,7 @@ type _ t =
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
   | Varscan: [`Adjust_mapq of int option] * bam_pair t -> vcf t
+  | Strelka: Strelka.Configuration.t * bam_pair t -> vcf t
 
 module Construct = struct
 
@@ -94,6 +95,8 @@ module Construct = struct
 
   let varscan ?adjust_mapq bam_pair =
     Varscan (`Adjust_mapq adjust_mapq, bam_pair)
+
+  let strelka ~configuration bam_pair = Strelka (configuration, bam_pair)
 
 end
 
@@ -141,6 +144,9 @@ let rec to_file_prefix:
       let prev = to_file_prefix bp in
       sprintf "%s-varscan-Amq%s"
         prev (match amq with None  -> "NONE" | Some s -> Int.to_string s)
+    | Strelka (config, bp) ->
+      let prev = to_file_prefix bp in
+      sprintf "%s-strelka-%s" prev config.Strelka.Configuration.name
     end
 
 
@@ -189,6 +195,11 @@ let rec to_json: type a. a t -> json =
       call "Varscan" [`Assoc [
           "Adjust_mapq",
           `String (Option.value_map adjust_mapq ~f:Int.to_string ~default:"None");
+          "input", to_json bam_pair;
+        ]]
+    | Strelka (config, bam_pair) ->
+      call "Strelka" [`Assoc [
+          "Configuration", Strelka.Configuration.to_json config;
           "input", to_json bam_pair;
         ]]
 
@@ -256,3 +267,8 @@ let compile_variant_caller_step ~work_dir ~machine (t: vcf t) =
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
     Varscan.map_reduce
       ~run_with:machine ?adjust_mapq ~normal ~tumor ~result_prefix ()
+  | Strelka (configuration, Bam_pair (normal_t, tumor_t)) ->
+    let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
+    let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
+    Strelka.run
+      ~run_with:machine ~normal ~tumor ~result_prefix ~processors:4 ~configuration ()
