@@ -874,9 +874,9 @@ module Virmid = struct
     let reference_fasta =
       Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
     let virmid_tool = Machine.get_tool run_with "virmid" in
-    let virmi_somatic_broken_vcf =
-      (* maybe it's not broken, but later tools can be annoyed by the
-         a space in the header *)
+    let virmid_somatic_broken_vcf =
+      (* maybe it's actually not broken, but later tools can be
+         annoyed by the a space in the header. *)
       work_dir // Filename.basename tumor#product#path ^ ".virmid.som.passed.vcf" in
     let make =
       Machine.run_program run_with ~name ~processors
@@ -893,7 +893,8 @@ module Virmid = struct
               "-o"; output_prefix;
             ] @ Configuration.render configuration))
           && shf "sed 's/\\(##INFO.*Number=A,Type=String,\\) /\\1/' %s > %s"
-            virmi_somatic_broken_vcf output_file
+            virmid_somatic_broken_vcf output_file
+         (* We construct the `output_file` out of the “broken” one with `sed`. *)
         )
     in
     file_target output_file ~name ~make ~host:(Machine.as_host run_with)
