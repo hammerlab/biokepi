@@ -66,7 +66,6 @@ type _ t =
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
-  | Varscan: [`Adjust_mapq of int option] * bam_pair t -> vcf t
   | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
 
 module Construct = struct
@@ -116,9 +115,26 @@ module Construct = struct
       bam_pair =
     Somaticsniper (`S prior_probability, `T theta, bam_pair)
 
-  let varscan ?adjust_mapq bam_pair =
-    Varscan (`Adjust_mapq adjust_mapq, bam_pair)
-
+  let varscan_somatic ?adjust_mapq bam_pair =
+    let configuration_name =
+      sprintf "amq-%s"
+        (Option.value_map ~default:"NONE" adjust_mapq ~f:Int.to_string) in
+    let configuration_json =
+      `Assoc [
+        "Name", `String configuration_name;
+        "Adjust_mapq",
+        `String (Option.value_map adjust_mapq ~f:Int.to_string ~default:"None");
+      ] in
+    somatic_variant_caller 
+      {Somatic_variant_caller.name = "Varscan-somatic";
+       configuration_json;
+       configuration_name;
+       make_target = begin
+         fun ~run_with ~normal ~tumor ~result_prefix ~processors () ->
+           Varscan.somatic_map_reduce ?adjust_mapq
+             ~run_with ~normal ~tumor ~result_prefix ()
+       end}
+      bam_pair
 
   let strelka ~configuration bam_pair =
     somatic_variant_caller 
@@ -178,10 +194,6 @@ let rec to_file_prefix:
     | Mutect bp -> sprintf "%s-mutect" (to_file_prefix bp)
     | Somaticsniper (`S s, `T t, bp) ->
       sprintf "%s-somaticsniper-S%F-T%F" (to_file_prefix bp) s t
-    | Varscan (`Adjust_mapq amq,  bp) ->
-      let prev = to_file_prefix bp in
-      sprintf "%s-varscan-Amq%s"
-        prev (match amq with None  -> "NONE" | Some s -> Int.to_string s)
     | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
@@ -228,12 +240,6 @@ let rec to_json: type a. a t -> json =
       call "Somaticsniper" [`Assoc [
           "Minus-s", `Float minus_s;
           "Minus-T", `Float minus_T;
-          "input", to_json bam_pair;
-        ]]
-    | Varscan (`Adjust_mapq adjust_mapq, bam_pair) ->
-      call "Varscan" [`Assoc [
-          "Adjust_mapq",
-          `String (Option.value_map adjust_mapq ~f:Int.to_string ~default:"None");
           "input", to_json bam_pair;
         ]]
     | Somatic_variant_caller (svc, bam_pair) ->
@@ -301,11 +307,6 @@ let compile_variant_caller_step ~work_dir ~machine (t: vcf t) =
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
     Somaticsniper.run
       ~run_with:machine ~minus_s ~minus_T ~normal ~tumor ~result_prefix ()
-  | Varscan (`Adjust_mapq adjust_mapq, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
-    Varscan.map_reduce
-      ~run_with:machine ?adjust_mapq ~normal ~tumor ~result_prefix ()
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
     let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
