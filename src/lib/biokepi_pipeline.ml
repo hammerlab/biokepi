@@ -22,6 +22,8 @@ module File = struct
   type t = Ketrew.EDSL.user_target
 end
 
+type json = Yojson.Basic.json
+
 type fastq_gz = Fastq_gz
 type fastq = Fastq
 type fastq_sample = Fastq_sample
@@ -33,6 +35,22 @@ type bwa_params = {
   gap_open_penalty: int;
   gap_extension_penalty: int;
 }
+module Somatic_variant_caller = struct
+  type t = {
+    name: string;
+    configuration_json: json;
+    configuration_name: string;
+    make_target:
+      run_with:Biokepi_run_environment.Machine.t ->
+      normal:Ketrew.EDSL.user_target ->
+      tumor:Ketrew.EDSL.user_target ->
+      result_prefix: string ->
+      processors: int ->
+      unit ->
+      Ketrew.EDSL.user_target
+  }
+end
+
 type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
   | Fastq: File.t -> fastq  t
@@ -49,8 +67,7 @@ type _ t =
   | Mutect: bam_pair  t -> vcf  t
   | Somaticsniper: [ `S of float ] * [ `T of float ] * bam_pair  t -> vcf  t
   | Varscan: [`Adjust_mapq of int option] * bam_pair t -> vcf t
-  | Strelka: Strelka.Configuration.t * bam_pair t -> vcf t
-  | Virmid: Virmid.Configuration.t * bam_pair t -> vcf t
+  | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
 
 module Construct = struct
 
@@ -86,6 +103,11 @@ module Construct = struct
   let gatk_bqsr bam = Gatk_bqsr bam
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
+
+
+  let somatic_variant_caller t bam_pair =
+    Somatic_variant_caller (t, bam_pair)
+  
   let mutect bam_pair = Mutect bam_pair
 
   let somaticsniper
@@ -97,8 +119,22 @@ module Construct = struct
   let varscan ?adjust_mapq bam_pair =
     Varscan (`Adjust_mapq adjust_mapq, bam_pair)
 
-  let strelka ~configuration bam_pair = Strelka (configuration, bam_pair)
-  let virmid ~configuration bam_pair = Virmid (configuration, bam_pair)
+
+  let strelka ~configuration bam_pair =
+    somatic_variant_caller 
+      {Somatic_variant_caller.name = "Strelka";
+       configuration_json = Strelka.Configuration.to_json configuration;
+       configuration_name = configuration.Strelka.Configuration.name;
+       make_target = Strelka.run ~configuration;}
+      bam_pair
+
+  let virmid ~configuration bam_pair =
+    somatic_variant_caller 
+      {Somatic_variant_caller.name = "Virmid";
+       configuration_json = Virmid.Configuration.to_json configuration;
+       configuration_name = configuration.Virmid.Configuration.name;
+       make_target = Virmid.run ~configuration;}
+      bam_pair
 
 end
 
@@ -146,17 +182,15 @@ let rec to_file_prefix:
       let prev = to_file_prefix bp in
       sprintf "%s-varscan-Amq%s"
         prev (match amq with None  -> "NONE" | Some s -> Int.to_string s)
-    | Strelka (config, bp) ->
+    | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
-      sprintf "%s-strelka-%s" prev config.Strelka.Configuration.name
-    | Virmid (config, bp) ->
-      let prev = to_file_prefix bp in
-      sprintf "%s-virmid-%s" prev config.Virmid.Configuration.name
+      sprintf "%s-%s-%s" prev
+        vc.Somatic_variant_caller.name
+        vc.Somatic_variant_caller.configuration_name
     end
 
 
 
-type json = Yojson.Basic.json
 let rec to_json: type a. a t -> json =
   let bwa_params {gap_open_penalty; gap_extension_penalty} input =
     `Assoc ["gap_open_penalty", `Int gap_open_penalty;
@@ -202,14 +236,9 @@ let rec to_json: type a. a t -> json =
           `String (Option.value_map adjust_mapq ~f:Int.to_string ~default:"None");
           "input", to_json bam_pair;
         ]]
-    | Strelka (config, bam_pair) ->
-      call "Strelka" [`Assoc [
-          "Configuration", Strelka.Configuration.to_json config;
-          "input", to_json bam_pair;
-        ]]
-    | Virmid (config, bam_pair) ->
-      call "Virmid" [`Assoc [
-          "Configuration", Virmid.Configuration.to_json config;
+    | Somatic_variant_caller (svc, bam_pair) ->
+      call svc.Somatic_variant_caller.name [`Assoc [
+          "Configuration", svc.Somatic_variant_caller.configuration_json;
           "input", to_json bam_pair;
         ]]
 
@@ -277,13 +306,8 @@ let compile_variant_caller_step ~work_dir ~machine (t: vcf t) =
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
     Varscan.map_reduce
       ~run_with:machine ?adjust_mapq ~normal ~tumor ~result_prefix ()
-  | Strelka (configuration, Bam_pair (normal_t, tumor_t)) ->
+  | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
     let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
-    Strelka.run
-      ~run_with:machine ~normal ~tumor ~result_prefix ~processors:4 ~configuration ()
-  | Virmid (configuration, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
-    Virmid.run
-      ~run_with:machine ~normal ~tumor ~result_prefix ~processors:4 ~configuration ()
+    som_vc.Somatic_variant_caller.make_target ~processors:4 (* TODO configurable processors ! *)
+      ~run_with:machine ~normal ~tumor ~result_prefix ()
