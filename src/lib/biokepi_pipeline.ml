@@ -64,7 +64,6 @@ type _ t =
   | Picard_mark_duplicates: bam t -> bam t
   | Gatk_bqsr: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
-  | Mutect: bam_pair  t -> vcf  t
   | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
 
 module Construct = struct
@@ -106,7 +105,20 @@ module Construct = struct
   let somatic_variant_caller t bam_pair =
     Somatic_variant_caller (t, bam_pair)
   
-  let mutect bam_pair = Mutect bam_pair
+  let mutect bam_pair =
+    let configuration_name = "default" in
+    let configuration_json =
+      `Assoc [
+        "Name", `String configuration_name;
+      ] in
+    let make_target ~run_with ~normal ~tumor ~result_prefix ~processors () =
+      Mutect.run ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+    somatic_variant_caller
+      {Somatic_variant_caller.name = "Mutect";
+       configuration_json;
+       configuration_name;
+       make_target;}
+      bam_pair
 
   let somaticsniper
       ?(prior_probability=Somaticsniper.default_prior_probability)
@@ -207,7 +219,6 @@ let rec to_file_prefix:
     | Picard_mark_duplicates bam ->
       sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
     | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
-    | Mutect bp -> sprintf "%s-mutect" (to_file_prefix bp)
     | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
@@ -248,12 +259,10 @@ let rec to_json: type a. a t -> json =
       call "Picard_mark_duplicates" [`Assoc ["input", to_json bam]]
     | Bam_pair (normal, tumor) ->
       call "Bam-pair" [`Assoc ["normal", to_json normal; "tumor", to_json tumor]]
-    | Mutect bam_pair ->
-      call "Mutect"[`Assoc ["input", to_json bam_pair]]
     | Somatic_variant_caller (svc, bam_pair) ->
       call svc.Somatic_variant_caller.name [`Assoc [
           "Configuration", svc.Somatic_variant_caller.configuration_json;
-          "input", to_json bam_pair;
+          "Input", to_json bam_pair;
         ]]
 
 let rec compile_aligner_step
@@ -306,10 +315,6 @@ let compile_variant_caller_step ~work_dir ~machine (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
-  | Mutect (Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
-    Mutect.run ~run_with:machine ~result_prefix ~normal ~tumor `Map_reduce
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
     let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
