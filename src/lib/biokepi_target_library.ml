@@ -154,27 +154,6 @@ module Bwa = struct
 
 end
 
-module Gunzip = struct
-  (**
-     Call ["gunzip <list of fastq.gz files> > some_name_cat.fastq"].
-  *)
-  let concat ~(run_with : Machine.t) bunch_of_fastq_dot_gzs ~result_path =
-    let open Ketrew.EDSL in
-    let program =
-      Program.(
-        exec ["mkdir"; "-p"; Filename.dirname result_path]
-        && shf "gunzip -c  %s > %s"
-          (List.map bunch_of_fastq_dot_gzs
-             ~f:(fun o -> Filename.quote o#product#path)
-           |> String.concat ~sep:" ") result_path
-      ) in
-    let name =
-      sprintf "gunzipcat-%s" (Filename.basename result_path) in
-    file_target result_path ~host:Machine.(as_host run_with) ~name
-      ~dependencies:bunch_of_fastq_dot_gzs
-      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
-end
-
 module Samtools = struct
   let sam_to_bam ~(run_with : Machine.t) file_t =
     let open Ketrew.EDSL in

@@ -102,3 +102,32 @@ let all_chromosomes_b37 = [
   `Chromosome "MT";
 ]
 
+let all_chromosomes_hg19 = [
+  `Chromosome "chr1";
+  `Chromosome "chr2";
+  `Chromosome "chr3";
+  `Chromosome "chr4";
+  `Chromosome "chr5";
+  `Chromosome "chr6";
+  `Chromosome "chr7";
+  `Chromosome "chr8";
+  `Chromosome "chr9";
+  `Chromosome "chr10";
+  `Chromosome "chr11";
+  `Chromosome "chr12";
+  `Chromosome "chr13";
+  `Chromosome "chr14";
+  `Chromosome "chr15";
+  `Chromosome "chr16";
+  `Chromosome "chr17";
+  `Chromosome "chr18";
+  `Chromosome "chr19";
+  `Chromosome "chr20";
+  `Chromosome "chr21";
+  `Chromosome "chr22";
+  `Chromosome "chrX";
+  `Chromosome "chrY";
+  `Chromosome "chrM";
+]
+
+

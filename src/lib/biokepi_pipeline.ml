@@ -17,6 +17,7 @@
 
 open Biokepi_common
 open Biokepi_target_library
+open Biokepi_run_environment
 
 module File = struct
   type t = Ketrew.EDSL.user_target
