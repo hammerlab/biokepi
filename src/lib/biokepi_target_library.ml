@@ -585,7 +585,7 @@ module Varscan = struct
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tNORMAL\tTUMOR
 "
 
-  let on_region
+  let somatic_on_region
       ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix region =
     let open Ketrew.EDSL in
     let name = Filename.basename result_prefix in
@@ -650,10 +650,10 @@ module Varscan = struct
     in
     varscan_filter
 
-  let map_reduce ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
+  let somatic_map_reduce ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
     let run_on_region region =
       let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
-      on_region ~run_with
+      somatic_on_region ~run_with
         ?adjust_mapq ~normal ~tumor ~result_prefix region in
     let targets = List.map Region.all_chromosomes_b37 ~f:run_on_region in
     let final_vcf = result_prefix ^ "-merged.vcf" in

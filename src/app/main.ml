@@ -36,7 +36,7 @@ let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
           mutect bam_pair;
           somaticsniper bam_pair;
           somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
-          varscan bam_pair;
+          varscan_somatic bam_pair;
         ])
   in
   vcfs
@@ -70,7 +70,7 @@ let global_named_examples: (string * example_pipeline) list = [
   "somatic-simple-varscan",
   `Somatic_from_fastqs
     (simple_somatic_example
-       ~variant_caller:Biokepi_pipeline.Construct.varscan);
+       ~variant_caller:Biokepi_pipeline.Construct.varscan_somatic);
   "somatic-simple-mutect",
   `Somatic_from_fastqs
     (simple_somatic_example
