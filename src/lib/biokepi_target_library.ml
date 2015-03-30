@@ -221,12 +221,13 @@ module Samtools = struct
       ~dependencies:(Tool.(ensure samtools) :: bam_file :: more_dependencies)
       ~if_fails_activate:[Remove.file ~run_with destination]
 
-  let sort_bam ~(run_with:Machine.t) bam_file =
+  let sort_bam ~(run_with:Machine.t) ?(processors=1) bam_file =
     let source = bam_file#product#path in
     let dest_prefix =
       sprintf "%s-%s" (Filename.chop_suffix source ".bam") "sorted" in
     let destination = sprintf "%s.%s" dest_prefix "bam" in
-    let make_command src des = ["sort"; src; dest_prefix] in
+    let sort_with_threads = sprintf "sort -@ %d" processors in
+    let make_command src des = [sort_with_threads; src; dest_prefix] in
     do_on_bam ~run_with bam_file ~destination ~make_command
 
   let index_to_bai ~(run_with:Machine.t) bam_file =
@@ -456,8 +457,8 @@ module Mutect = struct
       let dbsnp = Reference_genome.dbsnp_exn reference in
       let fasta_dot_fai = Samtools.faidx ~run_with fasta in
       let sequence_dict = Picard.create_dict ~run_with fasta in
-      let sorted_normal = Samtools.sort_bam ~run_with normal in
-      let sorted_tumor = Samtools.sort_bam ~run_with tumor in
+      let sorted_normal = Samtools.sort_bam ~processors:2 ~run_with normal in
+      let sorted_tumor = Samtools.sort_bam ~processors:2 ~run_with tumor in
       let run_mutect =
         let name = sprintf "%s" (Filename.basename output_file) in
         let make =
@@ -792,8 +793,8 @@ The usage is:
       Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with "strelka" in
     let gatk_tool = Machine.get_tool run_with "gatk" in
-    let sorted_normal = Samtools.sort_bam ~run_with normal in
-    let sorted_tumor = Samtools.sort_bam ~run_with tumor in
+    let sorted_normal = Samtools.sort_bam ~run_with ~processors normal in
+    let sorted_tumor = Samtools.sort_bam ~run_with ~processors tumor in
     let working_dir = Filename.(dirname result_prefix) in
     let make =
       Machine.run_program run_with ~name ~processors
