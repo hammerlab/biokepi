@@ -794,11 +794,13 @@ The usage is:
     let gatk_tool = Machine.get_tool run_with "gatk" in
     let sorted_normal = Samtools.sort_bam ~run_with normal in
     let sorted_tumor = Samtools.sort_bam ~run_with tumor in
+    let working_dir = Filename.(dirname result_prefix) in
     let make =
       Machine.run_program run_with ~name ~processors
         Program.(
           Tool.init strelka_tool && Tool.init gatk_tool
-          && shf "cd %s" Filename.(dirname result_prefix)
+          && shf "mkdir -p %s"  working_dir
+          && shf "cd %s" working_dir
           && generate_config_file ~path:config_file_path configuration
           && shf "rm -fr %s" output_dir (* strelka won't start if this
                                            directory exists *)
