@@ -792,6 +792,8 @@ The usage is:
       Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with "strelka" in
     let gatk_tool = Machine.get_tool run_with "gatk" in
+    let sorted_normal = Samtools.sort_bam ~run_with normal in
+    let sorted_tumor = Samtools.sort_bam ~run_with tumor in
     let make =
       Machine.run_program run_with ~name ~processors
         Program.(
@@ -825,7 +827,11 @@ The usage is:
     file_target output_file_path ~name ~make ~host:(Machine.as_host run_with)
       ~dependencies:[ normal; tumor; reference_fasta;
                       Tool.ensure strelka_tool;
-                      Tool.ensure gatk_tool;]
+                      Tool.ensure gatk_tool;
+                      sorted_normal; sorted_tumor;
+                      Samtools.index_to_bai ~run_with sorted_normal;
+                      Samtools.index_to_bai ~run_with sorted_tumor;
+                    ]
 
 end
 
