@@ -792,11 +792,13 @@ The usage is:
       Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with "strelka" in
     let gatk_tool = Machine.get_tool run_with "gatk" in
+    let working_dir = Filename.(dirname result_prefix) in
     let make =
       Machine.run_program run_with ~name ~processors
         Program.(
           Tool.init strelka_tool && Tool.init gatk_tool
-          && shf "cd %s" Filename.(dirname result_prefix)
+          && shf "mkdir -p %s"  working_dir
+          && shf "cd %s" working_dir
           && generate_config_file ~path:config_file_path configuration
           && shf "rm -fr %s" output_dir (* strelka won't start if this
                                            directory exists *)
