@@ -808,8 +808,8 @@ The usage is:
                   --ref=%s                   \
                   --config=%s                 \
                   --output-dir=%s "
-            normal#product#path
-            tumor#product#path
+            sorted_normal#product#path
+            sorted_tumor#product#path
             reference_fasta#product#path
             config_file_path
             output_dir
