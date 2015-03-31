@@ -226,8 +226,8 @@ module Samtools = struct
     let dest_prefix =
       sprintf "%s-%s" (Filename.chop_suffix source ".bam") "sorted" in
     let destination = sprintf "%s.%s" dest_prefix "bam" in
-    let sort_with_threads = sprintf "sort -@ %d" processors in
-    let make_command src des = [sort_with_threads; src; dest_prefix] in
+    let make_command src des =
+      ["sort"; "-@"; Int.to_string processors; src; dest_prefix] in
     do_on_bam ~run_with bam_file ~destination ~make_command
 
   let index_to_bai ~(run_with:Machine.t) bam_file =
