@@ -48,7 +48,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37] -> Biokepi_reference_genome.t;
+    get_reference_genome: [`B37 | `hg19 | `B38 ] -> Biokepi_reference_genome.t;
     get_tool: string -> Tool.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
@@ -531,7 +531,15 @@ module Ssh_box = struct
       | Some s -> s
     in
     Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
-      ~get_reference_genome:(function `B37 -> actual_b37)
+      ~get_reference_genome:(function
+        | `B37 -> actual_b37
+        | `B38 -> 
+            Data_providers.pull_b38 
+              ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
+        | `hg19 -> 
+            Data_providers.pull_hg19 
+              ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
+      )
       ~host
       ~get_tool:(function
         | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground

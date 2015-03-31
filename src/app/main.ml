@@ -145,7 +145,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
       List.map pipelines
         ~f:(fun pl ->
             let t =
-              Biokepi_pipeline.compile_variant_caller_step
+              Biokepi_pipeline.compile_variant_caller_step ~reference_build:`B37
                 ~work_dir ~machine pl in
             `Target t,
             `Json_blob (

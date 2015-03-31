@@ -418,7 +418,8 @@ module Gatk = struct
 end
 
 module Mutect = struct
-  let run ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
+  let run ?(reference_build=`B37)
+    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
     let open Ketrew.EDSL in
     let run_on_region region =
       let result_file suffix =
@@ -430,7 +431,7 @@ module Mutect = struct
       let coverage_file = result_file "coverage.wig" in
       let mutect = Machine.get_tool run_with "mutect" in
       let run_path = Filename.dirname output_file in
-      let reference = Machine.get_reference_genome run_with `B37 in
+      let reference = Machine.get_reference_genome run_with reference_build in
       let fasta = Reference_genome.fasta reference in
       let cosmic = Reference_genome.cosmic_exn reference in
       let dbsnp = Reference_genome.dbsnp_exn reference in
@@ -491,7 +492,8 @@ module Somaticsniper = struct
   let default_prior_probability = 0.01
   let default_theta = 0.85
 
-  let run ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
+  let run ?(reference_build=`B37)
+    ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
     let open Ketrew.EDSL in
     let name =
       "somaticsniper"
@@ -501,7 +503,7 @@ module Somaticsniper = struct
     let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
     let sniper = Machine.get_tool run_with "somaticsniper" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let output_file = result_file "-snvs.vcf" in
     let run_path = Filename.dirname output_file in
     let sorted_normal = Samtools.sort_bam ~run_with normal in
@@ -759,7 +761,7 @@ The usage is:
   end
 
 
-  let run
+  let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
     let open Ketrew.EDSL in
     let open Configuration in 
@@ -769,7 +771,7 @@ The usage is:
     let config_file_path = result_file  "configuration" in
     let output_file_path = output_dir // "results/passed_somatic_combined.vcf" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with "strelka" in
     let gatk_tool = Machine.get_tool run_with "gatk" in
     let sorted_normal = Samtools.sort_bam ~run_with ~processors normal in
@@ -850,7 +852,7 @@ module Virmid = struct
     
   end
 
-  let run
+  let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
     let open Ketrew.EDSL in
     let open Configuration in 
@@ -860,7 +862,7 @@ module Virmid = struct
     let output_prefix = "virmid-output" in
     let work_dir = result_file "-workdir" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let virmid_tool = Machine.get_tool run_with "virmid" in
     let virmid_somatic_broken_vcf =
       (* maybe it's actually not broken, but later tools can be
