@@ -458,46 +458,28 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     Biokepi_reference_genome.create  "B37" fasta ~dbsnp ~cosmic
 
   let b38_url =
-    "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome*fa.gz"
+    "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
   let dbsnp_b38 =
     "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
 
   let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
-    let b38_folder =
-      wget_to_folder ~host 
-      ~run_program 
-      b38_url 
-      ~test_file:"Homo_sapiens.GRCh38.dna.chromosome.10.fa.gz"
-      ~destination:(destination_path // "GRCh38")
-    in
     let fasta =
-      cat_folder ~host ~run_program 
-        ~files_gzipped:true
-        ~dependencies:[b38_folder]
-        ~folder:(destination_path // "GRCh38") 
-        ~destination:(destination_path // "b38.fasta") 
-    in
+      wget_gunzip ~host ~run_program b38_url
+        ~destination:(destination_path // "b38.fasta") in
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_b38
         ~destination:(destination_path // "dbsnp.vcf") in
     Biokepi_reference_genome.create  "B38" fasta ~dbsnp
 
   let hg19_url =
-    "http://hgdownload-test.cse.ucsc.edu/goldenPath/hg19/bigZips/chromFa.tar.gz"
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
   let dbsnp_hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/dbsnp_138.hg19.vcf.gz"
 
   let pull_hg19 ~host ~(run_program : Machine.run_function) ~destination_path =
-    let hg19_tar =
-      wget_untar ~host ~run_program hg19_url ~destination_folder:(destination_path // "chromFa") ~tar_contains:"chr1.fa"
-    in
     let fasta =
-      cat_folder ~host ~run_program 
-        ~files_gzipped:false
-        ~dependencies:[hg19_tar]
-        ~folder:(destination_path // "chromFa")
-        ~destination:(destination_path // "hg19.fasta")
-    in
+      wget_gunzip ~host ~run_program hg19_url
+        ~destination:(destination_path // "hg19.fasta") in
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_hg19_url
         ~destination:(destination_path // "dbsnp.vcf") in
