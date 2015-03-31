@@ -161,7 +161,7 @@ module Construct = struct
        configuration_name;
        make_target = begin
          fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () ->
-           Varscan.somatic_map_reduce ?adjust_mapq
+           Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
              ~run_with ~normal ~tumor ~result_prefix ()
        end}
       bam_pair

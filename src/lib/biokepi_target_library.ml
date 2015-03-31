@@ -483,7 +483,7 @@ module Mutect = struct
     match how with
     | `Region region -> run_on_region region
     | `Map_reduce ->
-      let targets = List.map Region.all_chromosomes_b37 ~f:run_on_region in
+      let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
       let final_vcf = result_prefix ^ "-merged.vcf" in
       Vcftools.vcf_concat ~run_with targets ~final_vcf
 end
@@ -632,12 +632,12 @@ module Varscan = struct
     in
     varscan_filter
 
-  let somatic_map_reduce ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
+  let somatic_map_reduce ~reference_build ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
     let run_on_region region =
       let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
       somatic_on_region ~run_with
         ?adjust_mapq ~normal ~tumor ~result_prefix region in
-    let targets = List.map Region.all_chromosomes_b37 ~f:run_on_region in
+    let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
     let final_vcf = result_prefix ^ "-merged.vcf" in
     Vcftools.vcf_concat ~run_with targets ~final_vcf
 end
