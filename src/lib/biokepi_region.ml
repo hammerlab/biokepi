@@ -27,8 +27,8 @@ type t = [
 (** Make a filename-compliant string out of a region specification. *)
 let to_filename = function
 | `Full -> "Full"
-| `Chromosome s -> sprintf "Chr%s" s
-| `Chromosome_interval (s, b, e) -> sprintf "Chr%s_%d-%d" s b e
+| `Chromosome s -> sprintf "%s" s
+| `Chromosome_interval (s, b, e) -> sprintf "%s_%d-%d" s b e
 
 let to_samtools_specification = function
 | `Full -> None
