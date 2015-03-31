@@ -813,6 +813,7 @@ The usage is:
                       Tool.ensure strelka_tool;
                       Tool.ensure gatk_tool;
                       sorted_normal; sorted_tumor;
+                      Picard.create_dict ~run_with reference_fasta;
                       Samtools.faidx ~run_with reference_fasta;
                       Samtools.index_to_bai ~run_with sorted_normal;
                       Samtools.index_to_bai ~run_with sorted_tumor;
