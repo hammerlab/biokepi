@@ -31,7 +31,6 @@ type fastq_sample = Fastq_sample
 type bam = Bam
 type bam_pair = Bam_pair
 type vcf = Vcf
-type reference_build = B37
 
 type bwa_params = {
   gap_open_penalty: int;
