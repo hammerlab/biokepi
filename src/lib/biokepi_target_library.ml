@@ -154,27 +154,6 @@ module Bwa = struct
 
 end
 
-module Gunzip = struct
-  (**
-     Call ["gunzip <list of fastq.gz files> > some_name_cat.fastq"].
-  *)
-  let concat ~(run_with : Machine.t) bunch_of_fastq_dot_gzs ~result_path =
-    let open Ketrew.EDSL in
-    let program =
-      Program.(
-        exec ["mkdir"; "-p"; Filename.dirname result_path]
-        && shf "gunzip -c  %s > %s"
-          (List.map bunch_of_fastq_dot_gzs
-             ~f:(fun o -> Filename.quote o#product#path)
-           |> String.concat ~sep:" ") result_path
-      ) in
-    let name =
-      sprintf "gunzipcat-%s" (Filename.basename result_path) in
-    file_target result_path ~host:Machine.(as_host run_with) ~name
-      ~dependencies:bunch_of_fastq_dot_gzs
-      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
-end
-
 module Samtools = struct
   let sam_to_bam ~(run_with : Machine.t) file_t =
     let open Ketrew.EDSL in
@@ -439,7 +418,8 @@ module Gatk = struct
 end
 
 module Mutect = struct
-  let run ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
+  let run ?(reference_build=`B37)
+    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
     let open Ketrew.EDSL in
     let run_on_region region =
       let result_file suffix =
@@ -451,7 +431,7 @@ module Mutect = struct
       let coverage_file = result_file "coverage.wig" in
       let mutect = Machine.get_tool run_with "mutect" in
       let run_path = Filename.dirname output_file in
-      let reference = Machine.get_reference_genome run_with `B37 in
+      let reference = Machine.get_reference_genome run_with reference_build in
       let fasta = Reference_genome.fasta reference in
       let cosmic = Reference_genome.cosmic_exn reference in
       let dbsnp = Reference_genome.dbsnp_exn reference in
@@ -503,7 +483,7 @@ module Mutect = struct
     match how with
     | `Region region -> run_on_region region
     | `Map_reduce ->
-      let targets = List.map Region.all_chromosomes_b37 ~f:run_on_region in
+      let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
       let final_vcf = result_prefix ^ "-merged.vcf" in
       Vcftools.vcf_concat ~run_with targets ~final_vcf
 end
@@ -512,7 +492,8 @@ module Somaticsniper = struct
   let default_prior_probability = 0.01
   let default_theta = 0.85
 
-  let run ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
+  let run ?(reference_build=`B37)
+    ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
     let open Ketrew.EDSL in
     let name =
       "somaticsniper"
@@ -522,7 +503,7 @@ module Somaticsniper = struct
     let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
     let sniper = Machine.get_tool run_with "somaticsniper" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let output_file = result_file "-snvs.vcf" in
     let run_path = Filename.dirname output_file in
     let sorted_normal = Samtools.sort_bam ~run_with normal in
@@ -651,12 +632,12 @@ module Varscan = struct
     in
     varscan_filter
 
-  let somatic_map_reduce ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
+  let somatic_map_reduce ~reference_build ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
     let run_on_region region =
       let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
       somatic_on_region ~run_with
         ?adjust_mapq ~normal ~tumor ~result_prefix region in
-    let targets = List.map Region.all_chromosomes_b37 ~f:run_on_region in
+    let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
     let final_vcf = result_prefix ^ "-merged.vcf" in
     Vcftools.vcf_concat ~run_with targets ~final_vcf
 end
@@ -780,7 +761,7 @@ The usage is:
   end
 
 
-  let run
+  let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
     let open Ketrew.EDSL in
     let open Configuration in 
@@ -790,7 +771,7 @@ The usage is:
     let config_file_path = result_file  "configuration" in
     let output_file_path = output_dir // "results/passed_somatic_combined.vcf" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with "strelka" in
     let gatk_tool = Machine.get_tool run_with "gatk" in
     let sorted_normal = Samtools.sort_bam ~run_with ~processors normal in
@@ -832,6 +813,8 @@ The usage is:
                       Tool.ensure strelka_tool;
                       Tool.ensure gatk_tool;
                       sorted_normal; sorted_tumor;
+                      Picard.create_dict ~run_with reference_fasta;
+                      Samtools.faidx ~run_with reference_fasta;
                       Samtools.index_to_bai ~run_with sorted_normal;
                       Samtools.index_to_bai ~run_with sorted_tumor;
                     ]
@@ -871,7 +854,7 @@ module Virmid = struct
     
   end
 
-  let run
+  let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
     let open Ketrew.EDSL in
     let open Configuration in 
@@ -881,7 +864,7 @@ module Virmid = struct
     let output_prefix = "virmid-output" in
     let work_dir = result_file "-workdir" in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37 |> Reference_genome.fasta in
+      Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let virmid_tool = Machine.get_tool run_with "virmid" in
     let virmid_somatic_broken_vcf =
       (* maybe it's actually not broken, but later tools can be

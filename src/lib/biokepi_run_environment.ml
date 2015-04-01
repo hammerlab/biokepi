@@ -48,7 +48,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37] -> Biokepi_reference_genome.t;
+    get_reference_genome: [`B37 | `hg19 | `B38 ] -> Biokepi_reference_genome.t;
     get_tool: string -> Tool.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
@@ -76,6 +76,46 @@ let rm_path ~host path =
   target (sprintf "rm-%s" (Filename.basename path))
     ~make:(daemonize ~using:`Python_daemon ~host
              Program.(exec ["rm"; "-rf"; path]))
+
+module Gunzip = struct
+  (**
+     Example: call ["gunzip <list of fastq.gz files> > some_name_cat.fastq"].
+  *)
+  let concat ~(run_with : Machine.t) bunch_of_dot_gzs ~result_path =
+    let open Ketrew.EDSL in
+    let program =
+      Program.(
+        exec ["mkdir"; "-p"; Filename.dirname result_path]
+        && shf "gunzip -c  %s > %s"
+          (List.map bunch_of_dot_gzs
+             ~f:(fun o -> Filename.quote o#product#path)
+           |> String.concat ~sep:" ") result_path
+      ) in
+    let name =
+      sprintf "gunzipcat-%s" (Filename.basename result_path) in
+    file_target result_path ~host:Machine.(as_host run_with) ~name
+      ~dependencies:bunch_of_dot_gzs
+      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+end
+
+
+module Cat = struct
+  let concat ~(run_with : Machine.t) bunch_of_files ~result_path =
+    let open Ketrew.EDSL in
+    let program =
+      Program.(
+        exec ["mkdir"; "-p"; Filename.dirname result_path]
+        && shf "cat %s > %s"
+          (List.map bunch_of_files
+             ~f:(fun o -> Filename.quote o#product#path)
+           |> String.concat ~sep:" ") result_path
+      ) in
+    let name =
+      sprintf "concat-all-%s" (Filename.basename result_path) in
+    file_target result_path ~host:Machine.(as_host run_with) ~name
+      ~dependencies:bunch_of_files
+      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+end
 
 module Tool_providers = struct
 
@@ -304,24 +344,36 @@ end
 
 module Data_providers = struct
 
+  let wget_to_folder ~host ~(run_program : Machine.run_function) ~test_file ~destination url  =
+    let name = "wget-" ^ Filename.basename destination in
+    let test_target = destination // test_file in
+    file_target test_target ~host ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; destination]
+            && shf "wget %s -P %s"
+                      (Filename.quote url)
+                      (Filename.quote destination)))
+      ~if_fails_activate:[rm_path ~host destination]
+
+  let wget ~host ~(run_program : Machine.run_function) url destination =
+    let name = "wget-" ^ Filename.basename destination in
+    file_target destination ~host ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; Filename.dirname destination]
+            && shf "wget %s -O %s"
+                      (Filename.quote url) (Filename.quote destination)))
+      ~if_fails_activate:[rm_path ~host destination]
 
   let wget_gunzip ~host ~(run_program : Machine.run_function) ~destination url =
     let open Ketrew.EDSL in
-    let wget path =
-      let name = "wget-" ^ Filename.basename path in
-      file_target path ~host ~name
-        ~make:(
-          run_program ~name ~processors:1
-            Program.(
-              exec ["mkdir"; "-p"; Filename.dirname path]
-              && shf "wget %s -O %s"
-                       (Filename.quote url) (Filename.quote path)))
-        ~if_fails_activate:[rm_path ~host path]
-    in
     let is_gz = Filename.check_suffix url ".gz" in
     if is_gz then (
       let name = "gunzip-" ^ (destination ^ ".gz") in
-      let wgot = wget (destination ^ ".gz") in
+      let wgot = wget ~host ~run_program url (destination ^ ".gz") in
       file_target destination ~host ~dependencies:[wgot] ~name
         ~make:(
           run_program ~name ~processors:1
@@ -330,7 +382,49 @@ module Data_providers = struct
                        (Filename.quote destination)))
         ~if_fails_activate:[rm_path ~host destination]
     ) else (
-      wget destination
+       wget ~host ~run_program url destination
+    )
+
+  let wget_untar ~host ~(run_program : Machine.run_function) 
+                ~destination_folder ~tar_contains url =
+    let open Ketrew.EDSL in
+    let zip_flags =
+      let is_gz = Filename.check_suffix url ".gz" in
+      let is_bzip = Filename.check_suffix url ".bz2" in
+      if is_gz then "z" else if is_bzip then "j" else ""
+    in
+    let tar_filename = (destination_folder ^ ".tar") in
+    let name = "untar-" ^ tar_filename in
+    let wgot = wget ~host ~run_program url tar_filename in
+    let file_in_tar = (destination_folder // tar_contains) in
+    file_target file_in_tar ~host ~dependencies:[wgot] ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; destination_folder]
+            && shf "tar -x%s -f %s -C %s" 
+                    zip_flags 
+                    (Filename.quote wgot#product#path)
+                    (Filename.quote destination_folder)))
+      ~if_fails_activate:[rm_path ~host destination_folder]
+
+  let cat_folder ~host ~(run_program : Machine.run_function) ?(dependencies=[]) ~files_gzipped ~folder ~destination = 
+    let open Ketrew.EDSL in
+    let name = "cat-folder-" ^ Filename.quote folder in
+    if files_gzipped then (
+      file_target destination ~host ~dependencies:dependencies ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(
+              shf "gunzip -c %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
+        ~if_fails_activate:[rm_path ~host destination]
+    ) else (
+      file_target destination ~host ~dependencies:dependencies ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(
+              shf "cat %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
+        ~if_fails_activate:[rm_path ~host destination]
     )
 
   (*
@@ -363,6 +457,34 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
         ~destination:(destination_path // "cosmic.vcf") in
     Biokepi_reference_genome.create  "B37" fasta ~dbsnp ~cosmic
 
+  let b38_url =
+    "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+  let dbsnp_b38 =
+    "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
+
+  let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
+    let fasta =
+      wget_gunzip ~host ~run_program b38_url
+        ~destination:(destination_path // "b38.fasta") in
+    let dbsnp =
+      wget_gunzip ~host ~run_program dbsnp_b38
+        ~destination:(destination_path // "dbsnp.vcf") in
+    Biokepi_reference_genome.create  "B38" fasta ~dbsnp
+
+  let hg19_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
+  let dbsnp_hg19_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/dbsnp_138.hg19.vcf.gz"
+
+  let pull_hg19 ~host ~(run_program : Machine.run_function) ~destination_path =
+    let fasta =
+      wget_gunzip ~host ~run_program hg19_url
+        ~destination:(destination_path // "hg19.fasta") in
+    let dbsnp =
+      wget_gunzip ~host ~run_program dbsnp_hg19_url
+        ~destination:(destination_path // "dbsnp.vcf") in
+    Biokepi_reference_genome.create "hg19" fasta ~dbsnp
+
 end
 
 module Ssh_box = struct
@@ -391,7 +513,15 @@ module Ssh_box = struct
       | Some s -> s
     in
     Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
-      ~get_reference_genome:(function `B37 -> actual_b37)
+      ~get_reference_genome:(function
+        | `B37 -> actual_b37
+        | `B38 -> 
+            Data_providers.pull_b38 
+              ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
+        | `hg19 -> 
+            Data_providers.pull_hg19 
+              ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
+      )
       ~host
       ~get_tool:(function
         | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground

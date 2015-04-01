@@ -27,8 +27,8 @@ type t = [
 (** Make a filename-compliant string out of a region specification. *)
 let to_filename = function
 | `Full -> "Full"
-| `Chromosome s -> sprintf "Chr%s" s
-| `Chromosome_interval (s, b, e) -> sprintf "Chr%s_%d-%d" s b e
+| `Chromosome s -> sprintf "%s" s
+| `Chromosome_interval (s, b, e) -> sprintf "%s_%d-%d" s b e
 
 let to_samtools_specification = function
 | `Full -> None
@@ -101,4 +101,40 @@ let all_chromosomes_b37 = [
   `Chromosome "Y";
   `Chromosome "MT";
 ]
+
+let all_chromosomes_hg19 = [
+  `Chromosome "chr1";
+  `Chromosome "chr2";
+  `Chromosome "chr3";
+  `Chromosome "chr4";
+  `Chromosome "chr5";
+  `Chromosome "chr6";
+  `Chromosome "chr7";
+  `Chromosome "chr8";
+  `Chromosome "chr9";
+  `Chromosome "chr10";
+  `Chromosome "chr11";
+  `Chromosome "chr12";
+  `Chromosome "chr13";
+  `Chromosome "chr14";
+  `Chromosome "chr15";
+  `Chromosome "chr16";
+  `Chromosome "chr17";
+  `Chromosome "chr18";
+  `Chromosome "chr19";
+  `Chromosome "chr20";
+  `Chromosome "chr21";
+  `Chromosome "chr22";
+  `Chromosome "chrX";
+  `Chromosome "chrY";
+  `Chromosome "chrM";
+]
+
+let major_contigs ~reference_build = 
+  match reference_build with 
+    | `B37 -> all_chromosomes_b37
+    | `B38 -> all_chromosomes_b37
+    | `hg19 -> all_chromosomes_hg19
+
+
 

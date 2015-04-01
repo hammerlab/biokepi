@@ -17,6 +17,7 @@
 
 open Biokepi_common
 open Biokepi_target_library
+open Biokepi_run_environment
 
 module File = struct
   type t = Ketrew.EDSL.user_target
@@ -41,6 +42,7 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
+      reference_build: [`B37 | `B38 | `hg19 ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
       normal:Ketrew.EDSL.user_target ->
       tumor:Ketrew.EDSL.user_target ->
@@ -111,8 +113,8 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~run_with ~normal ~tumor ~result_prefix ~processors () =
-      Mutect.run ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
+      Mutect.run ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller
       {Somatic_variant_caller.name = "Mutect";
        configuration_json;
@@ -132,8 +134,8 @@ module Construct = struct
         "Prior-probability", `Float prior_probability;
         "Theta", `Float theta;
       ] in
-    let make_target ~run_with ~normal ~tumor ~result_prefix ~processors () =
-      Somaticsniper.run
+    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
+      Somaticsniper.run ~reference_build
         ~run_with ~minus_s:prior_probability ~minus_T:theta
         ~normal ~tumor ~result_prefix () in
     somatic_variant_caller
@@ -158,8 +160,8 @@ module Construct = struct
        configuration_json;
        configuration_name;
        make_target = begin
-         fun ~run_with ~normal ~tumor ~result_prefix ~processors () ->
-           Varscan.somatic_map_reduce ?adjust_mapq
+         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () ->
+           Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
              ~run_with ~normal ~tumor ~result_prefix ()
        end}
       bam_pair
@@ -311,12 +313,12 @@ let rec compile_aligner_step
       ~r1 ?r2 ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
 
-let compile_variant_caller_step ~work_dir ~machine (t: vcf t) =
+let compile_variant_caller_step ~reference_build ~work_dir ~machine (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
     let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
     let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
-    som_vc.Somatic_variant_caller.make_target ~processors:4 (* TODO configurable processors ! *)
+    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors:4 (* TODO configurable processors ! *)
       ~run_with:machine ~normal ~tumor ~result_prefix ()
