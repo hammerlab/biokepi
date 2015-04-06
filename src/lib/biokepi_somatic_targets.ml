@@ -157,15 +157,15 @@ module Varscan = struct
 "
 
   let somatic_on_region
-      ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix region =
+      ~run_with ~reference_build ?adjust_mapq ~normal ~tumor ~result_prefix region =
     let open Ketrew.EDSL in
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
     let varscan_tool = Machine.get_tool run_with "varscan" in
     let snp_output = result_file "-snp.vcf" in
     let indel_output = result_file "-indel.vcf" in
-    let normal_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq normal in
-    let tumor_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq tumor in
+    let normal_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq normal in
+    let tumor_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq tumor in
     let host = Machine.as_host run_with in
     let tags = [Target_tags.variant_caller; "varscan"] in
     let varscan_somatic =
@@ -224,7 +224,7 @@ module Varscan = struct
   let somatic_map_reduce ~reference_build ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
     let run_on_region region =
       let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
-      somatic_on_region ~run_with
+      somatic_on_region ~run_with ~reference_build
         ?adjust_mapq ~normal ~tumor ~result_prefix region in
     let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
     let final_vcf = result_prefix ^ "-merged.vcf" in

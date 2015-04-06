@@ -26,6 +26,7 @@ module Bwa = struct
   let default_gap_extension_penalty = 4
   
   let align_to_sam
+      ~reference_build
       ?(gap_open_penalty=default_gap_open_penalty)
       ?(gap_extension_penalty=default_gap_extension_penalty)
       ~(r1: Ketrew.EDSL.user_target)
@@ -35,7 +36,7 @@ module Bwa = struct
       () =
     let open Ketrew.EDSL in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37
+      Machine.get_reference_genome run_with reference_build
       |> Biokepi_reference_genome.fasta in
     let in_work_dir =
       Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in

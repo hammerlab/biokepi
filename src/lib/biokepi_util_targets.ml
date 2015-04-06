@@ -83,14 +83,14 @@ module Samtools = struct
     let make_command src des = ["index"; "-b"; src] in
     do_on_bam ~run_with bam_file ~destination ~make_command
 
-  let mpileup ~run_with ?adjust_mapq ~region bam_file =
+  let mpileup ~run_with ~reference_build ?adjust_mapq ~region bam_file =
     let open Ketrew.EDSL in
     let samtools = Machine.get_tool run_with "samtools" in
     let src = bam_file#product#path in
     let adjust_mapq_option = 
       match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
     let samtools_region_option = Region.to_samtools_option region in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let pileup =
       Filename.chop_suffix src ".bam" ^
@@ -118,6 +118,7 @@ module Samtools = struct
     ] in
     file_target pileup ~name ~host ~make ~dependencies (*  *)
       ~if_fails_activate:[Remove.file ~run_with pileup]
+
 
 end
 
@@ -195,11 +196,12 @@ module Gatk = struct
   *)
   let indel_realigner
       ?(compress=false)
+      ~reference_build
       ~run_with input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
@@ -235,6 +237,7 @@ module Gatk = struct
         Remove.file ~run_with intervals_file;
       ]
 
+
   (* Again doing two steps in one target for now:
      http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator
      https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php
@@ -245,11 +248,11 @@ module Gatk = struct
     sh (String.concat ~sep:" "
           ("java -jar $GATK_JAR -T " :: analysis :: escaped_args))
 
-  let base_quality_score_recalibrator ~run_with ~input_bam ~output_bam =
+  let base_quality_score_recalibrator ~run_with ~reference_build ~input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let db_snp = Reference_genome.dbsnp_exn reference_genome in
     let recal_data_table =
