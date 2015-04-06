@@ -14,6 +14,8 @@ Library biokepi
            Biokepi_region,
            Biokepi_reference_genome,
            Biokepi_run_environment,
+           Biokepi_util_targets,
+           Biokepi_somatic_targets,
            Biokepi_target_library,
            Biokepi_pipeline,
            Biokepi_common_pipelines

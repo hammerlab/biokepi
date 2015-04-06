@@ -28,7 +28,7 @@ module Somatic = struct
 
   let crazy_example ~normal_fastqs ~tumor_fastqs ~dataset =
     let open Biokepi_pipeline.Construct in
-    let open Biokepi_target_library in
+    let open Biokepi_somatic_targets in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let bam_pair ?gap_open_penalty ?gap_extension_penalty () =

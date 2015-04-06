@@ -16,6 +16,8 @@
 
 
 open Biokepi_common
+open Biokepi_util_targets
+open Biokepi_somatic_targets 
 open Biokepi_target_library
 open Biokepi_run_environment
 
