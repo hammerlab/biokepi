@@ -268,6 +268,7 @@ let rec to_json: type a. a t -> json =
         ]]
 
 let rec compile_aligner_step
+    ~reference_build
     ~work_dir ?(is:[`Normal | `Tumor] option) ~machine (t : bam t) =
   let gunzip_concat ?read (t: fastq  t) =
     match t with
@@ -284,17 +285,17 @@ let rec compile_aligner_step
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Gatk_indel_realigner bam ->
-    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
-    Gatk.indel_realigner ~run_with:machine input_bam ~compress:false
+    Gatk.indel_realigner ~reference_build ~run_with:machine input_bam ~compress:false
       ~output_bam
   | Gatk_bqsr bam ->
-    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Gatk.base_quality_score_recalibrator
-      ~run_with:machine ~input_bam ~output_bam
+      ~run_with:machine ~reference_build ~input_bam ~output_bam
   | Picard_mark_duplicates bam ->
-    let input_bam = compile_aligner_step ~work_dir ?is ~machine bam in
+    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Picard.mark_duplicates
       ~run_with:machine ~input_bam output_bam
@@ -309,6 +310,7 @@ let rec compile_aligner_step
         let r1 = gunzip_concat ~read:(`R1 dataset) single in
         (r1, None) in
     Bwa.align_to_sam
+      ~reference_build
       ~gap_open_penalty ~gap_extension_penalty
       ~r1 ?r2 ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
@@ -318,7 +320,7 @@ let compile_variant_caller_step ~reference_build ~work_dir ~machine (t: vcf t) =
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~work_dir ~is:`Tumor ~machine tumor_t in
+    let normal = compile_aligner_step ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
+    let tumor = compile_aligner_step ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
     som_vc.Somatic_variant_caller.make_target ~reference_build ~processors:4 (* TODO configurable processors ! *)
       ~run_with:machine ~normal ~tumor ~result_prefix ()

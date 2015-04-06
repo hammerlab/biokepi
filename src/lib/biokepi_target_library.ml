@@ -46,6 +46,7 @@ module Bwa = struct
   let default_gap_extension_penalty = 4
   
   let align_to_sam
+      ~reference_build
       ?(gap_open_penalty=default_gap_open_penalty)
       ?(gap_extension_penalty=default_gap_extension_penalty)
       ~(r1: Ketrew.EDSL.user_target)
@@ -55,7 +56,7 @@ module Bwa = struct
       () =
     let open Ketrew.EDSL in
     let reference_fasta =
-      Machine.get_reference_genome run_with `B37
+      Machine.get_reference_genome run_with reference_build
       |> Biokepi_reference_genome.fasta in
     let in_work_dir =
       Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
@@ -214,14 +215,14 @@ module Samtools = struct
     let make_command src des = ["index"; "-b"; src] in
     do_on_bam ~run_with bam_file ~destination ~make_command
 
-  let mpileup ~run_with ?adjust_mapq ~region bam_file =
+  let mpileup ~run_with ~reference_build ?adjust_mapq ~region bam_file =
     let open Ketrew.EDSL in
     let samtools = Machine.get_tool run_with "samtools" in
     let src = bam_file#product#path in
     let adjust_mapq_option = 
       match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
     let samtools_region_option = Region.to_samtools_option region in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let pileup =
       Filename.chop_suffix src ".bam" ^
@@ -327,11 +328,12 @@ module Gatk = struct
   *)
   let indel_realigner
       ?(compress=false)
+      ~reference_build
       ~run_with input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
@@ -377,11 +379,11 @@ module Gatk = struct
     sh (String.concat ~sep:" "
           ("java -jar $GATK_JAR -T " :: analysis :: escaped_args))
 
-  let base_quality_score_recalibrator ~run_with ~input_bam ~output_bam =
+  let base_quality_score_recalibrator ~run_with ~reference_build ~input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
-    let reference_genome = Machine.get_reference_genome run_with `B37 in
+    let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let db_snp = Reference_genome.dbsnp_exn reference_genome in
     let recal_data_table =
@@ -568,15 +570,15 @@ module Varscan = struct
 "
 
   let somatic_on_region
-      ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix region =
+      ~run_with ~reference_build ?adjust_mapq ~normal ~tumor ~result_prefix region =
     let open Ketrew.EDSL in
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
     let varscan_tool = Machine.get_tool run_with "varscan" in
     let snp_output = result_file "-snp.vcf" in
     let indel_output = result_file "-indel.vcf" in
-    let normal_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq normal in
-    let tumor_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq tumor in
+    let normal_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq normal in
+    let tumor_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq tumor in
     let host = Machine.as_host run_with in
     let tags = [Target_tags.variant_caller; "varscan"] in
     let varscan_somatic =
@@ -635,7 +637,7 @@ module Varscan = struct
   let somatic_map_reduce ~reference_build ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix () =
     let run_on_region region =
       let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
-      somatic_on_region ~run_with
+      somatic_on_region ~run_with ~reference_build
         ?adjust_mapq ~normal ~tumor ~result_prefix region in
     let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
     let final_vcf = result_prefix ^ "-merged.vcf" in
