@@ -24,9 +24,46 @@ module Bwa = struct
 
   let default_gap_open_penalty = 11
   let default_gap_extension_penalty = 4
-  
-  let align_to_sam
+
+  let index
       ~reference_build
+      ~(run_with : Machine.t) =
+    let open Ketrew.EDSL in
+    let reference_fasta =
+      Machine.get_reference_genome run_with reference_build
+      |> Biokepi_reference_genome.fasta in
+    (* `bwa index` creates a bunch of files, c.f.
+       [this question](https://www.biostars.org/p/73585/) we detect the
+       `.bwt` one. *)
+    let bwa_tool = Machine.get_tool run_with "bwa" in
+    let name =
+      sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
+    let result = sprintf "%s.bwt" reference_fasta#product#path in
+    file_target ~host:(Machine.(as_host run_with)) result
+      ~if_fails_activate:[Remove.file ~run_with result]
+      ~dependencies:[reference_fasta; Tool.(ensure bwa_tool)]
+      ~tags:[Target_tags.aligner]
+      ~make:(Machine.run_program run_with ~processors:1 ~name
+                Program.(
+                  Tool.(init bwa_tool)
+                  && shf "bwa index %s"
+                    (Filename.quote reference_fasta#product#path)))
+
+  let read_group_header_option algorithm =
+    (* this option should magically make the sam file compatible
+             mutect and other GATK-like pieces of software
+             http://seqanswers.com/forums/showthread.php?t=17233
+
+             The `LB` one seems “necessary” for somatic sniper:
+             `[bam_header_parse] missing LB tag in @RG lines.`
+          *)
+      match algorithm with
+        |`Mem -> "-R \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
+        |`Aln -> "-r \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
+
+  let mem_align_to_sam
+      ~reference_build
+      ~processors
       ?(gap_open_penalty=default_gap_open_penalty)
       ?(gap_extension_penalty=default_gap_extension_penalty)
       ~(r1: Ketrew.EDSL.user_target)
@@ -44,24 +81,71 @@ module Bwa = struct
        [this question](https://www.biostars.org/p/73585/) we detect the
        `.bwt` one. *)
     let bwa_tool = Machine.get_tool run_with "bwa" in
-    let bwa_index =
-      let name =
-        sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
-      let result = sprintf "%s.bwt" reference_fasta#product#path in
-      file_target ~host:(Machine.(as_host run_with)) result
-        ~if_fails_activate:[Remove.file ~run_with result]
-        ~dependencies:[reference_fasta; Tool.(ensure bwa_tool)]
-        ~tags:[Target_tags.aligner]
-        ~make:(Machine.run_program run_with ~processors:1 ~name
-                 Program.(
-                   Tool.(init bwa_tool)
-                   && shf "bwa index %s"
-                     (Filename.quote reference_fasta#product#path)))
+    let bwa_index = index ~reference_build ~run_with in
+    let result = sprintf "%s.sam" result_prefix in
+    let name = sprintf "bwa-mem-%s" (Filename.basename r1#product#path) in
+    let bwa_base_command =
+      String.concat ~sep:" " [
+        "bwa mem";
+        (read_group_header_option `Mem);
+        "-t"; Int.to_string processors;
+        "-O"; Int.to_string gap_open_penalty;
+        "-E"; Int.to_string gap_extension_penalty;
+        (Filename.quote reference_fasta#product#path);
+        (Filename.quote r1#product#path);
+      ] in
+    let bwa_base_target ?(more_dependencies=[]) ~bwa_command  = 
+      file_target result ~host:Machine.(as_host run_with) ~name
+          ~dependencies:(Tool.(ensure bwa_tool) :: bwa_index :: r1 :: more_dependencies)
+          ~if_fails_activate:[Remove.file ~run_with result]
+          ~tags:[Target_tags.aligner]
+          ~make:(Machine.run_program run_with ~processors ~name
+              Program.(
+                Tool.(init bwa_tool)
+                && in_work_dir
+                && sh bwa_command))
     in
+    match r2 with
+      | Some read2 -> 
+        let bwa_command = String.concat ~sep:" " [
+          bwa_base_command;
+          (Filename.quote read2#product#path);
+          ">"; (Filename.quote result);
+        ] in
+        bwa_base_target ~bwa_command ~more_dependencies:[read2;]
+      | None -> 
+        let bwa_command = String.concat ~sep:" " [
+          bwa_base_command;
+           ">"; (Filename.quote result);
+        ] in
+        bwa_base_target ~bwa_command ~more_dependencies:[]
+
+
+
+  let align_to_sam
+      ~reference_build
+      ~processors
+      ?(gap_open_penalty=default_gap_open_penalty)
+      ?(gap_extension_penalty=default_gap_extension_penalty)
+      ~(r1: Ketrew.EDSL.user_target)
+      ?(r2: Ketrew.EDSL.user_target option)
+      ~(result_prefix:string)
+      ~(run_with : Machine.t)
+      () =
+    let open Ketrew.EDSL in
+    let reference_fasta =
+      Machine.get_reference_genome run_with reference_build
+      |> Biokepi_reference_genome.fasta in
+    let in_work_dir =
+      Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
+    (* `bwa index` creates a bunch of files, c.f.
+       [this question](https://www.biostars.org/p/73585/) we detect the
+       `.bwt` one. *)
+    let bwa_tool = Machine.get_tool run_with "bwa" in
+    let bwa_index = index ~reference_build ~run_with in
     let bwa_aln read_number read =
       let name = sprintf "bwa-aln-%s" (Filename.basename read#product#path) in
       let result = sprintf "%s-R%d.sai" result_prefix read_number in
-      let processors = 4 in
       let bwa_command =
         String.concat ~sep:" " [
           "bwa aln";
@@ -84,29 +168,19 @@ module Bwa = struct
                  ))
     in
     let r1_sai = bwa_aln 1 r1 in
-    let r2_sai_opt = Option.map r2 ~f:(fun r -> (bwa_aln 2 r, r))in
+    let r2_sai_opt = Option.map r2 ~f:(fun r -> (bwa_aln 2 r, r)) in
     let sam =
       let name = sprintf "bwa-sam-%s" (Filename.basename result_prefix) in
       let result = sprintf "%s.sam" result_prefix in
       let program, dependencies =
         let common_deps = [r1_sai; reference_fasta; bwa_index; Tool.(ensure bwa_tool) ] in
-        let read_group_header_option =
-          (* this option should magically make the sam file compatible
-             mutect and other GATK-like pieces of software
-             http://seqanswers.com/forums/showthread.php?t=17233
-
-             The `LB` one seems “necessary” for somatic sniper:
-             `[bam_header_parse] missing LB tag in @RG lines.`
-          *)
-          "-r \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
-        in
         match r2_sai_opt with
         | Some (r2_sai, r2) ->
           Program.(
             Tool.(init bwa_tool)
             && in_work_dir
             && shf "bwa sampe %s %s %s %s %s %s > %s"
-              read_group_header_option
+              (read_group_header_option `Aln)
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote r2_sai#product#path)
@@ -119,7 +193,7 @@ module Bwa = struct
             Tool.(init bwa_tool)
             && in_work_dir
             && shf "bwa samse %s %s %s > %s"
-              read_group_header_option
+              (read_group_header_option `Aln)
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote result)),

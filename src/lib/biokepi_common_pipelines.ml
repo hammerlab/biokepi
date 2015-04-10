@@ -67,7 +67,7 @@ module Somatic = struct
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let make_bam data =
-      data |> bwa |> gatk_indel_realigner |> picard_mark_duplicates |> gatk_bqsr
+      data |> bwa_mem |> gatk_indel_realigner |> picard_mark_duplicates |> gatk_bqsr
     in
     let vc_input =
       pair ~normal:(make_bam normal) ~tumor:(make_bam tumor) in

@@ -64,6 +64,7 @@ type _ t =
   | Gunzip_concat: fastq_gz  t list -> fastq  t
   | Concat_text: fastq  t list -> fastq  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
+  | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
   | Picard_mark_duplicates: bam t -> bam t
   | Gatk_bqsr: bam t -> bam t
@@ -98,6 +99,13 @@ module Construct = struct
       fastq =
     let params = {gap_open_penalty; gap_extension_penalty} in
     Bwa (params, fastq)
+
+  let bwa_mem
+      ?(gap_open_penalty=Bwa.default_gap_open_penalty)
+      ?(gap_extension_penalty=Bwa.default_gap_extension_penalty)
+      fastq =
+    let params = {gap_open_penalty; gap_extension_penalty} in
+    Bwa_mem (params, fastq)
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
   let picard_mark_duplicates bam = Picard_mark_duplicates bam
@@ -216,6 +224,9 @@ let rec to_file_prefix:
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-gap%d-gep%d"
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
+    | Bwa_mem ({ gap_open_penalty; gap_extension_penalty }, sample) ->
+      sprintf "%s-bwa-mem-gap%d-gep%d"
+        (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
     | Gatk_indel_realigner bam ->
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
     | Gatk_bqsr bam ->
@@ -253,6 +264,9 @@ let rec to_json: type a. a t -> json =
     | Bwa (params, input) ->
       let input_json = to_json input in
       call "BWA" [bwa_params params input_json]
+    | Bwa_mem (params, input) ->
+      let input_json = to_json input in
+      call "BWA-MEM" [bwa_params params input_json]
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
@@ -270,7 +284,7 @@ let rec to_json: type a. a t -> json =
         ]]
 
 let rec compile_aligner_step
-    ~reference_build
+    ~reference_build ~processors
     ~work_dir ?(is:[`Normal | `Tumor] option) ~machine (t : bam t) =
   let gunzip_concat ?read (t: fastq  t) =
     match t with
@@ -287,20 +301,35 @@ let rec compile_aligner_step
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Gatk_indel_realigner bam ->
-    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
+    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Gatk.indel_realigner ~reference_build ~run_with:machine input_bam ~compress:false
       ~output_bam
   | Gatk_bqsr bam ->
-    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
+    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Gatk.base_quality_score_recalibrator
       ~run_with:machine ~reference_build ~input_bam ~output_bam
   | Picard_mark_duplicates bam ->
-    let input_bam = compile_aligner_step ~work_dir ~reference_build ?is ~machine bam in
+    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Picard.mark_duplicates
       ~run_with:machine ~input_bam output_bam
+  | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
+    let r1, r2 =
+      match what with
+      | Paired_end_sample (dataset, l1, l2) ->
+        let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
+        let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
+        (r1, Some r2)
+      | Single_end_sample (dataset, single) ->
+        let r1 = gunzip_concat ~read:(`R1 dataset) single in
+        (r1, None) in
+    Bwa.mem_align_to_sam
+      ~reference_build ~processors
+      ~gap_open_penalty ~gap_extension_penalty
+      ~r1 ?r2 ~result_prefix ~run_with:machine ()
+    |> Samtools.sam_to_bam ~run_with:machine
   | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
     let r1, r2 =
       match what with
@@ -312,17 +341,17 @@ let rec compile_aligner_step
         let r1 = gunzip_concat ~read:(`R1 dataset) single in
         (r1, None) in
     Bwa.align_to_sam
-      ~reference_build
+      ~reference_build ~processors
       ~gap_open_penalty ~gap_extension_penalty
       ~r1 ?r2 ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
 
-let compile_variant_caller_step ~reference_build ~work_dir ~machine (t: vcf t) =
+let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
-    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors:4 (* TODO configurable processors ! *)
+    let normal = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
+    let tumor = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
+    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors (* TODO configurable processors ! *)
       ~run_with:machine ~normal ~tumor ~result_prefix ()
