@@ -49,7 +49,7 @@ module Bwa = struct
                   && shf "bwa index %s"
                     (Filename.quote reference_fasta#product#path)))
 
-  let read_group_header_option =
+  let read_group_header_option algorithm =
     (* this option should magically make the sam file compatible
              mutect and other GATK-like pieces of software
              http://seqanswers.com/forums/showthread.php?t=17233
@@ -57,7 +57,9 @@ module Bwa = struct
              The `LB` one seems “necessary” for somatic sniper:
              `[bam_header_parse] missing LB tag in @RG lines.`
           *)
-    "-r \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
+      match algorithm with
+        |`Mem -> "-R \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
+        |`Aln -> "-r \"@RG\tID:bwa\tSM:SM\tLB:ga\tPL:Illumina\""
 
   let mem_align_to_sam
       ~reference_build
@@ -85,7 +87,7 @@ module Bwa = struct
     let bwa_base_command =
       String.concat ~sep:" " [
         "bwa mem";
-        read_group_header_option;
+        (read_group_header_option `Mem);
         "-t"; Int.to_string processors;
         "-O"; Int.to_string gap_open_penalty;
         "-E"; Int.to_string gap_extension_penalty;
@@ -178,7 +180,7 @@ module Bwa = struct
             Tool.(init bwa_tool)
             && in_work_dir
             && shf "bwa sampe %s %s %s %s %s %s > %s"
-              read_group_header_option
+              (read_group_header_option `Aln)
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote r2_sai#product#path)
@@ -191,7 +193,7 @@ module Bwa = struct
             Tool.(init bwa_tool)
             && in_work_dir
             && shf "bwa samse %s %s %s > %s"
-              read_group_header_option
+              (read_group_header_option `Aln)
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote result)),
