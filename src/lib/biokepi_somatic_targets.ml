@@ -14,7 +14,7 @@ module Mutect = struct
       let result_file suffix =
         let region_name = Region.to_filename region in
         sprintf "%s-%s%s" result_prefix region_name suffix in
-      let intervals_option = Region.to_mutect_option region in
+      let intervals_option = Region.to_gatk_option region in
       let output_file = result_file "-somatic.vcf" in
       let dot_out_file = result_file "-output.out"in
       let coverage_file = result_file "coverage.wig" in

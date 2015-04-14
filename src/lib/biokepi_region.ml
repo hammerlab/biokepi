@@ -40,7 +40,7 @@ let to_samtools_option r =
   | Some s -> sprintf "-r %s" s
   | None -> ""
 
-let to_mutect_option r = 
+let to_gatk_option r = 
   match to_samtools_specification r with
   | Some s -> sprintf "--intervals %s" s
   | None -> ""

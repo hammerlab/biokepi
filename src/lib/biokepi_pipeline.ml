@@ -55,6 +55,22 @@ module Somatic_variant_caller = struct
   }
 end
 
+module Germline_variant_caller = struct
+  type t = {
+    name: string;
+    configuration_json: json;
+    configuration_name: string;
+    make_target:
+      reference_build: [`B37 | `B38 | `hg19 | `B37decoy ] -> 
+      run_with:Biokepi_run_environment.Machine.t ->
+      input_bam:Ketrew.EDSL.user_target ->
+      result_prefix: string ->
+      processors: int ->
+      unit ->
+      Ketrew.EDSL.user_target
+  }
+end
+
 type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
   | Fastq: File.t -> fastq  t
@@ -70,6 +86,7 @@ type _ t =
   | Gatk_bqsr: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
+  | Germline_variant_caller: Germline_variant_caller.t * bam t -> vcf t
 
 module Construct = struct
 
@@ -113,6 +130,23 @@ module Construct = struct
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
 
+  let germline_variant_caller t input_bam =
+    Germline_variant_caller (t, input_bam)
+
+  let gatk_haplotype_caller input_bam = 
+    let configuration_name = "default" in
+    let configuration_json =
+      `Assoc [
+        "Name", `String configuration_name;
+      ] in
+    let make_target ~reference_build ~run_with ~input_bam ~result_prefix ~processors () =
+      Gatk.haplotype_caller ~reference_build ~run_with ~input_bam ~result_prefix `Map_reduce in
+    germline_variant_caller
+      {Germline_variant_caller.name = "Gatk-HaplotypeCaller";
+        configuration_json;
+        configuration_name;
+        make_target;}
+      input_bam
 
   let somatic_variant_caller t bam_pair =
     Somatic_variant_caller (t, bam_pair)
@@ -239,6 +273,11 @@ let rec to_file_prefix:
       sprintf "%s-%s-%s" prev
         vc.Somatic_variant_caller.name
         vc.Somatic_variant_caller.configuration_name
+    | Germline_variant_caller (vc, bp) ->
+      let prev = to_file_prefix bp in
+      sprintf "%s-%s-%s" prev
+        vc.Germline_variant_caller.name
+        vc.Germline_variant_caller.configuration_name
     end
 
 
@@ -273,6 +312,11 @@ let rec to_json: type a. a t -> json =
     | Gatk_bqsr bam ->
       let input_json = to_json bam in
       call "Gatk_bqsr" [`Assoc ["input", input_json]]
+    | Germline_variant_caller (gvc, bam) ->
+      call gvc.Germline_variant_caller.name [`Assoc [
+          "Configuration", gvc.Germline_variant_caller.configuration_json;
+          "Input", to_json bam;
+        ]]
     | Picard_mark_duplicates bam ->
       call "Picard_mark_duplicates" [`Assoc ["input", to_json bam]]
     | Bam_pair (normal, tumor) ->
@@ -355,3 +399,7 @@ let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors
     let tumor = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
     som_vc.Somatic_variant_caller.make_target ~reference_build ~processors (* TODO configurable processors ! *)
       ~run_with:machine ~normal ~tumor ~result_prefix ()
+  | Germline_variant_caller (gvc, bam) ->
+    let input_bam = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine bam in
+    gvc.Germline_variant_caller.make_target ~processors ~reference_build
+      ~run_with:machine ~input_bam ~result_prefix ()
