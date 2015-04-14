@@ -48,7 +48,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37 | `hg19 | `B38 ] -> Biokepi_reference_genome.t;
+    get_reference_genome: [`B37 | `hg19 | `B38 | `B37decoy ] -> Biokepi_reference_genome.t;
     get_tool: string -> Tool.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
@@ -435,6 +435,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
   *)
   let b37_broad_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/human_g1k_v37.fasta.gz"
+
+  let b37_wdecoy_url =
+    "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz"
+  
   let b37_alt_url =
     "ftp://ftp.sanger.ac.uk/pub/1000genomes/tk2/\
      main_project_reference/human_g1k_v37.fasta.gz"
@@ -456,6 +460,18 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
       wget_gunzip ~host ~run_program cosmic_broad_url
         ~destination:(destination_path // "cosmic.vcf") in
     Biokepi_reference_genome.create  "B37" fasta ~dbsnp ~cosmic
+
+  let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
+    let fasta =
+      wget_gunzip ~host ~run_program b37_wdecoy_url
+        ~destination:(destination_path // "hs37d5.fasta") in
+    let dbsnp =
+      wget_gunzip ~host ~run_program dbsnp_broad_url
+        ~destination:(destination_path // "dbsnp.vcf") in
+    let cosmic =
+      wget_gunzip ~host ~run_program cosmic_broad_url
+        ~destination:(destination_path // "cosmic.vcf") in
+    Biokepi_reference_genome.create "hs37d5" fasta ~dbsnp ~cosmic
 
   let b38_url =
     "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
@@ -521,6 +537,8 @@ module Ssh_box = struct
         | `hg19 -> 
             Data_providers.pull_hg19 
               ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
+        | `B37decoy -> Data_providers.pull_b37decoy
+              ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
       )
       ~host
       ~get_tool:(function

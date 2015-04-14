@@ -132,7 +132,7 @@ let all_chromosomes_hg19 = [
 
 let major_contigs ~reference_build = 
   match reference_build with 
-    | `B37 -> all_chromosomes_b37
+    | (`B37 | `B37decoy) -> all_chromosomes_b37
     | `B38 -> all_chromosomes_b37
     | `hg19 -> all_chromosomes_hg19
 
