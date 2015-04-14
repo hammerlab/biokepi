@@ -61,6 +61,7 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
+      reference_build: [`B37 | `B38 | `hg19 ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
       input_bam:Ketrew.EDSL.user_target ->
       result_prefix: string ->
@@ -138,8 +139,8 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~run_with ~input_bam ~result_prefix ~processors () =
-      Gatk.haplotype_caller ~run_with ~input_bam ~result_prefix `Map_reduce in
+    let make_target ~reference_build ~run_with ~input_bam ~result_prefix ~processors () =
+      Gatk.haplotype_caller ~reference_build ~run_with ~input_bam ~result_prefix `Map_reduce in
     germline_variant_caller
       {Germline_variant_caller.name = "Gatk-HaplotypeCaller";
         configuration_json;
@@ -400,5 +401,5 @@ let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors
       ~run_with:machine ~normal ~tumor ~result_prefix ()
   | Germline_variant_caller (gvc, bam) ->
     let input_bam = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine bam in
-    gvc.Germline_variant_caller.make_target ~processors:4
+    gvc.Germline_variant_caller.make_target ~processors ~reference_build
       ~run_with:machine ~input_bam ~result_prefix ()
