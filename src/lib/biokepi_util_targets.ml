@@ -38,6 +38,7 @@ module Samtools = struct
     file_target ~name dest ~host ~make
       ~dependencies:[file_t; Tool.(ensure samtools)]
       ~if_fails_activate:[Remove.file ~run_with dest]
+      ~success_triggers:[Remove.file ~run_with src]
 
   let faidx ~(run_with:Machine.t) fasta =
     let open Ketrew.EDSL in
