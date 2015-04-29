@@ -48,7 +48,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37 | `hg19 | `B38 | `B37decoy ] -> Biokepi_reference_genome.t;
+    get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Biokepi_reference_genome.t;
     get_tool: string -> Tool.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
@@ -501,6 +501,20 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
         ~destination:(destination_path // "dbsnp.vcf") in
     Biokepi_reference_genome.create "hg19" fasta ~dbsnp
 
+  let hg18_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg18/Homo_sapiens_assembly18.fasta.gz"
+  let dbsnp_hg18_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg18/dbsnp_138.hg18.vcf.gz"
+
+  let pull_hg18 ~host ~(run_program : Machine.run_function) ~destination_path =
+    let fasta =
+      wget_gunzip ~host ~run_program hg18_url
+        ~destination:(destination_path // "hg18.fasta") in
+    let dbsnp =
+      wget_gunzip ~host ~run_program dbsnp_hg19_url
+        ~destination:(destination_path // "dbsnp.vcf") in
+    Biokepi_reference_genome.create "hg18" fasta ~dbsnp
+
 end
 
 module Ssh_box = struct
@@ -534,6 +548,9 @@ module Ssh_box = struct
         | `B38 -> 
             Data_providers.pull_b38 
               ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
+        | `hg18 ->
+          Data_providers.pull_hg18
+              ~host ~run_program ~destination_path:(meta_playground // "hg18-reference-genome")
         | `hg19 -> 
             Data_providers.pull_hg19 
               ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")

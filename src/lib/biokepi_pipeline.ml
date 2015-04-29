@@ -44,7 +44,7 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `B37decoy ] -> 
+      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
       normal:Ketrew.EDSL.user_target ->
       tumor:Ketrew.EDSL.user_target ->
@@ -61,7 +61,7 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `B37decoy ] -> 
+      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
       input_bam:Ketrew.EDSL.user_target ->
       result_prefix: string ->
