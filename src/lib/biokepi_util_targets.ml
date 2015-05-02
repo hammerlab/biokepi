@@ -144,12 +144,13 @@ module Picard = struct
     let picard_jar = Machine.get_tool run_with "picard" in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
+    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
     let program =
       Program.(Tool.(init picard_jar) &&
                shf "java -jar $PICARD_JAR MarkDuplicates \
                     VALIDATION_STRINGENCY=LENIENT \
                     INPUT=%s OUTPUT=%s METRICS_FILE=%s"
-                 (Filename.quote input_bam#product#path)
+                 (Filename.quote sorted_bam#product#path)
                  (Filename.quote output_bam)
                  metrics_path) in
     let make = Machine.run_program run_with program in
@@ -158,7 +159,7 @@ module Picard = struct
       ~name:(sprintf "picard-markdups-%s"
                Filename.(basename input_bam#product#path))
       ~host ~make
-      ~dependencies:[input_bam; Tool.(ensure picard_jar)]
+      ~dependencies:[sorted_bam; input_bam; Tool.(ensure picard_jar);]
       ~if_fails_activate:[Remove.file ~run_with output_bam;
                           Remove.file ~run_with metrics_path;]
     
