@@ -207,7 +207,7 @@ module Gatk = struct
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
@@ -265,7 +265,7 @@ module Gatk = struct
     let recal_data_table =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
