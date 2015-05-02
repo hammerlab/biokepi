@@ -119,8 +119,6 @@ module Samtools = struct
     ] in
     file_target pileup ~name ~host ~make ~dependencies (*  *)
       ~if_fails_activate:[Remove.file ~run_with pileup]
-
-
 end
 
 module Picard = struct
@@ -198,6 +196,7 @@ module Gatk = struct
   let indel_realigner
       ?(compress=false)
       ~reference_build
+      ~processors
       ~run_with input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
@@ -212,10 +211,11 @@ module Gatk = struct
       Machine.run_program run_with ~name
         Program.(
           Tool.(init gatk)
-          && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s"
+          && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s -nt %d"
             fasta#product#path
             sorted_bam#product#path
             intervals_file
+            processors
           && shf "java -jar $GATK_JAR -T IndelRealigner %s -R %s -I %s -o %s \
                   -targetIntervals %s"
             (if compress then "" else "-compress 0")
@@ -250,7 +250,11 @@ module Gatk = struct
     sh (String.concat ~sep:" "
           ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
 
-  let base_quality_score_recalibrator ~run_with ~reference_build ~input_bam ~output_bam =
+  let base_quality_score_recalibrator 
+        ~run_with 
+        ~processors
+        ~reference_build 
+        ~input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
@@ -266,12 +270,14 @@ module Gatk = struct
         Program.(
           Tool.(init gatk)
           && call_gatk ~analysis:"BaseRecalibrator" [
+            "-nct"; Int.to_string processors;
             "-I"; sorted_bam#product#path;
             "-R"; fasta#product#path;
             "-knownSites"; db_snp#product#path;
             "-o"; recal_data_table;
           ]
           && call_gatk ~analysis:"PrintReads" [
+            "-nct"; Int.to_string processors;
             "-R"; fasta#product#path;
             "-I"; sorted_bam#product#path;
             "-BQSR"; recal_data_table;

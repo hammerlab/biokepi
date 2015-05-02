@@ -347,13 +347,13 @@ let rec compile_aligner_step
   | Gatk_indel_realigner bam ->
     let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
-    Gatk.indel_realigner ~reference_build ~run_with:machine input_bam ~compress:false
+    Gatk.indel_realigner ~processors ~reference_build ~run_with:machine input_bam ~compress:false
       ~output_bam
   | Gatk_bqsr bam ->
     let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Gatk.base_quality_score_recalibrator
-      ~run_with:machine ~reference_build ~input_bam ~output_bam
+      ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
   | Picard_mark_duplicates bam ->
     let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
