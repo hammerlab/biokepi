@@ -119,8 +119,6 @@ module Samtools = struct
     ] in
     file_target pileup ~name ~host ~make ~dependencies (*  *)
       ~if_fails_activate:[Remove.file ~run_with pileup]
-
-
 end
 
 module Picard = struct
@@ -146,12 +144,13 @@ module Picard = struct
     let picard_jar = Machine.get_tool run_with "picard" in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
+    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
     let program =
       Program.(Tool.(init picard_jar) &&
                shf "java -jar $PICARD_JAR MarkDuplicates \
                     VALIDATION_STRINGENCY=LENIENT \
                     INPUT=%s OUTPUT=%s METRICS_FILE=%s"
-                 (Filename.quote input_bam#product#path)
+                 (Filename.quote sorted_bam#product#path)
                  (Filename.quote output_bam)
                  metrics_path) in
     let make = Machine.run_program run_with program in
@@ -160,7 +159,7 @@ module Picard = struct
       ~name:(sprintf "picard-markdups-%s"
                Filename.(basename input_bam#product#path))
       ~host ~make
-      ~dependencies:[input_bam; Tool.(ensure picard_jar)]
+      ~dependencies:[sorted_bam; input_bam; Tool.(ensure picard_jar);]
       ~if_fails_activate:[Remove.file ~run_with output_bam;
                           Remove.file ~run_with metrics_path;]
     
@@ -198,6 +197,7 @@ module Gatk = struct
   let indel_realigner
       ?(compress=false)
       ~reference_build
+      ~processors
       ~run_with input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
@@ -207,15 +207,16 @@ module Gatk = struct
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
           Tool.(init gatk)
-          && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s"
+          && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s -nt %d"
             fasta#product#path
             sorted_bam#product#path
             intervals_file
+            processors
           && shf "java -jar $GATK_JAR -T IndelRealigner %s -R %s -I %s -o %s \
                   -targetIntervals %s"
             (if compress then "" else "-compress 0")
@@ -250,7 +251,11 @@ module Gatk = struct
     sh (String.concat ~sep:" "
           ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
 
-  let base_quality_score_recalibrator ~run_with ~reference_build ~input_bam ~output_bam =
+  let base_quality_score_recalibrator 
+        ~run_with 
+        ~processors
+        ~reference_build 
+        ~input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with "gatk" in
@@ -260,18 +265,20 @@ module Gatk = struct
     let recal_data_table =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
           Tool.(init gatk)
           && call_gatk ~analysis:"BaseRecalibrator" [
+            "-nct"; Int.to_string processors;
             "-I"; sorted_bam#product#path;
             "-R"; fasta#product#path;
             "-knownSites"; db_snp#product#path;
             "-o"; recal_data_table;
           ]
           && call_gatk ~analysis:"PrintReads" [
+            "-nct"; Int.to_string processors;
             "-R"; fasta#product#path;
             "-I"; sorted_bam#product#path;
             "-BQSR"; recal_data_table;
