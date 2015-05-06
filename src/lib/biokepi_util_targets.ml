@@ -200,8 +200,9 @@ end
 module Bedtools = struct
   let do_on_bam
       ~(run_with:Machine.t)
+      ?(more_dependencies=[]) ?(success_triggers=[]) 
       ~processors
-      ?(more_dependencies=[]) bam_file ~output ~make_command =
+      ~output ~make_command bam_file =
     let open Ketrew.EDSL in
     let bedtools = Machine.get_tool run_with "bedtools" in
     let src_bam = bam_file#product#path in
@@ -215,9 +216,10 @@ module Bedtools = struct
     file_target output ~name ~host ~make
       ~dependencies:(Tool.(ensure bedtools) :: bam_file :: more_dependencies)
       ~if_fails_activate:[Remove.file ~run_with output]
+      ~success_triggers
 
   let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors bam_file =
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate bam_file in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
     let bam_file_name = (Filename.chop_suffix bam_file#product#path ".bam") in
     let fastq_output = match sample_type with
       | `Paired_end -> ["-fq"; sprintf "%s_R1.fastq" bam_file_name; "-fq2"; sprintf "%s_R2.fastq" bam_file_name]
@@ -225,7 +227,9 @@ module Bedtools = struct
     in
     let make_command src = "bamtofastq" ::  "-i" :: src :: fastq_output in
     let output = List.nth_exn fastq_output 1 in
-    do_on_bam ~run_with ~processors ~output ~make_command sorted_bam 
+    do_on_bam 
+      ~success_triggers:[Remove.file ~run_with sorted_bam#product#path] 
+      ~run_with ~processors ~output ~make_command sorted_bam 
 end
 
 module Gatk = struct
