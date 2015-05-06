@@ -26,8 +26,8 @@ module Mutect = struct
       let dbsnp = Reference_genome.dbsnp_exn reference in
       let fasta_dot_fai = Samtools.faidx ~run_with fasta in
       let sequence_dict = Picard.create_dict ~run_with fasta in
-      let sorted_normal = Samtools.sort_bam ~processors:2 ~run_with normal in
-      let sorted_tumor = Samtools.sort_bam ~processors:2 ~run_with tumor in
+      let sorted_normal = Samtools.sort_bam ~processors:2 ~run_with ~by:`Coordinate normal in
+      let sorted_tumor = Samtools.sort_bam ~processors:2 ~run_with ~by:`Coordinate tumor in
       let run_mutect =
         let name = sprintf "%s" (Filename.basename output_file) in
         let make =
@@ -95,8 +95,8 @@ module Somaticsniper = struct
       Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let output_file = result_file "-snvs.vcf" in
     let run_path = Filename.dirname output_file in
-    let sorted_normal = Samtools.sort_bam ~run_with normal in
-    let sorted_tumor = Samtools.sort_bam ~run_with tumor in
+    let sorted_normal = Samtools.sort_bam ~run_with ~by:`Coordinate normal in
+    let sorted_tumor = Samtools.sort_bam ~run_with ~by:`Coordinate tumor in
     let make =
       Machine.run_program run_with
         ~name ~processors:1 Program.(
@@ -363,8 +363,8 @@ The usage is:
       Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let strelka_tool = Machine.get_tool run_with Tool.Default.strelka in
     let gatk_tool = Machine.get_tool run_with Tool.Default.gatk in
-    let sorted_normal = Samtools.sort_bam ~run_with ~processors normal in
-    let sorted_tumor = Samtools.sort_bam ~run_with ~processors tumor in
+    let sorted_normal = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate normal in
+    let sorted_tumor = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate tumor in
     let working_dir = Filename.(dirname result_prefix) in
     let make =
       Machine.run_program run_with ~name ~processors
