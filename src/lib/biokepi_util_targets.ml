@@ -77,6 +77,14 @@ module Samtools = struct
       | `Coordinate -> ""
       | `Read_name -> "-n"
     in
+    let dest_suffix =
+      match by with
+        | `Coordinate -> "sorted"
+        | `Read_name -> "read-name-sorted"
+    in
+    let dest_prefix =
+      sprintf "%s-%s" (Filename.chop_suffix source ".bam") dest_suffix in
+    let destination = sprintf "%s.%s" dest_prefix "bam" in
     let make_command src des =
       ["sort"; sort_key; "-@"; Int.to_string processors; src; dest_prefix] in
     do_on_bam ~run_with bam_file ~destination ~make_command
