@@ -21,22 +21,57 @@ open Ketrew.EDSL
 
 
 module Tool = struct
+  module Definition = struct
+    type t = [
+      | `Bwa of [ `V_0_7_10 ]
+      | `Custom of string * string
+    ] [@@deriving yojson, show, eq]
+    let custom n ~version = `Custom (n, version)
+  end
+  module Default = struct
+    open Definition
+    let bwa = `Bwa `V_0_7_10
+    let samtools = custom "samtools" ~version:"1.1"
+    let vcftools = custom "vcftools" ~version:"0.1.12b"
+    let somaticsniper = custom "somaticsniper" ~version:"1.0.3"
+    let varscan = custom "varscan" ~version:"2.3.5"
+    let picard = custom "picard" ~version:"1.127"
+    let mutect = custom "mutect" ~version:"unknown"
+    let gatk = custom "gatk" ~version:"unknown"
+    let strelka = custom "strelka" ~version:"1.0.14"
+    let virmid = custom "virmid" ~version:"1.1.1"
+  end
   type t = {
-    name: string;
+    definition: Definition.t;
     init: Program.t;
     ensure: user_target;
   }
-  let create ?init ?ensure name = {
-    name;
+  let create ?init ?ensure definition = {
+    definition;
     init =
       Option.value init
-        ~default:(Program.shf "echo '%s: default init'" name);
+        ~default:(Program.shf "echo '%s: default init'"
+                    (Definition.show definition));
     ensure =
       Option.value ensure
-        ~default:(target (sprintf "%s-ensured" name));
+        ~default:(target (sprintf "%s-ensured" (Definition.show definition)));
   }
   let init t = t.init
   let ensure t = t.ensure
+
+  module Kit = struct
+    type tool = t
+    type t = {
+      tools: tool list;
+    }
+    let create tools = {tools}
+    let get_exn t def =
+      List.find t.tools
+        ~f:(fun {definition; _ } -> Definition.equal definition def)
+      |> Option.value_exn ~msg:(sprintf "Can't find tool %s"
+                                  Definition.(show def))
+
+  end
 end
 
 module Machine = struct
@@ -49,22 +84,23 @@ module Machine = struct
     ssh_name: string;
     host: Host.t;
     get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Biokepi_reference_genome.t;
-    get_tool: string -> Tool.t;
+    toolkit: Tool.Kit.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
     work_dir: string;
   }
   let create
-      ~ssh_name ~host ~get_reference_genome ~get_tool
+      ~ssh_name ~host ~get_reference_genome ~toolkit
       ~quick_command ~run_program ~work_dir  name =
-    {name; ssh_name; get_tool; get_reference_genome; host;
+    {name; ssh_name; toolkit; get_reference_genome; host;
      quick_command; run_program; work_dir}
 
   let name t = t.name
   let ssh_name t = t.ssh_name
   let as_host t = t.host
   let get_reference_genome t = t.get_reference_genome
-  let get_tool t = t.get_tool
+  let get_tool t =
+    Tool.Kit.get_exn t.toolkit
   let quick_command t = t.quick_command
   let run_program t = t.run_program
   let work_dir t = t.work_dir
@@ -156,7 +192,7 @@ module Tool_providers = struct
               bwa-0.7.10.tar.bz2"
         (*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)
         ~install_path in
-    Tool.create "bwa" ~ensure
+    Tool.create (`Bwa `V_0_7_10) ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let samtools ~host ~meta_playground =
@@ -166,7 +202,7 @@ module Tool_providers = struct
         ~url:"http://downloads.sourceforge.net/project/samtools/samtools/\
               1.1/samtools-1.1.tar.bz2"
         ~install_path in
-    Tool.create "samtools" ~ensure
+    Tool.create Tool.Default.samtools ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let vcftools ~host ~meta_playground =
@@ -179,7 +215,7 @@ module Tool_providers = struct
         ~url:"http://downloads.sourceforge.net/project/\
               vcftools/vcftools_0.1.12b.tar.gz"
     in
-    Tool.create "vcftools" ~ensure
+    Tool.create Tool.Default.vcftools ~ensure
       ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path
                      && shf "export PERL5LIB=$PERL5LIB:%s/site_perl/"
                        install_path)
@@ -217,7 +253,7 @@ module Tool_providers = struct
                             Filename.(quote binary)))
     in
     let init = Program.(shf "export PATH=%s/:$PATH" install_path) in
-    Tool.create "somaticsniper" ~ensure ~init
+    Tool.create Tool.Default.somaticsniper ~ensure ~init
 
   let varscan_tool ~host ~meta_playground =
     let url =
@@ -233,7 +269,7 @@ module Tool_providers = struct
                    && download_url_program url))
     in
     let init = Program.(shf "export VARSCAN_JAR=%s" jar) in
-    Tool.create "varscan" ~ensure ~init
+    Tool.create Tool.Default.varscan ~ensure ~init
 
   let picard_tool ~host ~meta_playground =
     let url =
@@ -252,7 +288,7 @@ module Tool_providers = struct
                  ))
     in
     let init = Program.(shf "export PICARD_JAR=%s" jar) in
-    Tool.create "picard" ~ensure ~init
+    Tool.create Tool.Default.picard ~ensure ~init
 
   type broad_jar_location = [
     | `Scp of string
@@ -289,13 +325,13 @@ module Tool_providers = struct
   let mutect_tool ~host ~meta_playground loc =
     let install_path = meta_playground // "mutect" in
     let get_mutect = get_broad_jar ~host ~install_path loc in
-    Tool.create "mutect" ~ensure:get_mutect
+    Tool.create Tool.Default.mutect ~ensure:get_mutect
       ~init:Program.(shf "export mutect_HOME=%s" install_path)
 
   let gatk_tool ~host ~meta_playground loc =
     let install_path = meta_playground // "gatk" in
     let ensure = get_broad_jar ~host ~install_path loc in
-    Tool.create "mutect" ~ensure
+    Tool.create Tool.Default.gatk ~ensure
       ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
 
   let strelka_tool ~host ~meta_playground =
@@ -320,7 +356,7 @@ module Tool_providers = struct
                  ))
     in
     let init = Program.(shf "export STRELKA_BIN=%s" strelka_bin) in
-    Tool.create "strelka" ~ensure ~init
+    Tool.create Tool.Default.strelka ~ensure ~init
 
   let virmid_tool ~host ~meta_playground =
     let url =
@@ -338,8 +374,23 @@ module Tool_providers = struct
                  ))
     in
     let init = Program.(shf "export VIRMID_JAR=%s" jar) in
-    Tool.create "virmid" ~ensure ~init
+    Tool.create Tool.Default.virmid ~ensure ~init
 
+  let default_toolkit
+      ~host ~meta_playground
+      ~mutect_jar_location ~gatk_jar_location =
+    Tool.Kit.create [
+      bwa_tool ~host ~meta_playground;
+      samtools ~host ~meta_playground;
+      vcftools ~host ~meta_playground;
+      mutect_tool
+        ~host ~meta_playground (mutect_jar_location ());
+      gatk_tool
+        ~host ~meta_playground (gatk_jar_location ());
+      picard_tool ~host ~meta_playground;
+      somaticsniper_tool ~host ~meta_playground;
+      varscan_tool ~host ~meta_playground;
+    ]
 end
 
 module Data_providers = struct
@@ -524,9 +575,9 @@ module Ssh_box = struct
         daemonize ~using:`Python_daemon ~host program
 
   let create
-    ~gatk_jar_location
-    ~mutect_jar_location
-    ?run_program ?b37 ~meta_playground ssh_hostname =
+      ~gatk_jar_location
+      ~mutect_jar_location
+      ?run_program ?b37 ~meta_playground ssh_hostname =
     let open Ketrew.EDSL in
     let playground = meta_playground // "ketrew_playground" in
     let host = Host.ssh ssh_hostname ~playground in
@@ -546,33 +597,22 @@ module Ssh_box = struct
       ~get_reference_genome:(function
         | `B37 -> actual_b37
         | `B38 -> 
-            Data_providers.pull_b38 
-              ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
+          Data_providers.pull_b38 
+            ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
         | `hg18 ->
           Data_providers.pull_hg18
-              ~host ~run_program ~destination_path:(meta_playground // "hg18-reference-genome")
+            ~host ~run_program ~destination_path:(meta_playground // "hg18-reference-genome")
         | `hg19 -> 
-            Data_providers.pull_hg19 
-              ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
+          Data_providers.pull_hg19 
+            ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
         | `B37decoy -> Data_providers.pull_b37decoy
-              ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
-      )
+                         ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
+        )
       ~host
-      ~get_tool:(function
-        | "bwa" -> Tool_providers.bwa_tool ~host ~meta_playground
-        | "samtools" -> Tool_providers.samtools ~host ~meta_playground
-        | "vcftools" -> Tool_providers.vcftools ~host ~meta_playground
-        | "mutect" ->
-          Tool_providers.mutect_tool
-            ~host ~meta_playground (mutect_jar_location ())
-        | "gatk" ->
-          Tool_providers.gatk_tool
-            ~host ~meta_playground (gatk_jar_location ())
-        | "picard" -> Tool_providers.picard_tool ~host ~meta_playground
-        | "somaticsniper" ->
-          Tool_providers.somaticsniper_tool ~host ~meta_playground
-        | "varscan" -> Tool_providers.varscan_tool ~host ~meta_playground
-        | other -> failwithf "ssh-box: get_tool: unknown tool: %s" other)
+      ~toolkit:(
+        Tool_providers.default_toolkit
+          ~host ~meta_playground
+          ~gatk_jar_location ~mutect_jar_location)
       ~run_program
       ~quick_command:(fun program -> run_program program)
       ~work_dir:(meta_playground // "work")

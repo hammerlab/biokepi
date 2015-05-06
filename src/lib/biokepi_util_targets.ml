@@ -26,7 +26,7 @@ end
 module Samtools = struct
   let sam_to_bam ~(run_with : Machine.t) file_t =
     let open Ketrew.EDSL in
-    let samtools = Machine.get_tool run_with "samtools" in
+    let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = file_t#product#path in
     let dest = sprintf "%s.%s" (Filename.chop_suffix src ".sam") "bam" in
     let program =
@@ -42,7 +42,7 @@ module Samtools = struct
 
   let faidx ~(run_with:Machine.t) fasta =
     let open Ketrew.EDSL in
-    let samtools = Machine.get_tool run_with "samtools" in
+    let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" src "fai" in
     let program = Program.(Tool.(init samtools) && exec ["samtools"; "faidx"; src]) in
@@ -57,7 +57,7 @@ module Samtools = struct
       ~(run_with:Machine.t)
       ?(more_dependencies=[]) bam_file ~destination ~make_command =
     let open Ketrew.EDSL in
-    let samtools = Machine.get_tool run_with "samtools" in
+    let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = bam_file#product#path in
     let sub_command = make_command src destination in
     let program =
@@ -86,7 +86,7 @@ module Samtools = struct
 
   let mpileup ~run_with ~reference_build ?adjust_mapq ~region bam_file =
     let open Ketrew.EDSL in
-    let samtools = Machine.get_tool run_with "samtools" in
+    let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = bam_file#product#path in
     let adjust_mapq_option = 
       match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
@@ -124,7 +124,7 @@ end
 module Picard = struct
   let create_dict ~(run_with:Machine.t) fasta =
     let open Ketrew.EDSL in
-    let picard_create_dict = Machine.get_tool run_with "picard" in
+    let picard_create_dict = Machine.get_tool run_with Tool.Default.picard in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" (Filename.chop_suffix src ".fasta") "dict" in
     let program =
@@ -141,7 +141,7 @@ module Picard = struct
 
   let mark_duplicates ~(run_with:Machine.t) ~input_bam output_bam =
     let open Ketrew.EDSL in
-    let picard_jar = Machine.get_tool run_with "picard" in
+    let picard_jar = Machine.get_tool run_with Tool.Default.picard in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
     let sorted_bam = Samtools.sort_bam ~run_with input_bam in
@@ -169,7 +169,7 @@ module Vcftools = struct
   let vcf_concat ~(run_with:Machine.t) vcfs ~final_vcf =
     let open Ketrew.EDSL in
     let name = sprintf "merge-vcfs-%s" (Filename.basename final_vcf) in
-    let vcftools = Machine.get_tool run_with "vcftools" in
+    let vcftools = Machine.get_tool run_with Tool.Default.vcftools in
     let vcf_concat =
       let make =
         Machine.run_program run_with ~name
@@ -201,7 +201,7 @@ module Gatk = struct
       ~run_with input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
-    let gatk = Machine.get_tool run_with "gatk" in
+    let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let intervals_file =
@@ -258,7 +258,7 @@ module Gatk = struct
         ~input_bam ~output_bam =
     let open Ketrew.EDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
-    let gatk = Machine.get_tool run_with "gatk" in
+    let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     let db_snp = Reference_genome.dbsnp_exn reference_genome in
@@ -303,7 +303,7 @@ module Gatk = struct
         let region_name = Region.to_filename region in
         sprintf "%s-%s%s" result_prefix region_name suffix in
       let output_vcf = result_file "-germline.vcf" in
-      let gatk = Machine.get_tool run_with "gatk" in
+      let gatk = Machine.get_tool run_with Tool.Default.gatk in
       let run_path = Filename.dirname output_vcf in
       let reference = Machine.get_reference_genome run_with reference_build in
       let reference_fasta = Reference_genome.fasta reference in

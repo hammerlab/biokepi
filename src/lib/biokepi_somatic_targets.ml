@@ -18,7 +18,7 @@ module Mutect = struct
       let output_file = result_file "-somatic.vcf" in
       let dot_out_file = result_file "-output.out"in
       let coverage_file = result_file "coverage.wig" in
-      let mutect = Machine.get_tool run_with "mutect" in
+      let mutect = Machine.get_tool run_with Tool.Default.mutect in
       let run_path = Filename.dirname output_file in
       let reference = Machine.get_reference_genome run_with reference_build in
       let fasta = Reference_genome.fasta reference in
@@ -90,7 +90,7 @@ module Somaticsniper = struct
       ^ Option.(value_map minus_T ~default:"" ~f:(sprintf "-T%F"))
     in
     let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
-    let sniper = Machine.get_tool run_with "somaticsniper" in
+    let sniper = Machine.get_tool run_with Tool.Default.somaticsniper in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
     let output_file = result_file "-snvs.vcf" in
@@ -161,7 +161,7 @@ module Varscan = struct
     let open Ketrew.EDSL in
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
-    let varscan_tool = Machine.get_tool run_with "varscan" in
+    let varscan_tool = Machine.get_tool run_with Tool.Default.varscan in
     let snp_output = result_file "-snp.vcf" in
     let indel_output = result_file "-indel.vcf" in
     let normal_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq normal in
@@ -361,8 +361,8 @@ The usage is:
     let output_file_path = output_dir // "results/passed_somatic_combined.vcf" in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
-    let strelka_tool = Machine.get_tool run_with "strelka" in
-    let gatk_tool = Machine.get_tool run_with "gatk" in
+    let strelka_tool = Machine.get_tool run_with Tool.Default.strelka in
+    let gatk_tool = Machine.get_tool run_with Tool.Default.gatk in
     let sorted_normal = Samtools.sort_bam ~run_with ~processors normal in
     let sorted_tumor = Samtools.sort_bam ~run_with ~processors tumor in
     let working_dir = Filename.(dirname result_prefix) in
@@ -454,7 +454,7 @@ module Virmid = struct
     let work_dir = result_file "-workdir" in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
-    let virmid_tool = Machine.get_tool run_with "virmid" in
+    let virmid_tool = Machine.get_tool run_with Tool.Default.virmid in
     let virmid_somatic_broken_vcf =
       (* maybe it's actually not broken, but later tools can be
          annoyed by the a space in the header. *)

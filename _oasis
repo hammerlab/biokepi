@@ -9,7 +9,7 @@ Plugins:     META (0.4)
 Library biokepi
   Path:       src/lib
   BuildTools: ocamlbuild
-  BuildDepends: ketrew, threads
+  BuildDepends: ketrew, threads, ppx_deriving.std
   Modules: Biokepi_common,
            Biokepi_region,
            Biokepi_reference_genome,

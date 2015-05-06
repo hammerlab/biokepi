@@ -35,7 +35,7 @@ module Bwa = struct
     (* `bwa index` creates a bunch of files, c.f.
        [this question](https://www.biostars.org/p/73585/) we detect the
        `.bwt` one. *)
-    let bwa_tool = Machine.get_tool run_with "bwa" in
+    let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
     let name =
       sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
     let result = sprintf "%s.bwt" reference_fasta#product#path in
@@ -80,7 +80,7 @@ module Bwa = struct
     (* `bwa index` creates a bunch of files, c.f.
        [this question](https://www.biostars.org/p/73585/) we detect the
        `.bwt` one. *)
-    let bwa_tool = Machine.get_tool run_with "bwa" in
+    let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
     let bwa_index = index ~reference_build ~run_with in
     let result = sprintf "%s.sam" result_prefix in
     let name = sprintf "bwa-mem-%s" (Filename.basename r1#product#path) in
@@ -141,7 +141,7 @@ module Bwa = struct
     (* `bwa index` creates a bunch of files, c.f.
        [this question](https://www.biostars.org/p/73585/) we detect the
        `.bwt` one. *)
-    let bwa_tool = Machine.get_tool run_with "bwa" in
+    let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
     let bwa_index = index ~reference_build ~run_with in
     let bwa_aln read_number read =
       let name = sprintf "bwa-aln-%s" (Filename.basename read#product#path) in
