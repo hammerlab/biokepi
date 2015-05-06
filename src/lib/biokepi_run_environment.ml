@@ -220,6 +220,18 @@ module Tool_providers = struct
                      && shf "export PERL5LIB=$PERL5LIB:%s/site_perl/"
                        install_path)
 
+  let bedtools ~host ~meta_playground =
+    let install_path = meta_playground // "bedtools" in
+    let ensure =
+      install_bwa_like ~host "bedtools"
+        ~install_path ~install_command:"cp -r bin ../"
+        ~witness:(install_path // "bin" // "bedtools")
+        ~url:"https://github.com/arq5x/bedtools2/\
+              archive/v2.23.0.tar.gz"
+    in
+    Tool.create "bedtools" ~ensure
+      ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path)
+
   let get_somaticsniper_binary ~host ~path = function
   | `AMD64 ->
     let deb_file = "somatic-sniper1.0.3_1.0.3_amd64.deb" in

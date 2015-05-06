@@ -197,6 +197,37 @@ module Vcftools = struct
     vcf_concat
 end
 
+module Bedtools = struct
+  let do_on_bam
+      ~(run_with:Machine.t)
+      ~processors
+      ?(more_dependencies=[]) bam_file ~output ~make_command =
+    let open Ketrew.EDSL in
+    let bedtools = Machine.get_tool run_with "bedtools" in
+    let src_bam = bam_file#product#path in
+    let sub_command = make_command src_bam in
+    let program =
+      Program.(Tool.(init bedtools) && exec ("bedtools" :: sub_command)) in
+    let make = Machine.run_program run_with program in
+    let host = Machine.(as_host run_with) in
+    let name =
+      sprintf "bedtools-%s" String.(concat ~sep:"-" sub_command) in
+    file_target output ~name ~host ~make
+      ~dependencies:(Tool.(ensure bedtools) :: bam_file :: more_dependencies)
+      ~if_fails_activate:[Remove.file ~run_with output]
+
+  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors bam_file =
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate bam_file in
+    let bam_file_name = (Filename.chop_suffix bam_file#product#path ".bam") in
+    let fastq_output = match sample_type with
+      | `Paired_end -> ["-fq"; sprintf "%s_R1.fastq" bam_file_name; "-fq2"; sprintf "%s_R2.fastq" bam_file_name]
+      | `Single_end ->  ["-fq"; sprintf "%s.fastq" bam_file_name]
+    in
+    let make_command src = "bamtofastq" ::  "-i" :: src :: fastq_output in
+    let output = List.nth_exn fastq_output 1 in
+    do_on_bam ~run_with ~processors ~output ~make_command sorted_bam 
+end
+
 module Gatk = struct
 
   (*
