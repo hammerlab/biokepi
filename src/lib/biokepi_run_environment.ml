@@ -33,6 +33,7 @@ module Tool = struct
     let bwa = `Bwa `V_0_7_10
     let samtools = custom "samtools" ~version:"1.1"
     let vcftools = custom "vcftools" ~version:"0.1.12b"
+    let bedtools = custom "bedtools" ~version:"2.23.0"
     let somaticsniper = custom "somaticsniper" ~version:"1.0.3"
     let varscan = custom "varscan" ~version:"2.3.5"
     let picard = custom "picard" ~version:"1.127"
@@ -219,6 +220,18 @@ module Tool_providers = struct
       ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path
                      && shf "export PERL5LIB=$PERL5LIB:%s/site_perl/"
                        install_path)
+
+  let bedtools ~host ~meta_playground =
+    let install_path = meta_playground // "bedtools" in
+    let ensure =
+      install_bwa_like ~host "bedtools"
+        ~install_path ~install_command:"cp -r bin ../"
+        ~witness:(install_path // "bin" // "bedtools")
+        ~url:"https://github.com/arq5x/bedtools2/\
+              archive/v2.23.0.tar.gz"
+    in
+    Tool.create Tool.Default.bedtools ~ensure
+      ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path)
 
   let get_somaticsniper_binary ~host ~path = function
   | `AMD64 ->

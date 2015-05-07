@@ -70,13 +70,23 @@ module Samtools = struct
       ~dependencies:(Tool.(ensure samtools) :: bam_file :: more_dependencies)
       ~if_fails_activate:[Remove.file ~run_with destination]
 
-  let sort_bam ~(run_with:Machine.t) ?(processors=1) bam_file =
+  let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by bam_file =
     let source = bam_file#product#path in
+    let sort_key = 
+      match by with
+      | `Coordinate -> ""
+      | `Read_name -> "-n"
+    in
+    let dest_suffix =
+      match by with
+        | `Coordinate -> "sorted"
+        | `Read_name -> "read-name-sorted"
+    in
     let dest_prefix =
-      sprintf "%s-%s" (Filename.chop_suffix source ".bam") "sorted" in
+      sprintf "%s-%s" (Filename.chop_suffix source ".bam") dest_suffix in
     let destination = sprintf "%s.%s" dest_prefix "bam" in
     let make_command src des =
-      ["sort"; "-@"; Int.to_string processors; src; dest_prefix] in
+      ["sort"; sort_key; "-@"; Int.to_string processors; src; dest_prefix] in
     do_on_bam ~run_with bam_file ~destination ~make_command
 
   let index_to_bai ~(run_with:Machine.t) bam_file =
@@ -97,7 +107,7 @@ module Samtools = struct
       Filename.chop_suffix src ".bam" ^
       sprintf "-%s%s.mpileup" (Region.to_filename region) adjust_mapq_option
     in
-    let sorted_bam = sort_bam ~run_with bam_file in
+    let sorted_bam = sort_bam ~run_with bam_file ~by:`Coordinate in
     let program =
       Program.(
         Tool.(init samtools)
@@ -144,7 +154,7 @@ module Picard = struct
     let picard_jar = Machine.get_tool run_with Tool.Default.picard in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with input_bam ~by:`Coordinate in
     let program =
       Program.(Tool.(init picard_jar) &&
                shf "java -jar $PICARD_JAR MarkDuplicates \
@@ -187,6 +197,41 @@ module Vcftools = struct
     vcf_concat
 end
 
+module Bedtools = struct
+  let do_on_bam
+      ~(run_with:Machine.t)
+      ?(more_dependencies=[]) ?(success_triggers=[]) 
+      ~processors
+      ~output ~make_command bam_file =
+    let open Ketrew.EDSL in
+    let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
+    let src_bam = bam_file#product#path in
+    let sub_command = make_command src_bam in
+    let program =
+      Program.(Tool.(init bedtools) && exec ("bedtools" :: sub_command)) in
+    let make = Machine.run_program run_with program in
+    let host = Machine.(as_host run_with) in
+    let name =
+      sprintf "bedtools-%s" String.(concat ~sep:"-" sub_command) in
+    file_target output ~name ~host ~make
+      ~dependencies:(Tool.(ensure bedtools) :: bam_file :: more_dependencies)
+      ~if_fails_activate:[Remove.file ~run_with output]
+      ~success_triggers
+
+  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors bam_file =
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
+    let bam_file_name = (Filename.chop_suffix bam_file#product#path ".bam") in
+    let fastq_output = match sample_type with
+      | `Paired_end -> ["-fq"; sprintf "%s_R1.fastq" bam_file_name; "-fq2"; sprintf "%s_R2.fastq" bam_file_name]
+      | `Single_end ->  ["-fq"; sprintf "%s.fastq" bam_file_name]
+    in
+    let make_command src = "bamtofastq" ::  "-i" :: src :: fastq_output in
+    let output = List.nth_exn fastq_output 1 in
+    do_on_bam 
+      ~success_triggers:[Remove.file ~run_with sorted_bam#product#path] 
+      ~run_with ~processors ~output ~make_command sorted_bam 
+end
+
 module Gatk = struct
 
   (*
@@ -207,7 +252,7 @@ module Gatk = struct
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
@@ -265,7 +310,7 @@ module Gatk = struct
     let recal_data_table =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors input_bam in
+    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
@@ -310,7 +355,7 @@ module Gatk = struct
       let reference_dot_fai = Samtools.faidx ~run_with reference_fasta in
       let sequence_dict = Picard.create_dict ~run_with reference_fasta in
       let dbsnp = Reference_genome.dbsnp_exn reference in
-      let sorted_bam = Samtools.sort_bam ~run_with input_bam in
+      let sorted_bam = Samtools.sort_bam ~run_with ~by:`Coordinate input_bam in
       let run_gatk_haplotype_caller =
         let name = sprintf "%s" (Filename.basename output_vcf) in
         let make =
