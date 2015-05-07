@@ -204,7 +204,7 @@ module Bedtools = struct
       ~processors
       ~output ~make_command bam_file =
     let open Ketrew.EDSL in
-    let bedtools = Machine.get_tool run_with "bedtools" in
+    let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
     let src_bam = bam_file#product#path in
     let sub_command = make_command src_bam in
     let program =

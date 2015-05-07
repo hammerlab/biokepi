@@ -33,6 +33,7 @@ module Tool = struct
     let bwa = `Bwa `V_0_7_10
     let samtools = custom "samtools" ~version:"1.1"
     let vcftools = custom "vcftools" ~version:"0.1.12b"
+    let bedtools = custom "bedtools" ~version:"2.23.0"
     let somaticsniper = custom "somaticsniper" ~version:"1.0.3"
     let varscan = custom "varscan" ~version:"2.3.5"
     let picard = custom "picard" ~version:"1.127"
@@ -229,7 +230,7 @@ module Tool_providers = struct
         ~url:"https://github.com/arq5x/bedtools2/\
               archive/v2.23.0.tar.gz"
     in
-    Tool.create "bedtools" ~ensure
+    Tool.create Tool.Default.bedtools ~ensure
       ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path)
 
   let get_somaticsniper_binary ~host ~path = function
