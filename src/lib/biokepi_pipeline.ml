@@ -369,7 +369,9 @@ let rec compile_aligner_step
       let sample_type =
         match how with `Single -> `Single_end | `Paired -> `Paired_end in
       let r1 =
-        Bedtools.bamtofastq ~run_with:machine ~processors ~sample_type bam
+        let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
+        Bedtools.bamtofastq ~run_with:machine ~processors ~sample_type
+          ~output_prefix bam
       in
       let r2 = (* hacky workatound for now *)
         match how with
