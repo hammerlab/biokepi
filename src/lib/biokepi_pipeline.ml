@@ -75,6 +75,7 @@ type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
   | Fastq: File.t -> fastq  t
   (* | List: 'a t list -> 'a list t *)
+  | Bam_sample: string * File.t -> bam t
   | Paired_end_sample: string * fastq  t * fastq  t -> fastq_sample  t
   | Single_end_sample: string * fastq  t -> fastq_sample  t
   | Gunzip_concat: fastq_gz  t list -> fastq  t
@@ -109,6 +110,8 @@ module Construct = struct
       Paired_end_sample (dataset, bring_to_single_fastq l1, bring_to_single_fastq l2)
     | `Single_end l ->
       Single_end_sample (dataset, bring_to_single_fastq l)
+
+  let bam ~dataset bam = Bam_sample (dataset, bam)
 
   let bwa
       ?(gap_open_penalty=Bwa.default_gap_open_penalty)
@@ -253,6 +256,7 @@ let rec to_file_prefix:
       | Some (`R2 s) -> sprintf "%s%s-R2-cat" s is_suffix
       end
     | Concat_text _ -> failwith "TODO"
+    | Bam_sample (name, _) -> name ^ is_suffix
     | Paired_end_sample (name, _ , _) ->
       name ^ is_suffix
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
@@ -292,6 +296,8 @@ let rec to_json: type a. a t -> json =
     match w with
     | Fastq_gz file -> call "Fastq_gz" [`String file#name]
     | Fastq file -> call "Fastq" [`String file#name]
+    | Bam_sample (name, file) ->
+      call "Bam-sample" [`String name; `String file#name]
     | Paired_end_sample (name, r1, r2) ->
       call "Paired-end" [`String name; to_json r1; to_json r2]
     | Single_end_sample (name, r) ->
@@ -344,6 +350,7 @@ let rec compile_aligner_step
   let result_prefix = work_dir // to_file_prefix ?is t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
+  | Bam_sample (name, bam_target) -> bam_target
   | Gatk_indel_realigner bam ->
     let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
