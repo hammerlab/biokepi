@@ -208,7 +208,9 @@ module Bedtools = struct
     let src_bam = bam_file#product#path in
     let sub_command = make_command src_bam in
     let program =
-      Program.(Tool.(init bedtools) && exec ("bedtools" :: sub_command)) in
+      Program.(Tool.(init bedtools)
+               && exec ["mkdir"; "-p"; Filename.dirname output]
+               && exec ("bedtools" :: sub_command)) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
     let name =
@@ -218,12 +220,13 @@ module Bedtools = struct
       ~if_fails_activate:[Remove.file ~run_with output]
       ~success_triggers
 
-  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors bam_file =
+  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix bam_file =
     let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
-    let bam_file_name = (Filename.chop_suffix bam_file#product#path ".bam") in
     let fastq_output = match sample_type with
-      | `Paired_end -> ["-fq"; sprintf "%s_R1.fastq" bam_file_name; "-fq2"; sprintf "%s_R2.fastq" bam_file_name]
-      | `Single_end ->  ["-fq"; sprintf "%s.fastq" bam_file_name]
+    | `Paired_end ->
+      ["-fq"; sprintf "%s_R1.fastq" output_prefix;
+       "-fq2"; sprintf "%s_R2.fastq" output_prefix]
+      | `Single_end ->  ["-fq"; sprintf "%s.fastq" output_prefix]
     in
     let make_command src = "bamtofastq" ::  "-i" :: src :: fastq_output in
     let output = List.nth_exn fastq_output 1 in

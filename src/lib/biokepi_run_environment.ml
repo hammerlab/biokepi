@@ -395,6 +395,7 @@ module Tool_providers = struct
     Tool.Kit.create [
       bwa_tool ~host ~meta_playground;
       samtools ~host ~meta_playground;
+      bedtools ~host ~meta_playground;
       vcftools ~host ~meta_playground;
       mutect_tool
         ~host ~meta_playground (mutect_jar_location ());
