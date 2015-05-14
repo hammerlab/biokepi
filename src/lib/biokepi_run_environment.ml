@@ -397,6 +397,7 @@ module Tool_providers = struct
       samtools ~host ~meta_playground;
       bedtools ~host ~meta_playground;
       vcftools ~host ~meta_playground;
+      strelka_tool ~host ~meta_playground;
       mutect_tool
         ~host ~meta_playground (mutect_jar_location ());
       gatk_tool
