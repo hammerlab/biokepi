@@ -12,10 +12,11 @@ end
 
 module Remove = struct
   let file ~run_with path =
-    let open Ketrew.EDSL in
-    target (sprintf "rm-%s" (Filename.basename path))
+    let open KEDSL in
+    workflow_node nothing
+      ~name:(sprintf "rm-%s" (Filename.basename path))
       ~done_when:(`Command_returns (
-          Ketrew.Target.Command.shell ~host:Machine.(as_host run_with)
+          Command.shell ~host:Machine.(as_host run_with)
             (sprintf "ls %s" path),
           2
         ))
@@ -25,7 +26,7 @@ end
 
 module Samtools = struct
   let sam_to_bam ~(run_with : Machine.t) file_t =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = file_t#product#path in
     let dest = sprintf "%s.%s" (Filename.chop_suffix src ".sam") "bam" in
@@ -35,28 +36,38 @@ module Samtools = struct
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
     let name = sprintf "sam-to-bam-%s" (Filename.chop_suffix src ".sam") in
-    file_target ~name dest ~host ~make
-      ~dependencies:[file_t; Tool.(ensure samtools)]
-      ~if_fails_activate:[Remove.file ~run_with dest]
-      ~success_triggers:[Remove.file ~run_with src]
+    workflow_node ~name
+      (single_file dest ~host)
+      ~make
+      ~edges:[
+        depends_on file_t;
+        depends_on Tool.(ensure samtools);
+        on_failure_activate (Remove.file ~run_with dest);
+        on_success_activate (Remove.file ~run_with src);
+      ]
 
   let faidx ~(run_with:Machine.t) fasta =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" src "fai" in
     let program = Program.(Tool.(init samtools) && exec ["samtools"; "faidx"; src]) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
-    file_target dest ~name:(sprintf "samtools-faidx-%s" Filename.(basename src))
-      ~host ~make
-      ~dependencies:[fasta; Tool.(ensure samtools)]
-      ~if_fails_activate:[Remove.file ~run_with dest]
+    workflow_node
+      (single_file dest ~host)
+      ~name:(sprintf "samtools-faidx-%s" Filename.(basename src))
+      ~make
+      ~edges:[
+        depends_on fasta;
+        depends_on Tool.(ensure samtools);
+        on_failure_activate (Remove.file ~run_with dest);
+      ]
 
   let do_on_bam
       ~(run_with:Machine.t)
-      ?(more_dependencies=[]) bam_file ~destination ~make_command =
-    let open Ketrew.EDSL in
+      ?(more_depends_on=[]) bam_file ~destination ~make_command =
+    let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = bam_file#product#path in
     let sub_command = make_command src destination in
@@ -66,9 +77,13 @@ module Samtools = struct
     let host = Machine.(as_host run_with) in
     let name =
       sprintf "samtools-%s" String.(concat ~sep:"-" sub_command) in
-    file_target destination ~name ~host ~make
-      ~dependencies:(Tool.(ensure samtools) :: bam_file :: more_dependencies)
-      ~if_fails_activate:[Remove.file ~run_with destination]
+    workflow_node ~name
+      (single_file destination ~host) ~make
+      ~edges:(
+        depends_on Tool.(ensure samtools)
+        :: depends_on bam_file
+        :: on_failure_activate (Remove.file ~run_with destination)
+        :: more_depends_on)
 
   let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by bam_file =
     let source = bam_file#product#path in
@@ -94,7 +109,7 @@ module Samtools = struct
     do_on_bam ~run_with bam_file ~destination ~make_command
 
   let mpileup ~run_with ~reference_build ?adjust_mapq ~region bam_file =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = bam_file#product#path in
     let adjust_mapq_option = 
@@ -122,17 +137,20 @@ module Samtools = struct
     let name =
       sprintf "samtools-mpileup-%s" Filename.(basename pileup |> chop_extension)
     in
-    let dependencies = [
-      Tool.(ensure samtools); sorted_bam; fasta;
-      index_to_bai ~run_with sorted_bam;
+    let edges = [
+      depends_on Tool.(ensure samtools);
+      depends_on sorted_bam;
+      depends_on fasta;
+      index_to_bai ~run_with sorted_bam |> depends_on;
+      on_failure_activate (Remove.file ~run_with pileup);
     ] in
-    file_target pileup ~name ~host ~make ~dependencies (*  *)
-      ~if_fails_activate:[Remove.file ~run_with pileup]
+    workflow_node ~name (single_file pileup ~host) ~make ~edges 
+
 end
 
 module Picard = struct
   let create_dict ~(run_with:Machine.t) fasta =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let picard_create_dict = Machine.get_tool run_with Tool.Default.picard in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" (Filename.chop_suffix src ".fasta") "dict" in
@@ -142,14 +160,16 @@ module Picard = struct
                  (Filename.quote src) (Filename.quote dest)) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
-    file_target dest
+    workflow_node (single_file dest ~host)
       ~name:(sprintf "picard-create-dict-%s" Filename.(basename src))
-      ~host ~make
-      ~dependencies:[fasta; Tool.(ensure picard_create_dict)]
-      ~if_fails_activate:[Remove.file ~run_with dest]
+      ~make
+      ~edges:[
+        depends_on fasta; depends_on Tool.(ensure picard_create_dict);
+        on_failure_activate (Remove.file ~run_with dest);
+      ]
 
   let mark_duplicates ~(run_with:Machine.t) ~input_bam output_bam =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let picard_jar = Machine.get_tool run_with Tool.Default.picard in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
@@ -164,19 +184,23 @@ module Picard = struct
                  metrics_path) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
-    file_target output_bam
+    workflow_node (single_file output_bam ~host)
       ~name:(sprintf "picard-markdups-%s"
                Filename.(basename input_bam#product#path))
-      ~host ~make
-      ~dependencies:[sorted_bam; input_bam; Tool.(ensure picard_jar);]
-      ~if_fails_activate:[Remove.file ~run_with output_bam;
-                          Remove.file ~run_with metrics_path;]
-    
+      ~make
+      ~edges:[
+        depends_on sorted_bam;
+        depends_on input_bam;
+        depends_on Tool.(ensure picard_jar);
+        on_failure_activate (Remove.file ~run_with output_bam);
+        on_failure_activate (Remove.file ~run_with metrics_path);
+      ]
+
 end
 
 module Vcftools = struct
   let vcf_concat ~(run_with:Machine.t) vcfs ~final_vcf =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let name = sprintf "merge-vcfs-%s" (Filename.basename final_vcf) in
     let vcftools = Machine.get_tool run_with Tool.Default.vcftools in
     let vcf_concat =
@@ -189,49 +213,58 @@ module Vcftools = struct
                  (List.map vcfs ~f:(fun t -> t#product#path)))
               final_vcf
           ) in
-      file_target ~name final_vcf  ~host:Machine.(as_host run_with)
-        ~make  ~dependencies:(Tool.(ensure vcftools) :: vcfs)
-        ~if_fails_activate:[Remove.file ~run_with final_vcf]
+      workflow_node ~name
+        (single_file final_vcf ~host:Machine.(as_host run_with))
+        ~make
+        ~edges:(
+          on_failure_activate (Remove.file ~run_with final_vcf)
+          :: depends_on Tool.(ensure vcftools)
+          :: List.map ~f:depends_on vcfs)
     in
     vcf_concat
 end
 
 module Bedtools = struct
-  let do_on_bam
-      ~(run_with:Machine.t)
-      ?(more_dependencies=[]) ?(success_triggers=[]) 
-      ~processors
-      ~output ~make_command bam_file =
-    let open Ketrew.EDSL in
-    let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
-    let src_bam = bam_file#product#path in
-    let sub_command = make_command src_bam in
-    let program =
-      Program.(Tool.(init bedtools)
-               && exec ["mkdir"; "-p"; Filename.dirname output]
-               && exec ("bedtools" :: sub_command)) in
-    let make = Machine.run_program run_with program in
-    let host = Machine.(as_host run_with) in
-    let name =
-      sprintf "bedtools-%s" String.(concat ~sep:"-" sub_command) in
-    file_target output ~name ~host ~make
-      ~dependencies:(Tool.(ensure bedtools) :: bam_file :: more_dependencies)
-      ~if_fails_activate:[Remove.file ~run_with output]
-      ~success_triggers
 
   let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix bam_file =
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
-    let fastq_output = match sample_type with
-    | `Paired_end ->
-      ["-fq"; sprintf "%s_R1.fastq" output_prefix;
-       "-fq2"; sprintf "%s_R2.fastq" output_prefix]
-      | `Single_end ->  ["-fq"; sprintf "%s.fastq" output_prefix]
+    let open KEDSL in
+    let sorted_bam =
+      Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
+    let fastq_output_options, r1, r2opt =
+      match sample_type with
+      | `Paired_end ->
+        let r1 = sprintf "%s_R1.fastq" output_prefix in
+        let r2 = sprintf "%s_R2.fastq" output_prefix in
+        (["-fq"; r1; "-fq2"; r2], r1, Some r2)
+      | `Single_end ->
+        let r1 = sprintf "%s.fastq" output_prefix in
+        (["-fq"; r1], r1, None)
     in
-    let make_command src = "bamtofastq" ::  "-i" :: src :: fastq_output in
-    let output = List.nth_exn fastq_output 1 in
-    do_on_bam 
-      ~success_triggers:[Remove.file ~run_with sorted_bam#product#path] 
-      ~run_with ~processors ~output ~make_command sorted_bam 
+    let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
+    let src_bam = bam_file#product#path in
+    let program =
+      Program.(Tool.(init bedtools)
+               && exec ["mkdir"; "-p"; Filename.dirname r1]
+               && exec ("bedtools" ::
+                        "bamtofastq" ::  "-i" :: src_bam ::
+                        fastq_output_options)) in
+    let make = Machine.run_program run_with program in
+    let name =
+      sprintf "bedtools-bamtofastq-%s"
+        Filename.(basename src_bam |> chop_extension) in
+    let edges = [
+        depends_on Tool.(ensure bedtools);
+        depends_on bam_file;
+        on_failure_activate (Remove.file ~run_with r1);
+        Option.value_map r2opt ~default:Empty_edge
+          ~f:(fun r2 ->
+              on_failure_activate (Remove.file ~run_with r2));
+        on_success_activate (Remove.file ~run_with sorted_bam#product#path);
+      ] in
+    workflow_node
+      (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
+      ~edges ~name ~make
+
 end
 
 module Gatk = struct
@@ -246,7 +279,7 @@ module Gatk = struct
       ~reference_build
       ~processors
       ~run_with input_bam ~output_bam =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome = Machine.get_reference_genome run_with reference_build in
@@ -273,17 +306,20 @@ module Gatk = struct
             intervals_file
         ) in
     let sequence_dict = Picard.create_dict ~run_with fasta in
-    file_target ~name output_bam
-      ~host:Machine.(as_host run_with)
-      ~make  ~dependencies:[Tool.(ensure gatk); fasta;
-                            sorted_bam;
-                            Samtools.index_to_bai ~run_with sorted_bam;
-                            (* RealignerTargetCreator wants the `.fai`: *)
-                            Samtools.faidx ~run_with fasta;
-                            input_bam; sequence_dict]
-      ~if_fails_activate:[
-        Remove.file ~run_with output_bam;
-        Remove.file ~run_with intervals_file;
+    workflow_node ~name
+      (single_file output_bam ~host:Machine.(as_host run_with))
+      ~make
+      ~edges:[
+        depends_on Tool.(ensure gatk);
+        depends_on fasta;
+        depends_on sorted_bam;
+        depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+        (* RealignerTargetCreator wants the `.fai`: *)
+        depends_on (Samtools.faidx ~run_with fasta);
+        depends_on input_bam;
+        depends_on sequence_dict;
+        on_failure_activate (Remove.file ~run_with output_bam);
+        on_failure_activate (Remove.file ~run_with intervals_file);
       ]
 
 
@@ -292,18 +328,18 @@ module Gatk = struct
      https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php
   *)
   let call_gatk ~analysis ?(region=`Full) args =
-    let open Ketrew.EDSL.Program in
+    let open KEDSL.Program in
     let escaped_args = List.map ~f:Filename.quote args in
     let intervals_option = Region.to_gatk_option region in
     sh (String.concat ~sep:" "
           ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
 
   let base_quality_score_recalibrator 
-        ~run_with 
-        ~processors
-        ~reference_build 
-        ~input_bam ~output_bam =
-    let open Ketrew.EDSL in
+      ~run_with 
+      ~processors
+      ~reference_build 
+      ~input_bam ~output_bam =
+    let open KEDSL in
     let name = sprintf "gatk-%s" (Filename.basename output_bam) in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome = Machine.get_reference_genome run_with reference_build in
@@ -332,19 +368,20 @@ module Gatk = struct
             "-o"; output_bam;
           ]
         ) in
-    file_target ~name output_bam
-      ~host:Machine.(as_host run_with)
-      ~make  ~dependencies:[Tool.(ensure gatk); fasta; db_snp;
-                            sorted_bam;
-                            Samtools.index_to_bai ~run_with sorted_bam;]
-      ~if_fails_activate:[
-        Remove.file ~run_with output_bam;
-        Remove.file ~run_with recal_data_table;
+    workflow_node ~name
+      (single_file output_bam ~host:Machine.(as_host run_with))
+      ~make
+      ~edges:[
+        depends_on Tool.(ensure gatk); depends_on fasta; depends_on db_snp;
+        depends_on sorted_bam;
+        depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+        on_failure_activate (Remove.file ~run_with output_bam);
+        on_failure_activate (Remove.file ~run_with recal_data_table);
       ]
 
 
   let haplotype_caller ~run_with ~reference_build ~input_bam ~result_prefix how  =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let run_on_region region =
       let result_file suffix =
         let region_name = Region.to_filename region in
@@ -362,25 +399,30 @@ module Gatk = struct
         let name = sprintf "%s" (Filename.basename output_vcf) in
         let make =
           Machine.run_program run_with ~name
-          Program.(
-            Tool.(init gatk)
-            && shf "mkdir -p %s" run_path
-            && shf "cd %s" run_path
-            && call_gatk ~region ~analysis:"HaplotypeCaller" [
-              "-I"; sorted_bam#product#path;
-              "-R"; reference_fasta#product#path;
-              "-o"; output_vcf;
-            ]
-          )
+            Program.(
+              Tool.(init gatk)
+              && shf "mkdir -p %s" run_path
+              && shf "cd %s" run_path
+              && call_gatk ~region ~analysis:"HaplotypeCaller" [
+                "-I"; sorted_bam#product#path;
+                "-R"; reference_fasta#product#path;
+                "-o"; output_vcf;
+              ]
+            )
         in
-        file_target ~name ~make output_vcf ~host:Machine.(as_host run_with)
+        workflow_node ~name ~make
+          (single_file output_vcf ~host:Machine.(as_host run_with))
           ~tags:[Target_tags.variant_caller]
-          ~dependencies:[
-            Tool.(ensure gatk); sorted_bam; reference_fasta;
-            dbsnp; reference_dot_fai; sequence_dict;
-            Samtools.index_to_bai ~run_with sorted_bam;
+          ~edges:[
+            depends_on Tool.(ensure gatk);
+            depends_on sorted_bam;
+            depends_on reference_fasta;
+            depends_on dbsnp;
+            depends_on reference_dot_fai;
+            depends_on sequence_dict;
+            depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+            on_failure_activate (Remove.file ~run_with output_vcf);
           ]
-          ~if_fails_activate:[Remove.file ~run_with output_vcf]
       in
       run_gatk_haplotype_caller
     in

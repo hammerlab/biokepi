@@ -28,7 +28,7 @@ module Bwa = struct
   let index
       ~reference_build
       ~(run_with : Machine.t) =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
       |> Biokepi_reference_genome.fasta in
@@ -39,15 +39,19 @@ module Bwa = struct
     let name =
       sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
     let result = sprintf "%s.bwt" reference_fasta#product#path in
-    file_target ~host:(Machine.(as_host run_with)) result
-      ~if_fails_activate:[Remove.file ~run_with result]
-      ~dependencies:[reference_fasta; Tool.(ensure bwa_tool)]
+    workflow_node
+      (single_file ~host:(Machine.(as_host run_with)) result)
+      ~edges:[
+        on_failure_activate (Remove.file ~run_with result);
+        depends_on reference_fasta;
+        depends_on Tool.(ensure bwa_tool);
+      ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_program run_with ~processors:1 ~name
-                Program.(
-                  Tool.(init bwa_tool)
-                  && shf "bwa index %s"
-                    (Filename.quote reference_fasta#product#path)))
+               Program.(
+                 Tool.(init bwa_tool)
+                 && shf "bwa index %s"
+                   (Filename.quote reference_fasta#product#path)))
 
   let read_group_header_option algorithm =
     (* this option should magically make the sam file compatible
@@ -66,12 +70,13 @@ module Bwa = struct
       ~processors
       ?(gap_open_penalty=default_gap_open_penalty)
       ?(gap_extension_penalty=default_gap_extension_penalty)
-      ~(r1: Ketrew.EDSL.user_target)
-      ?(r2: Ketrew.EDSL.user_target option)
+      ~fastq
+      (* ~(r1: KEDSL.single_file KEDSL.workflow_node) *)
+      (* ?(r2: KEDSL.single_file KEDSL.workflow_node option) *)
       ~(result_prefix:string)
       ~(run_with : Machine.t)
       () =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
       |> Biokepi_reference_genome.fasta in
@@ -83,7 +88,8 @@ module Bwa = struct
     let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
     let bwa_index = index ~reference_build ~run_with in
     let result = sprintf "%s.sam" result_prefix in
-    let name = sprintf "bwa-mem-%s" (Filename.basename r1#product#path) in
+    let r1_path, r2_path_opt = fastq#product#paths in
+    let name = sprintf "bwa-mem-%s" (Filename.basename r1_path) in
     let bwa_base_command =
       String.concat ~sep:" " [
         "bwa mem";
@@ -92,33 +98,41 @@ module Bwa = struct
         "-O"; Int.to_string gap_open_penalty;
         "-E"; Int.to_string gap_extension_penalty;
         (Filename.quote reference_fasta#product#path);
-        (Filename.quote r1#product#path);
+        (Filename.quote r1_path);
       ] in
-    let bwa_base_target ?(more_dependencies=[]) ~bwa_command  = 
-      file_target result ~host:Machine.(as_host run_with) ~name
-          ~dependencies:(Tool.(ensure bwa_tool) :: bwa_index :: r1 :: more_dependencies)
-          ~if_fails_activate:[Remove.file ~run_with result]
-          ~tags:[Target_tags.aligner]
-          ~make:(Machine.run_program run_with ~processors ~name
-              Program.(
-                Tool.(init bwa_tool)
-                && in_work_dir
-                && sh bwa_command))
+    let bwa_base_target ~bwa_command  = 
+      workflow_node
+        (single_file result ~host:Machine.(as_host run_with))
+        ~name
+        ~edges:(
+          depends_on Tool.(ensure bwa_tool)
+          :: depends_on bwa_index
+          :: depends_on fastq
+          :: on_failure_activate (Remove.file ~run_with result)
+          :: [])
+        ~tags:[Target_tags.aligner]
+        ~make:(Machine.run_program run_with ~processors ~name
+                 Program.(
+                   Tool.(init bwa_tool)
+                   && in_work_dir
+                   && sh bwa_command))
     in
-    match r2 with
-      | Some read2 -> 
-        let bwa_command = String.concat ~sep:" " [
+    match r2_path_opt with
+    | Some read2 -> 
+      let bwa_command =
+        String.concat ~sep:" " [
           bwa_base_command;
-          (Filename.quote read2#product#path);
+          (Filename.quote read2);
           ">"; (Filename.quote result);
         ] in
-        bwa_base_target ~bwa_command ~more_dependencies:[read2;]
-      | None -> 
-        let bwa_command = String.concat ~sep:" " [
+      bwa_base_target ~bwa_command
+    | None -> 
+      let bwa_command =
+        String.concat ~sep:" " [
           bwa_base_command;
-           ">"; (Filename.quote result);
+          ">"; (Filename.quote result);
         ] in
-        bwa_base_target ~bwa_command ~more_dependencies:[]
+      bwa_base_target ~bwa_command
 
 
 
@@ -127,12 +141,11 @@ module Bwa = struct
       ~processors
       ?(gap_open_penalty=default_gap_open_penalty)
       ?(gap_extension_penalty=default_gap_extension_penalty)
-      ~(r1: Ketrew.EDSL.user_target)
-      ?(r2: Ketrew.EDSL.user_target option)
+      ~fastq
       ~(result_prefix:string)
       ~(run_with : Machine.t)
       () =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
       |> Biokepi_reference_genome.fasta in
@@ -144,7 +157,7 @@ module Bwa = struct
     let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
     let bwa_index = index ~reference_build ~run_with in
     let bwa_aln read_number read =
-      let name = sprintf "bwa-aln-%s" (Filename.basename read#product#path) in
+      let name = sprintf "bwa-aln-%s" (Filename.basename read) in
       let result = sprintf "%s-R%d.sai" result_prefix read_number in
       let bwa_command =
         String.concat ~sep:" " [
@@ -153,12 +166,18 @@ module Bwa = struct
           "-O"; Int.to_string gap_open_penalty;
           "-E"; Int.to_string gap_extension_penalty;
           (Filename.quote reference_fasta#product#path);
-          (Filename.quote read#product#path);
+          (Filename.quote read);
           ">"; (Filename.quote result);
         ] in
-      file_target result ~host:Machine.(as_host run_with) ~name
-        ~dependencies:[read; bwa_index; Tool.(ensure bwa_tool)]
-        ~if_fails_activate:[Remove.file ~run_with result]
+      workflow_node
+        (single_file result ~host:Machine.(as_host run_with))
+        ~name
+        ~edges:[
+          depends_on fastq;
+          depends_on bwa_index;
+          depends_on Tool.(ensure bwa_tool);
+          on_failure_activate (Remove.file ~run_with result);
+        ]
         ~tags:[Target_tags.aligner]
         ~make:(Machine.run_program run_with ~processors ~name
                  Program.(
@@ -167,13 +186,20 @@ module Bwa = struct
                    && sh bwa_command
                  ))
     in
-    let r1_sai = bwa_aln 1 r1 in
-    let r2_sai_opt = Option.map r2 ~f:(fun r -> (bwa_aln 2 r, r)) in
+    let r1_path, r2_path_opt = fastq#product#paths in
+    let r1_sai = bwa_aln 1 r1_path in
+    let r2_sai_opt = Option.map r2_path_opt ~f:(fun r -> (bwa_aln 2 r, r)) in
     let sam =
       let name = sprintf "bwa-sam-%s" (Filename.basename result_prefix) in
       let result = sprintf "%s.sam" result_prefix in
-      let program, dependencies =
-        let common_deps = [r1_sai; reference_fasta; bwa_index; Tool.(ensure bwa_tool) ] in
+      let program, edges =
+        let common_edges = [
+          depends_on r1_sai;
+          depends_on reference_fasta;
+          depends_on bwa_index;
+          depends_on Tool.(ensure bwa_tool);
+          on_failure_activate (Remove.file ~run_with result);
+        ] in
         match r2_sai_opt with
         | Some (r2_sai, r2) ->
           Program.(
@@ -184,10 +210,10 @@ module Bwa = struct
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote r2_sai#product#path)
-              (Filename.quote r1#product#path)
-              (Filename.quote r2#product#path)
+              (Filename.quote r1_path)
+              (Filename.quote r2)
               (Filename.quote result)),
-          (r2_sai :: common_deps)
+          (depends_on r2_sai :: common_edges)
         | None ->
           Program.(
             Tool.(init bwa_tool)
@@ -197,11 +223,11 @@ module Bwa = struct
               (Filename.quote reference_fasta#product#path)
               (Filename.quote r1_sai#product#path)
               (Filename.quote result)),
-          common_deps
+          common_edges
       in
-      file_target result ~host:Machine.(as_host run_with)
-        ~name ~dependencies
-        ~if_fails_activate:[Remove.file ~run_with result]
+      workflow_node
+        (single_file result ~host:Machine.(as_host run_with))
+        ~name ~edges
         ~tags:[Target_tags.aligner]
         ~make:(Machine.run_program run_with ~processors:1 ~name  program)
     in
@@ -227,7 +253,7 @@ module Cycledash = struct
       ?params
       ?witness_output
       url =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let unik_script = sprintf "/tmp/upload_to_cycledash_%s" (Unique_id.create ()) in
     let script_options =
       let with_path opt s = opt, s#product#path in
@@ -243,28 +269,28 @@ module Cycledash = struct
         Some ("-w", Option.value witness_output ~default:"/tmp/www")
       ]
       |> List.concat_map ~f:(fun (x, y) -> [x; y]) in
-    let name = sprintf "upload+cycledash: %s" vcf#name in
+    let name = sprintf "upload+cycledash: %s" vcf#target#name in
     let make =
       Machine.quick_command run_with Program.(
-            shf "curl -f %s > %s"
-              (Filename.quote post_to_cycledash_script)
-              (Filename.quote unik_script)
-            && 
-            exec ("sh" :: unik_script :: script_options)
-          )
+          shf "curl -f %s > %s"
+            (Filename.quote post_to_cycledash_script)
+            (Filename.quote unik_script)
+          && 
+          exec ("sh" :: unik_script :: script_options)
+        )
     in
-    let dependencies =
-      let optional o = Option.value_map o ~f:(fun o -> [o]) ~default:[] in
-      [vcf]
-      @ optional truth_vcf
-      @ optional normal_bam
-      @ optional tumor_bam
-    in
+    let edges =
+      let dep = Option.map ~f:depends_on in
+      [ dep (Some vcf);
+        dep truth_vcf;
+        dep normal_bam;
+        dep tumor_bam; ] |> List.filter_opt in
     match witness_output with
     | None ->
-      target name ~make ~dependencies
+      workflow_node nothing ~name ~make ~edges
     | Some path ->
-      file_target path ~name ~make ~dependencies
-        ~host:Machine.(as_host run_with)
+      workflow_node ~name ~make ~edges
+        (single_file path ~host:Machine.(as_host run_with))
+      |> forget_product
 
 end

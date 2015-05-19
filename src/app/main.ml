@@ -82,7 +82,10 @@ let dump_pipeline =
   function
   | `Somatic_from_fastqs pipeline_example ->
     let dumb_fastq name =
-      Ketrew.EDSL.file_target (sprintf "/path/to/dump-%s.fastq.gz" name) ~name in
+      KEDSL.(
+        workflow_node
+          (single_file (sprintf "/path/to/dump-%s.fastq.gz" name))
+          ~name) in
     let normal_fastqs =
       `Paired_end ([dumb_fastq "R1-L001"; dumb_fastq "R1-L002"],
                    [dumb_fastq "R2-L001"; dumb_fastq "R2-L002"]) in
@@ -126,7 +129,7 @@ let with_environmental_dataset =
       |> List.map ~f:(String.strip ~on:`Both)
       |> List.map ~f:(fun f ->
           let name = sprintf "Input: %s (%s)" dataset kind in
-          Ketrew.EDSL.file_target f ~name)
+          KEDSL.(workflow_node (single_file f) ~name))
     in
     let normal_fastqs =
       `Paired_end (get_list "NORMAL_R1", get_list "NORMAL_R2") in
@@ -135,48 +138,50 @@ let with_environmental_dataset =
     (dataset, make_pipe_line ~normal_fastqs ~tumor_fastqs ~dataset)
 
 let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
-    let machine = environmental_box () in
-    let dataset, pipelines =
-      with_environmental_dataset pipeline_example in
-    let work_dir =
-      Biokepi_run_environment.Machine.work_dir machine
-      // sprintf "on-%s" dataset in
-    let compiled =
-      List.map pipelines
-        ~f:(fun pl ->
-            let t =
-              Biokepi_pipeline.compile_variant_caller_step ~reference_build:`B37
-                ~work_dir ~machine pl in
-            `Target t,
-            `Json_blob (
-              `Assoc [
-                "target-name", `String t#name;
-                "target-id", `String t#id;
-                "pipeline", Biokepi_pipeline.to_json pl;
-              ]))
-    in
-    let dependencies =
-      List.map compiled (function
-        | (`Target vcf, `Json_blob json) when push_result ->
-          let witness_output =
-            Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
-          let params = Yojson.Basic.pretty_to_string json in
-          Biokepi_target_library.Cycledash.post_vcf ~run_with:machine
-            ~vcf ~variant_caller_name:vcf#name ~dataset_name:dataset
-            ~witness_output ~params
-            (get_env "BIOKEPI_CYCLEDASH_URL")
-        | (`Target t, _) -> t
-        ) in
-    let whole_json =
-      `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in (*  *)
-    Ketrew.EDSL.target
-      (sprintf "%s on %s: common ancestor" pipeline_name dataset)
-      ~dependencies
-      ~metadata:(`String (Yojson.Basic.pretty_to_string whole_json))
+  let machine = environmental_box () in
+  let dataset, pipelines =
+    with_environmental_dataset pipeline_example in
+  let work_dir =
+    Biokepi_run_environment.Machine.work_dir machine
+    // sprintf "on-%s" dataset in
+  let compiled =
+    List.map pipelines
+      ~f:(fun pl ->
+          let t =
+            Biokepi_pipeline.compile_variant_caller_step ~reference_build:`B37
+              ~work_dir ~machine pl in
+          `Target t,
+          `Json_blob (
+            `Assoc [
+              "target-name", `String t#target#name;
+              "target-id", `String t#target#id;
+              "pipeline", Biokepi_pipeline.to_json pl;
+            ]))
+  in
+  let open KEDSL in
+  let edges =
+    List.map compiled (function
+      | (`Target vcf, `Json_blob json) when push_result ->
+        let witness_output =
+          Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
+        let params = Yojson.Basic.pretty_to_string json in
+        Biokepi_target_library.Cycledash.post_vcf ~run_with:machine
+          ~vcf ~variant_caller_name:vcf#target#name ~dataset_name:dataset
+          ~witness_output ~params
+          (get_env "BIOKEPI_CYCLEDASH_URL")
+        |> depends_on
+      | (`Target t, _) ->  t |> depends_on
+      ) in
+  let whole_json =
+    `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in (*  *)
+  workflow_node nothing
+    ~name:(sprintf "%s on %s: common ancestor" pipeline_name dataset)
+    ~edges
+    ~metadata:(`String (Yojson.Basic.pretty_to_string whole_json))
 
 let run_pipeline_example ~push_result ~pipeline_name pipeline =
-  let target = pipeline_example_target ~push_result ~pipeline_name pipeline in
-  Ketrew_client.submit target
+  let workflow = pipeline_example_target ~push_result ~pipeline_name pipeline in
+  Ketrew_client.submit workflow#target
     
 let () =
   let open Cmdliner in

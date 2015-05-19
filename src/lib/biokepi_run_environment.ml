@@ -17,7 +17,7 @@
 
 open Biokepi_common
 
-open Ketrew.EDSL
+open KEDSL
 
 
 module Tool = struct
@@ -45,7 +45,7 @@ module Tool = struct
   type t = {
     definition: Definition.t;
     init: Program.t;
-    ensure: user_target;
+    ensure: phony_workflow;
   }
   let create ?init ?ensure definition = {
     definition;
@@ -54,8 +54,11 @@ module Tool = struct
         ~default:(Program.shf "echo '%s: default init'"
                     (Definition.show definition));
     ensure =
-      Option.value ensure
-        ~default:(target (sprintf "%s-ensured" (Definition.show definition)));
+      Option.value_map
+        ensure
+        ~f:KEDSL.forget_product
+        ~default:(workflow_node nothing
+                    ~name:(sprintf "%s-ensured" (Definition.show definition)));
   }
   let init t = t.init
   let ensure t = t.ensure
@@ -109,8 +112,8 @@ module Machine = struct
 end
 
 let rm_path ~host path =
-  let open Ketrew.EDSL in
-  target (sprintf "rm-%s" (Filename.basename path))
+  workflow_node nothing
+    ~name:(sprintf "rm-%s" (Filename.basename path))
     ~make:(daemonize ~using:`Python_daemon ~host
              Program.(exec ["rm"; "-rf"; path]))
 
@@ -119,7 +122,7 @@ module Gunzip = struct
      Example: call ["gunzip <list of fastq.gz files> > some_name_cat.fastq"].
   *)
   let concat ~(run_with : Machine.t) bunch_of_dot_gzs ~result_path =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let program =
       Program.(
         exec ["mkdir"; "-p"; Filename.dirname result_path]
@@ -130,15 +133,17 @@ module Gunzip = struct
       ) in
     let name =
       sprintf "gunzipcat-%s" (Filename.basename result_path) in
-    file_target result_path ~host:Machine.(as_host run_with) ~name
-      ~dependencies:bunch_of_dot_gzs
+    workflow_node
+      (single_file result_path ~host:Machine.(as_host run_with))
+      ~name
       ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+      ~edges:(List.map ~f:depends_on bunch_of_dot_gzs)
 end
 
 
 module Cat = struct
   let concat ~(run_with : Machine.t) bunch_of_files ~result_path =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let program =
       Program.(
         exec ["mkdir"; "-p"; Filename.dirname result_path]
@@ -149,15 +154,16 @@ module Cat = struct
       ) in
     let name =
       sprintf "concat-all-%s" (Filename.basename result_path) in
-    file_target result_path ~host:Machine.(as_host run_with) ~name
-      ~dependencies:bunch_of_files
+    workflow_node
+      (single_file result_path ~host:Machine.(as_host run_with))
+      ~name ~edges:(List.map ~f:depends_on bunch_of_files)
       ~make:(Machine.run_program run_with ~processors:1 ~name  program)
 end
 
 module Tool_providers = struct
 
   let download_url_program ?output_filename url =
-    Ketrew.EDSL.Program.exec [
+    KEDSL.Program.exec [
       "wget";
       "-O"; Option.value output_filename ~default:Filename.(basename url);
       url
@@ -169,9 +175,12 @@ module Tool_providers = struct
       Program.(Option.value_map install_command
                  ~f:sh ~default:(shf "cp %s ../" tool_name)) in
     let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
-    file_target ~host
-      (Option.value witness ~default:(install_path // tool_name))
-      ~if_fails_activate:[rm_path ~host install_path]
+    workflow_node
+      (single_file ~host
+         (Option.value witness ~default:(install_path // tool_name)))
+      ~edges:[
+        on_failure_activate (rm_path ~host install_path);
+      ]
       ~make:(
         daemonize ~using:`Python_daemon ~host
           Program.(
@@ -241,8 +250,8 @@ module Tool_providers = struct
         "http://apt.genome.wustl.edu/ubuntu/pool/main/s/somatic-sniper1.0.3/%s"
         deb_file in
     let binary = path // "usr/bin/bam-somaticsniper1.0.3" in
-    let open Ketrew.EDSL in
-    file_target binary ~host
+    let open KEDSL in
+    workflow_node (single_file binary ~host)
       ~name:(sprintf "get_somaticsniper-on-%s" (Ketrew_host.to_string_hum host))
       ~make:(daemonize ~using:`Nohup_setsid ~host
                Program.(
@@ -259,7 +268,8 @@ module Tool_providers = struct
       get_somaticsniper_binary  ~host  ~path:install_path `AMD64 in
     let binary = install_path // "somaticsniper" in
     let ensure =
-      file_target binary ~host ~dependencies:[binary_got]
+      workflow_node (single_file binary ~host)
+        ~edges:[depends_on binary_got]
         ~make:(daemonize ~using:`Python_daemon ~host
                  Program.(shf "mv %s %s"
                             Filename.(quote binary_got#product#path)
@@ -274,7 +284,7 @@ module Tool_providers = struct
     let install_path = meta_playground // "varscan.2.3.5" in
     let jar = install_path // "VarScan.v2.3.5.jar" in
     let ensure =
-      file_target jar ~host
+      workflow_node (single_file jar ~host)
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -291,7 +301,7 @@ module Tool_providers = struct
     let install_path = meta_playground // "picard"  in
     let jar = install_path // "picard-tools-1.127" // "picard.jar" in
     let ensure =
-      file_target jar ~host
+      workflow_node (single_file jar ~host)
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -320,10 +330,13 @@ module Tool_providers = struct
       | `Scp s -> Filename.basename s
       | `Wget s -> Filename.basename s in
     let local_box_path = install_path // jar_name in
-    let open Ketrew.EDSL in
-    file_target local_box_path ~name:(sprintf "get-%s" jar_name)
-      ~if_fails_activate:[rm_path ~host local_box_path]
-      ~make:(daemonize ~using:`Python_daemon ~host
+    let open KEDSL in
+    workflow_node (single_file local_box_path ~host)
+      ~name:(sprintf "get-%s" jar_name)
+      ~edges:[
+        on_failure_activate (rm_path ~host local_box_path)
+      ]
+      ~make:(daemonize ~using:`Python_daemon
                Program.(
                  shf "mkdir -p %s" install_path
                  && begin match loc with
@@ -356,7 +369,7 @@ module Tool_providers = struct
     let witness = strelka_bin // "configureStrelkaWorkflow.pl" in
     let ensure =
       (* C.f. ftp://ftp.illumina.com/v1-branch/v1.0.14/README *)
-      file_target witness ~host
+      workflow_node (single_file witness ~host)
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -377,7 +390,7 @@ module Tool_providers = struct
     let install_path = meta_playground // "virmid.1.1.1"  in
     let jar = install_path // "Virmid-1.1.1" // "Virmid.jar" in
     let ensure =
-      file_target jar ~host
+      workflow_node (single_file jar ~host)
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -413,47 +426,57 @@ module Data_providers = struct
   let wget_to_folder ~host ~(run_program : Machine.run_function) ~test_file ~destination url  =
     let name = "wget-" ^ Filename.basename destination in
     let test_target = destination // test_file in
-    file_target test_target ~host ~name
+    workflow_node (single_file test_target ~host) ~name
       ~make:(
         run_program ~name ~processors:1
           Program.(
             exec ["mkdir"; "-p"; destination]
             && shf "wget %s -P %s"
-                      (Filename.quote url)
-                      (Filename.quote destination)))
-      ~if_fails_activate:[rm_path ~host destination]
+              (Filename.quote url)
+              (Filename.quote destination)))
+      ~edges:[
+        on_failure_activate (rm_path ~host destination);
+      ]
 
   let wget ~host ~(run_program : Machine.run_function) url destination =
     let name = "wget-" ^ Filename.basename destination in
-    file_target destination ~host ~name
+    workflow_node
+      (single_file destination ~host) ~name
       ~make:(
         run_program ~name ~processors:1
           Program.(
             exec ["mkdir"; "-p"; Filename.dirname destination]
             && shf "wget %s -O %s"
-                      (Filename.quote url) (Filename.quote destination)))
-      ~if_fails_activate:[rm_path ~host destination]
+              (Filename.quote url) (Filename.quote destination)))
+      ~edges:[
+        on_failure_activate (rm_path ~host destination);
+      ]
 
   let wget_gunzip ~host ~(run_program : Machine.run_function) ~destination url =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let is_gz = Filename.check_suffix url ".gz" in
     if is_gz then (
       let name = "gunzip-" ^ (destination ^ ".gz") in
       let wgot = wget ~host ~run_program url (destination ^ ".gz") in
-      file_target destination ~host ~dependencies:[wgot] ~name
+      workflow_node
+        (single_file destination ~host)
+        ~edges:[
+          depends_on (wgot);
+          on_failure_activate (rm_path ~host destination);
+        ]
+        ~name
         ~make:(
           run_program ~name ~processors:1
             Program.(shf "gunzip -c %s > %s"
                        (Filename.quote wgot#product#path)
                        (Filename.quote destination)))
-        ~if_fails_activate:[rm_path ~host destination]
     ) else (
-       wget ~host ~run_program url destination
+      wget ~host ~run_program url destination
     )
 
   let wget_untar ~host ~(run_program : Machine.run_function) 
-                ~destination_folder ~tar_contains url =
-    let open Ketrew.EDSL in
+      ~destination_folder ~tar_contains url =
+    let open KEDSL in
     let zip_flags =
       let is_gz = Filename.check_suffix url ".gz" in
       let is_bzip = Filename.check_suffix url ".bz2" in
@@ -463,34 +486,44 @@ module Data_providers = struct
     let name = "untar-" ^ tar_filename in
     let wgot = wget ~host ~run_program url tar_filename in
     let file_in_tar = (destination_folder // tar_contains) in
-    file_target file_in_tar ~host ~dependencies:[wgot] ~name
+    workflow_node
+      (single_file file_in_tar ~host)
+      ~edges:[
+        depends_on (wgot);
+        on_failure_activate (rm_path ~host destination_folder);
+      ]
+      ~name
       ~make:(
         run_program ~name ~processors:1
           Program.(
             exec ["mkdir"; "-p"; destination_folder]
             && shf "tar -x%s -f %s -C %s" 
-                    zip_flags 
-                    (Filename.quote wgot#product#path)
-                    (Filename.quote destination_folder)))
-      ~if_fails_activate:[rm_path ~host destination_folder]
+              zip_flags 
+              (Filename.quote wgot#product#path)
+              (Filename.quote destination_folder)))
 
-  let cat_folder ~host ~(run_program : Machine.run_function) ?(dependencies=[]) ~files_gzipped ~folder ~destination = 
-    let open Ketrew.EDSL in
+  let cat_folder ~host ~(run_program : Machine.run_function) ?(depends_on=[]) ~files_gzipped ~folder ~destination = 
+    let deps = depends_on in
+    let open KEDSL in
     let name = "cat-folder-" ^ Filename.quote folder in
+    let edges =
+      on_failure_activate (rm_path ~host destination)
+      :: List.map ~f:depends_on deps in
     if files_gzipped then (
-      file_target destination ~host ~dependencies:dependencies ~name
+      workflow_node (single_file destination ~host)
+        ~edges ~name
         ~make:(
           run_program ~name ~processors:1
             Program.(
               shf "gunzip -c %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
-        ~if_fails_activate:[rm_path ~host destination]
     ) else (
-      file_target destination ~host ~dependencies:dependencies ~name
+      workflow_node
+        (single_file destination ~host)
+        ~edges ~name
         ~make:(
           run_program ~name ~processors:1
             Program.(
               shf "cat %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
-        ~if_fails_activate:[rm_path ~host destination]
     )
 
   (*
@@ -585,7 +618,7 @@ end
 
 module Ssh_box = struct
  
-  let default_run_program : host:Ketrew.EDSL.Host.t -> Machine.run_function =
+  let default_run_program : host:KEDSL.Host.t -> Machine.run_function =
       fun ~host ?(name="biokepi-ssh-box") ?(processors=1) program ->
         daemonize ~using:`Python_daemon ~host program
 
@@ -593,7 +626,7 @@ module Ssh_box = struct
       ~gatk_jar_location
       ~mutect_jar_location
       ?run_program ?b37 ~meta_playground ssh_hostname =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let playground = meta_playground // "ketrew_playground" in
     let host = Host.ssh ssh_hostname ~playground in
     let run_program =

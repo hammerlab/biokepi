@@ -22,9 +22,9 @@ open Biokepi_common
 
 type t = {
   name : string;
-  location : Ketrew.EDSL.user_target;
-  cosmic :  Ketrew.EDSL.user_target option;
-  dbsnp :  Ketrew.EDSL.user_target option;
+  location : KEDSL.file_workflow;
+  cosmic :  KEDSL.file_workflow option;
+  dbsnp :  KEDSL.file_workflow option;
 }
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.
@@ -34,13 +34,13 @@ type t = {
 (** {3 Creation } *)
 
 val create :
-  ?cosmic:Ketrew.EDSL.user_target ->
-  ?dbsnp:Ketrew.EDSL.user_target ->
-  string -> Ketrew.EDSL.user_target -> t
+  ?cosmic:KEDSL.file_workflow ->
+  ?dbsnp:KEDSL.file_workflow ->
+  string -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
 
 val on_host :
-  host:Ketrew.EDSL.Host.t ->
+  host:KEDSL.Host.t ->
   ?cosmic:string -> ?dbsnp:string -> string -> string -> t
 (** Create a [Reference_genome.t] by applying [Ketrew.EDSL.file_target] for
     each path on a given [host]. *)
@@ -54,6 +54,6 @@ val dbsnp_path_exn : t -> string
  
 (** {3 Targets} *)
 
-val fasta: t -> Ketrew.EDSL.user_target
-val cosmic_exn: t -> Ketrew.EDSL.user_target
-val dbsnp_exn: t -> Ketrew.EDSL.user_target
+val fasta: t -> KEDSL.file_workflow
+val cosmic_exn: t -> KEDSL.file_workflow
+val dbsnp_exn: t -> KEDSL.file_workflow

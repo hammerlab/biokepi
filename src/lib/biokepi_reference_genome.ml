@@ -6,17 +6,20 @@ open Biokepi_common
 *)
 type t = {
   name: string;
-  location: Ketrew.EDSL.user_target;
-  cosmic:  Ketrew.EDSL.user_target option;
-  dbsnp:  Ketrew.EDSL.user_target option;
+  location: KEDSL.file_workflow;
+  cosmic:  KEDSL.file_workflow option;
+  dbsnp:  KEDSL.file_workflow option;
 }
 let create ?cosmic ?dbsnp name location =
   {name; location; cosmic; dbsnp}
 
 let on_host ~host ?cosmic ?dbsnp name path =
-  let location = Ketrew.EDSL.file_target ~host path in
-  let cosmic = Option.map ~f:(Ketrew.EDSL.file_target ~host) cosmic in
-  let dbsnp = Option.map ~f:(Ketrew.EDSL.file_target ~host) dbsnp in
+  let open KEDSL in
+  let location =
+    workflow_node (single_file ~host path) in
+  let optional = Option.map ~f:(fun p -> workflow_node (single_file ~host p)) in
+  let cosmic = optional cosmic in
+  let dbsnp = optional dbsnp in
   create ?cosmic ?dbsnp name location
 
 
@@ -32,7 +35,7 @@ let dbsnp_path_exn t =
   let trgt = Option.value_exn ~msg t.dbsnp in
   trgt#product#path
 
-let fasta: t -> Ketrew.EDSL.user_target = fun t -> t.location
+let fasta: t -> KEDSL.file_workflow = fun t -> t.location
 let cosmic_exn t =
   Option.value_exn ~msg:(sprintf "%s: no COSMIC" t.name) t.cosmic
 let dbsnp_exn t =

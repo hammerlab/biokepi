@@ -8,8 +8,8 @@ module Reference_genome = Biokepi_reference_genome
 
 module Mutect = struct
   let run ?(reference_build=`B37)
-    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
-    let open Ketrew.EDSL in
+      ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
+    let open KEDSL in
     let run_on_region region =
       let result_file suffix =
         let region_name = Region.to_filename region in
@@ -57,15 +57,22 @@ module Mutect = struct
                 coverage_file
             )
         in
-        file_target ~name ~make output_file ~host:Machine.(as_host run_with)
+        workflow_node ~name ~make
+          (single_file output_file ~host:Machine.(as_host run_with))
           ~tags:[Target_tags.variant_caller]
-          ~dependencies:[
-            Tool.(ensure mutect); sorted_normal; sorted_tumor; fasta; cosmic;
-            dbsnp; fasta_dot_fai; sequence_dict;
-            Samtools.index_to_bai ~run_with sorted_normal;
-            Samtools.index_to_bai ~run_with sorted_tumor;
+          ~edges:[
+            depends_on Tool.(ensure mutect);
+            depends_on sorted_normal;
+            depends_on sorted_tumor;
+            depends_on fasta;
+            depends_on cosmic;
+            depends_on dbsnp;
+            depends_on fasta_dot_fai;
+            depends_on sequence_dict;
+            depends_on (Samtools.index_to_bai ~run_with sorted_normal);
+            depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
+            on_failure_activate (Remove.file ~run_with output_file);
           ]
-          ~if_fails_activate:[Remove.file ~run_with output_file]
       in
       run_mutect
     in
@@ -82,8 +89,8 @@ module Somaticsniper = struct
   let default_theta = 0.85
 
   let run ?(reference_build=`B37)
-    ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
-    let open Ketrew.EDSL in
+      ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
+    let open KEDSL in
     let name =
       "somaticsniper"
       ^ Option.(value_map minus_s ~default:"" ~f:(sprintf "-s%F"))
@@ -119,14 +126,19 @@ module Somaticsniper = struct
                  output_file]
             ))
     in
-    file_target output_file ~name ~make ~host:Machine.(as_host run_with)
+    workflow_node ~name ~make
+      (single_file output_file ~host:Machine.(as_host run_with))
       ~metadata:(`String name)
       ~tags:[Target_tags.variant_caller; "somaticsniper"]
-      ~dependencies:[ Tool.ensure sniper; sorted_normal; sorted_tumor;
-                      Samtools.index_to_bai ~run_with sorted_normal;
-                      Samtools.index_to_bai ~run_with sorted_tumor;
-                      reference_fasta;]
-      ~if_fails_activate:[ Remove.file ~run_with output_file ]
+      ~edges:[
+        depends_on (Tool.ensure sniper);
+        depends_on sorted_normal;
+        depends_on sorted_tumor;
+        depends_on (Samtools.index_to_bai ~run_with sorted_normal);
+        depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
+        depends_on reference_fasta;
+        on_failure_activate ( Remove.file ~run_with output_file );
+      ]
 end
 
 module Varscan = struct
@@ -158,7 +170,7 @@ module Varscan = struct
 
   let somatic_on_region
       ~run_with ~reference_build ?adjust_mapq ~normal ~tumor ~result_prefix region =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
     let varscan_tool = Machine.get_tool run_with Tool.Default.varscan in
@@ -190,11 +202,16 @@ module Varscan = struct
         Program.(Tool.init varscan_tool && sh big_one_liner)
         |> Machine.run_program run_with ~name ~processors:1
       in
-      file_target snp_output ~name ~make ~host ~tags
-        ~dependencies:[ Tool.ensure varscan_tool;
-                        normal_pileup; tumor_pileup; ]
-        ~if_fails_activate:[ Remove.file ~run_with snp_output;
-                             Remove.file ~run_with indel_output]
+      workflow_node ~name ~make
+        (single_file snp_output ~host)
+        ~tags
+        ~edges:[
+          depends_on (Tool.ensure varscan_tool);
+          depends_on normal_pileup;
+          depends_on tumor_pileup;
+          on_failure_activate (Remove.file ~run_with snp_output);
+          on_failure_activate (Remove.file ~run_with indel_output);
+        ]
     in
     let snp_filtered = result_file "-snpfiltered.vcf" in
     let indel_filtered = result_file "-indelfiltered.vcf" in
@@ -214,10 +231,13 @@ module Varscan = struct
         )
         |> Machine.run_program run_with ~name ~processors:1
       in
-      file_target snp_filtered ~name ~host ~make ~tags
-        ~if_fails_activate:[ Remove.file ~run_with snp_filtered;
-                             Remove.file ~run_with indel_filtered ]
-        ~dependencies:[varscan_somatic]
+      workflow_node ~name
+        (single_file snp_filtered ~host) ~make ~tags
+        ~edges:[
+          depends_on varscan_somatic;
+          on_failure_activate (Remove.file ~run_with snp_filtered);
+          on_failure_activate (Remove.file ~run_with indel_filtered);
+        ]
     in
     varscan_filter
 
@@ -258,8 +278,8 @@ The usage is:
         `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
       ]
 
-    let generate_config_file ~path config : Ketrew.EDSL.Program.t =
-      let open Ketrew.EDSL in
+    let generate_config_file ~path config : KEDSL.Program.t =
+      let open KEDSL in
       Program.(
         shf "echo '[user]' > %s" path
         && chain 
@@ -352,7 +372,7 @@ The usage is:
 
   let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let open Configuration in 
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
@@ -397,16 +417,21 @@ The usage is:
           ]
         )
     in
-    file_target output_file_path ~name ~make ~host:(Machine.as_host run_with)
-      ~dependencies:[ normal; tumor; reference_fasta;
-                      Tool.ensure strelka_tool;
-                      Tool.ensure gatk_tool;
-                      sorted_normal; sorted_tumor;
-                      Picard.create_dict ~run_with reference_fasta;
-                      Samtools.faidx ~run_with reference_fasta;
-                      Samtools.index_to_bai ~run_with sorted_normal;
-                      Samtools.index_to_bai ~run_with sorted_tumor;
-                    ]
+    workflow_node ~name ~make
+      (single_file output_file_path ~host:(Machine.as_host run_with))
+      ~edges:[
+        depends_on normal;
+        depends_on tumor;
+        depends_on reference_fasta;
+        depends_on (Tool.ensure strelka_tool);
+        depends_on (Tool.ensure gatk_tool);
+        depends_on sorted_normal;
+        depends_on sorted_tumor;
+        depends_on (Picard.create_dict ~run_with reference_fasta);
+        depends_on (Samtools.faidx ~run_with reference_fasta);
+        depends_on (Samtools.index_to_bai ~run_with sorted_normal);
+        depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
+      ]
 
 end
 
@@ -445,7 +470,7 @@ module Virmid = struct
 
   let run ~reference_build
       ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
-    let open Ketrew.EDSL in
+    let open KEDSL in
     let open Configuration in 
     let name = Filename.basename result_prefix in
     let result_file suffix = result_prefix ^ suffix in
@@ -478,8 +503,14 @@ module Virmid = struct
          (* We construct the `output_file` out of the “broken” one with `sed`. *)
         )
     in
-    file_target output_file ~name ~make ~host:(Machine.as_host run_with)
-      ~dependencies:[ normal; tumor; reference_fasta; Tool.ensure virmid_tool]
+    workflow_node ~name ~make
+      (single_file output_file ~host:(Machine.as_host run_with))
+      ~edges:[
+        depends_on normal;
+        depends_on tumor;
+        depends_on reference_fasta;
+        depends_on (Tool.ensure virmid_tool);
+      ]
 
 
 end

@@ -22,7 +22,7 @@ open Biokepi_target_library
 open Biokepi_run_environment
 
 module File = struct
-  type t = Ketrew.EDSL.user_target
+  type t = KEDSL.file_workflow
 end
 
 type json = Yojson.Basic.json
@@ -46,12 +46,12 @@ module Somatic_variant_caller = struct
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
-      normal:Ketrew.EDSL.user_target ->
-      tumor:Ketrew.EDSL.user_target ->
+      normal:KEDSL.file_workflow ->
+      tumor:KEDSL.file_workflow ->
       result_prefix: string ->
       processors: int ->
       unit ->
-      Ketrew.EDSL.user_target
+      KEDSL.file_workflow
   }
 end
 
@@ -63,11 +63,11 @@ module Germline_variant_caller = struct
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
-      input_bam:Ketrew.EDSL.user_target ->
+      input_bam:KEDSL.file_workflow ->
       result_prefix: string ->
       processors: int ->
       unit ->
-      Ketrew.EDSL.user_target
+      KEDSL.file_workflow
   }
 end
 
@@ -301,10 +301,10 @@ let rec to_json: type a. a t -> json =
   fun w ->
     let call name (args : json list): json = `List (`String name :: args) in
     match w with
-    | Fastq_gz file -> call "Fastq_gz" [`String file#name]
-    | Fastq file -> call "Fastq" [`String file#name]
+    | Fastq_gz file -> call "Fastq_gz" [`String file#target#name]
+    | Fastq file -> call "Fastq" [`String file#target#name]
     | Bam_sample (name, file) ->
-      call "Bam-sample" [`String name; `String file#name]
+      call "Bam-sample" [`String name; `String file#target#name]
     | Bam_to_fastq (how, bam) ->
       let how_string =
         match how with `Paired -> "Paired" | `Single -> "Single" in 
@@ -368,34 +368,25 @@ let rec compile_aligner_step
           ~reference_build ~processors ~work_dir ?is ~machine what in
       let sample_type =
         match how with `Single -> `Single_end | `Paired -> `Paired_end in
-      let r1 =
+      let fastq_pair =
         let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
         Bedtools.bamtofastq ~run_with:machine ~processors ~sample_type
           ~output_prefix bam
       in
-      let r2 = (* hacky workatound for now *)
-        match how with
-        | `Single -> None
-        | `Paired ->
-          let trgt =
-            let open Ketrew.EDSL in
-            file_target ~host:Machine.(as_host machine) 
-              ~dependencies:[r1]
-              (let base = r1#product#path in
-               String.(sub_exn base ~index:0
-                         ~length:(length base - length "_R1.fastq"))
-               ^ "_R2.fastq")
-          in
-          Some trgt
-      in
-      (r1, r2)
+      fastq_pair
     | Paired_end_sample (dataset, l1, l2) ->
       let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
       let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
-      (r1, Some r2)
+      let open KEDSL in
+      workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                       r1#product#path (Some r2#product#path))
+        ~edges:[ depends_on r1; depends_on r2 ]
     | Single_end_sample (dataset, single) ->
       let r1 = gunzip_concat ~read:(`R1 dataset) single in
-      (r1, None)
+      let open KEDSL in
+      workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                       r1#product#path None)
+        ~edges:[ depends_on r1 ]
   in
   match t with
   | Bam_sample (name, bam_target) -> bam_target
@@ -415,18 +406,18 @@ let rec compile_aligner_step
     Picard.mark_duplicates
       ~run_with:machine ~input_bam output_bam
   | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
-    let r1, r2 = compile_fastq_sample what in
+    let fastq = compile_fastq_sample what in
     Bwa.mem_align_to_sam
       ~reference_build ~processors
       ~gap_open_penalty ~gap_extension_penalty
-      ~r1 ?r2 ~result_prefix ~run_with:machine ()
+      ~fastq ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
   | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
-    let r1, r2 = compile_fastq_sample what in
+    let fastq = compile_fastq_sample what in
     Bwa.align_to_sam
       ~reference_build ~processors
       ~gap_open_penalty ~gap_extension_penalty
-      ~r1 ?r2 ~result_prefix ~run_with:machine ()
+      ~fastq ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
 
 let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
