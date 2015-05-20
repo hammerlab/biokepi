@@ -37,7 +37,7 @@ module Samtools = struct
     let host = Machine.(as_host run_with) in
     let name = sprintf "sam-to-bam-%s" (Filename.chop_suffix src ".sam") in
     workflow_node ~name
-      (single_file dest ~host)
+      (bam_file dest ~host)
       ~make
       ~edges:[
         depends_on file_t;
@@ -66,23 +66,21 @@ module Samtools = struct
 
   let do_on_bam
       ~(run_with:Machine.t)
-      ?(more_depends_on=[]) input_bam ~destination ~make_command =
+      ?(more_depends_on=[]) input_bam ~product ~make_command =
     let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = input_bam#product#path in
-    let sub_command = make_command src destination in
+    let sub_command = make_command src product#path in
     let program =
       Program.(Tool.(init samtools) && exec ("samtools" :: sub_command)) in
     let make = Machine.run_program run_with program in
-    let host = Machine.(as_host run_with) in
     let name =
       sprintf "samtools-%s" String.(concat ~sep:"-" sub_command) in
-    workflow_node ~name
-      (single_file destination ~host) ~make
+    workflow_node product ~name ~make
       ~edges:(
         depends_on Tool.(ensure samtools)
         :: depends_on input_bam
-        :: on_failure_activate (Remove.file ~run_with destination)
+        :: on_failure_activate (Remove.file ~run_with product#path)
         :: more_depends_on)
 
   let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
@@ -94,19 +92,30 @@ module Samtools = struct
     in
     let dest_prefix =
       sprintf "%s-%s" (Filename.chop_suffix source ".bam") dest_suffix in
-    let destination = sprintf "%s.%s" dest_prefix "bam" in
+    let product =
+      KEDSL.bam_file ~sorting:by
+        ~host:Machine.(as_host run_with)
+        (sprintf "%s.%s" dest_prefix "bam") in
     let make_command src des =
       let command = ["-@"; Int.to_string processors; src; dest_prefix] in
       match by with
       | `Coordinate -> "sort" :: command
       | `Read_name -> "sort" :: "-n" :: command
     in
-    do_on_bam ~run_with input_bam ~destination ~make_command
+    do_on_bam ~run_with input_bam ~product ~make_command
+
+  let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+    match input_bam#product#sorting with
+    | Some `Coordinate -> input_bam
+    | other ->
+      sort_bam ~run_with input_bam ~processors ~by:`Coordinate
 
   let index_to_bai ~(run_with:Machine.t) input_bam =
-    let destination = sprintf "%s.%s" input_bam#product#path "bai" in
+    let product =
+      KEDSL.single_file  ~host:(Machine.as_host run_with)
+        (sprintf "%s.%s" input_bam#product#path "bai") in
     let make_command src des = ["index"; "-b"; src] in
-    do_on_bam ~run_with input_bam ~destination ~make_command
+    do_on_bam ~run_with input_bam ~product ~make_command
 
   let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
     let open KEDSL in
@@ -173,7 +182,8 @@ module Picard = struct
     let picard_jar = Machine.get_tool run_with Tool.Default.picard in
     let metrics_path =
       sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
-    let sorted_bam = Samtools.sort_bam ~run_with input_bam ~by:`Coordinate in
+    let sorted_bam =
+      Samtools.sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
     let program =
       Program.(Tool.(init picard_jar) &&
                shf "java -jar $PICARD_JAR MarkDuplicates \
@@ -184,13 +194,12 @@ module Picard = struct
                  metrics_path) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
-    workflow_node (single_file output_bam ~host)
+    workflow_node (bam_file output_bam ~host)
       ~name:(sprintf "picard-markdups-%s"
                Filename.(basename input_bam#product#path))
       ~make
       ~edges:[
         depends_on sorted_bam;
-        depends_on input_bam;
         depends_on Tool.(ensure picard_jar);
         on_failure_activate (Remove.file ~run_with output_bam);
         on_failure_activate (Remove.file ~run_with metrics_path);
@@ -229,7 +238,8 @@ module Bedtools = struct
   let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix input_bam =
     let open KEDSL in
     let sorted_bam =
-      Samtools.sort_bam ~run_with ~processors ~by:`Read_name input_bam in
+      Samtools.sort_bam_if_necessary
+        ~run_with ~processors ~by:`Read_name input_bam in
     let fastq_output_options, r1, r2opt =
       match sample_type with
       | `Paired_end ->
@@ -307,7 +317,7 @@ module Gatk = struct
         ) in
     let sequence_dict = Picard.create_dict ~run_with fasta in
     workflow_node ~name
-      (single_file output_bam ~host:Machine.(as_host run_with))
+      (bam_file output_bam ~host:Machine.(as_host run_with))
       ~make
       ~edges:[
         depends_on Tool.(ensure gatk);
@@ -348,7 +358,9 @@ module Gatk = struct
     let recal_data_table =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate input_bam in
+    let sorted_bam =
+      Samtools.sort_bam_if_necessary
+        ~run_with ~processors ~by:`Coordinate input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
@@ -369,7 +381,7 @@ module Gatk = struct
           ]
         ) in
     workflow_node ~name
-      (single_file output_bam ~host:Machine.(as_host run_with))
+      (bam_file output_bam ~host:Machine.(as_host run_with))
       ~make
       ~edges:[
         depends_on Tool.(ensure gatk); depends_on fasta; depends_on db_snp;

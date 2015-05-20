@@ -30,7 +30,7 @@ type json = Yojson.Basic.json
 type fastq_gz = Fastq_gz
 type fastq = Fastq
 type fastq_sample = Fastq_sample
-type bam = Bam
+type bam = KEDSL.bam_file KEDSL.workflow_node
 type bam_pair = Bam_pair
 type vcf = Vcf
 
@@ -46,8 +46,8 @@ module Somatic_variant_caller = struct
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
-      normal:KEDSL.file_workflow ->
-      tumor:KEDSL.file_workflow ->
+      normal: bam ->
+      tumor: bam ->
       result_prefix: string ->
       processors: int ->
       unit ->
@@ -63,7 +63,7 @@ module Germline_variant_caller = struct
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
       run_with:Biokepi_run_environment.Machine.t ->
-      input_bam:KEDSL.file_workflow ->
+      input_bam: bam ->
       result_prefix: string ->
       processors: int ->
       unit ->
@@ -75,7 +75,7 @@ type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
   | Fastq: File.t -> fastq  t
   (* | List: 'a t list -> 'a list t *)
-  | Bam_sample: string * File.t -> bam t
+  | Bam_sample: string * bam -> bam t
   | Bam_to_fastq: [ `Single | `Paired ] * bam t -> fastq_sample t
   | Paired_end_sample: string * fastq  t * fastq  t -> fastq_sample  t
   | Single_end_sample: string * fastq  t -> fastq_sample  t
