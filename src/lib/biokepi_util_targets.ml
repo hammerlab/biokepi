@@ -83,7 +83,7 @@ module Samtools = struct
         :: on_failure_activate (Remove.file ~run_with product#path)
         :: more_depends_on)
 
-  let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+  let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     let source = input_bam#product#path in
     let dest_suffix =
       match by with
@@ -108,7 +108,7 @@ module Samtools = struct
     match input_bam#product#sorting with
     | Some `Coordinate -> input_bam
     | other ->
-      sort_bam ~run_with input_bam ~processors ~by:`Coordinate
+      sort_bam_no_check ~run_with input_bam ~processors ~by:`Coordinate
 
   let index_to_bai ~(run_with:Machine.t) input_bam =
     let product =
@@ -130,7 +130,8 @@ module Samtools = struct
       Filename.chop_suffix src ".bam" ^
       sprintf "-%s%s.mpileup" (Region.to_filename region) adjust_mapq_option
     in
-    let sorted_bam = sort_bam ~run_with input_bam ~by:`Coordinate in
+    let sorted_bam =
+      sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
     let program =
       Program.(
         Tool.(init samtools)
@@ -296,7 +297,9 @@ module Gatk = struct
     let intervals_file =
       Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
     in
-    let sorted_bam = Samtools.sort_bam ~run_with ~processors ~by:`Coordinate input_bam in
+    let sorted_bam =
+      Samtools.sort_bam_if_necessary
+        ~run_with ~processors ~by:`Coordinate input_bam in
     let make =
       Machine.run_program run_with ~name
         Program.(
@@ -407,7 +410,8 @@ module Gatk = struct
       let reference_dot_fai = Samtools.faidx ~run_with reference_fasta in
       let sequence_dict = Picard.create_dict ~run_with reference_fasta in
       let dbsnp = Reference_genome.dbsnp_exn reference in
-      let sorted_bam = Samtools.sort_bam ~run_with ~by:`Coordinate input_bam in
+      let sorted_bam =
+        Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate input_bam in
       let run_gatk_haplotype_caller =
         let name = sprintf "%s" (Filename.basename output_vcf) in
         let make =
