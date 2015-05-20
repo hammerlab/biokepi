@@ -33,9 +33,9 @@ module Samtools = struct
     let program =
       Program.(Tool.(init samtools) && exec ["samtools"; "view"; "-b"; "-o"; dest; src])
     in
-    let make = Machine.run_program run_with program in
-    let host = Machine.(as_host run_with) in
     let name = sprintf "sam-to-bam-%s" (Filename.chop_suffix src ".sam") in
+    let make = Machine.run_program ~name run_with program in
+    let host = Machine.(as_host run_with) in
     workflow_node ~name
       (bam_file dest ~host)
       ~make
@@ -51,13 +51,13 @@ module Samtools = struct
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = fasta#product#path in
     let dest = sprintf "%s.%s" src "fai" in
-    let program = Program.(Tool.(init samtools) && exec ["samtools"; "faidx"; src]) in
-    let make = Machine.run_program run_with program in
+    let program =
+      Program.(Tool.(init samtools) && exec ["samtools"; "faidx"; src]) in
+    let name = sprintf "samtools-faidx-%s" Filename.(basename src) in
+    let make = Machine.run_program ~name run_with program in
     let host = Machine.(as_host run_with) in
     workflow_node
-      (single_file dest ~host)
-      ~name:(sprintf "samtools-faidx-%s" Filename.(basename src))
-      ~make
+      (single_file dest ~host) ~name ~make
       ~edges:[
         depends_on fasta;
         depends_on Tool.(ensure samtools);
@@ -73,9 +73,9 @@ module Samtools = struct
     let sub_command = make_command src product#path in
     let program =
       Program.(Tool.(init samtools) && exec ("samtools" :: sub_command)) in
-    let make = Machine.run_program run_with program in
     let name =
       sprintf "samtools-%s" String.(concat ~sep:"-" sub_command) in
+    let make = Machine.run_program ~name run_with program in
     workflow_node product ~name ~make
       ~edges:(
         depends_on Tool.(ensure samtools)
@@ -141,11 +141,11 @@ module Samtools = struct
           sorted_bam#product#path
           pileup
       ) in
-    let make = Machine.run_program run_with program in
-    let host = Machine.(as_host run_with) in
     let name =
       sprintf "samtools-mpileup-%s" Filename.(basename pileup |> chop_extension)
     in
+    let make = Machine.run_program ~name run_with program in
+    let host = Machine.(as_host run_with) in
     let edges = [
       depends_on Tool.(ensure samtools);
       depends_on sorted_bam;
@@ -167,11 +167,10 @@ module Picard = struct
       Program.(Tool.(init picard_create_dict) &&
                shf "java -jar $PICARD_JAR CreateSequenceDictionary R= %s O= %s"
                  (Filename.quote src) (Filename.quote dest)) in
-    let make = Machine.run_program run_with program in
+    let name = sprintf "picard-create-dict-%s" Filename.(basename src) in
+    let make = Machine.run_program run_with program ~name in
     let host = Machine.(as_host run_with) in
-    workflow_node (single_file dest ~host)
-      ~name:(sprintf "picard-create-dict-%s" Filename.(basename src))
-      ~make
+    workflow_node (single_file dest ~host) ~name ~make
       ~edges:[
         depends_on fasta; depends_on Tool.(ensure picard_create_dict);
         on_failure_activate (Remove.file ~run_with dest);
@@ -192,12 +191,12 @@ module Picard = struct
                  (Filename.quote sorted_bam#product#path)
                  (Filename.quote output_bam)
                  metrics_path) in
-    let make = Machine.run_program run_with program in
+    let name =
+      sprintf "picard-markdups-%s" Filename.(basename input_bam#product#path) in
+    let make = Machine.run_program ~name run_with program in
     let host = Machine.(as_host run_with) in
     workflow_node (bam_file ~sorting:`Coordinate output_bam ~host)
-      ~name:(sprintf "picard-markdups-%s"
-               Filename.(basename input_bam#product#path))
-      ~make
+      ~name ~make
       ~edges:[
         depends_on sorted_bam;
         depends_on Tool.(ensure picard_jar);
@@ -258,10 +257,10 @@ module Bedtools = struct
                && exec ("bedtools" ::
                         "bamtofastq" ::  "-i" :: src_bam ::
                         fastq_output_options)) in
-    let make = Machine.run_program run_with program in
     let name =
       sprintf "bedtools-bamtofastq-%s"
         Filename.(basename src_bam |> chop_extension) in
+    let make = Machine.run_program ~name run_with program in
     let edges = [
         depends_on Tool.(ensure bedtools);
         depends_on input_bam;
