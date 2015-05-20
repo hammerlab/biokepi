@@ -136,7 +136,7 @@ module KEDSL = struct
     is_done: Ketrew_target.Condition.t option;
     paths : string * (string option);
   >
-  let fastq_reads ?host r1 r2_opt =
+  let fastq_reads ?host r1 r2_opt : fastq_reads =
     object
       val r1_file = single_file ?host r1
       val r2_file_opt = Option.map r2_opt ~f:(single_file ?host)
@@ -145,6 +145,21 @@ module KEDSL = struct
         Some (match r2_file_opt with
           | Some r2 -> `And [r1_file#exists; r2#exists]
           | None -> r1_file#exists)
+    end
+
+  type bam_file = <
+    is_done: Ketrew_target.Condition.t option;
+    path : string;
+    sorting: [ `Coordinate | `Read_name ] option;
+    content_type: [ `DNA | `RNA ];
+  >
+  let bam_file ?host ?sorting ?(contains=`DNA) path : bam_file =
+    object
+      val file = single_file ?host path
+      method path = file#path
+      method is_done = file#is_done
+      method sorting = sorting
+      method content_type = contains
     end
 
 

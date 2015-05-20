@@ -66,10 +66,10 @@ module Samtools = struct
 
   let do_on_bam
       ~(run_with:Machine.t)
-      ?(more_depends_on=[]) bam_file ~destination ~make_command =
+      ?(more_depends_on=[]) input_bam ~destination ~make_command =
     let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
-    let src = bam_file#product#path in
+    let src = input_bam#product#path in
     let sub_command = make_command src destination in
     let program =
       Program.(Tool.(init samtools) && exec ("samtools" :: sub_command)) in
@@ -81,12 +81,12 @@ module Samtools = struct
       (single_file destination ~host) ~make
       ~edges:(
         depends_on Tool.(ensure samtools)
-        :: depends_on bam_file
+        :: depends_on input_bam
         :: on_failure_activate (Remove.file ~run_with destination)
         :: more_depends_on)
 
-  let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by bam_file =
-    let source = bam_file#product#path in
+  let sort_bam ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+    let source = input_bam#product#path in
     let dest_suffix =
       match by with
         | `Coordinate -> "sorted"
@@ -101,17 +101,17 @@ module Samtools = struct
       | `Coordinate -> "sort" :: command
       | `Read_name -> "sort" :: "-n" :: command
     in
-    do_on_bam ~run_with bam_file ~destination ~make_command
+    do_on_bam ~run_with input_bam ~destination ~make_command
 
-  let index_to_bai ~(run_with:Machine.t) bam_file =
-    let destination = sprintf "%s.%s" bam_file#product#path "bai" in
+  let index_to_bai ~(run_with:Machine.t) input_bam =
+    let destination = sprintf "%s.%s" input_bam#product#path "bai" in
     let make_command src des = ["index"; "-b"; src] in
-    do_on_bam ~run_with bam_file ~destination ~make_command
+    do_on_bam ~run_with input_bam ~destination ~make_command
 
-  let mpileup ~run_with ~reference_build ?adjust_mapq ~region bam_file =
+  let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
     let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
-    let src = bam_file#product#path in
+    let src = input_bam#product#path in
     let adjust_mapq_option = 
       match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
     let samtools_region_option = Region.to_samtools_option region in
@@ -121,7 +121,7 @@ module Samtools = struct
       Filename.chop_suffix src ".bam" ^
       sprintf "-%s%s.mpileup" (Region.to_filename region) adjust_mapq_option
     in
-    let sorted_bam = sort_bam ~run_with bam_file ~by:`Coordinate in
+    let sorted_bam = sort_bam ~run_with input_bam ~by:`Coordinate in
     let program =
       Program.(
         Tool.(init samtools)
@@ -226,10 +226,10 @@ end
 
 module Bedtools = struct
 
-  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix bam_file =
+  let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix input_bam =
     let open KEDSL in
     let sorted_bam =
-      Samtools.sort_bam ~run_with ~processors ~by:`Read_name bam_file in
+      Samtools.sort_bam ~run_with ~processors ~by:`Read_name input_bam in
     let fastq_output_options, r1, r2opt =
       match sample_type with
       | `Paired_end ->
@@ -241,7 +241,7 @@ module Bedtools = struct
         (["-fq"; r1], r1, None)
     in
     let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
-    let src_bam = bam_file#product#path in
+    let src_bam = input_bam#product#path in
     let program =
       Program.(Tool.(init bedtools)
                && exec ["mkdir"; "-p"; Filename.dirname r1]
@@ -254,7 +254,7 @@ module Bedtools = struct
         Filename.(basename src_bam |> chop_extension) in
     let edges = [
         depends_on Tool.(ensure bedtools);
-        depends_on bam_file;
+        depends_on input_bam;
         on_failure_activate (Remove.file ~run_with r1);
         Option.value_map r2opt ~default:Empty_edge
           ~f:(fun r2 ->
