@@ -39,7 +39,7 @@ module Bwa = struct
     let name =
       sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
     let result = sprintf "%s.bwt" reference_fasta#product#path in
-    workflow_node
+    workflow_node ~name
       (single_file ~host:(Machine.(as_host run_with)) result)
       ~edges:[
         on_failure_activate (Remove.file ~run_with result);

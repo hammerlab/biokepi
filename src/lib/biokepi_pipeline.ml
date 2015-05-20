@@ -380,6 +380,9 @@ let rec compile_aligner_step
       let open KEDSL in
       workflow_node (fastq_reads ~host:Machine.(as_host machine)
                        r1#product#path (Some r2#product#path))
+        ~name:(sprintf "pairing %s and %s"
+                 (Filename.basename r1#product#path)
+                 (Filename.basename r2#product#path))
         ~edges:[ depends_on r1; depends_on r2 ]
     | Single_end_sample (dataset, single) ->
       let r1 = gunzip_concat ~read:(`R1 dataset) single in
@@ -387,6 +390,8 @@ let rec compile_aligner_step
       workflow_node (fastq_reads ~host:Machine.(as_host machine)
                        r1#product#path None)
         ~edges:[ depends_on r1 ]
+        ~name:(sprintf "single-end %s"
+                 (Filename.basename r1#product#path))
   in
   match t with
   | Bam_sample (name, bam_target) -> bam_target

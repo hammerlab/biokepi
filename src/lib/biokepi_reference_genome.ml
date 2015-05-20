@@ -16,10 +16,13 @@ let create ?cosmic ?dbsnp name location =
 let on_host ~host ?cosmic ?dbsnp name path =
   let open KEDSL in
   let location =
-    workflow_node (single_file ~host path) in
-  let optional = Option.map ~f:(fun p -> workflow_node (single_file ~host p)) in
-  let cosmic = optional cosmic in
-  let dbsnp = optional dbsnp in
+    workflow_node
+      ~name:(sprintf "Fasta: %s" Filename.(basename path))
+      (single_file ~host path) in
+  let optional name =
+    Option.map ~f:(fun p -> workflow_node ~name (single_file ~host p)) in
+  let cosmic = optional "Cosmic DB" cosmic in
+  let dbsnp = optional "DBSNP" dbsnp in
   create ?cosmic ?dbsnp name location
 
 

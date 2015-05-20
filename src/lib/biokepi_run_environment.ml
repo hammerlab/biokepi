@@ -176,6 +176,7 @@ module Tool_providers = struct
                  ~f:sh ~default:(shf "cp %s ../" tool_name)) in
     let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
     workflow_node
+      ~name:(sprintf "Install %s" tool_name)
       (single_file ~host
          (Option.value witness ~default:(install_path // tool_name)))
       ~edges:[
@@ -269,6 +270,7 @@ module Tool_providers = struct
     let binary = install_path // "somaticsniper" in
     let ensure =
       workflow_node (single_file binary ~host)
+        ~name:(sprintf "Install somaticsniper")
         ~edges:[depends_on binary_got]
         ~make:(daemonize ~using:`Python_daemon ~host
                  Program.(shf "mv %s %s"
@@ -285,6 +287,7 @@ module Tool_providers = struct
     let jar = install_path // "VarScan.v2.3.5.jar" in
     let ensure =
       workflow_node (single_file jar ~host)
+        ~name:"Install varscan"
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -302,6 +305,7 @@ module Tool_providers = struct
     let jar = install_path // "picard-tools-1.127" // "picard.jar" in
     let ensure =
       workflow_node (single_file jar ~host)
+        ~name:"Install picard"
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -370,6 +374,7 @@ module Tool_providers = struct
     let ensure =
       (* C.f. ftp://ftp.illumina.com/v1-branch/v1.0.14/README *)
       workflow_node (single_file witness ~host)
+        ~name:"Build/install Strelka"
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
@@ -391,6 +396,7 @@ module Tool_providers = struct
     let jar = install_path // "Virmid-1.1.1" // "Virmid.jar" in
     let ensure =
       workflow_node (single_file jar ~host)
+        ~name:"Build/install Virmid"
         ~make:(daemonize ~host ~using:`Python_daemon
                  Program.(
                    exec ["mkdir"; "-p"; install_path]
