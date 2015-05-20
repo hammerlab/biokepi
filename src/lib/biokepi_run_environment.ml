@@ -462,7 +462,7 @@ module Data_providers = struct
     let open KEDSL in
     let is_gz = Filename.check_suffix url ".gz" in
     if is_gz then (
-      let name = "gunzip-" ^ (destination ^ ".gz") in
+      let name = "gunzip-" ^ Filename.basename (destination ^ ".gz") in
       let wgot = wget ~host ~run_program url (destination ^ ".gz") in
       workflow_node
         (single_file destination ~host)

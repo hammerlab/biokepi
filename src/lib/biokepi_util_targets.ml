@@ -66,15 +66,13 @@ module Samtools = struct
 
   let do_on_bam
       ~(run_with:Machine.t)
-      ?(more_depends_on=[]) input_bam ~product ~make_command =
+      ?(more_depends_on=[]) ~name input_bam ~product ~make_command =
     let open KEDSL in
     let samtools = Machine.get_tool run_with Tool.Default.samtools in
     let src = input_bam#product#path in
     let sub_command = make_command src product#path in
     let program =
       Program.(Tool.(init samtools) && exec ("samtools" :: sub_command)) in
-    let name =
-      sprintf "samtools-%s" String.(concat ~sep:"-" sub_command) in
     let make = Machine.run_program ~name run_with program in
     workflow_node product ~name ~make
       ~edges:(
@@ -103,6 +101,8 @@ module Samtools = struct
       | `Read_name -> "sort" :: "-n" :: command
     in
     do_on_bam ~run_with input_bam ~product ~make_command
+      ~name:(sprintf "Samtools-sort %s"
+               Filename.(basename input_bam#product#path))
 
   let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     match input_bam#product#sorting with
@@ -116,6 +116,8 @@ module Samtools = struct
         (sprintf "%s.%s" input_bam#product#path "bai") in
     let make_command src des = ["index"; "-b"; src] in
     do_on_bam ~run_with input_bam ~product ~make_command
+      ~name:(sprintf "Samtools-index %s"
+               Filename.(basename input_bam#product#path))
 
   let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
     let open KEDSL in
