@@ -194,7 +194,7 @@ module Picard = struct
                  metrics_path) in
     let make = Machine.run_program run_with program in
     let host = Machine.(as_host run_with) in
-    workflow_node (bam_file output_bam ~host)
+    workflow_node (bam_file ~sorting:`Coordinate output_bam ~host)
       ~name:(sprintf "picard-markdups-%s"
                Filename.(basename input_bam#product#path))
       ~make
@@ -317,7 +317,8 @@ module Gatk = struct
         ) in
     let sequence_dict = Picard.create_dict ~run_with fasta in
     workflow_node ~name
-      (bam_file output_bam ~host:Machine.(as_host run_with))
+      (bam_file ~sorting:`Coordinate
+         output_bam ~host:Machine.(as_host run_with))
       ~make
       ~edges:[
         depends_on Tool.(ensure gatk);
@@ -381,7 +382,8 @@ module Gatk = struct
           ]
         ) in
     workflow_node ~name
-      (bam_file output_bam ~host:Machine.(as_host run_with))
+      (bam_file output_bam
+         ~sorting:`Coordinate ~host:Machine.(as_host run_with))
       ~make
       ~edges:[
         depends_on Tool.(ensure gatk); depends_on fasta; depends_on db_snp;
