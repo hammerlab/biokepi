@@ -353,7 +353,7 @@ let rec compile_aligner_step
       let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
       let result_path = work_dir // to_file_prefix ?is ?read t ^ ".fastq" in
       dbg "Result_Path: %S" result_path;
-      Gunzip.concat ~run_with:machine fastqs ~result_path
+      Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
   in
   let result_prefix = work_dir // to_file_prefix ?is t in
   dbg "Result_Prefix: %S" result_prefix;
