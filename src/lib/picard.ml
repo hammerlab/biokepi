@@ -57,7 +57,7 @@ module Mark_duplicates_settings = struct
       t.sorting_collection_size_ratio
       (match t.mem_param with
       | None  -> ""
-      | Some some -> sprintf "-Mmx%s" some)
+      | Some some -> sprintf "-Xmx%s" some)
 
 end
 let mark_duplicates
