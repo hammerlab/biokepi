@@ -4,11 +4,6 @@ open Biokepi_run_environment
 module Region = Biokepi_region
 module Reference_genome = Biokepi_reference_genome
 
-module Target_tags = struct
-  let aligner = "aligner"
-  let variant_caller = "variant-caller"
-  let clean_up = "clean-up"
-end
 
 module Remove = struct
   let file ~run_with path =
