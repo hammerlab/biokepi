@@ -26,7 +26,8 @@ Library biokepi
            Somaticsniper,
            Strelka,
            Virmid,
-           Target_library,
+           Bwa,
+           Cycledash,
            Pipeline,
            Common_pipelines
 
