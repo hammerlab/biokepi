@@ -41,7 +41,7 @@ let run
     let result_file suffix =
       let region_name = Region.to_filename region in
       sprintf "%s-%s%s" result_prefix region_name suffix in
-    let intervals_option = Region.to_gatk_option region in
+    let intervals_option = Region.to_samtools_specification region in
     let output_file_prefix = result_file "-out" in (* MuSE adds `.MuSE.txt` *)
     let output_file = output_file_prefix ^ ".MuSE.txt" in
     let run_path = Filename.dirname output_file in
@@ -61,11 +61,13 @@ let run
             Tool.(init muse_tool)
             && shf "mkdir -p %s" run_path
             && shf "$muse_bin call -f %s \
-                    -r %s \
+                    %s \
                     -O %s \
                     %s %s"
               fasta#product#path
-              intervals_option
+              (match intervals_option with
+              | Some o -> sprintf "-r %s" o
+              | None -> "")
               output_file_prefix
               tumor#product#path
               normal#product#path
@@ -99,22 +101,22 @@ let run
                   %s \
                   -O %s \
                   -D %s"
-              call_file#product#path
-              Configuration.(match configuration.input_type with
-                | `WGS -> "-G" | `WES -> "-E")
-              vcf_output
-              dbsnp#product#path
-          )
-      in
-      workflow_node ~name ~make
-        (single_file vcf_output ~host:Machine.(as_host run_with))
-        ~tags:[Target_tags.variant_caller; "muse"]
-        ~edges:[
-          depends_on Tool.(ensure muse_tool);
-          depends_on call_file;
-          depends_on dbsnp;
-          on_failure_activate (Remove.file ~run_with vcf_output);
-        ]
+            call_file#product#path
+            Configuration.(match configuration.input_type with
+              | `WGS -> "-G" | `WES -> "-E")
+            vcf_output
+            dbsnp#product#path
+        )
+    in
+    workflow_node ~name ~make
+      (single_file vcf_output ~host:Machine.(as_host run_with))
+      ~tags:[Target_tags.variant_caller; "muse"]
+      ~edges:[
+        depends_on Tool.(ensure muse_tool);
+        depends_on call_file;
+        depends_on dbsnp;
+        on_failure_activate (Remove.file ~run_with vcf_output);
+      ]
   in
   begin match how with
   | `Region region ->
