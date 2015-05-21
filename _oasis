@@ -10,15 +10,16 @@ Library biokepi
   Path:       src/lib
   BuildTools: ocamlbuild
   BuildDepends: ketrew, threads, ppx_deriving.std
-  Modules: Biokepi_common,
-           Biokepi_region,
-           Biokepi_reference_genome,
-           Biokepi_run_environment,
-           Biokepi_util_targets,
-           Biokepi_somatic_targets,
-           Biokepi_target_library,
-           Biokepi_pipeline,
-           Biokepi_common_pipelines
+  Pack: true
+  Modules: Common,
+           Region,
+           Reference_genome,
+           Run_environment,
+           Util_targets,
+           Somatic_targets,
+           Target_library,
+           Pipeline,
+           Common_pipelines
 
 Executable biokepi_tests
   Path: src/test/

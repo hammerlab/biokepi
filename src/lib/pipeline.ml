@@ -15,11 +15,11 @@
 (**************************************************************************)
 
 
-open Biokepi_common
-open Biokepi_util_targets
-open Biokepi_somatic_targets 
-open Biokepi_target_library
-open Biokepi_run_environment
+open Common
+open Util_targets
+open Somatic_targets 
+open Target_library
+open Run_environment
 
 module File = struct
   type t = KEDSL.file_workflow
@@ -45,7 +45,7 @@ module Somatic_variant_caller = struct
     configuration_name: string;
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
-      run_with:Biokepi_run_environment.Machine.t ->
+      run_with:Run_environment.Machine.t ->
       normal: bam ->
       tumor: bam ->
       result_prefix: string ->
@@ -62,7 +62,7 @@ module Germline_variant_caller = struct
     configuration_name: string;
     make_target:
       reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
-      run_with:Biokepi_run_environment.Machine.t ->
+      run_with:Run_environment.Machine.t ->
       input_bam: bam ->
       result_prefix: string ->
       processors: int ->

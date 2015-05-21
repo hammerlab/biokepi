@@ -14,11 +14,11 @@
 (*  permissions and limitations under the License.                        *)
 (**************************************************************************)
 
-open Biokepi_common
+open Common
 
-open Biokepi_run_environment
-open Biokepi_util_targets 
-open Biokepi_somatic_targets 
+open Run_environment
+open Util_targets 
+open Somatic_targets 
 
 module Bwa = struct
 
@@ -31,7 +31,7 @@ module Bwa = struct
     let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
-      |> Biokepi_reference_genome.fasta in
+      |> Reference_genome.fasta in
     (* `bwa index` creates a bunch of files, c.f.
        [this question](https://www.biostars.org/p/73585/) we detect the
        `.bwt` one. *)
@@ -79,7 +79,7 @@ module Bwa = struct
     let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
-      |> Biokepi_reference_genome.fasta in
+      |> Reference_genome.fasta in
     let in_work_dir =
       Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
     (* `bwa index` creates a bunch of files, c.f.
@@ -148,7 +148,7 @@ module Bwa = struct
     let open KEDSL in
     let reference_fasta =
       Machine.get_reference_genome run_with reference_build
-      |> Biokepi_reference_genome.fasta in
+      |> Reference_genome.fasta in
     let in_work_dir =
       Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
     (* `bwa index` creates a bunch of files, c.f.

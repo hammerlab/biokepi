@@ -1,4 +1,4 @@
-open Biokepi_common
+open Common
 
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.

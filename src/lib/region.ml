@@ -15,7 +15,7 @@
 (**************************************************************************)
 
 
-open Biokepi_common
+open Common
 
 (** Positions are 1-based *)
 type t = [

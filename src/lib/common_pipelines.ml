@@ -15,20 +15,20 @@
 (**************************************************************************)
 
 
-open Biokepi_common
+open Common
 
 
 
 module Somatic = struct
 
   type from_fastqs =
-    normal_fastqs:Biokepi_pipeline.Construct.input_fastq ->
-    tumor_fastqs:Biokepi_pipeline.Construct.input_fastq ->
-    dataset:string -> Biokepi_pipeline.vcf Biokepi_pipeline.t list
+    normal_fastqs:Pipeline.Construct.input_fastq ->
+    tumor_fastqs:Pipeline.Construct.input_fastq ->
+    dataset:string -> Pipeline.vcf Pipeline.t list
 
   let crazy_example ~normal_fastqs ~tumor_fastqs ~dataset =
-    let open Biokepi_pipeline.Construct in
-    let open Biokepi_somatic_targets in
+    let open Pipeline.Construct in
+    let open Somatic_targets in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
@@ -63,7 +63,7 @@ module Somatic = struct
 
   let from_fastqs_with_variant_caller
       ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset =
-    let open Biokepi_pipeline.Construct in
+    let open Pipeline.Construct in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let make_bam data =

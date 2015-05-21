@@ -1,5 +1,5 @@
 
-open Biokepi_common
+open Biokepi.Common
 
 let say fmt = ksprintf (printf "%s\n%!") fmt
 
@@ -9,7 +9,7 @@ let get_opt s =
   try Some (Sys.getenv s) with _ -> None
 
 let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi_pipeline.Construct in
+  let open Biokepi.Pipeline.Construct in
   let normal = input_fastq ~dataset normal_fastqs in
   let tumor = input_fastq ~dataset tumor_fastqs in
   let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
@@ -42,7 +42,7 @@ let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
   vcfs
 
 let simple_somatic_example ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi_pipeline.Construct in
+  let open Biokepi.Pipeline.Construct in
   let normal = input_fastq ~dataset normal_fastqs in
   let tumor = input_fastq ~dataset tumor_fastqs in
   let make_bam data =
@@ -53,9 +53,9 @@ let simple_somatic_example ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset
   [variant_caller vc_input]
 
 type somatic_from_fastqs =
-  normal_fastqs:Biokepi_pipeline.Construct.input_fastq ->
-  tumor_fastqs:Biokepi_pipeline.Construct.input_fastq ->
-  dataset:string -> Biokepi_pipeline.vcf Biokepi_pipeline.t list
+  normal_fastqs:Biokepi.Pipeline.Construct.input_fastq ->
+  tumor_fastqs:Biokepi.Pipeline.Construct.input_fastq ->
+  dataset:string -> Biokepi.Pipeline.vcf Biokepi.Pipeline.t list
 
 type example_pipeline = [
   | `Somatic_from_fastqs of somatic_from_fastqs
@@ -66,15 +66,15 @@ let global_named_examples: (string * example_pipeline) list = [
   "somatic-simple-somaticsniper",
   `Somatic_from_fastqs
     (simple_somatic_example
-       ~variant_caller:Biokepi_pipeline.Construct.somaticsniper);
+       ~variant_caller:Biokepi.Pipeline.Construct.somaticsniper);
   "somatic-simple-varscan",
   `Somatic_from_fastqs
     (simple_somatic_example
-       ~variant_caller:Biokepi_pipeline.Construct.varscan_somatic);
+       ~variant_caller:Biokepi.Pipeline.Construct.varscan_somatic);
   "somatic-simple-mutect",
   `Somatic_from_fastqs
     (simple_somatic_example
-       ~variant_caller:Biokepi_pipeline.Construct.mutect);
+       ~variant_caller:Biokepi.Pipeline.Construct.mutect);
 ]
 
 
@@ -93,10 +93,10 @@ let dump_pipeline =
       `Single_end [dumb_fastq "R1-L001"; dumb_fastq "R1-L002"] in
     let vcfs = pipeline_example  ~normal_fastqs ~tumor_fastqs ~dataset:"DUMB" in
     say "Dumb examples dumped:\n%s"
-      (`List (List.map ~f:Biokepi_pipeline.to_json vcfs)
+      (`List (List.map ~f:Biokepi.Pipeline.to_json vcfs)
        |> Yojson.Basic.pretty_to_string ~std:true)
 
-let environmental_box () : Biokepi_run_environment.Machine.t =
+let environmental_box () : Biokepi.Run_environment.Machine.t =
   let box_uri = get_env "BIOKEPI_SSH_BOX_URI" |> Uri.of_string in
   let ssh_name =
     Uri.host box_uri |> Option.value_exn ~msg:"URI has no hostname" in
@@ -116,7 +116,7 @@ let environmental_box () : Biokepi_run_environment.Machine.t =
   in
   let mutect_jar_location = jar_location "MUTECT" in
   let gatk_jar_location = jar_location "GATK" in
-  Biokepi_run_environment.Ssh_box.create
+  Biokepi.Run_environment.Ssh_box.create
     ~gatk_jar_location ~mutect_jar_location ~meta_playground ssh_name
 
 let with_environmental_dataset =
@@ -142,20 +142,20 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
   let dataset, pipelines =
     with_environmental_dataset pipeline_example in
   let work_dir =
-    Biokepi_run_environment.Machine.work_dir machine
+    Biokepi.Run_environment.Machine.work_dir machine
     // sprintf "on-%s" dataset in
   let compiled =
     List.map pipelines
       ~f:(fun pl ->
           let t =
-            Biokepi_pipeline.compile_variant_caller_step ~reference_build:`B37
+            Biokepi.Pipeline.compile_variant_caller_step ~reference_build:`B37
               ~work_dir ~machine pl in
           `Target t,
           `Json_blob (
             `Assoc [
               "target-name", `String t#target#name;
               "target-id", `String t#target#id;
-              "pipeline", Biokepi_pipeline.to_json pl;
+              "pipeline", Biokepi.Pipeline.to_json pl;
             ]))
   in
   let open KEDSL in
@@ -165,7 +165,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
         let witness_output =
           Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
         let params = Yojson.Basic.pretty_to_string json in
-        Biokepi_target_library.Cycledash.post_vcf ~run_with:machine
+        Biokepi.Target_library.Cycledash.post_vcf ~run_with:machine
           ~vcf ~variant_caller_name:vcf#target#name ~dataset_name:dataset
           ~witness_output ~params
           (get_env "BIOKEPI_CYCLEDASH_URL")

@@ -1,10 +1,8 @@
-open Biokepi_common
+open Common
 
-open Biokepi_util_targets
+open Util_targets
 
-open Biokepi_run_environment
-module Region = Biokepi_region
-module Reference_genome = Biokepi_reference_genome
+open Run_environment
 
 module Mutect = struct
   let run ?(reference_build=`B37)

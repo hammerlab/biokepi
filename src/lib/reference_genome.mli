@@ -18,7 +18,7 @@
 (** Representation of Reference Genomes *)
 
 
-open Biokepi_common
+open Common
 
 type t = {
   name : string;

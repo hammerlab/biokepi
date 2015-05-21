@@ -15,7 +15,7 @@
 (**************************************************************************)
 
 
-open Biokepi_common
+open Common
 
 open KEDSL
 
@@ -87,7 +87,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Biokepi_reference_genome.t;
+    get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Reference_genome.t;
     toolkit: Tool.Kit.t;
     quick_command: Program.t -> Ketrew_target.Build_process.t;
     run_program: run_function;
@@ -564,7 +564,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let cosmic =
       wget_gunzip ~host ~run_program cosmic_broad_url
         ~destination:(destination_path // "cosmic.vcf") in
-    Biokepi_reference_genome.create  "B37" fasta ~dbsnp ~cosmic
+    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic
 
   let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -576,7 +576,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let cosmic =
       wget_gunzip ~host ~run_program cosmic_broad_url
         ~destination:(destination_path // "cosmic.vcf") in
-    Biokepi_reference_genome.create "hs37d5" fasta ~dbsnp ~cosmic
+    Reference_genome.create "hs37d5" fasta ~dbsnp ~cosmic
 
   let b38_url =
     "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
@@ -590,7 +590,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_b38
         ~destination:(destination_path // "dbsnp.vcf") in
-    Biokepi_reference_genome.create  "B38" fasta ~dbsnp
+    Reference_genome.create  "B38" fasta ~dbsnp
 
   let hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
@@ -604,7 +604,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_hg19_url
         ~destination:(destination_path // "dbsnp.vcf") in
-    Biokepi_reference_genome.create "hg19" fasta ~dbsnp
+    Reference_genome.create "hg19" fasta ~dbsnp
 
   let hg18_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg18/Homo_sapiens_assembly18.fasta.gz"
@@ -618,7 +618,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_hg19_url
         ~destination:(destination_path // "dbsnp.vcf") in
-    Biokepi_reference_genome.create "hg18" fasta ~dbsnp
+    Reference_genome.create "hg18" fasta ~dbsnp
 
 end
 

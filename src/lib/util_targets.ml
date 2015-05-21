@@ -1,8 +1,6 @@
-open Biokepi_common
+open Common
 
-open Biokepi_run_environment
-module Region = Biokepi_region
-module Reference_genome = Biokepi_reference_genome
+open Run_environment
 
 
 module Remove = struct
