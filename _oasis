@@ -21,7 +21,11 @@ Library biokepi
            Vcftools,
            Bedtools,
            Gatk,
-           Somatic_targets,
+           Mutect,
+           Varscan,
+           Somaticsniper,
+           Strelka,
+           Virmid,
            Target_library,
            Pipeline,
            Common_pipelines

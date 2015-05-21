@@ -28,7 +28,6 @@ module Somatic = struct
 
   let crazy_example ~normal_fastqs ~tumor_fastqs ~dataset =
     let open Pipeline.Construct in
-    let open Somatic_targets in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
     let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
