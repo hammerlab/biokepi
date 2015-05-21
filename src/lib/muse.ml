@@ -69,8 +69,8 @@ let run
               | Some o -> sprintf "-r %s" o
               | None -> "")
               output_file_prefix
-              tumor#product#path
-              normal#product#path
+              sorted_tumor#product#path
+              sorted_normal#product#path
               (* yes, the help message says tumor then normal *)
           )
       in
