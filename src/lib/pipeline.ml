@@ -232,6 +232,18 @@ module Construct = struct
        make_target = Virmid.run ~configuration;}
       bam_pair
 
+  let muse ~configuration bam_pair =
+    let make_target ~reference_build
+        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors () =
+      Muse.run ~reference_build ~configuration
+        ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+    somatic_variant_caller 
+      {Somatic_variant_caller.name = "Muse";
+       configuration_json = Muse.Configuration.to_json configuration;
+       configuration_name = configuration.Muse.Configuration.name;
+       make_target }
+      bam_pair
+
 end
 
 

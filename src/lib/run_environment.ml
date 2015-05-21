@@ -41,6 +41,7 @@ module Tool = struct
     let gatk = custom "gatk" ~version:"unknown"
     let strelka = custom "strelka" ~version:"1.0.14"
     let virmid = custom "virmid" ~version:"1.1.1"
+    let muse = custom "muse" ~version:"1.0b"
   end
   type t = {
     definition: Definition.t;
@@ -366,6 +367,26 @@ module Tool_providers = struct
     let init = Program.(shf "export VIRMID_JAR=%s" jar) in
     Tool.create Tool.Default.virmid ~ensure ~init
 
+  let muse_tool ~host ~meta_playground =
+    let url =
+      "http://bioinformatics.mdanderson.org/Software/MuSE/MuSEv1.0b" in
+    let install_path = meta_playground // "Musev1.0b" in
+    let binary_path = install_path // "Musev1.0b" in
+    let ensure =
+      workflow_node (single_file binary_path ~host)
+        ~name:"Install Muse"
+        ~make:(daemonize ~host ~using:`Python_daemon
+                 Program.(
+                   exec ["mkdir"; "-p"; install_path]
+                   && exec ["cd"; install_path]
+                   && download_url_program url
+                 ))
+    in
+    let init = Program.(shf "export muse_bin=%s" binary_path) in
+    Tool.create Tool.Default.muse ~ensure ~init
+    
+
+    
   let default_toolkit
       ~host ~meta_playground
       ~mutect_jar_location ~gatk_jar_location =
@@ -382,6 +403,7 @@ module Tool_providers = struct
       picard_tool ~host ~meta_playground;
       somaticsniper_tool ~host ~meta_playground;
       varscan_tool ~host ~meta_playground;
+      muse_tool ~host ~meta_playground;
     ]
 end
 
