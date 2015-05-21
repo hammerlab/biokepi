@@ -370,8 +370,8 @@ module Tool_providers = struct
   let muse_tool ~host ~meta_playground =
     let url =
       "http://bioinformatics.mdanderson.org/Software/MuSE/MuSEv1.0b" in
-    let install_path = meta_playground // "Musev1.0b" in
-    let binary_path = install_path // "Musev1.0b" in
+    let install_path = meta_playground // "MuSEv1.0b" in
+    let binary_path = install_path // "MuSEv1.0b" in
     let ensure =
       workflow_node (single_file binary_path ~host)
         ~name:"Install Muse"
