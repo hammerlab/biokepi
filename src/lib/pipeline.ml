@@ -16,7 +16,6 @@
 
 
 open Common
-open Util_targets
 open Somatic_targets 
 open Target_library
 open Run_environment

@@ -17,8 +17,8 @@
 open Common
 
 open Run_environment
-open Util_targets 
 open Somatic_targets 
+open Workflow_utilities
 
 module Bwa = struct
 
