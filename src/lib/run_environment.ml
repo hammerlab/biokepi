@@ -380,6 +380,7 @@ module Tool_providers = struct
                    exec ["mkdir"; "-p"; install_path]
                    && exec ["cd"; install_path]
                    && download_url_program url
+                   && shf "chmod +x %s" binary_path
                  ))
     in
     let init = Program.(shf "export muse_bin=%s" binary_path) in
