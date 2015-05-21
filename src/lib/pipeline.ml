@@ -81,7 +81,7 @@ type _ t =
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
-  | Picard_mark_duplicates: bam t -> bam t
+  | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
   | Gatk_bqsr: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
   | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
@@ -128,7 +128,10 @@ module Construct = struct
     Bwa_mem (params, fastq)
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
-  let picard_mark_duplicates bam = Picard_mark_duplicates bam
+  let picard_mark_duplicates
+      ?(settings=Picard.Mark_duplicates_settings.default) bam =
+    Picard_mark_duplicates (settings, bam)
+
   let gatk_bqsr bam = Gatk_bqsr bam
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
@@ -273,7 +276,8 @@ let rec to_file_prefix:
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
     | Gatk_bqsr bam ->
       sprintf "%s-bqsr" (to_file_prefix ?is ?read bam)
-    | Picard_mark_duplicates bam ->
+    | Picard_mark_duplicates (_, bam) ->
+      (* The settings, for now, do not impact the resul.t *)
       sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
     | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
     | Somatic_variant_caller (vc, bp) ->
@@ -331,7 +335,8 @@ let rec to_json: type a. a t -> json =
           "Configuration", gvc.Germline_variant_caller.configuration_json;
           "Input", to_json bam;
         ]]
-    | Picard_mark_duplicates bam ->
+    | Picard_mark_duplicates (settings, bam) ->
+      (* The settings should not impact the output, so we don't dump them. *)
       call "Picard_mark_duplicates" [`Assoc ["input", to_json bam]]
     | Bam_pair (normal, tumor) ->
       call "Bam-pair" [`Assoc ["normal", to_json normal; "tumor", to_json tumor]]
@@ -402,10 +407,12 @@ let rec compile_aligner_step
     let output_bam = result_prefix ^ ".bam" in
     Gatk.base_quality_score_recalibrator
       ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
-  | Picard_mark_duplicates bam ->
-    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
+  | Picard_mark_duplicates (settings, bam) ->
+    let input_bam =
+      compile_aligner_step
+        ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
-    Picard.mark_duplicates
+    Picard.mark_duplicates ~settings
       ~run_with:machine ~input_bam output_bam
   | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
     let fastq = compile_fastq_sample what in
