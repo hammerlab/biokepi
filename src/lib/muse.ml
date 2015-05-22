@@ -93,6 +93,8 @@ let run
   let muse_sump call_file =
     let vcf_output = result_prefix ^ ".vcf" in
     let dbsnp = Reference_genome.dbsnp_exn reference in
+    let bgzipped_dbsnp =
+      Samtools.bgzip ~run_with dbsnp (dbsnp#product#path ^ ".bgz") in
     let name = sprintf "muse-sump-%s" (Filename.basename vcf_output) in
     let make =
       Machine.run_program run_with ~name Program.(
@@ -105,7 +107,7 @@ let run
             Configuration.(match configuration.input_type with
               | `WGS -> "-G" | `WES -> "-E")
             vcf_output
-            dbsnp#product#path
+            bgzipped_dbsnp#product#path
         )
     in
     workflow_node ~name ~make
@@ -114,7 +116,9 @@ let run
       ~edges:[
         depends_on Tool.(ensure muse_tool);
         depends_on call_file;
-        depends_on dbsnp;
+        depends_on bgzipped_dbsnp;
+        depends_on
+          (Samtools.tabix ~run_with ~tabular_format:`Vcf bgzipped_dbsnp);
         on_failure_activate (Remove.file ~run_with vcf_output);
       ]
   in
