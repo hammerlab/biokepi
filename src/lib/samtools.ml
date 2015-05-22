@@ -62,6 +62,36 @@ let bgzip ~run_with input_file output_path =
       on_failure_activate (Remove.file ~run_with output_path);
     ]
 
+let tabix ~run_with ~tabular_format input_file =
+  let open KEDSL in
+  let samtools = Machine.get_tool run_with Tool.Default.samtools in
+  let output_path = input_file#product#path ^ ".tbi" in
+  let minus_p_argument =
+    match tabular_format with
+    | `Gff -> "gff"
+    | `Bed -> "bed"
+    | `Sam -> "sam"
+    | `Vcf -> "vcf"
+    | `Psltab -> "psltab" in
+  let program =
+    Program.(
+      Tool.(init samtools)
+      && shf "tabix -p %s %s"
+        minus_p_argument
+        input_file#product#path
+    ) in
+  let name =
+    sprintf "samtools-tabix-%s" Filename.(basename input_file#product#path) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  workflow_node
+    (single_file output_path ~host) ~name ~make
+    ~edges:[
+      depends_on input_file;
+      depends_on Tool.(ensure samtools);
+      on_failure_activate (Remove.file ~run_with output_path);
+    ]
+
 
 let do_on_bam
     ~(run_with:Machine.t)
