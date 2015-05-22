@@ -44,6 +44,25 @@ let faidx ~(run_with:Machine.t) fasta =
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
+let bgzip ~run_with input_file output_path =
+  let open KEDSL in
+  let samtools = Machine.get_tool run_with Tool.Default.samtools in
+  let program =
+    Program.(Tool.(init samtools)
+             && shf "bgzip %s -c > %s" input_file#product#path output_path) in
+  let name =
+    sprintf "samtools-bgzip-%s" Filename.(basename input_file#product#path) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  workflow_node
+    (single_file output_path ~host) ~name ~make
+    ~edges:[
+      depends_on input_file;
+      depends_on Tool.(ensure samtools);
+      on_failure_activate (Remove.file ~run_with output_path);
+    ]
+
+
 let do_on_bam
     ~(run_with:Machine.t)
     ?(more_depends_on=[]) ~name input_bam ~product ~make_command =
