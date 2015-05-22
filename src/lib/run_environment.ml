@@ -167,11 +167,36 @@ module Tool_providers = struct
 
   let samtools ~host ~meta_playground =
     let install_path = meta_playground // "samtools" in
+    let url = "http://downloads.sourceforge.net/project/samtools/samtools/\
+               1.1/samtools-1.1.tar.bz2" in
+    let archive = Filename.basename url in
     let ensure =
-      install_bwa_like ~host "samtools"
-        ~url:"http://downloads.sourceforge.net/project/samtools/samtools/\
-              1.1/samtools-1.1.tar.bz2"
-        ~install_path in
+      let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
+      let toplevel_tools = ["samtools"] in
+      let htslib = ["bgzip"; "tabix" ] in
+      let tools = toplevel_tools @ htslib in
+      let files = List.map ~f:(fun e -> install_path // e) tools in
+      workflow_node (list_of_files ~host files)
+        ~name:(sprintf "Install Samtools")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvf%s %s" tar_option archive
+              && shf "cd samtools-*"
+              && sh "make"
+              && shf "cp %s ../" (String.concat toplevel_tools ~sep:" ") 
+              && sh "cd htslib*/"
+              && sh "make"
+              && shf "cp %s ../../" (String.concat htslib ~sep:" ") 
+              && sh "echo Done"
+            ))
+    in
     Tool.create Tool.Default.samtools ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
