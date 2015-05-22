@@ -131,6 +131,18 @@ module KEDSL = struct
   type file_workflow = single_file workflow_node
   type phony_workflow = nothing workflow_node
 
+  type list_of_files = <
+    is_done: Ketrew_target.Condition.t option;
+    paths : string list;
+  >
+  let list_of_files ?host paths =
+    object
+      val files = List.map paths ~f:(fun p -> single_file ?host p)
+      method is_done =
+        Some (`And (List.filter_map files ~f:(fun f -> f#is_done)))
+      method paths = paths
+    end
+
 
   type fastq_reads = <
     is_done: Ketrew_target.Condition.t option;
