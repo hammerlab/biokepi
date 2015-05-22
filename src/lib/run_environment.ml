@@ -430,6 +430,7 @@ module Tool_providers = struct
       somaticsniper_tool ~host ~meta_playground;
       varscan_tool ~host ~meta_playground;
       muse_tool ~host ~meta_playground;
+      virmid_tool ~host ~meta_playground;
     ]
 end
 
