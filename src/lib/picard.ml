@@ -50,7 +50,7 @@ module Mark_duplicates_settings = struct
              MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=%d \
              MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=%d \
              SORTING_COLLECTION_SIZE_RATIO=%f \
-             java %s "
+             java %s -Djava.io.tmpdir=%s "
       t.tmpdir
       t.max_sequences_for_disk_read_ends_map
       t.max_file_handles_for_read_ends_map
@@ -58,6 +58,7 @@ module Mark_duplicates_settings = struct
       (match t.mem_param with
       | None  -> ""
       | Some some -> sprintf "-Xmx%s" some)
+      t.tmpdir
 
 end
 let mark_duplicates
