@@ -93,3 +93,43 @@ let mark_duplicates
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
 
+let bam_to_fastq
+    ~run_with ~sample_type ~processors ~output_prefix input_bam =
+  let open KEDSL in
+  let sorted_bam =
+    Samtools.sort_bam_if_necessary
+      ~run_with ~processors ~by:`Read_name input_bam in
+  let fastq_output_options, r1, r2opt =
+    match sample_type with
+    | `Paired_end ->
+      let r1 = sprintf "%s_R1.fastq" output_prefix in
+      let r2 = sprintf "%s_R2.fastq" output_prefix in
+      ([sprintf "FASTQ=%s" Filename.(quote r1);
+        sprintf "SECOND_END_FASTQ=%s" Filename.(quote r2)],
+       r1, Some r2)
+    | `Single_end ->
+      let r1 = sprintf "%s.fastq" output_prefix in
+      ([sprintf "FASTQ=%s" r1], r1, None)
+  in
+  let picard_jar = Machine.get_tool run_with Tool.Default.picard in
+  let program =
+    Program.(
+      Tool.(init picard_jar) &&
+      shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
+        (Filename.quote sorted_bam#product#path)
+        (String.concat ~sep:" " fastq_output_options)
+    ) in
+  let name =
+    sprintf "picard-bam2fastq-%s" Filename.(basename input_bam#product#path) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  workflow_node (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
+    ~name ~make
+    ~edges:[
+      depends_on sorted_bam;
+      depends_on Tool.(ensure picard_jar);
+      on_failure_activate (Remove.file ~run_with r1);
+      Option.value_map r2opt ~default:Empty_edge
+        ~f:(fun r2 ->
+            on_failure_activate (Remove.file ~run_with r2));
+    ]
