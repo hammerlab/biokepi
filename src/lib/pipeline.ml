@@ -384,7 +384,7 @@ let rec compile_aligner_step
         match how with `Single -> `Single_end | `Paired -> `Paired_end in
       let fastq_pair =
         let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
-        Bedtools.bamtofastq ~run_with:machine ~processors ~sample_type
+        Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
           ~output_prefix bam
       in
       fastq_pair
