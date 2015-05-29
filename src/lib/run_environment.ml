@@ -623,7 +623,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
       wget_gunzip ~host ~run_program hg18_url
         ~destination:(destination_path // "hg18.fasta") in
     let dbsnp =
-      wget_gunzip ~host ~run_program dbsnp_hg19_url
+      wget_gunzip ~host ~run_program dbsnp_hg18_url
         ~destination:(destination_path // "dbsnp.vcf") in
     Reference_genome.create "hg18" fasta ~dbsnp
 
