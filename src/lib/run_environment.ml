@@ -43,6 +43,7 @@ module Tool = struct
     let virmid = custom "virmid" ~version:"1.1.1"
     let muse = custom "muse" ~version:"1.0b"
     let star = custom "star" ~version:"2.4.1d"
+    let stringtie = custom "stringtie" ~version:"1.0.4"
   end
   type t = {
     definition: Definition.t;
@@ -192,6 +193,14 @@ module Tool_providers = struct
             ))
     in
     Tool.create Tool.Default.star ~ensure
+
+  let stringtie_tool ~host ~meta_playground =
+    let install_path = meta_playground // "stringtie" in
+    let ensure =
+      install_bwa_like ~host "stringtie"
+        ~url:"http://ccb.jhu.edu/software/stringtie/dl/stringtie-1.0.4.tar.gz"
+        ~install_path in
+    Tool.create Tool.Default.stringtie ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let samtools ~host ~meta_playground =

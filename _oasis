@@ -29,6 +29,7 @@ Library biokepi
            Muse,
            Star,
            Bwa,
+           Stringtie,
            Cycledash,
            Pipeline,
            Common_pipelines
