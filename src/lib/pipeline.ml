@@ -440,6 +440,10 @@ let rec compile_aligner_step
       ~gap_open_penalty ~gap_extension_penalty
       ~fastq ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
+  | Star (what) ->
+    let fastq = compile_fastq_sample what in
+    Star.align ~reference_build ~processors
+      ~fastq ~result_prefix ~run_with:machine ()
 
 let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
