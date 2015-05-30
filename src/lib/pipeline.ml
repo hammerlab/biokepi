@@ -289,9 +289,9 @@ let rec to_file_prefix:
     | Gatk_bqsr bam ->
       sprintf "%s-bqsr" (to_file_prefix ?is ?read bam)
     | Picard_mark_duplicates (_, bam) ->
-      (* The settings, for now, do not impact the resul.t *)
+      (* The settings, for now, do not impact the result *)
       sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
-    | Bam_pair (nor, tum) -> to_file_prefix ?is:None nor
+    | Bam_pair (nor, tum) -> to_file_prefix ?is:None tum
     | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
