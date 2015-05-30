@@ -561,6 +561,9 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
   let cosmic_broad_url =
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"
 
+  let gtf_b37_url = "http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
+
+
   let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
       wget_gunzip ~host ~run_program b37_broad_url
@@ -571,7 +574,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let cosmic =
       wget_gunzip ~host ~run_program cosmic_broad_url
         ~destination:(destination_path // "cosmic.vcf") in
-    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic
+    let gtf = 
+      wget_gunzip ~host ~run_program gtf_b37_url
+        ~destination:(destination_path // "transcripts.gtf") in
+    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf
 
   let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -590,6 +596,8 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
   let dbsnp_b38 =
     "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
 
+  let gtf_b38_url = "http://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz"
+
   let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
       wget_gunzip ~host ~run_program b38_url
@@ -597,7 +605,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_b38
         ~destination:(destination_path // "dbsnp.vcf") in
-    Reference_genome.create  "B38" fasta ~dbsnp
+    let gtf = 
+      wget_gunzip ~host ~run_program gtf_b38_url
+        ~destination:(destination_path // "transcripts.gtf") in
+    Reference_genome.create  "B38" fasta ~dbsnp ~gtf
 
   let hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
