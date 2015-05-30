@@ -42,6 +42,7 @@ module Tool = struct
     let strelka = custom "strelka" ~version:"1.0.14"
     let virmid = custom "virmid" ~version:"1.1.1"
     let muse = custom "muse" ~version:"1.0b"
+    let star = custom "star" ~version:"2.4.1d"
   end
   type t = {
     definition: Definition.t;
@@ -163,6 +164,34 @@ module Tool_providers = struct
         (*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)
         ~install_path in
     Tool.create (`Bwa `V_0_7_10) ~ensure
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let star_tool ~host ~meta_playground =
+    let install_path = meta_playground // "star" in
+    let url = "https://github.com/alexdobin/STAR/archive/STAR_2.4.1d.tar.gz" in
+    let archive = Filename.basename url in
+    let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
+    let star_binary = "STAR" in
+    let star_binary_path = sprintf "bin/Linux_x86_64/%s" star_binary in
+    let ensure =
+      workflow_node (single_file ~host (install_path // star_binary))
+        ~name:(sprintf "Install STAR")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvf%s %s" tar_option archive
+              && shf "cd STAR-*"
+              && shf "cp %s ../" star_binary_path
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.star ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let samtools ~host ~meta_playground =
