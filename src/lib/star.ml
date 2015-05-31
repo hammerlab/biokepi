@@ -58,7 +58,6 @@ let align
   let star_index = index ~reference_build ~run_with ~processors in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let star_index_dir = sprintf "%s/star-index/" reference_dir in
-
   let result = sprintf "%sAligned.sortedByCoord.out.bam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "star-rna-align-%s" (Filename.basename r1_path) in
@@ -81,6 +80,7 @@ let align
             on_failure_activate (Remove.file ~run_with result);
             depends_on reference_fasta;
             depends_on star_index;
+            depends_on fastq;
             depends_on Tool.(ensure star_tool);
         ]
         ~tags:[Target_tags.aligner]
