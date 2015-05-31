@@ -460,6 +460,7 @@ module Tool_providers = struct
       varscan_tool ~host ~meta_playground;
       muse_tool ~host ~meta_playground;
       virmid_tool ~host ~meta_playground;
+      star_tool ~host ~meta_playground;
     ]
 end
 
