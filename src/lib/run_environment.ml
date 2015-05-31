@@ -470,6 +470,7 @@ module Tool_providers = struct
       muse_tool ~host ~meta_playground;
       virmid_tool ~host ~meta_playground;
       star_tool ~host ~meta_playground;
+      stringtie_tool ~host ~meta_playground;
     ]
 end
 
