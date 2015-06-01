@@ -42,6 +42,7 @@ module Tool = struct
     let strelka = custom "strelka" ~version:"1.0.14"
     let virmid = custom "virmid" ~version:"1.1.1"
     let muse = custom "muse" ~version:"1.0b"
+    let star = custom "star" ~version:"2.4.1d"
   end
   type t = {
     definition: Definition.t;
@@ -163,6 +164,34 @@ module Tool_providers = struct
         (*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)
         ~install_path in
     Tool.create (`Bwa `V_0_7_10) ~ensure
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let star_tool ~host ~meta_playground =
+    let install_path = meta_playground // "star" in
+    let url = "https://github.com/alexdobin/STAR/archive/STAR_2.4.1d.tar.gz" in
+    let archive = Filename.basename url in
+    let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
+    let star_binary = "STAR" in
+    let star_binary_path = sprintf "bin/Linux_x86_64/%s" star_binary in
+    let ensure =
+      workflow_node (single_file ~host (install_path // star_binary))
+        ~name:(sprintf "Install STAR")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvf%s %s" tar_option archive
+              && shf "cd STAR-*"
+              && shf "cp %s ../" star_binary_path
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.star ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let samtools ~host ~meta_playground =
@@ -431,6 +460,7 @@ module Tool_providers = struct
       varscan_tool ~host ~meta_playground;
       muse_tool ~host ~meta_playground;
       virmid_tool ~host ~meta_playground;
+      star_tool ~host ~meta_playground;
     ]
 end
 
@@ -561,6 +591,9 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
   let cosmic_broad_url =
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"
 
+  let gtf_b37_url = "http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
+
+
   let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
       wget_gunzip ~host ~run_program b37_broad_url
@@ -571,7 +604,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let cosmic =
       wget_gunzip ~host ~run_program cosmic_broad_url
         ~destination:(destination_path // "cosmic.vcf") in
-    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic
+    let gtf = 
+      wget_gunzip ~host ~run_program gtf_b37_url
+        ~destination:(destination_path // "transcripts.gtf") in
+    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf
 
   let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -590,6 +626,8 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
   let dbsnp_b38 =
     "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
 
+  let gtf_b38_url = "http://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz"
+
   let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
       wget_gunzip ~host ~run_program b38_url
@@ -597,7 +635,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let dbsnp =
       wget_gunzip ~host ~run_program dbsnp_b38
         ~destination:(destination_path // "dbsnp.vcf") in
-    Reference_genome.create  "B38" fasta ~dbsnp
+    let gtf = 
+      wget_gunzip ~host ~run_program gtf_b38_url
+        ~destination:(destination_path // "transcripts.gtf") in
+    Reference_genome.create  "B38" fasta ~dbsnp ~gtf
 
   let hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"

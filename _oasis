@@ -27,6 +27,7 @@ Library biokepi
            Strelka,
            Virmid,
            Muse,
+           Star,
            Bwa,
            Cycledash,
            Pipeline,

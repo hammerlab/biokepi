@@ -78,6 +78,7 @@ type _ t =
   | Single_end_sample: string * fastq  t -> fastq_sample  t
   | Gunzip_concat: fastq_gz  t list -> fastq  t
   | Concat_text: fastq  t list -> fastq  t
+  | Star: fastq_sample  t -> bam  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
@@ -126,6 +127,8 @@ module Construct = struct
       fastq =
     let params = {gap_open_penalty; gap_extension_penalty} in
     Bwa_mem (params, fastq)
+
+  let star fastq = Star fastq
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
   let picard_mark_duplicates
@@ -284,6 +287,8 @@ let rec to_file_prefix:
     | Bwa_mem ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-mem-gap%d-gep%d"
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
+    | Star (sample) ->
+      sprintf "%s-star-aligned" (to_file_prefix ?is sample)
     | Gatk_indel_realigner bam ->
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
     | Gatk_bqsr bam ->
@@ -336,6 +341,9 @@ let rec to_json: type a. a t -> json =
     | Bwa_mem (params, input) ->
       let input_json = to_json input in
       call "BWA-MEM" [bwa_params params input_json]
+    | Star (input) ->
+      let input_json = to_json input in
+      call "STAR" [input_json]
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
@@ -440,6 +448,10 @@ let rec compile_aligner_step
       ~gap_open_penalty ~gap_extension_penalty
       ~fastq ~result_prefix ~run_with:machine ()
     |> Samtools.sam_to_bam ~run_with:machine
+  | Star (what) ->
+    let fastq = compile_fastq_sample what in
+    Star.align ~reference_build ~processors
+     ~fastq ~result_prefix ~run_with:machine ()
 
 let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
