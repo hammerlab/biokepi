@@ -192,7 +192,8 @@ module Tool_providers = struct
               && sh "echo Done"
             ))
     in
-    Tool.create Tool.Default.star ~ensure
+    Tool.create Tool.Default.star ~ensure 
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let stringtie_tool ~host ~meta_playground =
     let install_path = meta_playground // "stringtie" in
