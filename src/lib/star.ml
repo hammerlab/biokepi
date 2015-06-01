@@ -62,12 +62,17 @@ let align
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "star-rna-align-%s" (Filename.basename r1_path) in
   let star_base_command = sprintf 
-        "STAR --outSAMtype BAM SortedByCoordinate --genomeDir %s \
-              --runThreadN %d  --outFileNamePrefix %s --readFilesIn %s"
+        "STAR --outSAMtype BAM SortedByCoordinate \
+              --outSAMstrandField intronMotif \
+              --outFilterIntronMotifs RemoveNoncanonical \
+              --genomeDir %s \
+              --runThreadN %d \
+              --outFileNamePrefix %s \
+              --readFilesIn %s"
                (Filename.quote star_index_dir)
                processors
                result_prefix
-               r1_path
+               (Filename.quote r1_path)
   in
   let base_star_target ~star_command = 
     workflow_node ~name
