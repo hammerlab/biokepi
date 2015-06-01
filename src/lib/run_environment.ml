@@ -44,6 +44,7 @@ module Tool = struct
     let muse = custom "muse" ~version:"1.0b"
     let star = custom "star" ~version:"2.4.1d"
     let stringtie = custom "stringtie" ~version:"1.0.4"
+    let cufflinks = custom "cufflinks" ~version:"2.2.1"
   end
   type t = {
     definition: Definition.t;
@@ -237,6 +238,34 @@ module Tool_providers = struct
             ))
     in
     Tool.create Tool.Default.samtools ~ensure
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let cufflinks_tools ~host ~meta_playground = 
+    let install_path = meta_playground // "cufflinks" in
+    let url = 
+      "http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz" in
+    let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
+    let archive = Filename.basename url in
+    let cufflinks_binary = "cufflinks" in
+    let ensure =
+      workflow_node (single_file ~host (install_path // cufflinks_binary))
+        ~name:(sprintf "Install Cufflinks")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvf%s %s" tar_option archive
+              && shf "cd cufflinks-*"
+              && sh "cp * ../"
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.cufflinks ~ensure 
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let vcftools ~host ~meta_playground =
@@ -472,6 +501,7 @@ module Tool_providers = struct
       virmid_tool ~host ~meta_playground;
       star_tool ~host ~meta_playground;
       stringtie_tool ~host ~meta_playground;
+      cufflinks_tools ~host ~meta_playground;
     ]
 end
 
