@@ -27,12 +27,12 @@ let post_vcf
     List.filter_opt [
       Some ("-V", vcf#product#path);
       Some ("-v", variant_caller_name);
-      Some ("-d", dataset_name);
+      Some ("-P", dataset_name);
       Option.map truth_vcf ~f:(with_path "-T"); 
       Some ("-U", url);
       Option.map tumor_bam ~f:(with_path "-t");
       Option.map normal_bam ~f:(with_path "-n");
-      Option.map params ~f:(fun p -> "-p", p);
+      Option.map params ~f:(fun p -> "-N", p);
       Some ("-w", Option.value witness_output ~default:"/tmp/www")
     ]
     |> List.concat_map ~f:(fun (x, y) -> [x; y]) in
