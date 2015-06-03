@@ -122,7 +122,6 @@ let bam_to_fastq
   let name =
     sprintf "picard-bam2fastq-%s" Filename.(basename input_bam#product#path) in
   let make = Machine.run_program ~name run_with program in
-  let host = Machine.(as_host run_with) in
   workflow_node (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
     ~name ~make
     ~edges:[
