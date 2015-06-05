@@ -17,7 +17,6 @@ let run ?(reference_build=`B37)
   let reference_annotations =
     Machine.get_reference_genome run_with reference_build |> Reference_genome.gtf_exn in
   let cufflinks_tool = Machine.get_tool run_with Tool.Default.cufflinks in
-  let working_dir = Filename.(dirname result_prefix) in
   let make =
     Machine.run_program run_with ~name ~processors
       Program.(
