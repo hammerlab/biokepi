@@ -8,4 +8,4 @@ env:
   global:
     - PACKAGE=biokepi INSTALL=true TESTS=false
   matrix:
-    - OCAML_VERSION=4.02.0
+    - OCAML_VERSION=4.02
