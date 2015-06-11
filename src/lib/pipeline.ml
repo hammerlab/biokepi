@@ -265,7 +265,7 @@ let rec to_file_prefix:
     begin match w with
     | Fastq_gz _ -> failwith "TODO"
     | Fastq _ -> failwith "TODO"
-    | Single_end_sample _ -> failwith "TODO"
+    | Single_end_sample (name, _) -> name ^ is_suffix
     | Gunzip_concat [] -> failwith "TODO"
     | Gunzip_concat (_ :: _) ->
       begin match read with
