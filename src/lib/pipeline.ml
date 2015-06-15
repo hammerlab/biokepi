@@ -79,6 +79,7 @@ type _ t =
   | Gunzip_concat: fastq_gz  t list -> fastq  t
   | Concat_text: fastq  t list -> fastq  t
   | Star: fastq_sample  t -> bam  t
+  | Hisat: fastq_sample  t -> bam  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
   | Gatk_indel_realigner: bam t -> bam t
@@ -129,6 +130,8 @@ module Construct = struct
     Bwa_mem (params, fastq)
 
   let star fastq = Star fastq
+
+  let hisat fastq = Hisat fastq
 
   let gatk_indel_realigner bam = Gatk_indel_realigner bam
   let picard_mark_duplicates
@@ -289,6 +292,8 @@ let rec to_file_prefix:
         (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
     | Star (sample) ->
       sprintf "%s-star-aligned" (to_file_prefix ?is sample)
+    | Hisat (sample) ->
+      sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
     | Gatk_indel_realigner bam ->
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
     | Gatk_bqsr bam ->
@@ -344,6 +349,9 @@ let rec to_json: type a. a t -> json =
     | Star (input) ->
       let input_json = to_json input in
       call "STAR" [input_json]
+    | Hisat (input) ->
+      let input_json = to_json input in
+      call "HISAT" [input_json]
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
@@ -452,6 +460,10 @@ let rec compile_aligner_step
   | Star (what) ->
     let fastq = compile_fastq_sample what in
     Star.align ~reference_build ~processors
+     ~fastq ~result_prefix ~run_with:machine ()
+  | Hisat (what) ->
+    let fastq = compile_fastq_sample what in
+    Hisat.align ~reference_build ~processors
      ~fastq ~result_prefix ~run_with:machine ()
 
 let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
