@@ -411,6 +411,7 @@ let rec compile_aligner_step
       let open KEDSL in
       workflow_node (fastq_reads ~host:Machine.(as_host machine)
                        r1#product#path None)
+        ~equivalence:`None
         ~edges:[ depends_on r1 ]
         ~name:(sprintf "single-end %s"
                  (Filename.basename r1#product#path))
