@@ -156,7 +156,7 @@ module KEDSL = struct
       method is_done =
         Some (match r2_file_opt with
           | Some r2 -> `And [r1_file#exists; r2#exists]
-          | None -> r1_file#exists)
+          | None -> `And [r1_file#exists; r1_file#exists;])
     end
 
   type bam_file = <
