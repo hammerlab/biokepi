@@ -33,6 +33,7 @@ Library biokepi
            Cycledash,
            Cufflinks,
            Pipeline,
+           Hisat,
            Common_pipelines
 
 Executable biokepi_tests
