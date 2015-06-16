@@ -70,9 +70,7 @@ let align
   in
   let base_hisat_target ~hisat_command = 
     workflow_node ~name
-      (bam_file 
-        ?sorting:(Some `Coordinate)
-        ?contains:(Some `RNA)
+      (single_file
         ~host:(Machine.(as_host run_with)) 
         result)
       ~edges:[
