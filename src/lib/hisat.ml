@@ -61,12 +61,10 @@ let align
                "hisat \
                 -p %d \
                 -x %s \
-                -S %s \
-                -1 %s"
+                -S %s"
                 processors
                 (Filename.quote index_prefix)
                 (Filename.quote result)
-                (Filename.quote r1_path)
   in
   let base_hisat_target ~hisat_command = 
     workflow_node ~name
@@ -93,11 +91,13 @@ let align
     let hisat_command =
       String.concat ~sep:" " [
         hisat_base_command;
-        "-2";
-        (Filename.quote read2);
+        "-1"; (Filename.quote r1_path);
+        "-2"; (Filename.quote read2);
       ] in
       base_hisat_target ~hisat_command
     | None -> 
-      let hisat_command = hisat_base_command in
+      let hisat_command = String.concat ~sep:" " [
+        hisat_base_command;
+        "-U"; (Filename.quote r1_path);
+      ] in
       base_hisat_target ~hisat_command
-
