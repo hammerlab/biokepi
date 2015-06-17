@@ -45,6 +45,7 @@ module Tool = struct
     let star = custom "star" ~version:"2.4.1d"
     let stringtie = custom "stringtie" ~version:"1.0.4"
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
+    let hisat = custom "hisat" ~version:"0.1.6-beta"
   end
   type t = {
     definition: Definition.t;
@@ -194,6 +195,32 @@ module Tool_providers = struct
             ))
     in
     Tool.create Tool.Default.star ~ensure 
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let hisat_tool ~host ~meta_playground =
+    let install_path = meta_playground // "hisat" in
+    let url = "http://ccb.jhu.edu/software/hisat/downloads/hisat-0.1.6-beta-Linux_x86_64.zip" in
+    let archive = Filename.basename url in
+    let hisat_binary = "hisat" in
+    let ensure =
+      workflow_node (single_file ~host (install_path // hisat_binary))
+        ~name:(sprintf "Install HISAT")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "unzip %s" archive
+              && sh "cd hisat-*"
+              && sh "mv hisat* ../"
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.hisat ~ensure 
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let stringtie_tool ~host ~meta_playground =
@@ -502,6 +529,7 @@ module Tool_providers = struct
       star_tool ~host ~meta_playground;
       stringtie_tool ~host ~meta_playground;
       cufflinks_tools ~host ~meta_playground;
+      hisat_tool ~host ~meta_playground;
     ]
 end
 
