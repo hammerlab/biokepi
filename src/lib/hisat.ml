@@ -35,56 +35,54 @@ let index
           ))
 
 let align 
-  ~reference_build
-  ~processors
-  ~fastq
-  ~(result_prefix:string)
-  ~(run_with : Machine.t)
-  () =
+    ~reference_build
+    ~processors
+    ~fastq
+    ~(result_prefix:string)
+    ~(run_with : Machine.t)
+    () =
   let open KEDSL in
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
-      |> Reference_genome.fasta in
+    |> Reference_genome.fasta in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let index_dir = sprintf "%s/hisat-index/" reference_dir in
   let index_prefix = index_dir // "hisat-index" in
   let in_work_dir =
-      Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
+    Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
   let hisat_tool = Machine.get_tool run_with Tool.Default.hisat in
   let hisat_index = index ~reference_build ~run_with ~processors in
-  let reference_dir = (Filename.dirname reference_fasta#product#path) in
-  let hisat_index_dir = sprintf "%s/hisat-index/" reference_dir in
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "hisat-rna-align-%s" (Filename.basename r1_path) in
   let hisat_base_command = sprintf 
-               "hisat \
-                -p %d \
-                -x %s \
-                -S %s"
-                processors
-                (Filename.quote index_prefix)
-                (Filename.quote result)
+      "hisat \
+       -p %d \
+       -x %s \
+       -S %s"
+      processors
+      (Filename.quote index_prefix)
+      (Filename.quote result)
   in
   let base_hisat_target ~hisat_command = 
     workflow_node ~name
       (single_file
-        ~host:(Machine.(as_host run_with)) 
-        result)
+         ~host:(Machine.(as_host run_with)) 
+         result)
       ~edges:[
-            on_failure_activate (Remove.file ~run_with result);
-            depends_on reference_fasta;
-            depends_on hisat_index;
-            depends_on fastq;
-            depends_on Tool.(ensure hisat_tool);
-        ]
-        ~tags:[Target_tags.aligner]
-        ~make:(Machine.run_program run_with ~processors ~name
-             Program.(
-               Tool.(init hisat_tool)
-               && in_work_dir
-               && sh hisat_command 
-           ))
+        on_failure_activate (Remove.file ~run_with result);
+        depends_on reference_fasta;
+        depends_on hisat_index;
+        depends_on fastq;
+        depends_on Tool.(ensure hisat_tool);
+      ]
+      ~tags:[Target_tags.aligner]
+      ~make:(Machine.run_program run_with ~processors ~name
+               Program.(
+                 Tool.(init hisat_tool)
+                 && in_work_dir
+                 && sh hisat_command 
+               ))
   in
   match r2_path_opt with
   | Some read2 -> 
@@ -94,10 +92,10 @@ let align
         "-1"; (Filename.quote r1_path);
         "-2"; (Filename.quote read2);
       ] in
-      base_hisat_target ~hisat_command
-    | None -> 
-      let hisat_command = String.concat ~sep:" " [
+    base_hisat_target ~hisat_command
+  | None -> 
+    let hisat_command = String.concat ~sep:" " [
         hisat_base_command;
         "-U"; (Filename.quote r1_path);
       ] in
-      base_hisat_target ~hisat_command
+    base_hisat_target ~hisat_command

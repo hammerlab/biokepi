@@ -22,10 +22,15 @@ open KEDSL
 
 module Tool = struct
   module Definition = struct
-    type t = [
-      | `Bwa of [ `V_0_7_10 ]
-      | `Custom of string * string
-    ] [@@deriving yojson, show, eq]
+    include struct
+      (* hack to remove warning from generated code, cf.
+         https://github.com/whitequark/ppx_deriving/issues/41 *)
+      [@@@ocaml.warning "-11"]
+      type t = [
+        | `Bwa of [ `V_0_7_10 ]
+        | `Custom of string * string
+      ] [@@deriving yojson, show, eq]
+    end
     let custom n ~version = `Custom (n, version)
   end
   module Default = struct
