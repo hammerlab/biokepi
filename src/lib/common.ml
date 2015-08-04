@@ -29,7 +29,7 @@ let dbg fmt = ksprintf (eprintf "biokepi-debug: %s\n%!") fmt
 let failwithf fmt = ksprintf failwith fmt
 
 module Unique_id = struct
-  include Ketrew_pervasives.Unique_id
+  include Ketrew_pure.Internal_pervasives.Unique_id
 end
 
 
@@ -44,7 +44,7 @@ end
 module KEDSL = struct
 
   include Ketrew.EDSL
-  module Command = Ketrew_target.Command
+  module Command = Ketrew_pure.Target.Command
 
   type 'product workflow_node = <
     product : 'product;
@@ -106,18 +106,18 @@ module KEDSL = struct
   let file_target _ = `Please_KEDSL_workflow
 
   type single_file = <
-    exists: Ketrew_target.Condition.t;
-    is_done: Ketrew_target.Condition.t option;
+    exists: Ketrew_pure.Target.Condition.t;
+    is_done: Ketrew_pure.Target.Condition.t option;
     path : string;
-    is_bigger_than: int -> Ketrew_target.Condition.t;
+    is_bigger_than: int -> Ketrew_pure.Target.Condition.t;
   >
   let single_file ?(host= Host.tmp_on_localhost) path : single_file =
     let basename = Filename.basename path in
     object
       val vol =
-        Ketrew_target.Volume.(
+        Ketrew_pure.Target.Volume.(
           create ~host
-            ~root:(Ketrew.Path.absolute_directory_exn (Filename.dirname path))
+            ~root:(Ketrew_pure.Path.absolute_directory_exn (Filename.dirname path))
             (file basename))
       method path = path
       method exists = `Volume_exists vol
@@ -132,7 +132,7 @@ module KEDSL = struct
   type phony_workflow = nothing workflow_node
 
   type list_of_files = <
-    is_done: Ketrew_target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t option;
     paths : string list;
   >
   let list_of_files ?host paths =
@@ -145,7 +145,7 @@ module KEDSL = struct
 
 
   type fastq_reads = <
-    is_done: Ketrew_target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t option;
     paths : string * (string option);
   >
   let fastq_reads ?host r1 r2_opt : fastq_reads =
@@ -160,7 +160,7 @@ module KEDSL = struct
     end
 
   type bam_file = <
-    is_done: Ketrew_target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t option;
     path : string;
     sorting: [ `Coordinate | `Read_name ] option;
     content_type: [ `DNA | `RNA ];
@@ -174,6 +174,8 @@ module KEDSL = struct
       method content_type = contains
     end
 
+
+  let submit w = Ketrew.Client.submit w#target
 
 end
 
