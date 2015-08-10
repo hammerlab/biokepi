@@ -58,12 +58,13 @@ let align
   let star_index = index ~reference_build ~run_with ~processors in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let star_index_dir = sprintf "%s/star-index/" reference_dir in
-  let result = sprintf "%sAligned.sortedByCoord.out.bam" result_prefix in
+  let result = sprintf "%s.sortedByCoord.out.bam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "star-rna-align-%s" (Filename.basename r1_path) in
   let star_base_command = sprintf 
         "STAR --outSAMtype BAM SortedByCoordinate \
               --outSAMstrandField intronMotif \
+              --outSAMattributes NH HI NM MD \
               --outFilterIntronMotifs RemoveNoncanonical \
               --genomeDir %s \
               --runThreadN %d \
