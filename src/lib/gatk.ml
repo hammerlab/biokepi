@@ -147,6 +147,7 @@ let haplotype_caller ~run_with ~reference_build ~input_bam ~result_prefix how  =
               "-I"; sorted_bam#product#path;
               "-R"; reference_fasta#product#path;
               "-o"; output_vcf;
+              "--filter_reads_with_N_cigar";
             ]
           )
       in
