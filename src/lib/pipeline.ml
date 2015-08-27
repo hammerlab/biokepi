@@ -427,12 +427,17 @@ let rec compile_aligner_step
   match t with
   | Bam_sample (name, bam_target) -> bam_target
   | Gatk_indel_realigner bam ->
-    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
+    let input_bam =
+      compile_aligner_step
+        ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
-    Gatk.indel_realigner ~processors ~reference_build ~run_with:machine input_bam ~compress:false
+    Gatk.indel_realigner
+      ~processors ~reference_build ~run_with:machine input_bam ~compress:false
       ~output_bam
   | Gatk_bqsr bam ->
-    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
+    let input_bam =
+      compile_aligner_step
+        ~processors ~work_dir ~reference_build ?is ~machine bam in
     let output_bam = result_prefix ^ ".bam" in
     Gatk.base_quality_score_recalibrator
       ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
@@ -467,16 +472,23 @@ let rec compile_aligner_step
      ~fastq ~result_prefix ~run_with:machine ()
      |> Samtools.sam_to_bam ~run_with:machine
 
-let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
+let compile_variant_caller_step
+    ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
   let result_prefix = work_dir // to_file_prefix t in
   dbg "Result_Prefix: %S" result_prefix;
   match t with
   | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
-    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors (* TODO configurable processors ! *)
+    let normal =
+      compile_aligner_step
+        ~processors ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
+    let tumor =
+      compile_aligner_step
+        ~processors ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
+    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
       ~run_with:machine ~normal ~tumor ~result_prefix ()
   | Germline_variant_caller (gvc, bam) ->
-    let input_bam = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine bam in
+    let input_bam =
+      compile_aligner_step
+        ~processors ~reference_build ~work_dir ~is:`Normal ~machine bam in
     gvc.Germline_variant_caller.make_target ~processors ~reference_build
       ~run_with:machine ~input_bam ~result_prefix ()
