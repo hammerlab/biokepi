@@ -3,9 +3,10 @@ open Run_environment
 open Workflow_utilities
 
 let run ?(reference_build=`B37)
-    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
+    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix
+    ?(more_edges = []) how =
   let open KEDSL in
-  let run_on_region region =
+  let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in
       sprintf "%s-%s%s" result_prefix region_name suffix in
@@ -59,7 +60,7 @@ let run ?(reference_build=`B37)
       workflow_node ~name ~make
         (single_file output_file ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
-        ~edges:[
+        ~edges:(add_edges @ [
           depends_on Tool.(ensure mutect);
           depends_on sorted_normal;
           depends_on sorted_tumor;
@@ -71,13 +72,16 @@ let run ?(reference_build=`B37)
           depends_on (Samtools.index_to_bai ~run_with sorted_normal);
           depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
           on_failure_activate (Remove.file ~run_with output_file);
-        ]
+        ])
     in
     run_mutect
   in
   match how with
-  | `Region region -> run_on_region region
+  | `Region region -> run_on_region ~add_edges:more_edges region
   | `Map_reduce ->
-    let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
+    let targets =
+      List.map (Region.major_contigs ~reference_build)
+        (* We pass the more_edges only to the last step *)
+        ~f:(run_on_region ~add_edges:[]) in
     let final_vcf = result_prefix ^ "-merged.vcf" in
-    Vcftools.vcf_concat ~run_with targets ~final_vcf
+    Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges

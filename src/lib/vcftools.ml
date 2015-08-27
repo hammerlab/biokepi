@@ -2,7 +2,7 @@ open Common
 open Run_environment
 open Workflow_utilities
 
-let vcf_concat ~(run_with:Machine.t) vcfs ~final_vcf =
+let vcf_concat ~(run_with:Machine.t) ?(more_edges = []) vcfs ~final_vcf =
   let open KEDSL in
   let name = sprintf "merge-vcfs-%s" (Filename.basename final_vcf) in
   let vcftools = Machine.get_tool run_with Tool.Default.vcftools in
@@ -22,7 +22,8 @@ let vcf_concat ~(run_with:Machine.t) vcfs ~final_vcf =
       ~edges:(
         on_failure_activate (Remove.file ~run_with final_vcf)
         :: depends_on Tool.(ensure vcftools)
-        :: List.map ~f:depends_on vcfs)
+        :: List.map ~f:depends_on vcfs
+        @ more_edges)
   in
   vcf_concat
 

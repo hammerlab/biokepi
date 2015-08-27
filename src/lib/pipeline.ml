@@ -47,6 +47,7 @@ module Somatic_variant_caller = struct
       tumor: bam ->
       result_prefix: string ->
       processors: int ->
+      ?more_edges: KEDSL.workflow_edge list ->
       unit ->
       KEDSL.file_workflow
   }
@@ -169,8 +170,12 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
-      Mutect.run ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+    let make_target
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
+      Mutect.run
+        ?more_edges
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller
       {Somatic_variant_caller.name = "Mutect";
        configuration_json;
@@ -190,7 +195,9 @@ module Construct = struct
         "Prior-probability", `Float prior_probability;
         "Theta", `Float theta;
       ] in
-    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
+    let make_target
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
       Somaticsniper.run ~reference_build
         ~run_with ~minus_s:prior_probability ~minus_T:theta
         ~normal ~tumor ~result_prefix () in
@@ -216,8 +223,10 @@ module Construct = struct
        configuration_json;
        configuration_name;
        make_target = begin
-         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () ->
+         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+           ?more_edges () ->
            Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
+             ?more_edges
              ~run_with ~normal ~tumor ~result_prefix ()
        end}
       bam_pair
@@ -240,8 +249,9 @@ module Construct = struct
 
   let muse ~configuration bam_pair =
     let make_target ~reference_build
-        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors () =
-      Muse.run ~reference_build ~configuration
+        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
+      Muse.run ~reference_build ~configuration ?more_edges
         ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller 
       {Somatic_variant_caller.name = "Muse";
