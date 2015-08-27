@@ -97,7 +97,7 @@ module Machine = struct
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Reference_genome.t;
+    get_reference_genome: Reference_genome.specification -> Reference_genome.t;
     toolkit: Tool.Kit.t;
     quick_command: Program.t -> Ketrew_pure.Target.Build_process.t;
     run_program: run_function;

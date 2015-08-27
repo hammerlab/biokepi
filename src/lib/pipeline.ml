@@ -41,7 +41,7 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
+      reference_build: Reference_genome.specification -> 
       run_with:Run_environment.Machine.t ->
       normal: bam ->
       tumor: bam ->
@@ -59,7 +59,7 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
+      reference_build: Reference_genome.specification -> 
       run_with:Run_environment.Machine.t ->
       input_bam: bam ->
       result_prefix: string ->
