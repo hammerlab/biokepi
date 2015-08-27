@@ -119,9 +119,11 @@ let base_quality_score_recalibrator
     ]
 
 
-let haplotype_caller ~run_with ~reference_build ~input_bam ~result_prefix how  =
+let haplotype_caller
+    ?(more_edges = [])
+    ~run_with ~reference_build ~input_bam ~result_prefix how =
   let open KEDSL in
-  let run_on_region region =
+  let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in
       sprintf "%s-%s%s" result_prefix region_name suffix in
@@ -154,22 +156,25 @@ let haplotype_caller ~run_with ~reference_build ~input_bam ~result_prefix how  =
       workflow_node ~name ~make
         (single_file output_vcf ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
-        ~edges:[
-          depends_on Tool.(ensure gatk);
-          depends_on sorted_bam;
-          depends_on reference_fasta;
-          depends_on dbsnp;
-          depends_on reference_dot_fai;
-          depends_on sequence_dict;
-          depends_on (Samtools.index_to_bai ~run_with sorted_bam);
-          on_failure_activate (Remove.file ~run_with output_vcf);
-        ]
+        ~edges:(add_edges @ [
+            depends_on Tool.(ensure gatk);
+            depends_on sorted_bam;
+            depends_on reference_fasta;
+            depends_on dbsnp;
+            depends_on reference_dot_fai;
+            depends_on sequence_dict;
+            depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+            on_failure_activate (Remove.file ~run_with output_vcf);
+          ])
     in
     run_gatk_haplotype_caller
   in
   match how with
-  | `Region region -> run_on_region region
+  | `Region region -> run_on_region ~add_edges:more_edges region
   | `Map_reduce ->
-    let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
+    let targets =
+      List.map (Region.major_contigs ~reference_build)
+        ~f:(run_on_region ~add_edges:[]) (* we add edges only to the last step *)
+    in
     let final_vcf = result_prefix ^ "-merged.vcf" in
-    Vcftools.vcf_concat ~run_with targets ~final_vcf
+    Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges

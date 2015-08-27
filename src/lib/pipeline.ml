@@ -64,6 +64,7 @@ module Germline_variant_caller = struct
       input_bam: bam ->
       result_prefix: string ->
       processors: int ->
+      ?more_edges: KEDSL.workflow_edge list ->
       unit ->
       KEDSL.file_workflow
   }
@@ -152,8 +153,11 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~reference_build ~run_with ~input_bam ~result_prefix ~processors () =
-      Gatk.haplotype_caller ~reference_build ~run_with ~input_bam ~result_prefix `Map_reduce in
+    let make_target
+        ~reference_build ~run_with ~input_bam ~result_prefix ~processors
+        ?more_edges () =
+      Gatk.haplotype_caller ?more_edges ~reference_build ~run_with
+        ~input_bam ~result_prefix `Map_reduce in
     germline_variant_caller
       {Germline_variant_caller.name = "Gatk-HaplotypeCaller";
         configuration_json;
