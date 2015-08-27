@@ -395,9 +395,21 @@ module Compiler = struct
     reference_build: Reference_genome.specification;
     work_dir: string;
     machine : Machine.t;
+    wrap_bam_node:
+      bam pipeline ->
+      KEDSL.bam_file KEDSL.workflow_node ->
+      KEDSL.bam_file KEDSL.workflow_node;
+    wrap_vcf_node:
+      vcf pipeline ->
+      KEDSL.single_file KEDSL.workflow_node ->
+      KEDSL.single_file KEDSL.workflow_node;
   }
-  let create ~processors ~reference_build ~work_dir ~machine () =
-    {processors ; reference_build; work_dir; machine ;}
+  let create
+      ?(wrap_bam_node = fun _ x -> x)
+      ?(wrap_vcf_node = fun _ x -> x)
+      ~processors ~reference_build ~work_dir ~machine () =
+    {processors; reference_build; work_dir; machine;
+     wrap_bam_node; wrap_vcf_node}
 
   let rec compile_aligner_step
       ~compiler ?(is:[`Normal | `Tumor] option) (pipeline : bam pipeline) =
@@ -447,61 +459,67 @@ module Compiler = struct
           ~name:(sprintf "single-end %s"
                    (Filename.basename r1#product#path))
     in
-    match pipeline with
-    | Bam_sample (name, bam_target) -> bam_target
-    | Gatk_indel_realigner bam ->
-      let input_bam = compile_aligner_step ~compiler ?is bam in
-      let output_bam = result_prefix ^ ".bam" in
-      Gatk.indel_realigner
-        ~processors ~reference_build ~run_with:machine input_bam ~compress:false
-        ~output_bam
-    | Gatk_bqsr bam ->
-      let input_bam = compile_aligner_step ~compiler ?is bam in
-      let output_bam = result_prefix ^ ".bam" in
-      Gatk.base_quality_score_recalibrator
-        ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
-    | Picard_mark_duplicates (settings, bam) ->
-      let input_bam = compile_aligner_step ~compiler ?is bam in
-      let output_bam = result_prefix ^ ".bam" in
-      Picard.mark_duplicates ~settings
-        ~run_with:machine ~input_bam output_bam
-    | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
-      let fastq = compile_fastq_sample what in
-      Bwa.mem_align_to_sam
-        ~reference_build ~processors
-        ~gap_open_penalty ~gap_extension_penalty
-        ~fastq ~result_prefix ~run_with:machine ()
-      |> Samtools.sam_to_bam ~run_with:machine
-    | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
-      let fastq = compile_fastq_sample what in
-      Bwa.align_to_sam
-        ~reference_build ~processors
-        ~gap_open_penalty ~gap_extension_penalty
-        ~fastq ~result_prefix ~run_with:machine ()
-      |> Samtools.sam_to_bam ~run_with:machine
-    | Star (what) ->
-      let fastq = compile_fastq_sample what in
-      Star.align ~reference_build ~processors
-        ~fastq ~result_prefix ~run_with:machine ()
-    | Hisat (what) ->
-      let fastq = compile_fastq_sample what in
-      Hisat.align ~reference_build ~processors
-        ~fastq ~result_prefix ~run_with:machine ()
-      |> Samtools.sam_to_bam ~run_with:machine
+    let bam_node =
+      match pipeline with
+      | Bam_sample (name, bam_target) -> bam_target
+      | Gatk_indel_realigner bam ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Gatk.indel_realigner
+          ~processors ~reference_build ~run_with:machine input_bam ~compress:false
+          ~output_bam
+      | Gatk_bqsr bam ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Gatk.base_quality_score_recalibrator
+          ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
+      | Picard_mark_duplicates (settings, bam) ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Picard.mark_duplicates ~settings
+          ~run_with:machine ~input_bam output_bam
+      | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
+        let fastq = compile_fastq_sample what in
+        Bwa.mem_align_to_sam
+          ~reference_build ~processors
+          ~gap_open_penalty ~gap_extension_penalty
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+      | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
+        let fastq = compile_fastq_sample what in
+        Bwa.align_to_sam
+          ~reference_build ~processors
+          ~gap_open_penalty ~gap_extension_penalty
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+      | Star (what) ->
+        let fastq = compile_fastq_sample what in
+        Star.align ~reference_build ~processors
+          ~fastq ~result_prefix ~run_with:machine ()
+      | Hisat (what) ->
+        let fastq = compile_fastq_sample what in
+        Hisat.align ~reference_build ~processors
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+    in
+    compiler.wrap_bam_node pipeline bam_node
 
   let compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
-    match pipeline with
-    | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-      let normal = compile_aligner_step ~compiler ~is:`Normal normal_t in
-      let tumor = compile_aligner_step ~compiler ~is:`Tumor tumor_t in
-      som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
-        ~run_with:machine ~normal ~tumor ~result_prefix ()
-    | Germline_variant_caller (gvc, bam) ->
-      let input_bam = compile_aligner_step ~compiler ~is:`Normal bam in
-      gvc.Germline_variant_caller.make_target ~processors ~reference_build
-        ~run_with:machine ~input_bam ~result_prefix ()
+    let vcf_node =
+      match pipeline with
+      | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
+        let normal = compile_aligner_step ~compiler ~is:`Normal normal_t in
+        let tumor = compile_aligner_step ~compiler ~is:`Tumor tumor_t in
+        som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
+          ~run_with:machine ~normal ~tumor ~result_prefix ()
+      | Germline_variant_caller (gvc, bam) ->
+        let input_bam = compile_aligner_step ~compiler ~is:`Normal bam in
+        gvc.Germline_variant_caller.make_target ~processors ~reference_build
+          ~run_with:machine ~input_bam ~result_prefix ()
+    in
+    compiler.wrap_vcf_node pipeline vcf_node
 
 end
