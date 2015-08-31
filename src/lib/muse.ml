@@ -33,7 +33,7 @@ end
 
 let run
     ~reference_build ~configuration
-    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix how =
+    ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ?(more_edges = []) how =
   let open KEDSL in
   let reference = Machine.get_reference_genome run_with reference_build in
   let muse_tool = Machine.get_tool run_with Tool.Default.muse in
@@ -113,14 +113,14 @@ let run
     workflow_node ~name ~make
       (single_file vcf_output ~host:Machine.(as_host run_with))
       ~tags:[Target_tags.variant_caller; "muse"]
-      ~edges:[
+      ~edges:(more_edges @ [ (* muse_sump is the last step in every case *)
         depends_on Tool.(ensure muse_tool);
         depends_on call_file;
         depends_on bgzipped_dbsnp;
         depends_on
           (Samtools.tabix ~run_with ~tabular_format:`Vcf bgzipped_dbsnp);
         on_failure_activate (Remove.file ~run_with vcf_output);
-      ]
+      ])
   in
   begin match how with
   | `Region region ->

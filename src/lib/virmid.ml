@@ -35,7 +35,8 @@ module Configuration = struct
 end
 
 let run ~reference_build
-    ~run_with ~normal ~tumor ~result_prefix ~processors ~configuration () =
+    ~run_with ~normal ~tumor ~result_prefix ~processors
+    ?(more_edges = []) ~configuration () =
   let open KEDSL in
   let open Configuration in 
   let name = Filename.basename result_prefix in
@@ -71,9 +72,9 @@ let run ~reference_build
   in
   workflow_node ~name ~make
     (single_file output_file ~host:(Machine.as_host run_with))
-    ~edges:[
+    ~edges:(more_edges @ [
       depends_on normal;
       depends_on tumor;
       depends_on reference_fasta;
       depends_on (Tool.ensure virmid_tool);
-    ]
+    ])

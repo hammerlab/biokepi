@@ -91,15 +91,15 @@ end
 module Machine = struct
 
   type run_function = ?name:string -> ?processors:int -> Program.t ->
-    Ketrew_target.Build_process.t
+    Ketrew_pure.Target.Build_process.t
 
   type t = {
     name: string;
     ssh_name: string;
     host: Host.t;
-    get_reference_genome: [`B37 | `hg19 | `hg18 | `B38 | `B37decoy ] -> Reference_genome.t;
+    get_reference_genome: Reference_genome.specification -> Reference_genome.t;
     toolkit: Tool.Kit.t;
-    quick_command: Program.t -> Ketrew_target.Build_process.t;
+    quick_command: Program.t -> Ketrew_pure.Target.Build_process.t;
     run_program: run_function;
     work_dir: string;
   }
@@ -337,7 +337,8 @@ module Tool_providers = struct
     let binary = path // "usr/bin/bam-somaticsniper1.0.3" in
     let open KEDSL in
     workflow_node (single_file binary ~host)
-      ~name:(sprintf "get_somaticsniper-on-%s" (Ketrew_host.to_string_hum host))
+      ~name:(sprintf "get_somaticsniper-on-%s"
+               (Ketrew_pure.Host.to_string_hum host))
       ~make:(daemonize ~using:`Nohup_setsid ~host
                Program.(
                  exec ["mkdir"; "-p"; path]

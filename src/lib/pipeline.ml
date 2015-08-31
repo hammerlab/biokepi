@@ -41,12 +41,13 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
+      reference_build: Reference_genome.specification -> 
       run_with:Run_environment.Machine.t ->
       normal: bam ->
       tumor: bam ->
       result_prefix: string ->
       processors: int ->
+      ?more_edges: KEDSL.workflow_edge list ->
       unit ->
       KEDSL.file_workflow
   }
@@ -58,11 +59,12 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ] -> 
+      reference_build: Reference_genome.specification -> 
       run_with:Run_environment.Machine.t ->
       input_bam: bam ->
       result_prefix: string ->
       processors: int ->
+      ?more_edges: KEDSL.workflow_edge list ->
       unit ->
       KEDSL.file_workflow
   }
@@ -151,8 +153,11 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~reference_build ~run_with ~input_bam ~result_prefix ~processors () =
-      Gatk.haplotype_caller ~reference_build ~run_with ~input_bam ~result_prefix `Map_reduce in
+    let make_target
+        ~reference_build ~run_with ~input_bam ~result_prefix ~processors
+        ?more_edges () =
+      Gatk.haplotype_caller ?more_edges ~reference_build ~run_with
+        ~input_bam ~result_prefix `Map_reduce in
     germline_variant_caller
       {Germline_variant_caller.name = "Gatk-HaplotypeCaller";
         configuration_json;
@@ -169,8 +174,12 @@ module Construct = struct
       `Assoc [
         "Name", `String configuration_name;
       ] in
-    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
-      Mutect.run ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+    let make_target
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
+      Mutect.run
+        ?more_edges
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller
       {Somatic_variant_caller.name = "Mutect";
        configuration_json;
@@ -190,7 +199,9 @@ module Construct = struct
         "Prior-probability", `Float prior_probability;
         "Theta", `Float theta;
       ] in
-    let make_target ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () =
+    let make_target
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
       Somaticsniper.run ~reference_build
         ~run_with ~minus_s:prior_probability ~minus_T:theta
         ~normal ~tumor ~result_prefix () in
@@ -216,8 +227,10 @@ module Construct = struct
        configuration_json;
        configuration_name;
        make_target = begin
-         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors () ->
+         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+           ?more_edges () ->
            Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
+             ?more_edges
              ~run_with ~normal ~tumor ~result_prefix ()
        end}
       bam_pair
@@ -240,8 +253,9 @@ module Construct = struct
 
   let muse ~configuration bam_pair =
     let make_target ~reference_build
-        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors () =
-      Muse.run ~reference_build ~configuration
+        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
+      Muse.run ~reference_build ~configuration ?more_edges
         ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller 
       {Somatic_variant_caller.name = "Muse";
@@ -374,109 +388,138 @@ let rec to_json: type a. a t -> json =
           "Input", to_json bam_pair;
         ]]
 
-let rec compile_aligner_step
-    ~reference_build ~processors
-    ~work_dir ?(is:[`Normal | `Tumor] option) ~machine (t : bam t) =
-  let gunzip_concat ?read (t: fastq  t) =
-    match t with
-    | Fastq f -> f
-    | Concat_text (l: fastq t list) ->
-      failwith "Concat_text: not implemented"
-    | Gunzip_concat (l: fastq_gz t list) ->
-      let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
-      let result_path = work_dir // to_file_prefix ?is ?read t ^ ".fastq" in
-      dbg "Result_Path: %S" result_path;
-      Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
-  in
-  let result_prefix = work_dir // to_file_prefix ?is t in
-  dbg "Result_Prefix: %S" result_prefix;
-  let compile_fastq_sample (fs : fastq_sample t) =
-    match fs with
-    | Bam_to_fastq (how, what) ->
-      let bam =
-        compile_aligner_step
-          ~reference_build ~processors ~work_dir ?is ~machine what in
-      let sample_type =
-        match how with `Single -> `Single_end | `Paired -> `Paired_end in
-      let fastq_pair =
-        let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
-        Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
-          ~output_prefix bam
-      in
-      fastq_pair
-    | Paired_end_sample (dataset, l1, l2) ->
-      let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
-      let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
-      let open KEDSL in
-      workflow_node (fastq_reads ~host:Machine.(as_host machine)
-                       r1#product#path (Some r2#product#path))
-        ~name:(sprintf "pairing %s and %s"
-                 (Filename.basename r1#product#path)
-                 (Filename.basename r2#product#path))
-        ~edges:[ depends_on r1; depends_on r2 ]
-    | Single_end_sample (dataset, single) ->
-      let r1 = gunzip_concat ~read:(`R1 dataset) single in
-      let open KEDSL in
-      workflow_node (fastq_reads ~host:Machine.(as_host machine)
-                       r1#product#path None)
-        ~equivalence:`None
-        ~edges:[ depends_on r1 ]
-        ~name:(sprintf "single-end %s"
-                 (Filename.basename r1#product#path))
-  in
-  match t with
-  | Bam_sample (name, bam_target) -> bam_target
-  | Gatk_indel_realigner bam ->
-    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
-    let output_bam = result_prefix ^ ".bam" in
-    Gatk.indel_realigner ~processors ~reference_build ~run_with:machine input_bam ~compress:false
-      ~output_bam
-  | Gatk_bqsr bam ->
-    let input_bam = compile_aligner_step ~processors ~work_dir ~reference_build ?is ~machine bam in
-    let output_bam = result_prefix ^ ".bam" in
-    Gatk.base_quality_score_recalibrator
-      ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
-  | Picard_mark_duplicates (settings, bam) ->
-    let input_bam =
-      compile_aligner_step
-        ~processors ~work_dir ~reference_build ?is ~machine bam in
-    let output_bam = result_prefix ^ ".bam" in
-    Picard.mark_duplicates ~settings
-      ~run_with:machine ~input_bam output_bam
-  | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
-    let fastq = compile_fastq_sample what in
-    Bwa.mem_align_to_sam
-      ~reference_build ~processors
-      ~gap_open_penalty ~gap_extension_penalty
-      ~fastq ~result_prefix ~run_with:machine ()
-    |> Samtools.sam_to_bam ~run_with:machine
-  | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
-    let fastq = compile_fastq_sample what in
-    Bwa.align_to_sam
-      ~reference_build ~processors
-      ~gap_open_penalty ~gap_extension_penalty
-      ~fastq ~result_prefix ~run_with:machine ()
-    |> Samtools.sam_to_bam ~run_with:machine
-  | Star (what) ->
-    let fastq = compile_fastq_sample what in
-    Star.align ~reference_build ~processors
-     ~fastq ~result_prefix ~run_with:machine ()
-  | Hisat (what) ->
-    let fastq = compile_fastq_sample what in
-    Hisat.align ~reference_build ~processors
-     ~fastq ~result_prefix ~run_with:machine ()
-     |> Samtools.sam_to_bam ~run_with:machine
+module Compiler = struct
+  type 'a pipeline = 'a t
+  type t = {
+    processors : int;
+    reference_build: Reference_genome.specification;
+    work_dir: string;
+    machine : Machine.t;
+    wrap_bam_node:
+      bam pipeline ->
+      KEDSL.bam_file KEDSL.workflow_node ->
+      KEDSL.bam_file KEDSL.workflow_node;
+    wrap_vcf_node:
+      vcf pipeline ->
+      KEDSL.single_file KEDSL.workflow_node ->
+      KEDSL.single_file KEDSL.workflow_node;
+  }
+  let create
+      ?(wrap_bam_node = fun _ x -> x)
+      ?(wrap_vcf_node = fun _ x -> x)
+      ~processors ~reference_build ~work_dir ~machine () =
+    {processors; reference_build; work_dir; machine;
+     wrap_bam_node; wrap_vcf_node}
 
-let compile_variant_caller_step ~reference_build ~work_dir ~machine ?(processors=4) (t: vcf t) =
-  let result_prefix = work_dir // to_file_prefix t in
-  dbg "Result_Prefix: %S" result_prefix;
-  match t with
-  | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-    let normal = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine normal_t in
-    let tumor = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Tumor ~machine tumor_t in
-    som_vc.Somatic_variant_caller.make_target ~reference_build ~processors (* TODO configurable processors ! *)
-      ~run_with:machine ~normal ~tumor ~result_prefix ()
-  | Germline_variant_caller (gvc, bam) ->
-    let input_bam = compile_aligner_step ~processors ~reference_build ~work_dir ~is:`Normal ~machine bam in
-    gvc.Germline_variant_caller.make_target ~processors ~reference_build
-      ~run_with:machine ~input_bam ~result_prefix ()
+  let rec compile_aligner_step
+      ~compiler ?(is:[`Normal | `Tumor] option) (pipeline : bam pipeline) =
+    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let gunzip_concat ?read (pipeline: fastq  pipeline) =
+      match pipeline with
+      | Fastq f -> f
+      | Concat_text (l: fastq pipeline list) ->
+        failwith "Concat_text: not implemented"
+      | Gunzip_concat (l: fastq_gz pipeline list) ->
+        let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
+        let result_path = work_dir // to_file_prefix ?is ?read pipeline ^ ".fastq" in
+        dbg "Result_Path: %S" result_path;
+        Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
+    in
+    let result_prefix = work_dir // to_file_prefix ?is pipeline in
+    dbg "Result_Prefix: %S" result_prefix;
+    let compile_fastq_sample (fs : fastq_sample pipeline) =
+      match fs with
+      | Bam_to_fastq (how, what) ->
+        let bam = compile_aligner_step ~compiler ?is what in
+        let sample_type =
+          match how with `Single -> `Single_end | `Paired -> `Paired_end in
+        let fastq_pair =
+          let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
+          Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
+            ~output_prefix bam
+        in
+        fastq_pair
+      | Paired_end_sample (dataset, l1, l2) ->
+        let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
+        let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
+        let open KEDSL in
+        workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         r1#product#path (Some r2#product#path))
+          ~name:(sprintf "pairing %s and %s"
+                   (Filename.basename r1#product#path)
+                   (Filename.basename r2#product#path))
+          ~edges:[ depends_on r1; depends_on r2 ]
+      | Single_end_sample (dataset, single) ->
+        let r1 = gunzip_concat ~read:(`R1 dataset) single in
+        let open KEDSL in
+        workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         r1#product#path None)
+          ~equivalence:`None
+          ~edges:[ depends_on r1 ]
+          ~name:(sprintf "single-end %s"
+                   (Filename.basename r1#product#path))
+    in
+    let bam_node =
+      match pipeline with
+      | Bam_sample (name, bam_target) -> bam_target
+      | Gatk_indel_realigner bam ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Gatk.indel_realigner
+          ~processors ~reference_build ~run_with:machine input_bam ~compress:false
+          ~output_bam
+      | Gatk_bqsr bam ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Gatk.base_quality_score_recalibrator
+          ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
+      | Picard_mark_duplicates (settings, bam) ->
+        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let output_bam = result_prefix ^ ".bam" in
+        Picard.mark_duplicates ~settings
+          ~run_with:machine ~input_bam output_bam
+      | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
+        let fastq = compile_fastq_sample what in
+        Bwa.mem_align_to_sam
+          ~reference_build ~processors
+          ~gap_open_penalty ~gap_extension_penalty
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+      | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
+        let fastq = compile_fastq_sample what in
+        Bwa.align_to_sam
+          ~reference_build ~processors
+          ~gap_open_penalty ~gap_extension_penalty
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+      | Star (what) ->
+        let fastq = compile_fastq_sample what in
+        Star.align ~reference_build ~processors
+          ~fastq ~result_prefix ~run_with:machine ()
+      | Hisat (what) ->
+        let fastq = compile_fastq_sample what in
+        Hisat.align ~reference_build ~processors
+          ~fastq ~result_prefix ~run_with:machine ()
+        |> Samtools.sam_to_bam ~run_with:machine
+    in
+    compiler.wrap_bam_node pipeline bam_node
+
+  let compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
+    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let result_prefix = work_dir // to_file_prefix pipeline in
+    dbg "Result_Prefix: %S" result_prefix;
+    let vcf_node =
+      match pipeline with
+      | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
+        let normal = compile_aligner_step ~compiler ~is:`Normal normal_t in
+        let tumor = compile_aligner_step ~compiler ~is:`Tumor tumor_t in
+        som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
+          ~run_with:machine ~normal ~tumor ~result_prefix ()
+      | Germline_variant_caller (gvc, bam) ->
+        let input_bam = compile_aligner_step ~compiler ~is:`Normal bam in
+        gvc.Germline_variant_caller.make_target ~processors ~reference_build
+          ~run_with:machine ~input_bam ~result_prefix ()
+    in
+    compiler.wrap_vcf_node pipeline vcf_node
+
+end

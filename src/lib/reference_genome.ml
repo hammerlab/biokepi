@@ -1,5 +1,8 @@
 open Common
 
+type specification =
+  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ]
+
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.
      Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.

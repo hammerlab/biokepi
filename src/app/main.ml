@@ -144,12 +144,15 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
   let work_dir =
     Biokepi.Run_environment.Machine.work_dir machine
     // sprintf "on-%s" dataset in
+  let compiler = 
+    Biokepi.Pipeline.Compiler.create
+      ~reference_build:`B37 ~work_dir ~machine ~processors:2 () in
   let compiled =
     List.map pipelines
       ~f:(fun pl ->
           let t =
-            Biokepi.Pipeline.compile_variant_caller_step ~reference_build:`B37
-              ~work_dir ~machine pl in
+            Biokepi.Pipeline.Compiler.compile_variant_caller_step ~compiler pl
+          in
           `Target t,
           `Json_blob (
             `Assoc [
@@ -181,7 +184,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
 
 let run_pipeline_example ~push_result ~pipeline_name pipeline =
   let workflow = pipeline_example_target ~push_result ~pipeline_name pipeline in
-  Ketrew_client.submit workflow#target
+  KEDSL.submit workflow
     
 let () =
   let open Cmdliner in

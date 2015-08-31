@@ -20,6 +20,9 @@
 
 open Common
 
+type specification =
+  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ]
+
 type t = {
   name : string;
   location : KEDSL.file_workflow;
