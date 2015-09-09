@@ -576,6 +576,7 @@ module Tool_providers = struct
       stringtie_tool ~host ~meta_playground;
       cufflinks_tools ~host ~meta_playground;
       hisat_tool ~host ~meta_playground;
+      mosaik_tool ~host ~meta_playground;
     ]
 end
 
