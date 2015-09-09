@@ -51,6 +51,7 @@ module Tool = struct
     let stringtie = custom "stringtie" ~version:"1.0.4"
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
     let hisat = custom "hisat" ~version:"0.1.6-beta"
+    let mosaik = custom "mosaik" ~version:"2.2.3"
   end
   type t = {
     definition: Definition.t;
@@ -142,7 +143,11 @@ module Tool_providers = struct
     let install_program =
       Program.(Option.value_map install_command
                  ~f:sh ~default:(shf "cp %s ../" tool_name)) in
-    let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
+    let tar_option = 
+      if Filename.check_suffix url "bz2" then "j" 
+      else if Filename.check_suffix url "gz"  then "z"
+      else "" 
+    in
     workflow_node
       ~name:(sprintf "Install %s" tool_name)
       (single_file ~host
@@ -173,6 +178,41 @@ module Tool_providers = struct
         ~install_path in
     Tool.create (`Bwa `V_0_7_10) ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let mosaik_tool ~host ~meta_playground = 
+    let install_path = meta_playground // "mosaik" in
+    let url = "https://mosaik-aligner.googlecode.com/files/MOSAIK-2.2.3-source.tar" in
+    let archive = Filename.basename url in
+    let ensure =
+      workflow_node (single_file ~host (install_path // "MosaikAligner"))
+        ~name:(sprintf "Install MOSAIK")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvf %s" archive
+              && shf "cd MOSAIK*"
+              && sh "make"
+              && sh "cp networkFile/*pe.ann ../pe.ann"
+              && sh "cp networkFile/*se.ann ../se.ann"
+              && sh "cp ../bin/* ../"
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.mosaik ~ensure 
+      ~init:(
+        Program.(
+          shf "export PATH=%s:$PATH" install_path
+          && shf "export MOSAIK_PE_ANN=%s/pe.ann" install_path
+          && shf "export MOSAIK_SE_ANN=%s/se.ann" install_path
+      ))
+
+        
 
   let star_tool ~host ~meta_playground =
     let install_path = meta_playground // "star" in
