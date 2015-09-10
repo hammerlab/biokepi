@@ -30,9 +30,11 @@ let index
               Tool.(init mosaik_tool)
               && shf "mkdir -p %s" mosaik_tmp_dir
               && shf "export MOSAIK_TMP=%s" mosaik_tmp_dir 
+              (* Command to build basic MOSAIK reference file *)
               && shf "MosaikBuild -fr %s -oa %s"
                 reference_fasta#product#path
                 index_result
+              (* Command to build MOSAIK index file *)
               && shf "MosaikJump -ia %s -hs 15 -out %s"
                 index_result
                 jump_file_result
