@@ -84,6 +84,7 @@ type _ t =
   | Hisat: fastq_sample  t -> bam  t
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
+  | Mosaik: fastq_sample t -> bam t
   | Gatk_indel_realigner: bam t -> bam t
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
   | Gatk_bqsr: bam t -> bam t
@@ -130,6 +131,8 @@ module Construct = struct
       fastq =
     let params = {gap_open_penalty; gap_extension_penalty} in
     Bwa_mem (params, fastq)
+
+  let mosaik fastq = Mosaik fastq
 
   let star fastq = Star fastq
 
@@ -308,6 +311,8 @@ let rec to_file_prefix:
       sprintf "%s-star-aligned" (to_file_prefix ?is sample)
     | Hisat (sample) ->
       sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
+    | Mosaik (sample) ->
+      sprintf "%s-mosaik" (to_file_prefix ?is sample)
     | Gatk_indel_realigner bam ->
       sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
     | Gatk_bqsr bam ->
@@ -366,6 +371,9 @@ let rec to_json: type a. a t -> json =
     | Hisat (input) ->
       let input_json = to_json input in
       call "HISAT" [input_json]
+    | Mosaik (input) ->
+      let input_json = to_json input in
+      call "MOSAIK" [input_json]
     | Gatk_indel_realigner bam ->
       let input_json = to_json bam in
       call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
@@ -492,6 +500,10 @@ module Compiler = struct
           ~gap_open_penalty ~gap_extension_penalty
           ~fastq ~result_prefix ~run_with:machine ()
         |> Samtools.sam_to_bam ~run_with:machine
+      | Mosaik (what) ->
+        let fastq = compile_fastq_sample what in
+        Mosaik.align ~reference_build ~processors
+          ~fastq ~result_prefix ~run_with:machine ()
       | Star (what) ->
         let fastq = compile_fastq_sample what in
         Star.align ~reference_build ~processors
