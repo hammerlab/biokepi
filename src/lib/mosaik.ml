@@ -15,6 +15,7 @@ let index
     sprintf "mosaik-build-%s" (Filename.basename reference_fasta#product#path) in
   let index_result = sprintf "%s.mosaik.dat" reference_fasta#product#path in
   let jump_file_result = sprintf "%s.mosaik-index" reference_fasta#product#path in
+  let mosaik_tmp_dir = (Filename.dirname reference_fasta#product#path) // "mosaik-tmp" in
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) index_result)
     ~edges:[
@@ -27,6 +28,8 @@ let index
     ~make:(Machine.run_program run_with ~processors ~name
             Program.(
               Tool.(init mosaik_tool)
+              && shf "mkdir -p %s" mosaik_tmp_dir
+              && shf "export MOSAIK_TMP=%s" mosaik_tmp_dir 
               && shf "MosaikBuild -fr %s -oa %s"
                 reference_fasta#product#path
                 index_result
