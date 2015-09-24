@@ -51,7 +51,9 @@ module Gunzip = struct
       (single_file result_path ~host:Machine.(as_host run_with))
       ~name
       ~make:(Machine.run_program run_with ~processors:1 ~name  program)
-      ~edges:(List.map ~f:depends_on bunch_of_dot_gzs)
+      ~edges:(
+        on_failure_activate Remove.(file ~run_with result_path)
+        :: List.map ~f:depends_on bunch_of_dot_gzs)
 end
 
 
@@ -70,6 +72,9 @@ module Cat = struct
       sprintf "concat-all-%s" (Filename.basename result_path) in
     workflow_node
       (single_file result_path ~host:Machine.(as_host run_with))
-      ~name ~edges:(List.map ~f:depends_on bunch_of_files)
+      ~name
+      ~edges:(
+        on_failure_activate Remove.(file ~run_with result_path)
+        :: List.map ~f:depends_on bunch_of_files)
       ~make:(Machine.run_program run_with ~processors:1 ~name  program)
 end
