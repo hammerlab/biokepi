@@ -13,12 +13,16 @@ targets).
 
 This should be considered *“alpha / preview”* software.
 
+
 Build
 -----
 
+The main dependency is [Ketrew](http://seb.mondet.org/software/ketrew/) (which
+requires OCaml ≥ 4.02.2).
+
 To install through `opam`:
 
-    opam pin add biokepi .
+    opam pin add biokepi https://github.com/hammerlab/biokepi.git
     [opam install biokepi]
 
 
