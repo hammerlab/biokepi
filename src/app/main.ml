@@ -78,7 +78,7 @@ let global_named_examples: (string * example_pipeline) list = [
 ]
 
 
-let dump_pipeline =
+let dump_pipeline ?(format = `Json) =
   function
   | `Somatic_from_fastqs pipeline_example ->
     let dumb_fastq name =
@@ -92,9 +92,12 @@ let dump_pipeline =
     let tumor_fastqs =
       `Single_end [dumb_fastq "R1-L001"; dumb_fastq "R1-L002"] in
     let vcfs = pipeline_example  ~normal_fastqs ~tumor_fastqs ~dataset:"DUMB" in
-    say "Dumb examples dumped:\n%s"
-      (`List (List.map ~f:Biokepi.Pipeline.to_json vcfs)
-       |> Yojson.Basic.pretty_to_string ~std:true)
+    begin match format with
+    | `Json  -> 
+      say "Pipeline JSON (with DUMB dataset):\n%s"
+        (`List (List.map ~f:Biokepi.Pipeline.to_json vcfs)
+         |> Yojson.Basic.pretty_to_string ~std:true)
+    end
 
 let environmental_box () : Biokepi.Run_environment.Machine.t =
   let box_uri = get_env "BIOKEPI_SSH_BOX_URI" |> Uri.of_string in
@@ -185,7 +188,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
 let run_pipeline_example ~push_result ~pipeline_name pipeline =
   let workflow = pipeline_example_target ~push_result ~pipeline_name pipeline in
   KEDSL.submit workflow
-    
+
 let () =
   let open Cmdliner in
   let version = "0.0.0" in
@@ -194,10 +197,10 @@ let () =
      Term.info (fst info) ~version ~sdocs:"COMMON OPTIONS" ~doc:(snd info)) in
   let name_flag =
     Arg.(required & opt (some string) None & info ["N"; "name"]
-           ~doc:"Choose the pipeline by “name”") in
+           ~doc:"Choose the pipeline by name") in
   let push_to_cycledash_flag =
     Arg.(value & flag & info ["P"; "push-result"]
-           ~doc:"Push the result to a running Cycledash.") in
+           ~doc:"Push the result to a running Cycledash instance.") in
   let dump_pipeline =
     sub_command
       ~info:("dump-pipeline", "Dump the JSON blob of a pipeline")
@@ -227,6 +230,16 @@ let () =
           $ push_to_cycledash_flag
         )
   in
+  let list_pipelines =
+    sub_command
+      ~info:("list-named-pipelines", "Display a list available pipelines")
+      ~term:Term.(
+          pure (fun () ->
+              List.iter global_named_examples ~f:(fun (n, _) ->
+                  say "* %s" n)
+            )
+          $ pure ()
+        ) in
   let default_cmd =
     let doc = "Bio-related Ketrew Workflows – Example Application" in
     let man = [
@@ -240,7 +253,7 @@ let () =
       ret (pure (`Help (`Plain, None))),
       info "biokepi" ~version ~doc ~man)
   in
-  let cmds = [dump_pipeline; run_pipeline] in
+  let cmds = [dump_pipeline; run_pipeline; list_pipelines] in
   match Term.eval_choice default_cmd cmds with
   | `Ok () -> ()
   | `Error _ -> failwithf "cmdliner error"

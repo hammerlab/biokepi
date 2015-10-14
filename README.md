@@ -30,9 +30,15 @@ To build locally:
 
     make configure
     make
+    
+Getting Started
+---------------
 
-Using The Demo Application
---------------------------
+Once all set with Ketrew's
+[mini-tutorial](http://seb.mondet.org/software/ketrew/#GettingStarted), one can
+submit a few Biokepi “example” pipelines to that same Ketrew daemon.
+
+### Using The Demo Application
 
 The application is meant to show how to program with the library, especially
 building pipelines with `Biokepi_pipeline`.
@@ -45,48 +51,59 @@ It is configured with environment variables. It will run the pipelines on a
 given machine accessed through SSH (unfortunately within the demo one cannot
 specify a scheduler interface).
 
-You first need a “client” configuration file for Ketrew:
-
-```
-debug-level = 2
-[client]
-  connection = "https://some.server.where.ketrew.runs:8443"
-  token = "netok"
-```
-
-If it is not in the
-[default location](http://seb.mondet.org/software/ketrew/The_Configuration_File.html)
-you may force it with:
-`export KETREW_CONFIGURATION=client-config-file.toml`.
-
 Variables to set:
 
 - `BIOKEPI_DATASET_NAME`: a name for the dataset used as a namespace for
-file-naming.
+  file-naming.
 - `BIOKEPI_NORMAL_R1`, `BIOKEPI_NORMAL_R2`, `BIOKEPI_TUMOR_R1`, and
-`BIOKEPI_TUMOR_R2`: the input files, for now each variable may contain a
-comma-separated list of [*.fastq.gz](http://en.wikipedia.org/wiki/FASTQ_format)
-(absolute) files on the running machine.
+  `BIOKEPI_TUMOR_R2`: the input files, for now each variable may contain a
+  comma-separated list of
+  [*.fastq.gz](http://en.wikipedia.org/wiki/FASTQ_format) (absolute) files on
+  the running machine.
 - `BIOKEPI_SSH_BOX_URI`: an URI describing the machine to run on; for example
-`ssh://SshName//home/user/biokepi-test/metaplay` where:
+  `ssh://SshName//home/user/biokepi-test/metaplay` where:
     - `SshName` would be an entry in the `.ssh/config` of the server running
     Ketrew,
     - `/home/user/biokepi-test/metaplay` is the top-level directory where every
     generated file will go.
-- `BIOKEPI_MUTECT_JAR_SCP` or `BIOKEPI_MUTECT_JAR_WGET`: if you use [Mutect]
-(http://www.broadinstitute.org/cancer/cga/mutect) (the default pipeline does)
-you need to provide a way to download the JAR file (`biokepi` would violate
-its non-free license by doing it itself). So use something like:
-`BIOKEPI_MUTECT_JAR_SCP=MyServer:/path/to/mutect.jar`.
+- `BIOKEPI_MUTECT_JAR_SCP` or `BIOKEPI_MUTECT_JAR_WGET`: if you use
+  [Mutect](http://www.broadinstitute.org/cancer/cga/mutect) (the default
+  pipeline does) you need to provide a way to download the JAR file (`biokepi`
+  would violate its non-free license by doing it itself). So use something like:
+  `BIOKEPI_MUTECT_JAR_SCP=MyServer:/path/to/mutect.jar`.<br/>
+  Same goes for `GATK` (with `BIOKEPI_MUTECT_JAR_{SCP,WGET}`).
 - `BIOKEPI_CYCLEDASH_URL`: if you are using
-[Cycledash](https://github.com/hammerlab/cycledash) (i.e. the option `-P`) then
-you need to provide the base URL (Biokepi will append `/runs` and `/upload` to
-that URL).
+  [Cycledash](https://github.com/hammerlab/cycledash) (i.e. the option `-P`)
+  then you need to provide the base URL (Biokepi will append `/runs` and
+  `/upload` to that URL).
+  
+For example:
 
-Then you can run:
+```shell
+export BIOKEPI_DATASET_NAME="CP4242"
+export BIOKEPI_NORMAL_R1=/path/to/R1_L001.fastq.gz,/R1_L002.fastq.gz
+export BIOKEPI_NORMAL_R2=/path/to/R2_L001.fastq.gz,/R2_L002.fastq.gz
+export BIOKEPI_TUMOR_R1=/path/to/R1_L001.fastq.gz,/R1_L002.fastq.gz
+export BIOKEPI_TUMOR_R2=/path/to/R2_L001.fastq.gz,/R2_L002.fastq.gz
+export BIOKEPI_SSH_BOX_URI=ssh://SshName//home/user/biokepi-test/metaplay
+export BIOKEPI_MUTECT_JAR_SCP=MyServer:path/to/mutect.jar
+export BIOKEPI_GATK_JAR_WGET=http://example.com/top-secret/gatk.jar
+export BIOKEPI_CYCLEDASH_URL=http://cycledash.example.com
+```
 
-    ./biokepi run -N dumb [-P]
+Then you can run a few predefined somatic pipelines:
 
-(for now `dumb` is the only available pipeline).
-This should submit a pretty big pipeline to stress-test your Ketrew server
-(about 1300 targets, creating about 1 TB of data).
+    ./biokepi-demo list-named-pipelines
+
+will list the names you can use.
+
+    ./biokepi-demo dump-pipeline -N somatic-crazy
+
+will display the JSON representation of the pipeline named `somatic-crazy`.
+
+    ./biokepi-demo run -N somatic-simple-mutect
+
+should submit a the pipeline to your Ketrew server.
+
+
+

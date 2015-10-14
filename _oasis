@@ -46,7 +46,7 @@ Executable biokepi_tests
   MainIs:     main.ml
 
 
-Executable biokepi
+Executable "biokepi-demo"
   Path: src/app/
   BuildTools: ocamlbuild
   CompiledObject: best
