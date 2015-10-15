@@ -795,10 +795,10 @@ module Ssh_box = struct
   let create
       ~gatk_jar_location
       ~mutect_jar_location
-      ?run_program ?b37 ~meta_playground ssh_hostname =
+      ?run_program ?b37 uri =
     let open KEDSL in
-    let playground = meta_playground // "ketrew_playground" in
-    let host = Host.ssh ssh_hostname ~playground in
+    let host = Host.parse (uri // "ketrew_playground") in
+    let meta_playground = Uri.of_string uri |> Uri.path in
     let run_program =
       match run_program with
       | None -> default_run_program ~host
@@ -811,7 +811,9 @@ module Ssh_box = struct
         Data_providers.pull_b37 ~host ~run_program ~destination_path
       | Some s -> s
     in
-    Machine.create (sprintf "ssh-box-%s" ssh_hostname) ~ssh_name:ssh_hostname
+    Machine.create (sprintf "ssh-box-%s" uri)
+      ~ssh_name:(
+        Uri.of_string uri |> Uri.host |> Option.value ~default:"No-NAME")
       ~get_reference_genome:(function
         | `B37 -> actual_b37
         | `B38 -> 
