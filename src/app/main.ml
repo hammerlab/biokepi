@@ -100,10 +100,7 @@ let dump_pipeline ?(format = `Json) =
     end
 
 let environmental_box () : Biokepi.Run_environment.Machine.t =
-  let box_uri = get_env "BIOKEPI_SSH_BOX_URI" |> Uri.of_string in
-  let ssh_name =
-    Uri.host box_uri |> Option.value_exn ~msg:"URI has no hostname" in
-  let meta_playground = Uri.path box_uri in
+  let box_uri = get_env "BIOKEPI_SSH_BOX_URI" in
   let jar_location name () =
     begin match ksprintf get_opt "BIOKEPI_%s_JAR_SCP" name with
     | Some s -> `Scp s
@@ -114,13 +111,12 @@ let environmental_box () : Biokepi.Run_environment.Machine.t =
         failwithf "BIOKEPI_%s_JAR_SCP or BIOKEPI_%s_JAR_WGET \
                    are required when you wanna run %s" name name name
       end
-      
     end  
   in
   let mutect_jar_location = jar_location "MUTECT" in
   let gatk_jar_location = jar_location "GATK" in
   Biokepi.Run_environment.Ssh_box.create
-    ~gatk_jar_location ~mutect_jar_location ~meta_playground ssh_name
+    ~gatk_jar_location ~mutect_jar_location box_uri
 
 let with_environmental_dataset =
   function
