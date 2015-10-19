@@ -17,6 +17,8 @@ let run ?(reference_build=`B37)
   let reference_annotations =
     Machine.get_reference_genome run_with reference_build |> Reference_genome.gtf_exn in
   let cufflinks_tool = Machine.get_tool run_with Tool.Default.cufflinks in
+  let sorted_bam =
+    Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in
   let make =
     Machine.run_program run_with ~name ~processors
       Program.(
@@ -31,7 +33,7 @@ let run ?(reference_build=`B37)
           processors
           reference_annotations#product#path
           output_dir
-          bam#product#path
+          sorted_bam#product#path
       )
   in
   workflow_node ~name ~make
@@ -41,5 +43,5 @@ let run ?(reference_build=`B37)
       depends_on reference_fasta;
       depends_on reference_annotations;
       depends_on (Tool.ensure cufflinks_tool);
-      depends_on (Samtools.index_to_bai ~run_with bam);
+      depends_on (Samtools.index_to_bai ~run_with sorted_bam);
     ]
