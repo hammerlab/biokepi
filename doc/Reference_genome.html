@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Region.html">
+<link rel="next" href="Run_environment.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><link title="Creation " rel="Section" href="#3_Creation">
+<link title="Usual Accessors " rel="Section" href="#3_UsualAccessors">
+<link title="Targets" rel="Section" href="#3_Targets">
+<title>Reference_genome</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Region.html" title="Region">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Run_environment.html" title="Run_environment">Next</a>
+</div>
+<h1>Module <a href="type_Reference_genome.html">Reference_genome</a></h1>
+
+<pre><span class="keyword">module</span> Reference_genome: <code class="code">sig</code> <a href="Reference_genome.html">..</a> <code class="code">end</code></pre><div class="info module top">
+Representation of Reference Genomes<br>
+</div>
+<hr width="100%">
+
+<pre><span id="TYPEspecification"><span class="keyword">type</span> <code class="type"></code>specification</span> = <code class="type">[ `B37 | `B37decoy | `B38 | `hg18 | `hg19 ]</code> </pre>
+
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.name">name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.location">location</span>&nbsp;: <code class="type"><a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.cosmic">cosmic</span>&nbsp;: <code class="type"><a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.dbsnp">dbsnp</span>&nbsp;: <code class="type"><a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.gtf">gtf</span>&nbsp;: <code class="type"><a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+A reference genome has a name (for display/matching) and a
+     cluster-dependent path.
+     Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.<br>
+</div>
+
+<br>
+<h3 id="3_Creation">Creation </h3><br>
+
+<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">?cosmic:<a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> -><br>       ?dbsnp:<a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> -><br>       ?gtf:<a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> -><br>       string -> <a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a> -> <a href="Reference_genome.html#TYPEt">t</a></code></pre><div class="info ">
+Build a <code class="code">Reference_genome.t</code> record.<br>
+</div>
+
+<pre><span id="VALon_host"><span class="keyword">val</span> on_host</span> : <code class="type">host:Common.KEDSL.Host.t -><br>       ?cosmic:string -><br>       ?dbsnp:string -> ?gtf:string -> string -> string -> <a href="Reference_genome.html#TYPEt">t</a></code></pre><div class="info ">
+Create a <code class="code">Reference_genome.t</code> by applying <code class="code">Ketrew.EDSL.file_target</code> for
+    each path on a given <code class="code">host</code>.<br>
+</div>
+<br>
+<h3 id="3_UsualAccessors">Usual Accessors </h3><br>
+
+<pre><span id="VALname"><span class="keyword">val</span> name</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALpath"><span class="keyword">val</span> path</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALcosmic_path_exn"><span class="keyword">val</span> cosmic_path_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALdbsnp_path_exn"><span class="keyword">val</span> dbsnp_path_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALgtf_path_exn"><span class="keyword">val</span> gtf_path_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> string</code></pre><br>
+<h3 id="3_Targets">Targets</h3><br>
+
+<pre><span id="VALfasta"><span class="keyword">val</span> fasta</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> <a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALcosmic_exn"><span class="keyword">val</span> cosmic_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> <a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALdbsnp_exn"><span class="keyword">val</span> dbsnp_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> <a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALgtf_exn"><span class="keyword">val</span> gtf_exn</span> : <code class="type"><a href="Reference_genome.html#TYPEt">t</a> -> <a href="Common.KEDSL.html#TYPEfile_workflow">Common.KEDSL.file_workflow</a></code></pre></body></html>

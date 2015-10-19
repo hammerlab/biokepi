@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Cycledash.html">
+<link rel="next" href="Pipeline.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Cufflinks</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Cycledash.html" title="Cycledash">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Pipeline.html" title="Pipeline">Next</a>
+</div>
+<h1>Module <a href="type_Cufflinks.html">Cufflinks</a></h1>
+
+<pre><span class="keyword">module</span> Cufflinks: <code class="code">sig</code> <a href="Cufflinks.html">..</a> <code class="code">end</code></pre><hr width="100%">
+
+<pre><span id="VALrun"><span class="keyword">val</span> run</span> : <code class="type">?reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       processors:int -><br>       bam:< is_done : Common.KEDSL.Condition.t option; path : string; .. ><br>           <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       result_prefix:string -> <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>

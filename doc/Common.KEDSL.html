@@ -1,0 +1,243 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Common.Unique_id.html">
+<link rel="next" href="Common.Ketrew.html">
+<link rel="Up" href="Common.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Common.KEDSL</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Common.Unique_id.html" title="Common.Unique_id">Previous</a>
+&nbsp;<a class="up" href="Common.html" title="Common">Up</a>
+&nbsp;<a class="post" href="Common.Ketrew.html" title="Common.Ketrew">Next</a>
+</div>
+<h1>Module <a href="type_Common.KEDSL.html">Common.KEDSL</a></h1>
+
+<pre><span class="keyword">module</span> KEDSL: <code class="code">sig</code> <a href="Common.KEDSL.html">..</a> <code class="code">end</code></pre><div class="info module top">
+This is an experimental extension of Ketrew's EDSL. If we're happy
+   with it we'll push it upstream.
+<p>
+
+   The idea is carry around a type parameter to have arbitrary products.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">include</span> Ketrew.EDSL</pre>
+
+<pre><span class="keyword">module</span> <a href="Common.KEDSL.Command.html">Command</a>: <code class="type">Ketrew_pure.Target.Command</code></pre>
+<pre><span id="TYPEworkflow_node"><span class="keyword">type</span> <code class="type">< is_done : Condition.t option; .. ></code> workflow_node</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_node.product">product</span>&nbsp;: <code class="type">< is_done : Condition.t option; .. > as 'a</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_node.target">target</span>&nbsp;: <code class="type">user_target</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><code><span id="TYPEworkflow_edge"><span class="keyword">type</span> <code class="type"></code>workflow_edge</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_edge.Depends_on"><span class="constructor">Depends_on</span></span> <span class="keyword">:</span> <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code> <span class="keyword">-></span> <code class="type"><a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_edge.On_success_activate"><span class="constructor">On_success_activate</span></span> <span class="keyword">:</span> <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code> <span class="keyword">-></span> <code class="type"><a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_edge.On_failure_activate"><span class="constructor">On_failure_activate</span></span> <span class="keyword">:</span> <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code> <span class="keyword">-></span> <code class="type"><a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTworkflow_edge.Empty_edge"><span class="constructor">Empty_edge</span></span> <span class="keyword">:</span> <code class="type"><a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></code></td>
+
+</tr></table>
+
+
+
+<pre><span id="VALdepends_on"><span class="keyword">val</span> depends_on</span> : <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a> -><br>       <a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></pre>
+<pre><span id="VALon_success_activate"><span class="keyword">val</span> on_success_activate</span> : <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a> -><br>       <a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></pre>
+<pre><span id="VALon_failure_activate"><span class="keyword">val</span> on_failure_activate</span> : <code class="type">< is_done : Condition.t option; .. > <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a> -><br>       <a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a></code></pre>
+<pre><span id="TYPEnothing"><span class="keyword">type</span> <code class="type"></code>nothing</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnothing.is_done">is_done</span>&nbsp;: <code class="type">Condition.t option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALnothing"><span class="keyword">val</span> nothing</span> : <code class="type">< is_done : 'a option ></code></pre>
+<pre><span id="VALworkflow_node"><span class="keyword">val</span> workflow_node</span> : <code class="type">?active:bool -><br>       ?make:Ketrew_pure.Target.Build_process.t -><br>       ?done_when:Condition.t -><br>       ?metadata:[ `String of string ] -><br>       ?equivalence:Ketrew_pure.Target.Equivalence.t -><br>       ?tags:string list -><br>       ?name:string -><br>       ?edges:<a href="Common.KEDSL.html#TYPEworkflow_edge">workflow_edge</a> list -><br>       (< is_done : Ketrew_pure.Target.Condition.t option; .. > as 'a) -><br>       'a <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code></pre>
+<pre><span id="VALtarget"><span class="keyword">val</span> target</span> : <code class="type">'a -> [> `Please_KEDSL_workflow ]</code></pre>
+<pre><span id="VALfile_target"><span class="keyword">val</span> file_target</span> : <code class="type">'a -> [> `Please_KEDSL_workflow ]</code></pre>
+<pre><span id="TYPEsingle_file"><span class="keyword">type</span> <code class="type"></code>single_file</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsingle_file.exists">exists</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsingle_file.is_bigger_than">is_bigger_than</span>&nbsp;: <code class="type">int -> Ketrew_pure.Target.Condition.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsingle_file.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsingle_file.path">path</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALsingle_file"><span class="keyword">val</span> single_file</span> : <code class="type">?host:Host.t -> string -> <a href="Common.KEDSL.html#TYPEsingle_file">single_file</a></code></pre>
+<pre><span id="VALforget_product"><span class="keyword">val</span> forget_product</span> : <code class="type">< target : user_target; .. > -><br>       <a href="Common.KEDSL.html#TYPEnothing">nothing</a> <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code></pre>
+<pre><span id="TYPEfile_workflow"><span class="keyword">type</span> <code class="type"></code>file_workflow</span> = <code class="type"><a href="Common.KEDSL.html#TYPEsingle_file">single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code> </pre>
+
+
+<pre><span id="TYPEphony_workflow"><span class="keyword">type</span> <code class="type"></code>phony_workflow</span> = <code class="type"><a href="Common.KEDSL.html#TYPEnothing">nothing</a> <a href="Common.KEDSL.html#TYPEworkflow_node">workflow_node</a></code> </pre>
+
+
+<pre><span id="TYPElist_of_files"><span class="keyword">type</span> <code class="type"></code>list_of_files</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlist_of_files.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTlist_of_files.paths">paths</span>&nbsp;: <code class="type">string list</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALlist_of_files"><span class="keyword">val</span> list_of_files</span> : <code class="type">?host:Host.t -><br>       string list -><br>       < is_done : [> `And of Ketrew_pure.Target.Condition.t list ] option;<br>         paths : string list ></code></pre>
+<pre><span id="TYPEfastq_reads"><span class="keyword">type</span> <code class="type"></code>fastq_reads</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.paths">paths</span>&nbsp;: <code class="type">string * string option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALfastq_reads"><span class="keyword">val</span> fastq_reads</span> : <code class="type">?host:Host.t -> string -> string option -> <a href="Common.KEDSL.html#TYPEfastq_reads">fastq_reads</a></code></pre>
+<pre><span id="TYPEbam_file"><span class="keyword">type</span> <code class="type"></code>bam_file</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.content_type">content_type</span>&nbsp;: <code class="type">[ `DNA | `RNA ]</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.path">path</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.sorting">sorting</span>&nbsp;: <code class="type">[ `Coordinate | `Read_name ] option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALbam_file"><span class="keyword">val</span> bam_file</span> : <code class="type">?host:Host.t -><br>       ?sorting:[ `Coordinate | `Read_name ] -><br>       ?contains:[ `DNA | `RNA ] -> string -> <a href="Common.KEDSL.html#TYPEbam_file">bam_file</a></code></pre>
+<pre><span id="VALsubmit"><span class="keyword">val</span> submit</span> : <code class="type">< target : Ketrew.EDSL.user_target; .. > -> unit</code></pre></body></html>
