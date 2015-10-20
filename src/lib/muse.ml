@@ -1,4 +1,4 @@
-(** Workflow-nodes to run {:http://bioinformatics.mdanderson.org/main/MuSE{MuSE}}. *)
+(** Workflow-nodes to run {{:http://bioinformatics.mdanderson.org/main/MuSE}MuSE}. *)
 
 open Common
 open Run_environment
