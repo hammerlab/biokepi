@@ -14,24 +14,31 @@
 (*  permissions and limitations under the License.                        *)
 (**************************************************************************)
 
-(** [Pervasives] module for the library. *)
+(** Module opened by default (like
+{{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Pervasives.html}Pervasives})
+for our library. *)
 
+(** A {{:http://seb.mondet.org/software/nonstd/index.html}Non-standard mini
+library}. *)
 include Nonstd
+
+(** A String module with more capabilities *)
 module String = struct
   include Sosa.Native_string
 end
 
 let (//) = Filename.concat
-(** A very standard operator. *)
+(** [path // filename] will concat [filename] to the end of [path]. *)
 
 let dbg fmt = ksprintf (eprintf "biokepi-debug: %s\n%!") fmt
+(** A consistent debugging mechanism. *)
 
 let failwithf fmt = ksprintf failwith fmt
+(** A formatted {!failwith} *)
 
 module Unique_id = struct
   include Ketrew_pure.Internal_pervasives.Unique_id
 end
-
 
 (**
 
