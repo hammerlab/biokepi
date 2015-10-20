@@ -1,36 +1,36 @@
 <html>
 <head>
 <link rel="stylesheet" href="style.css" type="text/css">
-<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="Common" rel="Chapter" href="Common.html">
-<link title="Region" rel="Chapter" href="Region.html">
-<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
-<link title="Run_environment" rel="Chapter" href="Run_environment.html">
-<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
-<link title="Samtools" rel="Chapter" href="Samtools.html">
-<link title="Picard" rel="Chapter" href="Picard.html">
-<link title="Vcftools" rel="Chapter" href="Vcftools.html">
 <link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
 <link title="Gatk" rel="Chapter" href="Gatk.html">
-<link title="Mutect" rel="Chapter" href="Mutect.html">
-<link title="Varscan" rel="Chapter" href="Varscan.html">
-<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
-<link title="Strelka" rel="Chapter" href="Strelka.html">
-<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
 <link title="Mosaik" rel="Chapter" href="Mosaik.html">
 <link title="Muse" rel="Chapter" href="Muse.html">
-<link title="Star" rel="Chapter" href="Star.html">
-<link title="Bwa" rel="Chapter" href="Bwa.html">
-<link title="Stringtie" rel="Chapter" href="Stringtie.html">
-<link title="Cycledash" rel="Chapter" href="Cycledash.html">
-<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
 <link title="Pipeline" rel="Chapter" href="Pipeline.html">
-<link title="Hisat" rel="Chapter" href="Hisat.html">
-<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Index of values</title>
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Index of values</title>
 </head>
 <body>
 <div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
@@ -41,11 +41,11 @@
 <tr><td><a href="Common.html#VAL(//)">(//)</a> [<a href="Common.html">Common</a>]</td>
 <td></td></tr>
 <tr><td align="left"><br>A</td></tr>
-<tr><td><a href="Hisat.html#VALalign">align</a> [<a href="Hisat.html">Hisat</a>]</td>
-<td></td></tr>
 <tr><td><a href="Star.html#VALalign">align</a> [<a href="Star.html">Star</a>]</td>
 <td></td></tr>
 <tr><td><a href="Mosaik.html#VALalign">align</a> [<a href="Mosaik.html">Mosaik</a>]</td>
+<td></td></tr>
+<tr><td><a href="Hisat.html#VALalign">align</a> [<a href="Hisat.html">Hisat</a>]</td>
 <td></td></tr>
 <tr><td><a href="Bwa.html#VALalign_to_sam">align_to_sam</a> [<a href="Bwa.html">Bwa</a>]</td>
 <td></td></tr>
@@ -84,9 +84,9 @@
 <td></td></tr>
 <tr><td><a href="Samtools.html#VALbgzip">bgzip</a> [<a href="Samtools.html">Samtools</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALbwa">bwa</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALbwa">bwa</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALbwa">bwa</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Pipeline.Construct.html#VALbwa_mem">bwa_mem</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
@@ -109,7 +109,7 @@
 <td></td></tr>
 <tr><td><a href="Workflow_utilities.Gunzip.html#VALconcat">concat</a> [<a href="Workflow_utilities.Gunzip.html">Workflow_utilities.Gunzip</a>]</td>
 <td><div class="info">
-Example: call <code class="code">"gunzip &lt;list of fastq.gz files&gt; &gt; some_name_cat.fastq"</code>.
+Example: call <code class="code"><span class="string">"gunzip &lt;list of fastq.gz files&gt; &gt; some_name_cat.fastq"</span></code>.
 </div>
 </td></tr>
 <tr><td><a href="Run_environment.Data_providers.html#VALcosmic_broad_url">cosmic_broad_url</a> [<a href="Run_environment.Data_providers.html">Run_environment.Data_providers</a>]</td>
@@ -119,8 +119,6 @@ Example: call <code class="code">"gunzip &lt;list of fastq.gz files&gt; &gt; som
 <tr><td><a href="Reference_genome.html#VALcosmic_path_exn">cosmic_path_exn</a> [<a href="Reference_genome.html">Reference_genome</a>]</td>
 <td></td></tr>
 <tr><td><a href="Common_pipelines.Somatic.html#VALcrazy_example">crazy_example</a> [<a href="Common_pipelines.Somatic.html">Common_pipelines.Somatic</a>]</td>
-<td></td></tr>
-<tr><td><a href="Pipeline.Compiler.html#VALcreate">create</a> [<a href="Pipeline.Compiler.html">Pipeline.Compiler</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Ssh_box.html#VALcreate">create</a> [<a href="Run_environment.Ssh_box.html">Run_environment.Ssh_box</a>]</td>
 <td></td></tr>
@@ -132,9 +130,11 @@ Example: call <code class="code">"gunzip &lt;list of fastq.gz files&gt; &gt; som
 <td></td></tr>
 <tr><td><a href="Reference_genome.html#VALcreate">create</a> [<a href="Reference_genome.html">Reference_genome</a>]</td>
 <td><div class="info">
-Build a <code class="code">Reference_genome.t</code> record.
+Build a <code class="code"><span class="constructor">Reference_genome</span>.t</code> record.
 </div>
 </td></tr>
+<tr><td><a href="Pipeline.Compiler.html#VALcreate">create</a> [<a href="Pipeline.Compiler.html">Pipeline.Compiler</a>]</td>
+<td></td></tr>
 <tr><td><a href="Picard.html#VALcreate_dict">create_dict</a> [<a href="Picard.html">Picard</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALcufflinks">cufflinks</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
@@ -160,13 +160,13 @@ Build a <code class="code">Reference_genome.t</code> record.
 <td></td></tr>
 <tr><td><a href="Reference_genome.html#VALdbsnp_path_exn">dbsnp_path_exn</a> [<a href="Reference_genome.html">Reference_genome</a>]</td>
 <td></td></tr>
-<tr><td><a href="Muse.Configuration.html#VALdefault">default</a> [<a href="Muse.Configuration.html">Muse.Configuration</a>]</td>
-<td></td></tr>
 <tr><td><a href="Virmid.Configuration.html#VALdefault">default</a> [<a href="Virmid.Configuration.html">Virmid.Configuration</a>]</td>
 <td></td></tr>
 <tr><td><a href="Strelka.Configuration.html#VALdefault">default</a> [<a href="Strelka.Configuration.html">Strelka.Configuration</a>]</td>
 <td></td></tr>
 <tr><td><a href="Picard.Mark_duplicates_settings.html#VALdefault">default</a> [<a href="Picard.Mark_duplicates_settings.html">Picard.Mark_duplicates_settings</a>]</td>
+<td></td></tr>
+<tr><td><a href="Muse.Configuration.html#VALdefault">default</a> [<a href="Muse.Configuration.html">Muse.Configuration</a>]</td>
 <td></td></tr>
 <tr><td><a href="Bwa.html#VALdefault_gap_extension_penalty">default_gap_extension_penalty</a> [<a href="Bwa.html">Bwa</a>]</td>
 <td></td></tr>
@@ -258,22 +258,22 @@ Build a <code class="code">Reference_genome.t</code> record.
 <td></td></tr>
 <tr><td><a href="Run_environment.Data_providers.html#VALhg19_url">hg19_url</a> [<a href="Run_environment.Data_providers.html">Run_environment.Data_providers</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALhisat">hisat</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALhisat">hisat</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALhisat">hisat</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALhisat_tool">hisat_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
 <tr><td align="left"><br>I</td></tr>
 <tr><td><a href="Gatk.html#VALindel_realigner">indel_realigner</a> [<a href="Gatk.html">Gatk</a>]</td>
 <td></td></tr>
-<tr><td><a href="Hisat.html#VALindex">index</a> [<a href="Hisat.html">Hisat</a>]</td>
-<td></td></tr>
-<tr><td><a href="Bwa.html#VALindex">index</a> [<a href="Bwa.html">Bwa</a>]</td>
-<td></td></tr>
 <tr><td><a href="Star.html#VALindex">index</a> [<a href="Star.html">Star</a>]</td>
 <td></td></tr>
 <tr><td><a href="Mosaik.html#VALindex">index</a> [<a href="Mosaik.html">Mosaik</a>]</td>
+<td></td></tr>
+<tr><td><a href="Hisat.html#VALindex">index</a> [<a href="Hisat.html">Hisat</a>]</td>
+<td></td></tr>
+<tr><td><a href="Bwa.html#VALindex">index</a> [<a href="Bwa.html">Bwa</a>]</td>
 <td></td></tr>
 <tr><td><a href="Samtools.html#VALindex_to_bai">index_to_bai</a> [<a href="Samtools.html">Samtools</a>]</td>
 <td></td></tr>
@@ -295,23 +295,23 @@ Build a <code class="code">Reference_genome.t</code> record.
 <td></td></tr>
 <tr><td><a href="Bwa.html#VALmem_align_to_sam">mem_align_to_sam</a> [<a href="Bwa.html">Bwa</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALmosaik">mosaik</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALmosaik">mosaik</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALmosaik">mosaik</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALmosaik_tool">mosaik_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
 <tr><td><a href="Samtools.html#VALmpileup">mpileup</a> [<a href="Samtools.html">Samtools</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALmuse">muse</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALmuse">muse</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALmuse">muse</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALmuse_tool">muse_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALmutect">mutect</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALmutect">mutect</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALmutect">mutect</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALmutect_tool">mutect_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
@@ -327,7 +327,7 @@ Build a <code class="code">Reference_genome.t</code> record.
 <td></td></tr>
 <tr><td><a href="Reference_genome.html#VALon_host">on_host</a> [<a href="Reference_genome.html">Reference_genome</a>]</td>
 <td><div class="info">
-Create a <code class="code">Reference_genome.t</code> by applying <code class="code">Ketrew.EDSL.file_target</code> for
+Create a <code class="code"><span class="constructor">Reference_genome</span>.t</code> by applying <code class="code"><span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.file_target</code> for
     each path on a given <code class="code">host</code>.
 </div>
 </td></tr>
@@ -370,19 +370,19 @@ Create a <code class="code">Reference_genome.t</code> by applying <code class="c
 <td></td></tr>
 <tr><td><a href="Run_environment.html#VALrm_path">rm_path</a> [<a href="Run_environment.html">Run_environment</a>]</td>
 <td></td></tr>
-<tr><td><a href="Cufflinks.html#VALrun">run</a> [<a href="Cufflinks.html">Cufflinks</a>]</td>
+<tr><td><a href="Virmid.html#VALrun">run</a> [<a href="Virmid.html">Virmid</a>]</td>
 <td></td></tr>
 <tr><td><a href="Stringtie.html#VALrun">run</a> [<a href="Stringtie.html">Stringtie</a>]</td>
-<td></td></tr>
-<tr><td><a href="Muse.html#VALrun">run</a> [<a href="Muse.html">Muse</a>]</td>
-<td></td></tr>
-<tr><td><a href="Virmid.html#VALrun">run</a> [<a href="Virmid.html">Virmid</a>]</td>
 <td></td></tr>
 <tr><td><a href="Strelka.html#VALrun">run</a> [<a href="Strelka.html">Strelka</a>]</td>
 <td></td></tr>
 <tr><td><a href="Somaticsniper.html#VALrun">run</a> [<a href="Somaticsniper.html">Somaticsniper</a>]</td>
 <td></td></tr>
 <tr><td><a href="Mutect.html#VALrun">run</a> [<a href="Mutect.html">Mutect</a>]</td>
+<td></td></tr>
+<tr><td><a href="Muse.html#VALrun">run</a> [<a href="Muse.html">Muse</a>]</td>
+<td></td></tr>
+<tr><td><a href="Cufflinks.html#VALrun">run</a> [<a href="Cufflinks.html">Cufflinks</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Machine.html#VALrun_program">run_program</a> [<a href="Run_environment.Machine.html">Run_environment.Machine</a>]</td>
 <td></td></tr>
@@ -401,9 +401,9 @@ Create a <code class="code">Reference_genome.t</code> by applying <code class="c
 <td></td></tr>
 <tr><td><a href="Pipeline.Construct.html#VALsomatic_variant_caller">somatic_variant_caller</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALsomaticsniper">somaticsniper</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALsomaticsniper">somaticsniper</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALsomaticsniper">somaticsniper</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALsomaticsniper_tool">somaticsniper_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
@@ -413,15 +413,15 @@ Create a <code class="code">Reference_genome.t</code> by applying <code class="c
 <td></td></tr>
 <tr><td><a href="Run_environment.Machine.html#VALssh_name">ssh_name</a> [<a href="Run_environment.Machine.html">Run_environment.Machine</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALstar">star</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALstar">star</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALstar">star</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALstar_tool">star_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALstrelka">strelka</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALstrelka">strelka</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALstrelka">strelka</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALstrelka_tool">strelka_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>
@@ -449,13 +449,13 @@ Make a filename-compliant string out of a region specification.
 <td></td></tr>
 <tr><td><a href="Picard.Mark_duplicates_settings.html#VALto_java_shell_call">to_java_shell_call</a> [<a href="Picard.Mark_duplicates_settings.html">Picard.Mark_duplicates_settings</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.html#VALto_json">to_json</a> [<a href="Pipeline.html">Pipeline</a>]</td>
-<td></td></tr>
-<tr><td><a href="Muse.Configuration.html#VALto_json">to_json</a> [<a href="Muse.Configuration.html">Muse.Configuration</a>]</td>
-<td></td></tr>
 <tr><td><a href="Virmid.Configuration.html#VALto_json">to_json</a> [<a href="Virmid.Configuration.html">Virmid.Configuration</a>]</td>
 <td></td></tr>
 <tr><td><a href="Strelka.Configuration.html#VALto_json">to_json</a> [<a href="Strelka.Configuration.html">Strelka.Configuration</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.html#VALto_json">to_json</a> [<a href="Pipeline.html">Pipeline</a>]</td>
+<td></td></tr>
+<tr><td><a href="Muse.Configuration.html#VALto_json">to_json</a> [<a href="Muse.Configuration.html">Muse.Configuration</a>]</td>
 <td></td></tr>
 <tr><td><a href="Region.html#VALto_samtools_option">to_samtools_option</a> [<a href="Region.html">Region</a>]</td>
 <td></td></tr>
@@ -476,9 +476,9 @@ Make a filename-compliant string out of a region specification.
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALvcftools">vcftools</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
 <td></td></tr>
-<tr><td><a href="Pipeline.Construct.html#VALvirmid">virmid</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
-<td></td></tr>
 <tr><td><a href="Run_environment.Tool.Default.html#VALvirmid">virmid</a> [<a href="Run_environment.Tool.Default.html">Run_environment.Tool.Default</a>]</td>
+<td></td></tr>
+<tr><td><a href="Pipeline.Construct.html#VALvirmid">virmid</a> [<a href="Pipeline.Construct.html">Pipeline.Construct</a>]</td>
 <td></td></tr>
 <tr><td><a href="Run_environment.Tool_providers.html#VALvirmid_tool">virmid_tool</a> [<a href="Run_environment.Tool_providers.html">Run_environment.Tool_providers</a>]</td>
 <td></td></tr>

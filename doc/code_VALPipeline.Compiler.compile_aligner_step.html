@@ -1,0 +1,130 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Pipeline.Compiler.compile_aligner_step</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;<span class="keyword">rec</span>&nbsp;compile_aligner_step<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~compiler&nbsp;?(is:[<span class="keywordsign">`</span><span class="constructor">Normal</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Tumor</span>]&nbsp;option)&nbsp;(pipeline&nbsp;:&nbsp;bam&nbsp;pipeline)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;{processors&nbsp;;&nbsp;reference_build;&nbsp;work_dir;&nbsp;machine&nbsp;;}&nbsp;=&nbsp;compiler&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip_concat&nbsp;?read&nbsp;(pipeline:&nbsp;fastq&nbsp;&nbsp;pipeline)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;pipeline&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fastq</span>&nbsp;f&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;f<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Concat_text</span>&nbsp;(l:&nbsp;fastq&nbsp;pipeline&nbsp;list)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwith&nbsp;<span class="string">"Concat_text:&nbsp;not&nbsp;implemented"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gunzip_concat</span>&nbsp;(l:&nbsp;fastq_gz&nbsp;pipeline&nbsp;list)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastqs&nbsp;=&nbsp;<span class="constructor">List</span>.map&nbsp;l&nbsp;~f:(<span class="keyword">function</span>&nbsp;<span class="constructor">Fastq_gz</span>&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_path&nbsp;=&nbsp;work_dir&nbsp;//&nbsp;to_file_prefix&nbsp;?is&nbsp;?read&nbsp;pipeline&nbsp;^&nbsp;<span class="string">".fastq"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dbg&nbsp;<span class="string">"Result_Path:&nbsp;%S"</span>&nbsp;result_path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Gunzip</span>.concat&nbsp;~run_with:machine&nbsp;fastqs&nbsp;~result_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_prefix&nbsp;=&nbsp;work_dir&nbsp;//&nbsp;to_file_prefix&nbsp;?is&nbsp;pipeline&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;dbg&nbsp;<span class="string">"Result_Prefix:&nbsp;%S"</span>&nbsp;result_prefix;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;compile_fastq_sample&nbsp;(fs&nbsp;:&nbsp;fastq_sample&nbsp;pipeline)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;fs&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_to_fastq</span>&nbsp;(how,&nbsp;what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam&nbsp;=&nbsp;compile_aligner_step&nbsp;~compiler&nbsp;?is&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sample_type&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Single</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Single_end</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Paired</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Paired_end</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_prefix&nbsp;=&nbsp;work_dir&nbsp;//&nbsp;to_file_prefix&nbsp;?is&nbsp;?read:<span class="constructor">None</span>&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Picard</span>.bam_to_fastq&nbsp;~run_with:machine&nbsp;~processors&nbsp;~sample_type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~output_prefix&nbsp;bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fastq_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Paired_end_sample</span>&nbsp;(dataset,&nbsp;l1,&nbsp;l2)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r1&nbsp;=&nbsp;gunzip_concat&nbsp;~read:(<span class="keywordsign">`</span><span class="constructor">R1</span>&nbsp;dataset)&nbsp;l1&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r2&nbsp;=&nbsp;gunzip_concat&nbsp;~read:(<span class="keywordsign">`</span><span class="constructor">R2</span>&nbsp;dataset)&nbsp;l2&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(fastq_reads&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;machine)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;(<span class="constructor">Some</span>&nbsp;r2<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"pairing&nbsp;%s&nbsp;and&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;r1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;r2<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[&nbsp;depends_on&nbsp;r1;&nbsp;depends_on&nbsp;r2&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Single_end_sample</span>&nbsp;(dataset,&nbsp;single)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r1&nbsp;=&nbsp;gunzip_concat&nbsp;~read:(<span class="keywordsign">`</span><span class="constructor">R1</span>&nbsp;dataset)&nbsp;single&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(fastq_reads&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;machine)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="constructor">None</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~equivalence:<span class="keywordsign">`</span><span class="constructor">None</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[&nbsp;depends_on&nbsp;r1&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"single-end&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;r1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_node&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;pipeline&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_sample</span>&nbsp;(name,&nbsp;bam_target)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bam_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gatk_indel_realigner</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam&nbsp;=&nbsp;compile_aligner_step&nbsp;~compiler&nbsp;?is&nbsp;bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_bam&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">".bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Gatk</span>.indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~processors&nbsp;~reference_build&nbsp;~run_with:machine&nbsp;input_bam&nbsp;~compress:<span class="keyword">false</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~output_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gatk_bqsr</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam&nbsp;=&nbsp;compile_aligner_step&nbsp;~compiler&nbsp;?is&nbsp;bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_bam&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">".bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Gatk</span>.base_quality_score_recalibrator<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with:machine&nbsp;~processors&nbsp;~reference_build&nbsp;~input_bam&nbsp;~output_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Picard_mark_duplicates</span>&nbsp;(settings,&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam&nbsp;=&nbsp;compile_aligner_step&nbsp;~compiler&nbsp;?is&nbsp;bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_bam&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">".bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Picard</span>.mark_duplicates&nbsp;~settings<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with:machine&nbsp;~input_bam&nbsp;output_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bwa_mem</span>&nbsp;({gap_open_penalty;&nbsp;gap_extension_penalty},&nbsp;what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;=&nbsp;compile_fastq_sample&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bwa</span>.mem_align_to_sam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~reference_build&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~gap_open_penalty&nbsp;~gap_extension_penalty<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fastq&nbsp;~result_prefix&nbsp;~run_with:machine&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Samtools</span>.sam_to_bam&nbsp;~run_with:machine<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bwa</span>&nbsp;({gap_open_penalty;&nbsp;gap_extension_penalty},&nbsp;what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;=&nbsp;compile_fastq_sample&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bwa</span>.align_to_sam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~reference_build&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~gap_open_penalty&nbsp;~gap_extension_penalty<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fastq&nbsp;~result_prefix&nbsp;~run_with:machine&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Samtools</span>.sam_to_bam&nbsp;~run_with:machine<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Mosaik</span>&nbsp;(what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;=&nbsp;compile_fastq_sample&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Mosaik</span>.align&nbsp;~reference_build&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fastq&nbsp;~result_prefix&nbsp;~run_with:machine&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Star</span>&nbsp;(what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;=&nbsp;compile_fastq_sample&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Star</span>.align&nbsp;~reference_build&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fastq&nbsp;~result_prefix&nbsp;~run_with:machine&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Hisat</span>&nbsp;(what)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;=&nbsp;compile_fastq_sample&nbsp;what&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Hisat</span>.align&nbsp;~reference_build&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fastq&nbsp;~result_prefix&nbsp;~run_with:machine&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Samtools</span>.sam_to_bam&nbsp;~run_with:machine<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;compiler.wrap_bam_node&nbsp;pipeline&nbsp;bam_node</code></body></html>

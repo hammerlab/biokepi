@@ -1,0 +1,51 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Pipeline.Somatic_variant_caller</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;configuration_json:&nbsp;json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;configuration_name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;make_target:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reference_build:&nbsp;<span class="constructor">Reference_genome</span>.specification&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normal:&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tumor:&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result_prefix:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;processors:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?more_edges:&nbsp;<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+&nbsp;&nbsp;}<br>
+<span class="keyword">end</span></code></body></html>

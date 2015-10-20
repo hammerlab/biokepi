@@ -2,47 +2,45 @@
 <html>
 <head>
 <link rel="stylesheet" href="style.css" type="text/css">
-<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
-<link rel="previous" href="Vcftools.html">
-<link rel="next" href="Gatk.html">
+<link rel="next" href="Bwa.html">
 <link rel="Up" href="index.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="Common" rel="Chapter" href="Common.html">
-<link title="Region" rel="Chapter" href="Region.html">
-<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
-<link title="Run_environment" rel="Chapter" href="Run_environment.html">
-<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
-<link title="Samtools" rel="Chapter" href="Samtools.html">
-<link title="Picard" rel="Chapter" href="Picard.html">
-<link title="Vcftools" rel="Chapter" href="Vcftools.html">
 <link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
 <link title="Gatk" rel="Chapter" href="Gatk.html">
-<link title="Mutect" rel="Chapter" href="Mutect.html">
-<link title="Varscan" rel="Chapter" href="Varscan.html">
-<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
-<link title="Strelka" rel="Chapter" href="Strelka.html">
-<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
 <link title="Mosaik" rel="Chapter" href="Mosaik.html">
 <link title="Muse" rel="Chapter" href="Muse.html">
-<link title="Star" rel="Chapter" href="Star.html">
-<link title="Bwa" rel="Chapter" href="Bwa.html">
-<link title="Stringtie" rel="Chapter" href="Stringtie.html">
-<link title="Cycledash" rel="Chapter" href="Cycledash.html">
-<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
 <link title="Pipeline" rel="Chapter" href="Pipeline.html">
-<link title="Hisat" rel="Chapter" href="Hisat.html">
-<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Bedtools</title>
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Bedtools</title>
 </head>
 <body>
-<div class="navbar"><a class="pre" href="Vcftools.html" title="Vcftools">Previous</a>
-&nbsp;<a class="up" href="index.html" title="Index">Up</a>
-&nbsp;<a class="post" href="Gatk.html" title="Gatk">Next</a>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Bwa.html" title="Bwa">Next</a>
 </div>
-<h1>Module <a href="type_Bedtools.html">Bedtools</a></h1>
+<h1>Module <a href="type_Bedtools.html">Bedtools</a> (<a href="code_Bedtools.html">.ml</a>)</h1>
 
-<pre><span class="keyword">module</span> Bedtools: <code class="code">sig</code> <a href="Bedtools.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span class="keyword">module</span> Bedtools: <code class="code"><span class="keyword">sig</span></code> <a href="Bedtools.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
 
-<pre><span id="VALbamtofastq"><span class="keyword">val</span> bamtofastq</span> : <code class="type">run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       sample_type:[< `Paired_end | `Single_end ] -><br>       processors:int -><br>       output_prefix:string -><br>       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       <a href="Common.KEDSL.html#TYPEfastq_reads">Common.KEDSL.fastq_reads</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>
+<pre><span id="VALbamtofastq"><span class="keyword">val</span> <a href="code_VALBedtools.bamtofastq.html">bamtofastq</a></span> : <code class="type">run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       sample_type:[< `Paired_end | `Single_end ] -><br>       processors:int -><br>       output_prefix:string -><br>       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       <a href="Common.KEDSL.html#TYPEfastq_reads">Common.KEDSL.fastq_reads</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>

@@ -1,0 +1,479 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Run_environment.Tool_providers</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;download_url_program&nbsp;?output_filename&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.exec&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"wget"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-O"</span>;&nbsp;<span class="constructor">Option</span>.value&nbsp;output_filename&nbsp;~default:<span class="constructor">Filename</span>.(basename&nbsp;url);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_bwa_like&nbsp;~host&nbsp;?install_command&nbsp;?witness&nbsp;~install_path&nbsp;~url&nbsp;tool_name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Option</span>.value_map&nbsp;install_command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:sh&nbsp;~default:(shf&nbsp;<span class="string">"cp&nbsp;%s&nbsp;../"</span>&nbsp;tool_name))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tar_option&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;url&nbsp;<span class="string">"bz2"</span>&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"j"</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;url&nbsp;<span class="string">"gz"</span>&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"z"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">""</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;%s"</span>&nbsp;tool_name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Option</span>.value&nbsp;witness&nbsp;~default:(install_path&nbsp;//&nbsp;tool_name)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvf%s&nbsp;%s"</span>&nbsp;tar_option&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s*"</span>&nbsp;tool_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;install_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"bwa"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_bwa_like&nbsp;~host&nbsp;<span class="string">"bwa"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~url:<span class="string">"http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;(<span class="keywordsign">`</span><span class="constructor">Bwa</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">V_0_7_10</span>)&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mosaik_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"mosaik"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;<span class="string">"https://mosaik-aligner.googlecode.com/files/MOSAIK-2.2.3-source.tar"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;~host&nbsp;(install_path&nbsp;//&nbsp;<span class="string">"MosaikAligner"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;MOSAIK"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvf&nbsp;%s"</span>&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;MOSAIK*"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cp&nbsp;networkFile/*pe.ann&nbsp;../pe.ann"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cp&nbsp;networkFile/*se.ann&nbsp;../se.ann"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cp&nbsp;../bin/*&nbsp;../"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.mosaik&nbsp;~ensure&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"export&nbsp;MOSAIK_PE_ANN=%s/pe.ann"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"export&nbsp;MOSAIK_SE_ANN=%s/se.ann"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"star"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;<span class="string">"https://github.com/alexdobin/STAR/archive/STAR_2.4.1d.tar.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tar_option&nbsp;=&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;url&nbsp;<span class="string">"bz2"</span>&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"j"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"z"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star_binary&nbsp;=&nbsp;<span class="string">"STAR"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star_binary_path&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"bin/Linux_x86_64/%s"</span>&nbsp;star_binary&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;~host&nbsp;(install_path&nbsp;//&nbsp;star_binary))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;STAR"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvf%s&nbsp;%s"</span>&nbsp;tar_option&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;STAR-*"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cp&nbsp;%s&nbsp;../"</span>&nbsp;star_binary_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.star&nbsp;~ensure&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"hisat"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;<span class="string">"http://ccb.jhu.edu/software/hisat/downloads/hisat-0.1.6-beta-Linux_x86_64.zip"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat_binary&nbsp;=&nbsp;<span class="string">"hisat"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;~host&nbsp;(install_path&nbsp;//&nbsp;hisat_binary))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;HISAT"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"unzip&nbsp;%s"</span>&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cd&nbsp;hisat-*"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"mv&nbsp;hisat*&nbsp;../"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.hisat&nbsp;~ensure&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;stringtie_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"stringtie"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_bwa_like&nbsp;~host&nbsp;<span class="string">"stringtie"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~url:<span class="string">"http://ccb.jhu.edu/software/stringtie/dl/stringtie-1.0.4.tar.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.stringtie&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"samtools"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;<span class="string">"http://downloads.sourceforge.net/project/samtools/samtools/1.1/samtools-1.1.tar.bz2"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tar_option&nbsp;=&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;url&nbsp;<span class="string">"bz2"</span>&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"j"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"z"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;toplevel_tools&nbsp;=&nbsp;[<span class="string">"samtools"</span>]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;htslib&nbsp;=&nbsp;[<span class="string">"bgzip"</span>;&nbsp;<span class="string">"tabix"</span>&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tools&nbsp;=&nbsp;toplevel_tools&nbsp;@&nbsp;htslib&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;files&nbsp;=&nbsp;<span class="constructor">List</span>.map&nbsp;~f:(<span class="keyword">fun</span>&nbsp;e&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;install_path&nbsp;//&nbsp;e)&nbsp;tools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(list_of_files&nbsp;~host&nbsp;files)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;Samtools"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvf%s&nbsp;%s"</span>&nbsp;tar_option&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;samtools-*"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cp&nbsp;%s&nbsp;../"</span>&nbsp;(<span class="constructor">String</span>.concat&nbsp;toplevel_tools&nbsp;~sep:<span class="string">"&nbsp;"</span>)&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cd&nbsp;htslib*/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cp&nbsp;%s&nbsp;../../"</span>&nbsp;(<span class="constructor">String</span>.concat&nbsp;htslib&nbsp;~sep:<span class="string">"&nbsp;"</span>)&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cufflinks_tools&nbsp;~host&nbsp;~meta_playground&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"cufflinks"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tar_option&nbsp;=&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;url&nbsp;<span class="string">"bz2"</span>&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"j"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"z"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;archive&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cufflinks_binary&nbsp;=&nbsp;<span class="string">"cufflinks"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;~host&nbsp;(install_path&nbsp;//&nbsp;cufflinks_binary))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;Cufflinks"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvf%s&nbsp;%s"</span>&nbsp;tar_option&nbsp;archive<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;cufflinks-*"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cp&nbsp;*&nbsp;../"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;Done"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.cufflinks&nbsp;~ensure&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"export&nbsp;PATH=%s:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcftools&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"vcftools"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_bwa_like&nbsp;~host&nbsp;<span class="string">"vcftools"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path&nbsp;~install_command:<span class="string">"cp&nbsp;-r&nbsp;bin&nbsp;../&nbsp;&amp;&amp;&nbsp;cp&nbsp;-r&nbsp;lib/perl5/site_perl&nbsp;../"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~witness:(install_path&nbsp;//&nbsp;<span class="string">"bin"</span>&nbsp;//&nbsp;<span class="string">"vcftools"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~url:<span class="string">"http://downloads.sourceforge.net/project/vcftools/vcftools_0.1.12b.tar.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.vcftools&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;PATH=%s/bin/:$PATH"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"export&nbsp;PERL5LIB=$PERL5LIB:%s/site_perl/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bedtools&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"bedtools"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_bwa_like&nbsp;~host&nbsp;<span class="string">"bedtools"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path&nbsp;~install_command:<span class="string">"cp&nbsp;-r&nbsp;bin&nbsp;../"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~witness:(install_path&nbsp;//&nbsp;<span class="string">"bin"</span>&nbsp;//&nbsp;<span class="string">"bedtools"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~url:<span class="string">"https://github.com/arq5x/bedtools2/archive/v2.23.0.tar.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.bedtools&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;PATH=%s/bin/:$PATH"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_somaticsniper_binary&nbsp;~host&nbsp;~path&nbsp;=&nbsp;<span class="keyword">function</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">AMD64</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;deb_file&nbsp;=&nbsp;<span class="string">"somatic-sniper1.0.3_1.0.3_amd64.deb"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;deb_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://apt.genome.wustl.edu/ubuntu/pool/main/s/somatic-sniper1.0.3/%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deb_file&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;binary&nbsp;=&nbsp;path&nbsp;//&nbsp;<span class="string">"usr/bin/bam-somaticsniper1.0.3"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;binary&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"get_somaticsniper-on-%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Ketrew_pure</span>.<span class="constructor">Host</span>.to_string_hum&nbsp;host))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Nohup_setsid</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;deb_url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"ar"</span>;&nbsp;<span class="string">"x"</span>;&nbsp;deb_file]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"tar"</span>;&nbsp;<span class="string">"xvfz"</span>;&nbsp;<span class="string">"data.tar.gz"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somaticsniper_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"somaticsniper"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;binary_got&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;get_somaticsniper_binary&nbsp;&nbsp;~host&nbsp;&nbsp;~path:install_path&nbsp;<span class="keywordsign">`</span><span class="constructor">AMD64</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;binary&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"somaticsniper"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;binary&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Install&nbsp;somaticsniper"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[depends_on&nbsp;binary_got]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"mv&nbsp;%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.(quote&nbsp;binary_got<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.(quote&nbsp;binary)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;PATH=%s/:$PATH"</span>&nbsp;install_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.somaticsniper&nbsp;~ensure&nbsp;~init<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;varscan_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://downloads.sourceforge.net/project/varscan/VarScan.v2.3.5.jar"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"varscan.2.3.5"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;jar&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"VarScan.v2.3.5.jar"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;jar&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Install&nbsp;varscan"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~host&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;VARSCAN_JAR=%s"</span>&nbsp;jar)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.varscan&nbsp;~ensure&nbsp;~init<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;picard_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"https://github.com/broadinstitute/picard/releases/download/1.127/picard-tools-1.127.zip"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"picard"</span>&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;jar&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"picard-tools-1.127"</span>&nbsp;//&nbsp;<span class="string">"picard.jar"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;jar&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Install&nbsp;picard"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~host&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"unzip"</span>;&nbsp;<span class="constructor">Filename</span>.basename&nbsp;url]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;PICARD_JAR=%s"</span>&nbsp;jar)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.picard&nbsp;~ensure&nbsp;~init<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;broad_jar_location&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Scp</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Wget</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(**
+   Mutect (and some other tools) are behind some web-login annoying thing:
+   c.f. &lt;http://www.broadinstitute.org/cancer/cga/mutect_download&gt;
+   So the user of the lib must provide an SSH or HTTP URL (or
+   reimplement the `Tool.t` is some other way).
+  *)</span></td></tr></table><code class="code"><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_broad_jar&nbsp;~host&nbsp;~install_path&nbsp;loc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;jar_name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;loc&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Scp</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Filename</span>.basename&nbsp;s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Wget</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Filename</span>.basename&nbsp;s&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;local_box_path&nbsp;=&nbsp;install_path&nbsp;//&nbsp;jar_name&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;local_box_path&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"get-%s"</span>&nbsp;jar_name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(rm_path&nbsp;~host&nbsp;local_box_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">match</span>&nbsp;loc&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Scp</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"scp&nbsp;%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;s)&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;local_box_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Wget</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"wget&nbsp;%s&nbsp;-O&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;s)&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;local_box_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect_tool&nbsp;~host&nbsp;~meta_playground&nbsp;loc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"mutect"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_mutect&nbsp;=&nbsp;get_broad_jar&nbsp;~host&nbsp;~install_path&nbsp;loc&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.mutect&nbsp;~ensure:get_mutect<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;mutect_HOME=%s"</span>&nbsp;install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_tool&nbsp;~host&nbsp;~meta_playground&nbsp;loc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"gatk"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=&nbsp;get_broad_jar&nbsp;~host&nbsp;~install_path&nbsp;loc&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;GATK_JAR=%s"</span>&nbsp;ensure<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://strelka:%27%27@ftp.illumina.com/v1-branch/v1.0.14/strelka_workflow-1.0.14.tar.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"strelka.1.0.14"</span>&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka_bin&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"usr"</span>&nbsp;//&nbsp;<span class="string">"bin"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;witness&nbsp;=&nbsp;strelka_bin&nbsp;//&nbsp;<span class="string">"configureStrelkaWorkflow.pl"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;C.f.&nbsp;ftp://ftp.illumina.com/v1-branch/v1.0.14/README&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;witness&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Build/install&nbsp;Strelka"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~host&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvfz&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"cd&nbsp;strelka_workflow-1.0.14/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"./configure&nbsp;--prefix=%s"</span>&nbsp;(install_path&nbsp;//&nbsp;<span class="string">"usr"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make&nbsp;&amp;&amp;&nbsp;make&nbsp;install"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;STRELKA_BIN=%s"</span>&nbsp;strelka_bin)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.strelka&nbsp;~ensure&nbsp;~init<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;virmid_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://downloads.sourceforge.net/project/virmid/virmid-1.1.1.tar.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"virmid.1.1.1"</span>&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;jar&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"Virmid-1.1.1"</span>&nbsp;//&nbsp;<span class="string">"Virmid.jar"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;jar&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Build/install&nbsp;Virmid"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~host&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tar&nbsp;xvfz&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;VIRMID_JAR=%s"</span>&nbsp;jar)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.virmid&nbsp;~ensure&nbsp;~init<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse_tool&nbsp;~host&nbsp;~meta_playground&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://bioinformatics.mdanderson.org/Software/MuSE/MuSEv1.0b"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;meta_playground&nbsp;//&nbsp;<span class="string">"MuSEv1.0b"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;binary_path&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"MuSEv1.0b"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;binary_path&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Install&nbsp;Muse"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(daemonize&nbsp;~host&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;download_url_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"chmod&nbsp;+x&nbsp;%s"</span>&nbsp;binary_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;=&nbsp;<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;muse_bin=%s"</span>&nbsp;binary_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.create&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.muse&nbsp;~ensure&nbsp;~init<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_toolkit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~meta_playground<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~mutect_jar_location&nbsp;~gatk_jar_location&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.create&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bwa_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;samtools&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bedtools&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vcftools&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strelka_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mutect_tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~meta_playground&nbsp;(mutect_jar_location&nbsp;());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gatk_tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~meta_playground&nbsp;(gatk_jar_location&nbsp;());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;picard_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;somaticsniper_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;varscan_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;muse_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virmid_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;star_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stringtie_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cufflinks_tools&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hisat_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mosaik_tool&nbsp;~host&nbsp;~meta_playground;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<span class="keyword">end</span></code></body></html>

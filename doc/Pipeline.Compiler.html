@@ -2,46 +2,46 @@
 <html>
 <head>
 <link rel="stylesheet" href="style.css" type="text/css">
-<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
 <link rel="previous" href="Pipeline.Construct.html">
 <link rel="Up" href="Pipeline.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="Common" rel="Chapter" href="Common.html">
-<link title="Region" rel="Chapter" href="Region.html">
-<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
-<link title="Run_environment" rel="Chapter" href="Run_environment.html">
-<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
-<link title="Samtools" rel="Chapter" href="Samtools.html">
-<link title="Picard" rel="Chapter" href="Picard.html">
-<link title="Vcftools" rel="Chapter" href="Vcftools.html">
 <link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
 <link title="Gatk" rel="Chapter" href="Gatk.html">
-<link title="Mutect" rel="Chapter" href="Mutect.html">
-<link title="Varscan" rel="Chapter" href="Varscan.html">
-<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
-<link title="Strelka" rel="Chapter" href="Strelka.html">
-<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
 <link title="Mosaik" rel="Chapter" href="Mosaik.html">
 <link title="Muse" rel="Chapter" href="Muse.html">
-<link title="Star" rel="Chapter" href="Star.html">
-<link title="Bwa" rel="Chapter" href="Bwa.html">
-<link title="Stringtie" rel="Chapter" href="Stringtie.html">
-<link title="Cycledash" rel="Chapter" href="Cycledash.html">
-<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
 <link title="Pipeline" rel="Chapter" href="Pipeline.html">
-<link title="Hisat" rel="Chapter" href="Hisat.html">
-<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Pipeline.Compiler</title>
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Pipeline.Compiler</title>
 </head>
 <body>
 <div class="navbar"><a class="pre" href="Pipeline.Construct.html" title="Pipeline.Construct">Previous</a>
 &nbsp;<a class="up" href="Pipeline.html" title="Pipeline">Up</a>
 &nbsp;</div>
-<h1>Module <a href="type_Pipeline.Compiler.html">Pipeline.Compiler</a></h1>
+<h1>Module <a href="type_Pipeline.Compiler.html">Pipeline.Compiler</a> (<a href="code_Pipeline.Compiler.html">.ml</a>)</h1>
 
-<pre><span class="keyword">module</span> Compiler: <code class="code">sig</code> <a href="Pipeline.Compiler.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span class="keyword">module</span> Compiler: <code class="code"><span class="keyword">sig</span></code> <a href="Pipeline.Compiler.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
 
 <pre><span id="TYPEpipeline"><span class="keyword">type</span> <code class="type">'a</code> pipeline</span> = <code class="type">'a <a href="Pipeline.html#TYPEt">Pipeline.t</a></code> </pre>
 
@@ -93,6 +93,6 @@
 
 
 
-<pre><span id="VALcreate"><span class="keyword">val</span> create</span> : <code class="type">?wrap_bam_node:(<a href="Pipeline.html#TYPEbam">Pipeline.bam</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>                       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a>) -><br>       ?wrap_vcf_node:(<a href="Pipeline.html#TYPEvcf">Pipeline.vcf</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>                       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a>) -><br>       processors:int -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       work_dir:string -><br>       machine:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -> unit -> <a href="Pipeline.Compiler.html#TYPEt">t</a></code></pre>
-<pre><span id="VALcompile_aligner_step"><span class="keyword">val</span> compile_aligner_step</span> : <code class="type">compiler:<a href="Pipeline.Compiler.html#TYPEt">t</a> -><br>       ?is:[ `Normal | `Tumor ] -><br>       <a href="Pipeline.html#TYPEbam">Pipeline.bam</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre>
-<pre><span id="VALcompile_variant_caller_step"><span class="keyword">val</span> compile_variant_caller_step</span> : <code class="type">compiler:<a href="Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Pipeline.html#TYPEvcf">Pipeline.vcf</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>
+<pre><span id="VALcreate"><span class="keyword">val</span> <a href="code_VALPipeline.Compiler.create.html">create</a></span> : <code class="type">?wrap_bam_node:(<a href="Pipeline.html#TYPEbam">Pipeline.bam</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>                       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a>) -><br>       ?wrap_vcf_node:(<a href="Pipeline.html#TYPEvcf">Pipeline.vcf</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>                       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a>) -><br>       processors:int -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       work_dir:string -><br>       machine:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -> unit -> <a href="Pipeline.Compiler.html#TYPEt">t</a></code></pre>
+<pre><span id="VALcompile_aligner_step"><span class="keyword">val</span> <a href="code_VALPipeline.Compiler.compile_aligner_step.html">compile_aligner_step</a></span> : <code class="type">compiler:<a href="Pipeline.Compiler.html#TYPEt">t</a> -><br>       ?is:[ `Normal | `Tumor ] -><br>       <a href="Pipeline.html#TYPEbam">Pipeline.bam</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre>
+<pre><span id="VALcompile_variant_caller_step"><span class="keyword">val</span> <a href="code_VALPipeline.Compiler.compile_variant_caller_step.html">compile_variant_caller_step</a></span> : <code class="type">compiler:<a href="Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Pipeline.html#TYPEvcf">Pipeline.vcf</a> <a href="Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>

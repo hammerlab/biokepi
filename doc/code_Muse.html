@@ -1,0 +1,166 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Muse</title>
+</head>
+<body>
+<code class="code"></code><table><tr><td></td><td><span class="comment">(** Workflow-nodes to run <a href="http://bioinformatics.mdanderson.org/main/MuSE">MuSE</a>. *)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Workflow_utilities</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Configuration</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_type:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">WGS</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">WES</span>&nbsp;];<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_type_to_string&nbsp;input_type&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;input_type&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">WGS</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"WGS"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">WES</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"WES"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_json&nbsp;{name;&nbsp;input_type}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"name"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"input-type"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;(input_type_to_string&nbsp;input_type);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;input_type&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;is&nbsp;=&nbsp;input_type_to_string&nbsp;input_type&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;name&nbsp;=&nbsp;<span class="string">"default-"</span>&nbsp;^&nbsp;is;&nbsp;input_type}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;wgs&nbsp;=&nbsp;default&nbsp;<span class="keywordsign">`</span><span class="constructor">WGS</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;wes&nbsp;=&nbsp;default&nbsp;<span class="keywordsign">`</span><span class="constructor">WES</span><br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;run<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build&nbsp;~configuration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;~normal&nbsp;~tumor&nbsp;~result_prefix&nbsp;?(more_edges&nbsp;=&nbsp;[])&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.muse&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse_call_on_region&nbsp;region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_file&nbsp;suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;region_name&nbsp;=&nbsp;<span class="constructor">Region</span>.to_filename&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s%s"</span>&nbsp;result_prefix&nbsp;region_name&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_option&nbsp;=&nbsp;<span class="constructor">Region</span>.to_samtools_specification&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_file_prefix&nbsp;=&nbsp;result_file&nbsp;<span class="string">"-out"</span>&nbsp;<span class="keyword">in</span>&nbsp;<span class="comment">(*&nbsp;MuSE&nbsp;adds&nbsp;`.MuSE.txt`&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_file&nbsp;=&nbsp;output_file_prefix&nbsp;^&nbsp;<span class="string">".MuSE.txt"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_path&nbsp;=&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;output_file&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta_dot_fai&nbsp;=&nbsp;<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;let&nbsp;sequence_dict&nbsp;=&nbsp;Picard.create_dict&nbsp;~run_with&nbsp;fasta&nbsp;in&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_normal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~processors:2&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;normal&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~processors:2&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;tumor&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_muse_call&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"muse-call-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_file)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.(init&nbsp;muse_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"$muse_bin&nbsp;call&nbsp;-f&nbsp;%s&nbsp;%s&nbsp;-O&nbsp;%s&nbsp;%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">match</span>&nbsp;intervals_option&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;o&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"-r&nbsp;%s"</span>&nbsp;o<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">""</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_file_prefix<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_tumor<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_normal<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;yes,&nbsp;the&nbsp;help&nbsp;message&nbsp;says&nbsp;tumor&nbsp;then&nbsp;normal&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_file&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.variant_caller;&nbsp;<span class="string">"muse"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;muse_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_normal;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_tumor;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta_dot_fai;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_normal);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_tumor);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_file);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_muse_call<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse_sump&nbsp;call_file&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcf_output&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">".vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bgzipped_dbsnp&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.bgzip&nbsp;~run_with&nbsp;dbsnp&nbsp;(dbsnp<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;^&nbsp;<span class="string">".bgz"</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"muse-sump-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;vcf_output)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.(init&nbsp;muse_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"$muse_bin&nbsp;sump&nbsp;-I&nbsp;%s&nbsp;%s&nbsp;-O&nbsp;%s&nbsp;-D&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Configuration</span>.(<span class="keyword">match</span>&nbsp;configuration.input_type&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">WGS</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"-G"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">WES</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"-E"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vcf_output<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bgzipped_dbsnp<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;vcf_output&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.variant_caller;&nbsp;<span class="string">"muse"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(more_edges&nbsp;@&nbsp;[&nbsp;<span class="comment">(*&nbsp;muse_sump&nbsp;is&nbsp;the&nbsp;last&nbsp;step&nbsp;in&nbsp;every&nbsp;case&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;muse_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;call_file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;bgzipped_dbsnp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Samtools</span>.tabix&nbsp;~run_with&nbsp;~tabular_format:<span class="keywordsign">`</span><span class="constructor">Vcf</span>&nbsp;bgzipped_dbsnp);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;vcf_output);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Region</span>&nbsp;region&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;muse_call_on_region&nbsp;region&nbsp;|&gt;&nbsp;muse_sump<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Map_reduce</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;call_files&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;(<span class="constructor">Region</span>.major_contigs&nbsp;~reference_build)&nbsp;~f:muse_call_on_region<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;concatenated&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Cat</span>.concat&nbsp;~run_with&nbsp;call_files<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~result_path:(result_prefix&nbsp;^&nbsp;<span class="string">"-concat.txt"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;muse_sump&nbsp;concatenated<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+</code></body></html>

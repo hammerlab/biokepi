@@ -1,0 +1,96 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Strelka.run</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;run&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~normal&nbsp;~tumor&nbsp;~result_prefix&nbsp;~processors&nbsp;?(more_edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Configuration</span>&nbsp;<span class="keyword">in</span>&nbsp;<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;<span class="constructor">Filename</span>.basename&nbsp;result_prefix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_file&nbsp;suffix&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_dir&nbsp;=&nbsp;result_file&nbsp;<span class="string">"strelka_output"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;config_file_path&nbsp;=&nbsp;result_file&nbsp;&nbsp;<span class="string">"configuration"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_file_path&nbsp;=&nbsp;output_dir&nbsp;//&nbsp;<span class="string">"results/passed_somatic_combined.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;|&gt;&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.strelka&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_normal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~processors&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;normal&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~processors&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;tumor&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;working_dir&nbsp;=&nbsp;<span class="constructor">Filename</span>.(dirname&nbsp;result_prefix)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.init&nbsp;strelka_tool&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Tool</span>.init&nbsp;gatk_tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;&nbsp;working_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;working_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;generate_config_file&nbsp;~path:config_file_path&nbsp;configuration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"rm&nbsp;-fr&nbsp;%s"</span>&nbsp;output_dir&nbsp;<span class="comment">(*&nbsp;strelka&nbsp;won't&nbsp;start&nbsp;if&nbsp;this<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;directory&nbsp;exists&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"$STRELKA_BIN/configureStrelkaWorkflow.pl&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--normal=%s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--tumor=%s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--ref=%s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--config=%s&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--output-dir=%s&nbsp;"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_normal<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_tumor<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;config_file_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;output_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"make&nbsp;-j%d"</span>&nbsp;processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Gatk</span>.call_gatk&nbsp;~analysis:<span class="string">"CombineVariants"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"--variant"</span>;&nbsp;<span class="string">"results/passed.somatic.snvs.vcf"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"--variant"</span>;&nbsp;<span class="string">"results/passed.somatic.indels.vcf"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-genotypeMergeOptions"</span>;&nbsp;<span class="string">"UNIQUIFY"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_file_path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_file_path&nbsp;~host:(<span class="constructor">Machine</span>.as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:(more_edges&nbsp;@&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;normal;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;tumor;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Tool</span>.ensure&nbsp;strelka_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Tool</span>.ensure&nbsp;gatk_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_normal;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_tumor;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;reference_fasta);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;reference_fasta);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_normal);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_tumor);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;])</code></body></html>

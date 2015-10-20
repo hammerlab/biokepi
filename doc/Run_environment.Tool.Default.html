@@ -2,7 +2,7 @@
 <html>
 <head>
 <link rel="stylesheet" href="style.css" type="text/css">
-<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
 <link rel="previous" href="Run_environment.Tool.Definition.html">
 <link rel="next" href="Run_environment.Tool.Kit.html">
@@ -10,55 +10,55 @@
 <link title="Index of types" rel=Appendix href="index_types.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="Common" rel="Chapter" href="Common.html">
-<link title="Region" rel="Chapter" href="Region.html">
-<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
-<link title="Run_environment" rel="Chapter" href="Run_environment.html">
-<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
-<link title="Samtools" rel="Chapter" href="Samtools.html">
-<link title="Picard" rel="Chapter" href="Picard.html">
-<link title="Vcftools" rel="Chapter" href="Vcftools.html">
 <link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
 <link title="Gatk" rel="Chapter" href="Gatk.html">
-<link title="Mutect" rel="Chapter" href="Mutect.html">
-<link title="Varscan" rel="Chapter" href="Varscan.html">
-<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
-<link title="Strelka" rel="Chapter" href="Strelka.html">
-<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
 <link title="Mosaik" rel="Chapter" href="Mosaik.html">
 <link title="Muse" rel="Chapter" href="Muse.html">
-<link title="Star" rel="Chapter" href="Star.html">
-<link title="Bwa" rel="Chapter" href="Bwa.html">
-<link title="Stringtie" rel="Chapter" href="Stringtie.html">
-<link title="Cycledash" rel="Chapter" href="Cycledash.html">
-<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
 <link title="Pipeline" rel="Chapter" href="Pipeline.html">
-<link title="Hisat" rel="Chapter" href="Hisat.html">
-<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Run_environment.Tool.Default</title>
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Run_environment.Tool.Default</title>
 </head>
 <body>
 <div class="navbar"><a class="pre" href="Run_environment.Tool.Definition.html" title="Run_environment.Tool.Definition">Previous</a>
 &nbsp;<a class="up" href="Run_environment.Tool.html" title="Run_environment.Tool">Up</a>
 &nbsp;<a class="post" href="Run_environment.Tool.Kit.html" title="Run_environment.Tool.Kit">Next</a>
 </div>
-<h1>Module <a href="type_Run_environment.Tool.Default.html">Run_environment.Tool.Default</a></h1>
+<h1>Module <a href="type_Run_environment.Tool.Default.html">Run_environment.Tool.Default</a> (<a href="code_Run_environment.Tool.Default.html">.ml</a>)</h1>
 
-<pre><span class="keyword">module</span> Default: <code class="code">sig</code> <a href="Run_environment.Tool.Default.html">..</a> <code class="code">end</code></pre><hr width="100%">
+<pre><span class="keyword">module</span> Default: <code class="code"><span class="keyword">sig</span></code> <a href="Run_environment.Tool.Default.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
 
-<pre><span id="VALbwa"><span class="keyword">val</span> bwa</span> : <code class="type">[> `Bwa of [> `V_0_7_10 ] ]</code></pre>
-<pre><span id="VALsamtools"><span class="keyword">val</span> samtools</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALvcftools"><span class="keyword">val</span> vcftools</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALbedtools"><span class="keyword">val</span> bedtools</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALsomaticsniper"><span class="keyword">val</span> somaticsniper</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALvarscan"><span class="keyword">val</span> varscan</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALpicard"><span class="keyword">val</span> picard</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALmutect"><span class="keyword">val</span> mutect</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALgatk"><span class="keyword">val</span> gatk</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALstrelka"><span class="keyword">val</span> strelka</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALvirmid"><span class="keyword">val</span> virmid</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALmuse"><span class="keyword">val</span> muse</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALstar"><span class="keyword">val</span> star</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALstringtie"><span class="keyword">val</span> stringtie</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALcufflinks"><span class="keyword">val</span> cufflinks</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALhisat"><span class="keyword">val</span> hisat</span> : <code class="type">[> `Custom of string * string ]</code></pre>
-<pre><span id="VALmosaik"><span class="keyword">val</span> mosaik</span> : <code class="type">[> `Custom of string * string ]</code></pre></body></html>
+<pre><span id="VALbwa"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.bwa.html">bwa</a></span> : <code class="type">[> `Bwa of [> `V_0_7_10 ] ]</code></pre>
+<pre><span id="VALsamtools"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.samtools.html">samtools</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALvcftools"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.vcftools.html">vcftools</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALbedtools"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.bedtools.html">bedtools</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALsomaticsniper"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.somaticsniper.html">somaticsniper</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALvarscan"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.varscan.html">varscan</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALpicard"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.picard.html">picard</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALmutect"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.mutect.html">mutect</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALgatk"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.gatk.html">gatk</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALstrelka"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.strelka.html">strelka</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALvirmid"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.virmid.html">virmid</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALmuse"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.muse.html">muse</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALstar"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.star.html">star</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALstringtie"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.stringtie.html">stringtie</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALcufflinks"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.cufflinks.html">cufflinks</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALhisat"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.hisat.html">hisat</a></span> : <code class="type">[> `Custom of string * string ]</code></pre>
+<pre><span id="VALmosaik"><span class="keyword">val</span> <a href="code_VALRun_environment.Tool.Default.mosaik.html">mosaik</a></span> : <code class="type">[> `Custom of string * string ]</code></pre></body></html>

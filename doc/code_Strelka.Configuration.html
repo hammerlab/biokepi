@@ -1,0 +1,137 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Strelka.Configuration</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;parameters:&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_json&nbsp;{name;&nbsp;parameters}:&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.json&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"name"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"parameters"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;(<span class="constructor">List</span>.map&nbsp;parameters&nbsp;~f:(<span class="keyword">fun</span>&nbsp;(a,&nbsp;b)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;a,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;b));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;generate_config_file&nbsp;~path&nbsp;config&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"echo&nbsp;'[user]'&nbsp;&gt;&nbsp;%s"</span>&nbsp;path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;chain&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.map&nbsp;config.parameters&nbsp;(<span class="keyword">fun</span>&nbsp;(k,&nbsp;v)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"echo&nbsp;'%s&nbsp;=&nbsp;%s'&nbsp;&gt;&gt;&nbsp;%s"</span>&nbsp;k&nbsp;v&nbsp;path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;name&nbsp;=&nbsp;<span class="string">"default"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isSkipDepthFilters"</span>,&nbsp;<span class="string">"0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"maxInputDepth"</span>,&nbsp;<span class="string">"10000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"depthFilterMultiple"</span>,&nbsp;<span class="string">"3.0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.4"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxSpanningDeletionFrac"</span>,&nbsp;<span class="string">"0.75"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxRefRepeat"</span>,&nbsp;<span class="string">"8"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxWindowFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.3"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxIntHpolLength"</span>,&nbsp;<span class="string">"14"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoise"</span>,&nbsp;<span class="string">"0.0000005"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelNoise"</span>,&nbsp;<span class="string">"0.0000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoiseStrandBiasFrac"</span>,&nbsp;<span class="string">"0.5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier1Mapq"</span>,&nbsp;<span class="string">"40"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier2Mapq"</span>,&nbsp;<span class="string">"5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvQuality_LowerBound"</span>,&nbsp;<span class="string">"15"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelQuality_LowerBound"</span>,&nbsp;<span class="string">"30"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isWriteRealignedBam"</span>,&nbsp;<span class="string">"0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"binSize"</span>,&nbsp;<span class="string">"25000000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"extraStrelkaArguments"</span>,&nbsp;<span class="string">"--eland-compatibility"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;test1&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;name&nbsp;=&nbsp;<span class="string">"test1"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isSkipDepthFilters"</span>,&nbsp;<span class="string">"0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"maxInputDepth"</span>,&nbsp;<span class="string">"10000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"depthFilterMultiple"</span>,&nbsp;<span class="string">"3.0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.4"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxSpanningDeletionFrac"</span>,&nbsp;<span class="string">"0.75"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxRefRepeat"</span>,&nbsp;<span class="string">"8"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxWindowFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.3"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxIntHpolLength"</span>,&nbsp;<span class="string">"14"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoise"</span>,&nbsp;<span class="string">"0.0000005"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelNoise"</span>,&nbsp;<span class="string">"0.0000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoiseStrandBiasFrac"</span>,&nbsp;<span class="string">"0.5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier1Mapq"</span>,&nbsp;<span class="string">"40"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier2Mapq"</span>,&nbsp;<span class="string">"5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvQuality_LowerBound"</span>,&nbsp;<span class="string">"15"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelQuality_LowerBound"</span>,&nbsp;<span class="string">"30"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isWriteRealignedBam"</span>,&nbsp;<span class="string">"0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"binSize"</span>,&nbsp;<span class="string">"25000000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"extraStrelkaArguments"</span>,&nbsp;<span class="string">"--eland-compatibility"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"priorSomaticSnvRate"</span>,&nbsp;<span class="string">"1e-06"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"germlineSnvTheta"</span>,&nbsp;<span class="string">"0.001"</span>;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;empty_exome&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;name&nbsp;=&nbsp;<span class="string">"empty-exome"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isSkipDepthFilters"</span>,&nbsp;<span class="string">"1"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;exome_default&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;name&nbsp;=&nbsp;<span class="string">"exome-default"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isSkipDepthFilters"</span>,&nbsp;<span class="string">"1"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"maxInputDepth"</span>,&nbsp;<span class="string">"10000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"depthFilterMultiple"</span>,&nbsp;<span class="string">"3.0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.4"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"snvMaxSpanningDeletionFrac"</span>,&nbsp;<span class="string">"0.75"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxRefRepeat"</span>,&nbsp;<span class="string">"8"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxWindowFilteredBasecallFrac"</span>,&nbsp;<span class="string">"0.3"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"indelMaxIntHpolLength"</span>,&nbsp;<span class="string">"14"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelPrior"</span>,&nbsp;<span class="string">"0.000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoise"</span>,&nbsp;<span class="string">"0.0000005"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelNoise"</span>,&nbsp;<span class="string">"0.0000001"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvNoiseStrandBiasFrac"</span>,&nbsp;<span class="string">"0.5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier1Mapq"</span>,&nbsp;<span class="string">"40"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"minTier2Mapq"</span>,&nbsp;<span class="string">"5"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssnvQuality_LowerBound"</span>,&nbsp;<span class="string">"15"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sindelQuality_LowerBound"</span>,&nbsp;<span class="string">"30"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"isWriteRealignedBam"</span>,&nbsp;<span class="string">"0"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"binSize"</span>,&nbsp;<span class="string">"25000000"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"extraStrelkaArguments"</span>,&nbsp;<span class="string">"--eland-compatibility"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]}<br>
+<br>
+<span class="keyword">end</span></code></body></html>

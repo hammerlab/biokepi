@@ -1,0 +1,214 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Gatk</title>
+</head>
+<body>
+<code class="code"><span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Workflow_utilities</span><br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For&nbsp;now&nbsp;we&nbsp;have&nbsp;the&nbsp;two&nbsp;steps&nbsp;in&nbsp;the&nbsp;same&nbsp;target&nbsp;but&nbsp;this&nbsp;could<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;split&nbsp;in&nbsp;two.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.f.&nbsp;https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php<br>
+&nbsp;&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(compress=<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;input_bam&nbsp;~output_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"gatk-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_bam)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_genome&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_file&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_suffix&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="string">".bam"</span>&nbsp;^&nbsp;<span class="string">"-target.intervals"</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~processors&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;RealignerTargetCreator&nbsp;-R&nbsp;%s&nbsp;-I&nbsp;%s&nbsp;-o&nbsp;%s&nbsp;-nt&nbsp;%d"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intervals_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;IndelRealigner&nbsp;%s&nbsp;-R&nbsp;%s&nbsp;-I&nbsp;%s&nbsp;-o&nbsp;%s&nbsp;-targetIntervals&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;compress&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">""</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"-compress&nbsp;0"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intervals_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sequence_dict&nbsp;=&nbsp;<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(bam_file&nbsp;~sorting:<span class="keywordsign">`</span><span class="constructor">Coordinate</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_bam&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;RealignerTargetCreator&nbsp;wants&nbsp;the&nbsp;`.fai`:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;fasta);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;input_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sequence_dict;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;intervals_file);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<br>
+<span class="comment">(*&nbsp;Again&nbsp;doing&nbsp;two&nbsp;steps&nbsp;in&nbsp;one&nbsp;target&nbsp;for&nbsp;now:<br>
+&nbsp;&nbsp;&nbsp;http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator<br>
+&nbsp;&nbsp;&nbsp;https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php<br>
+*)</span><br>
+<span class="keyword">let</span>&nbsp;call_gatk&nbsp;~analysis&nbsp;?(region=<span class="keywordsign">`</span><span class="constructor">Full</span>)&nbsp;args&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;escaped_args&nbsp;=&nbsp;<span class="constructor">List</span>.map&nbsp;~f:<span class="constructor">Filename</span>.quote&nbsp;args&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_option&nbsp;=&nbsp;<span class="constructor">Region</span>.to_gatk_option&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;sh&nbsp;(<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;"</span>&nbsp;::&nbsp;analysis&nbsp;::&nbsp;intervals_option&nbsp;::&nbsp;escaped_args))<br>
+<br>
+<span class="keyword">let</span>&nbsp;base_quality_score_recalibrator&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~input_bam&nbsp;~output_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"gatk-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_bam)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_genome&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;db_snp&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;recal_data_table&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_suffix&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="string">".bam"</span>&nbsp;^&nbsp;<span class="string">"-recal_data.table"</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~processors&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~analysis:<span class="string">"BaseRecalibrator"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-nct"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-knownSites"</span>;&nbsp;db_snp<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;recal_data_table;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~analysis:<span class="string">"PrintReads"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-nct"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-BQSR"</span>;&nbsp;recal_data_table;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(bam_file&nbsp;output_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sorting:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;gatk);&nbsp;depends_on&nbsp;fasta;&nbsp;depends_on&nbsp;db_snp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;recal_data_table);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;haplotype_caller<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(more_edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~reference_build&nbsp;~input_bam&nbsp;~result_prefix&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_on_region&nbsp;~add_edges&nbsp;region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_file&nbsp;suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;region_name&nbsp;=&nbsp;<span class="constructor">Region</span>.to_filename&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s%s"</span>&nbsp;result_prefix&nbsp;region_name&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_vcf&nbsp;=&nbsp;result_file&nbsp;<span class="string">"-germline.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_path&nbsp;=&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;output_vcf&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_dot_fai&nbsp;=&nbsp;<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sequence_dict&nbsp;=&nbsp;<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_gatk_haplotype_caller&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_vcf)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~region&nbsp;~analysis:<span class="string">"HaplotypeCaller"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_vcf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"--filter_reads_with_N_cigar"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_vcf&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.variant_caller]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(add_edges&nbsp;@&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;dbsnp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_dot_fai;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sequence_dict;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_vcf);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_gatk_haplotype_caller<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Region</span>&nbsp;region&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;run_on_region&nbsp;~add_edges:more_edges&nbsp;region<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Map_reduce</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;targets&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;(<span class="constructor">Region</span>.major_contigs&nbsp;~reference_build)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(run_on_region&nbsp;~add_edges:[])&nbsp;<span class="comment">(*&nbsp;we&nbsp;add&nbsp;edges&nbsp;only&nbsp;to&nbsp;the&nbsp;last&nbsp;step&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_vcf&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">"-merged.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Vcftools</span>.vcf_concat&nbsp;~run_with&nbsp;targets&nbsp;~final_vcf&nbsp;~more_edges<br>
+</code></body></html>

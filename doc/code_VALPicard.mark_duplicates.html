@@ -1,0 +1,63 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
+<link title="Gatk" rel="Chapter" href="Gatk.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
+<link title="Mosaik" rel="Chapter" href="Mosaik.html">
+<link title="Muse" rel="Chapter" href="Muse.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
+<link title="Pipeline" rel="Chapter" href="Pipeline.html">
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Picard.mark_duplicates</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;mark_duplicates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(settings&nbsp;=&nbsp;<span class="constructor">Mark_duplicates_settings</span>.default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with:&nbsp;<span class="constructor">Machine</span>.t)&nbsp;~input_bam&nbsp;output_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;picard_jar&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Default</span>.picard&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;metrics_path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;output_bam&nbsp;<span class="string">".bam"</span>)&nbsp;<span class="string">".metrics"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary&nbsp;~run_with&nbsp;input_bam&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;java_call&nbsp;=&nbsp;<span class="constructor">Mark_duplicates_settings</span>.to_java_shell_call&nbsp;settings&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Tool</span>.(init&nbsp;picard_jar)&nbsp;<span class="keywordsign">&amp;&amp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"%s&nbsp;-jar&nbsp;$PICARD_JAR&nbsp;MarkDuplicates&nbsp;VALIDATION_STRINGENCY=LENIENT&nbsp;INPUT=%s&nbsp;OUTPUT=%s&nbsp;METRICS_FILE=%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;java_call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;output_bam)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;metrics_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"picard-markdups-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;(bam_file&nbsp;~sorting:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;output_bam&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Tool</span>.(ensure&nbsp;picard_jar);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;metrics_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]</code></body></html>

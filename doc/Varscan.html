@@ -2,53 +2,53 @@
 <html>
 <head>
 <link rel="stylesheet" href="style.css" type="text/css">
-<meta content="text/html; charset=iso-8859-1" http-equiv="Content-Type">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
 <link rel="Start" href="index.html">
-<link rel="previous" href="Mutect.html">
-<link rel="next" href="Somaticsniper.html">
+<link rel="previous" href="Stringtie.html">
+<link rel="next" href="Vcftools.html">
 <link rel="Up" href="index.html">
 <link title="Index of types" rel=Appendix href="index_types.html">
 <link title="Index of values" rel=Appendix href="index_values.html">
 <link title="Index of modules" rel=Appendix href="index_modules.html">
-<link title="Common" rel="Chapter" href="Common.html">
-<link title="Region" rel="Chapter" href="Region.html">
-<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
-<link title="Run_environment" rel="Chapter" href="Run_environment.html">
-<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html">
-<link title="Samtools" rel="Chapter" href="Samtools.html">
-<link title="Picard" rel="Chapter" href="Picard.html">
-<link title="Vcftools" rel="Chapter" href="Vcftools.html">
 <link title="Bedtools" rel="Chapter" href="Bedtools.html">
+<link title="Bwa" rel="Chapter" href="Bwa.html">
+<link title="Common" rel="Chapter" href="Common.html">
+<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html">
+<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Cycledash" rel="Chapter" href="Cycledash.html">
 <link title="Gatk" rel="Chapter" href="Gatk.html">
-<link title="Mutect" rel="Chapter" href="Mutect.html">
-<link title="Varscan" rel="Chapter" href="Varscan.html">
-<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
-<link title="Strelka" rel="Chapter" href="Strelka.html">
-<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Hisat" rel="Chapter" href="Hisat.html">
 <link title="Mosaik" rel="Chapter" href="Mosaik.html">
 <link title="Muse" rel="Chapter" href="Muse.html">
-<link title="Star" rel="Chapter" href="Star.html">
-<link title="Bwa" rel="Chapter" href="Bwa.html">
-<link title="Stringtie" rel="Chapter" href="Stringtie.html">
-<link title="Cycledash" rel="Chapter" href="Cycledash.html">
-<link title="Cufflinks" rel="Chapter" href="Cufflinks.html">
+<link title="Mutect" rel="Chapter" href="Mutect.html">
+<link title="Picard" rel="Chapter" href="Picard.html">
 <link title="Pipeline" rel="Chapter" href="Pipeline.html">
-<link title="Hisat" rel="Chapter" href="Hisat.html">
-<link title="Common_pipelines" rel="Chapter" href="Common_pipelines.html"><title>Varscan</title>
+<link title="Reference_genome" rel="Chapter" href="Reference_genome.html">
+<link title="Region" rel="Chapter" href="Region.html">
+<link title="Run_environment" rel="Chapter" href="Run_environment.html">
+<link title="Samtools" rel="Chapter" href="Samtools.html">
+<link title="Somaticsniper" rel="Chapter" href="Somaticsniper.html">
+<link title="Star" rel="Chapter" href="Star.html">
+<link title="Strelka" rel="Chapter" href="Strelka.html">
+<link title="Stringtie" rel="Chapter" href="Stringtie.html">
+<link title="Varscan" rel="Chapter" href="Varscan.html">
+<link title="Vcftools" rel="Chapter" href="Vcftools.html">
+<link title="Virmid" rel="Chapter" href="Virmid.html">
+<link title="Workflow_utilities" rel="Chapter" href="Workflow_utilities.html"><title>Varscan</title>
 </head>
 <body>
-<div class="navbar"><a class="pre" href="Mutect.html" title="Mutect">Previous</a>
+<div class="navbar"><a class="pre" href="Stringtie.html" title="Stringtie">Previous</a>
 &nbsp;<a class="up" href="index.html" title="Index">Up</a>
-&nbsp;<a class="post" href="Somaticsniper.html" title="Somaticsniper">Next</a>
+&nbsp;<a class="post" href="Vcftools.html" title="Vcftools">Next</a>
 </div>
-<h1>Module <a href="type_Varscan.html">Varscan</a></h1>
+<h1>Module <a href="type_Varscan.html">Varscan</a> (<a href="code_Varscan.html">.ml</a>)</h1>
 
-<pre><span class="keyword">module</span> Varscan: <code class="code">sig</code> <a href="Varscan.html">..</a> <code class="code">end</code></pre><div class="info module top">
-Expects the tool <code class="code">"varscan"</code> to provide the environment variable 
-   <code class="code">"$VARSCAN_JAR"</code>.<br>
+<pre><span class="keyword">module</span> Varscan: <code class="code"><span class="keyword">sig</span></code> <a href="Varscan.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Expects the tool <code class="code"><span class="string">"varscan"</span></code> to provide the environment variable 
+   <code class="code"><span class="string">"$VARSCAN_JAR"</span></code>.<br>
 </div>
 <hr width="100%">
 
-<pre><span id="VALempty_vcf"><span class="keyword">val</span> empty_vcf</span> : <code class="type">string</code></pre>
-<pre><span id="VALsomatic_on_region"><span class="keyword">val</span> somatic_on_region</span> : <code class="type">run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       ?adjust_mapq:int -><br>       normal:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       tumor:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       result_prefix:string -><br>       [< `Chromosome of string | `Chromosome_interval of string * int * int | `Full ] -><br>       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre>
-<pre><span id="VALsomatic_map_reduce"><span class="keyword">val</span> somatic_map_reduce</span> : <code class="type">?more_edges:<a href="Common.KEDSL.html#TYPEworkflow_edge">Common.KEDSL.workflow_edge</a> list -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       ?adjust_mapq:int -><br>       normal:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       tumor:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       result_prefix:string -><br>       unit -> <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>
+<pre><span id="VALempty_vcf"><span class="keyword">val</span> <a href="code_VALVarscan.empty_vcf.html">empty_vcf</a></span> : <code class="type">string</code></pre>
+<pre><span id="VALsomatic_on_region"><span class="keyword">val</span> <a href="code_VALVarscan.somatic_on_region.html">somatic_on_region</a></span> : <code class="type">run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       ?adjust_mapq:int -><br>       normal:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       tumor:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       result_prefix:string -><br>       [< `Chromosome of string | `Chromosome_interval of string * int * int | `Full ] -><br>       <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre>
+<pre><span id="VALsomatic_map_reduce"><span class="keyword">val</span> <a href="code_VALVarscan.somatic_map_reduce.html">somatic_map_reduce</a></span> : <code class="type">?more_edges:<a href="Common.KEDSL.html#TYPEworkflow_edge">Common.KEDSL.workflow_edge</a> list -><br>       reference_build:<a href="Reference_genome.html#TYPEspecification">Reference_genome.specification</a> -><br>       run_with:<a href="Run_environment.Machine.html#TYPEt">Run_environment.Machine.t</a> -><br>       ?adjust_mapq:int -><br>       normal:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       tumor:<a href="Common.KEDSL.html#TYPEbam_file">Common.KEDSL.bam_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a> -><br>       result_prefix:string -><br>       unit -> <a href="Common.KEDSL.html#TYPEsingle_file">Common.KEDSL.single_file</a> <a href="Common.KEDSL.html#TYPEworkflow_node">Common.KEDSL.workflow_node</a></code></pre></body></html>
