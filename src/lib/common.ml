@@ -34,7 +34,7 @@ let dbg fmt = ksprintf (eprintf "biokepi-debug: %s\n%!") fmt
 (** A consistent debugging mechanism. *)
 
 let failwithf fmt = ksprintf failwith fmt
-(** A formatted {!failwith} *)
+(** A formatted [failwith]. *)
 
 module Unique_id = struct
   include Ketrew_pure.Internal_pervasives.Unique_id
