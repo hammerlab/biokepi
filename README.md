@@ -41,29 +41,30 @@ submit a few Biokepi “example” pipelines to that same Ketrew daemon.
 ### Using The Demo Application
 
 The application is meant to show how to program with the library, especially
-building pipelines with `Biokepi_pipeline`.
+how to build pipelines with [Biokepi.Pipeline](src/lib/pipeline.ml).
 
-For now the demo pipeline looks like a somatic variant calling pipeline (hence
-the use of the words “tumor,” “normal,” etc.) but they have not been debugged
-enough to be used.
+For now the demo looks like a somatic variant calling pipeline (hence
+the use of the words “tumor,” “normal,” etc.). They have not been debugged
+enough to be used in production.
 
 It is configured with environment variables. It will run the pipelines on a
-given machine accessed through SSH (unfortunately within the demo one cannot
-specify a scheduler interface).
+given machine, accessed through SSH. Unfortunately within the demo one cannot
+specify a scheduler interface.
 
 Variables to set:
 
-- `BIOKEPI_DATASET_NAME`: a name for the dataset used as a namespace for
-  file-naming.
+- `BIOKEPI_DATASET_NAME`: a name for the dataset to be analyzed.
+  This is used as a namespace for file-naming and separating work environments
+  from other analyses run by Biokepi on target machine.
 - `BIOKEPI_NORMAL_R1`, `BIOKEPI_NORMAL_R2`, `BIOKEPI_TUMOR_R1`, and
-  `BIOKEPI_TUMOR_R2`: the input files, for now each variable may contain a
+  `BIOKEPI_TUMOR_R2`: the input files. For now each variable may contain a
   comma-separated list of
   [*.fastq.gz](http://en.wikipedia.org/wiki/FASTQ_format) (absolute) files on
   the running machine.
-- `BIOKEPI_SSH_BOX_URI`: an URI describing the machine to run on; for example
+- `BIOKEPI_SSH_BOX_URI`: an URI describing the machine to run on. For example
   `ssh://SshName//home/user/biokepi-test/metaplay` where:
     - `SshName` would be an entry in the `.ssh/config` of the server running
-    Ketrew,
+    Ketrew.
     - `/home/user/biokepi-test/metaplay` is the top-level directory where every
     generated file will go.
 - `BIOKEPI_MUTECT_JAR_SCP` or `BIOKEPI_MUTECT_JAR_WGET`: if you use
@@ -71,7 +72,7 @@ Variables to set:
   pipeline does) you need to provide a way to download the JAR file (`biokepi`
   would violate its non-free license by doing it itself). So use something like:
   `BIOKEPI_MUTECT_JAR_SCP=MyServer:/path/to/mutect.jar`.<br/>
-  Same goes for `GATK` (with `BIOKEPI_MUTECT_JAR_{SCP,WGET}`).
+  Same goes for `GATK` (with `BIOKEPI_GATK_JAR_{SCP,WGET}`).
 - `BIOKEPI_CYCLEDASH_URL`: if you are using
   [Cycledash](https://github.com/hammerlab/cycledash) (i.e. the option `-P`)
   then you need to provide the base URL (Biokepi will append `/runs` and
@@ -104,6 +105,4 @@ will display the JSON representation of the pipeline named `somatic-crazy`.
     ./biokepi-demo run -N somatic-simple-mutect
 
 should submit a the pipeline to your Ketrew server.
-
-
 
