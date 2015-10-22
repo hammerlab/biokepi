@@ -735,6 +735,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"
 
   let gtf_b37_url = "http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
+  let cdna_b37_url = "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz"
 
 
   let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
@@ -750,7 +751,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let gtf = 
       wget_gunzip ~host ~run_program gtf_b37_url
         ~destination:(destination_path // "transcripts.gtf") in
-    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf
+    let cdna = 
+      wget_gunzip ~host ~run_program cdna_b37_url
+      ~destination:(destination_path // "Homo_sapiens.GRCh37.75.cdna.all.fa") in
+    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf ~cdna
 
   let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -770,6 +774,8 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
 
   let gtf_b38_url = "http://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz"
+  let cdna_b38_url = "http://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
+
 
   let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -781,7 +787,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let gtf = 
       wget_gunzip ~host ~run_program gtf_b38_url
         ~destination:(destination_path // "transcripts.gtf") in
-    Reference_genome.create  "B38" fasta ~dbsnp ~gtf
+    let cdna = 
+      wget_gunzip ~host ~run_program cdna_b38_url
+        ~destination:(destination_path // "GRCh38.cdna.all.fa") in 
+    Reference_genome.create  "B38" fasta ~dbsnp ~gtf ~cdna
 
   let hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
