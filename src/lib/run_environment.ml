@@ -604,6 +604,7 @@ module Tool_providers = struct
       cufflinks_tools ~host ~meta_playground;
       hisat_tool ~host ~meta_playground;
       mosaik_tool ~host ~meta_playground;
+      kallisto_tool ~host ~meta_playground;
     ]
 end
 
