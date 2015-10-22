@@ -36,6 +36,7 @@ Library biokepi
            Cufflinks,
            Pipeline,
            Hisat,
+           Kallisto,
            Common_pipelines
 
 Executable biokepi_tests

@@ -52,6 +52,7 @@ module Tool = struct
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
     let hisat = custom "hisat" ~version:"0.1.6-beta"
     let mosaik = custom "mosaik" ~version:"2.2.3"
+    let kallisto = custom "kallisto" ~version:"0.42.3"
   end
   type t = {
     definition: Definition.t;
@@ -266,6 +267,32 @@ module Tool_providers = struct
             ))
     in
     Tool.create Tool.Default.hisat ~ensure 
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let kallisto_tool ~host ~meta_playground =
+    let install_path  = meta_playground // "kallisto" in
+    let url = "https://github.com/pachterlab/kallisto/releases/download/v0.42.3/kallisto_linux-v0.42.3.tar.gz" in
+    let archive = Filename.basename url in
+    let kallisto_binary = "kallisto" in 
+    let ensure =
+      workflow_node (single_file ~host (install_path // kallisto_binary))
+        ~name:(sprintf "Install kallisto")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvzf %s" archive
+              && shf "cd kallisto_*"
+              && sh "cp -r * ../"
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.kallisto ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let stringtie_tool ~host ~meta_playground =
@@ -577,6 +604,7 @@ module Tool_providers = struct
       cufflinks_tools ~host ~meta_playground;
       hisat_tool ~host ~meta_playground;
       mosaik_tool ~host ~meta_playground;
+      kallisto_tool ~host ~meta_playground;
     ]
 end
 
@@ -708,6 +736,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"
 
   let gtf_b37_url = "http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
+  let cdna_b37_url = "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz"
 
 
   let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
@@ -723,7 +752,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let gtf = 
       wget_gunzip ~host ~run_program gtf_b37_url
         ~destination:(destination_path // "transcripts.gtf") in
-    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf
+    let cdna = 
+      wget_gunzip ~host ~run_program cdna_b37_url
+      ~destination:(destination_path // "Homo_sapiens.GRCh37.75.cdna.all.fa") in
+    Reference_genome.create  "B37" fasta ~dbsnp ~cosmic ~gtf ~cdna
 
   let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -743,6 +775,8 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"
 
   let gtf_b38_url = "http://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/Homo_sapiens.GRCh38.80.gtf.gz"
+  let cdna_b38_url = "http://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"
+
 
   let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
     let fasta =
@@ -754,7 +788,10 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
     let gtf = 
       wget_gunzip ~host ~run_program gtf_b38_url
         ~destination:(destination_path // "transcripts.gtf") in
-    Reference_genome.create  "B38" fasta ~dbsnp ~gtf
+    let cdna = 
+      wget_gunzip ~host ~run_program cdna_b38_url
+        ~destination:(destination_path // "GRCh38.cdna.all.fa") in 
+    Reference_genome.create  "B38" fasta ~dbsnp ~gtf ~cdna
 
   let hg19_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"
