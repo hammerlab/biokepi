@@ -52,6 +52,7 @@ module Tool = struct
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
     let hisat = custom "hisat" ~version:"0.1.6-beta"
     let mosaik = custom "mosaik" ~version:"2.2.3"
+    let kallisto = custom "kallisto" ~version:"0.42.3"
   end
   type t = {
     definition: Definition.t;
@@ -266,6 +267,32 @@ module Tool_providers = struct
             ))
     in
     Tool.create Tool.Default.hisat ~ensure 
+      ~init:(Program.shf "export PATH=%s:$PATH" install_path)
+
+  let kallisto_tool ~host ~meta_playground =
+    let install_path  = meta_playground // "kallisto" in
+    let url = "https://github.com/pachterlab/kallisto/releases/download/v0.42.3/kallisto_linux-v0.42.3.tar.gz" in
+    let archive = Filename.basename url in
+    let kallisto_binary = "kallisto" in 
+    let ensure =
+      workflow_node (single_file ~host (install_path // kallisto_binary))
+        ~name:(sprintf "Install kallisto")
+        ~edges:[
+          on_failure_activate (rm_path ~host install_path);
+        ]
+        ~make:(
+          daemonize ~using:`Python_daemon ~host
+            Program.(
+              shf "mkdir -p %s" install_path
+              && shf "cd %s" install_path
+              && download_url_program url
+              && shf "tar xvzf %s" archive
+              && shf "cd kallisto_*"
+              && sh "cp -r * ../"
+              && sh "echo Done"
+            ))
+    in
+    Tool.create Tool.Default.kallisto ~ensure
       ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
   let stringtie_tool ~host ~meta_playground =

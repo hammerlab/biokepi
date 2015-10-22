@@ -29,18 +29,19 @@ type t = {
   cosmic :  KEDSL.file_workflow option;
   dbsnp :  KEDSL.file_workflow option;
   gtf : KEDSL.file_workflow option;
+  cdna : KEDSL.file_workflow option;
 }
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.
      Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.
 *)
 
-(** {3 Creation } *)
 
 val create :
   ?cosmic:KEDSL.file_workflow ->
   ?dbsnp:KEDSL.file_workflow ->
   ?gtf:KEDSL.file_workflow ->
+  ?cdna:KEDSL.file_workflow ->
   string -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
 
@@ -49,21 +50,24 @@ val on_host :
   ?cosmic:string -> 
   ?dbsnp:string -> 
   ?gtf:string->
+  ?cdna:string->
   string -> string -> t
 (** Create a [Reference_genome.t] by applying [Ketrew.EDSL.file_target] for
     each path on a given [host]. *)
 
-(** {3 Usual Accessors } *)
+(** {5 Usual Accessors } *)
 
 val name : t -> string
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
 val gtf_path_exn : t -> string
+val cdna_path_exn : t -> string
  
-(** {3 Targets} *)
+(** {5 Targets} *)
 
 val fasta: t -> KEDSL.file_workflow
 val cosmic_exn: t -> KEDSL.file_workflow
 val dbsnp_exn: t -> KEDSL.file_workflow
 val gtf_exn: t -> KEDSL.file_workflow
+val cdna_exn: t -> KEDSL.file_workflow

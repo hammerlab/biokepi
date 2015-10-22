@@ -13,12 +13,13 @@ type t = {
   cosmic:  KEDSL.file_workflow option;
   dbsnp:  KEDSL.file_workflow option;
   gtf:  KEDSL.file_workflow option;
+  cdna: KEDSL.file_workflow option;
 }
 
-let create ?cosmic ?dbsnp ?gtf name location =
-  {name; location; cosmic; dbsnp; gtf}
+let create ?cosmic ?dbsnp ?gtf ?cdna name location =
+  {name; location; cosmic; dbsnp; gtf; cdna}
 
-let on_host ~host ?cosmic ?dbsnp ?gtf name path =
+let on_host ~host ?cosmic ?dbsnp ?gtf ?cdna name path =
   let open KEDSL in
   let location =
     workflow_node
@@ -29,7 +30,8 @@ let on_host ~host ?cosmic ?dbsnp ?gtf name path =
   let cosmic = optional "Cosmic DB" cosmic in
   let dbsnp = optional "DBSNP" dbsnp in
   let gtf = optional "GTF" gtf in
-  create ?cosmic ?dbsnp ?gtf name location
+  let cdna = optional "cDNA" cdna in
+  create ?cosmic ?dbsnp ?gtf ?cdna name location
 
 
 let name t = t.name
@@ -49,6 +51,11 @@ let gtf_path_exn t =
   let trgt = Option.value_exn ~msg t.gtf in
   trgt#product#path
 
+let cdna_path_exn t =
+    let msg = sprintf "cdna_path_exn of %s" t.name in
+    let target = Option.value_exn ~msg t.cdna in
+    target#product#path
+
 let fasta: t -> KEDSL.file_workflow = fun t -> t.location
 let cosmic_exn t =
   Option.value_exn ~msg:(sprintf "%s: no COSMIC" t.name) t.cosmic
@@ -56,3 +63,5 @@ let dbsnp_exn t =
   Option.value_exn ~msg:(sprintf "%s: no DBSNP" t.name) t.dbsnp
 let gtf_exn t =
   Option.value_exn ~msg:(sprintf "%s: no GTF" t.name) t.gtf
+let cdna_exn t =
+  Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" t.name) t.cdna
