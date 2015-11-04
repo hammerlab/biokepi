@@ -17,23 +17,15 @@ build:
 doc:
 	ocaml setup.ml -doc
 
-#apidoc:
-#	mkdir -p _apidoc && \
-#	ocamlfind ocamldoc -html -d _apidoc/ -package ketrew  \
-#	    -thread  -charset UTF-8 -t "Biokepi API" -keep-code -colorize-code \
-#	    -sort \
-#	    -I _build/src/lib/ \
-#	    src/lib/*.mli src/lib/*.ml
-
-#doc: apidoc build
-#	INPUT=src/doc/ \
-#	    INDEX=README.md \
-#	    TITLE_PREFIX="Biokepi: " \
-#	    OUTPUT_DIR=_doc \
-#	    API=_apidoc \
-#	    CATCH_MODULE_PATHS='^(Biokepi[A-Z_a-z]+):', \
-#	    TITLE_SUBSTITUTIONS="main.ml:Literate Tests" \
-#	    oredoc
+oredoc: doc build
+	INPUT=src  \
+	INDEX=README.md \
+	TITLE_PREFIX="Biokepi: " \
+	OUTPUT_DIR=_oredoc \
+	API=biokepi.docdir \
+	CATCH_MODULE_PATHS='^(Biokepi[A-Z_a-z]+):', \
+	TITLE_SUBSTITUTIONS="main.ml:Literate Tests" \
+	oredoc
 
 clean:
 	rm -fr _build test_biokepi biokepi-demo

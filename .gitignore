@@ -14,3 +14,5 @@
 /setup.ml
 /biokepi
 /test_biokepi
+_oredoc/
+biokepi.docdir
