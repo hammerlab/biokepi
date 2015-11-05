@@ -184,10 +184,10 @@ module KEDSL = struct
 
   let submit w = Ketrew.Client.submit w#target
 
-end
+end (* KEDSL *)
 
 (** and then we forbid any other access to Ketrew, to force everything
-    to throught the above module. *)
+    through the above module. *)
 module Ketrew = struct end
 
 

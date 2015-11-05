@@ -51,7 +51,7 @@ module Somatic_variant_caller = struct
       unit ->
       KEDSL.file_workflow
   }
-end
+end (* Somatic_variant_caller *)
 
 module Germline_variant_caller = struct
   type t = {
@@ -68,7 +68,7 @@ module Germline_variant_caller = struct
       unit ->
       KEDSL.file_workflow
   }
-end
+end (* Germline_variant_caller *)
 
 type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
@@ -267,7 +267,7 @@ module Construct = struct
        make_target }
       bam_pair
 
-end
+end (* Construct *)
 
 
 let rec to_file_prefix:
@@ -534,4 +534,4 @@ module Compiler = struct
     in
     compiler.wrap_vcf_node pipeline vcf_node
 
-end
+end (* Compiler *)
