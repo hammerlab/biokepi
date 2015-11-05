@@ -1,5 +1,6 @@
-B _build/src/lib/
-B _build/src/test/
-S src/lib/
-S src/test/
+S src/**
+B _build/src/**
+PKG ppx_deriving_yojson
+PKG ppx_deriving.show
+PKG threads
 PKG ketrew
