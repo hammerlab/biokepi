@@ -1,3 +1,5 @@
+#use "topfind"
+#thread
 #directory "_build/src/lib"
 #require "ketrew"
 #load_rec "biokepi.cma"
