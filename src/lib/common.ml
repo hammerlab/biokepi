@@ -56,7 +56,7 @@ module KEDSL = struct
   type 'product workflow_node = <
     product : 'product;
     target: user_target;
-  > constraint 'product = < is_done : Condition.t option ; .. >
+  > constraint 'product = < is_done : Condition.t ; .. >
 
   type workflow_edge =
     | Depends_on: 'a workflow_node -> workflow_edge
@@ -68,8 +68,8 @@ module KEDSL = struct
   let on_success_activate n = On_success_activate n
   let on_failure_activate n = On_failure_activate n
 
-  type nothing = < is_done : Condition.t option >
-  let nothing  = object method is_done = None end
+  type nothing = < is_done : Condition.t >
+  let nothing  = object method is_done = `Satisfied end
 
   let workflow_node
       ?active
@@ -81,7 +81,7 @@ module KEDSL = struct
       let done_when =
         match done_when with
         | Some s -> Some s
-        | None -> product#is_done
+        | None -> Some product#is_done
       in
       let depends_on =
         List.filter_map edges ~f:(function
@@ -114,7 +114,7 @@ module KEDSL = struct
 
   type single_file = <
     exists: Ketrew_pure.Target.Condition.t;
-    is_done: Ketrew_pure.Target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t;
     path : string;
     is_bigger_than: int -> Ketrew_pure.Target.Condition.t;
   >
@@ -128,12 +128,15 @@ module KEDSL = struct
             (file basename))
       method path = path
       method exists = `Volume_exists vol
-      method is_done = Some (`Volume_exists vol)
+      method is_done = `Volume_exists vol
       method is_bigger_than n = `Volume_size_bigger_than (vol, n)
     end
 
   let forget_product node : nothing workflow_node =
-    object method product = nothing  method target = node#target end
+    object
+      method product = nothing
+      method target = node#target
+    end
 
   type file_workflow = single_file workflow_node
   type phony_workflow = nothing workflow_node
@@ -145,14 +148,13 @@ module KEDSL = struct
   let list_of_files ?host paths =
     object
       val files = List.map paths ~f:(fun p -> single_file ?host p)
-      method is_done =
-        Some (`And (List.filter_map files ~f:(fun f -> f#is_done)))
+      method is_done = `And (List.map files ~f:(fun f -> f#is_done))
       method paths = paths
     end
 
 
   type fastq_reads = <
-    is_done: Ketrew_pure.Target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t;
     paths : string * (string option);
   >
   let fastq_reads ?host r1 r2_opt : fastq_reads =
@@ -161,13 +163,13 @@ module KEDSL = struct
       val r2_file_opt = Option.map r2_opt ~f:(single_file ?host)
       method paths = (r1, r2_opt)
       method is_done =
-        Some (match r2_file_opt with
+          match r2_file_opt with
           | Some r2 -> `And [r1_file#exists; r2#exists]
-          | None -> `And [r1_file#exists; r1_file#exists;])
+          | None -> `And [r1_file#exists; r1_file#exists;]
     end
 
   type bam_file = <
-    is_done: Ketrew_pure.Target.Condition.t option;
+    is_done: Ketrew_pure.Target.Condition.t;
     path : string;
     sorting: [ `Coordinate | `Read_name ] option;
     content_type: [ `DNA | `RNA ];
