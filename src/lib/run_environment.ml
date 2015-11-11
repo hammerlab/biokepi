@@ -88,7 +88,7 @@ module Tool = struct
                                   Definition.(show def))
 
   end
-end
+end (* Tool *)
 
 module Machine = struct
 
@@ -121,7 +121,7 @@ module Machine = struct
   let run_program t = t.run_program
   let work_dir t = t.work_dir
 
-end
+end (* Machine *)
 
 let rm_path ~host path =
   workflow_node nothing
@@ -606,7 +606,7 @@ module Tool_providers = struct
       mosaik_tool ~host ~meta_playground;
       kallisto_tool ~host ~meta_playground;
     ]
-end
+end (* Tool_providers *)
 
 module Data_providers = struct
 
@@ -821,7 +821,7 @@ ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle
         ~destination:(destination_path // "dbsnp.vcf") in
     Reference_genome.create "hg18" fasta ~dbsnp
 
-end
+end (* Data_providers *)
 
 module Ssh_box = struct
  
@@ -874,4 +874,4 @@ module Ssh_box = struct
       ~quick_command:(fun program -> run_program program)
       ~work_dir:(meta_playground // "work")
 
-end
+end (* Ssh_box *)
