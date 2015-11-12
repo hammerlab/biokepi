@@ -2,6 +2,60 @@ open Common
 open Run_environment
 open Workflow_utilities
 
+
+module Configuration = struct
+
+  module Indel_realigner = struct
+    type t = {
+      name: string;
+      parameters: (string * string) list;
+    }
+
+    let to_json {parameters; name}: Yojson.Basic.json =
+      `Assoc [
+        "name", `String name;
+        "parameters",
+        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
+      ]
+
+    let render {parameters; _} =
+      List.concat_map parameters ~f:(fun (a,b) -> [a; b])
+
+    let default = {
+      name = "default";
+      parameters = [];
+    }
+
+  end
+
+  module Realigner_target_creator = struct
+    type t = {
+      name: string;
+      parameters: (string * string) list;
+    }
+
+    let render {parameters; _} =
+      List.concat_map parameters ~f:(fun (a,b) -> [a; b])
+
+    let to_json {parameters; name}: Yojson.Basic.json =
+      `Assoc [
+        "name", `String name;
+        "parameters",
+        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
+      ]
+
+    let default = {
+      name = "default";
+      parameters = [];
+    }
+  end
+
+
+  type indel_realigner = (Indel_realigner.t * Realigner_target_creator.t)
+
+  let default_indel_realigner = (Indel_realigner.default, Realigner_target_creator.default)
+
+end
   (*
      For now we have the two steps in the same target but this could
      be split in two.
@@ -9,10 +63,12 @@ open Workflow_utilities
   *)
 let indel_realigner
     ?(compress=false)
+    ~configuration
     ~reference_build
     ~processors
     ~run_with input_bam ~output_bam =
   let open KEDSL in
+  let indel_config, target_config = configuration in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
   let gatk = Machine.get_tool run_with Tool.Default.gatk in
   let reference_genome = Machine.get_reference_genome run_with reference_build in
@@ -27,19 +83,22 @@ let indel_realigner
     Machine.run_program run_with ~name
       Program.(
         Tool.(init gatk)
-        && shf "java -jar $GATK_JAR -T RealignerTargetCreator -R %s -I %s -o %s -nt %d"
-          fasta#product#path
-          sorted_bam#product#path
-          intervals_file
-          processors
-        && shf "java -jar $GATK_JAR -T IndelRealigner %s -R %s -I %s -o %s \
-                -targetIntervals %s"
-          (if compress then "" else "-compress 0")
-          fasta#product#path
-          sorted_bam#product#path
-          output_bam
-          intervals_file
-      ) in
+        && sh ("java -jar $GATK_JAR -T RealignerTargetCreator" ^
+               (String.concat ~sep:" " ([
+                    "-R"; fasta#product#path;
+                    "-I"; sorted_bam#product#path;
+                    "-o"; intervals_file;
+                    "-nt"; Int.to_string processors
+                  ] @ Configuration.Realigner_target_creator.render target_config)))
+        && sh ("java -jar $GATK_JAR -T IndelRealigner"
+               ^ (if compress then "" else "-compress 0")
+               ^ (String.concat ~sep:" " ([
+                   "-R"; fasta#product#path;
+                   "-I"; sorted_bam#product#path;
+                   "-o %s"; output_bam;
+                   "-targetIntervals"; intervals_file;
+                 ] @ Configuration.Indel_realigner.render indel_config))))
+  in
   let sequence_dict = Picard.create_dict ~run_with fasta in
   workflow_node ~name
     (bam_file ~sorting:`Coordinate

@@ -85,7 +85,7 @@ type _ t =
   | Bwa: bwa_params * fastq_sample  t -> bam  t
   | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
   | Mosaik: fastq_sample t -> bam t
-  | Gatk_indel_realigner: bam t -> bam t
+  | Gatk_indel_realigner: Gatk.Configuration.indel_realigner * bam t -> bam t
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
   | Gatk_bqsr: bam t -> bam t
   | Bam_pair: bam  t * bam  t -> bam_pair  t
@@ -138,7 +138,10 @@ module Construct = struct
 
   let hisat fastq = Hisat fastq
 
-  let gatk_indel_realigner bam = Gatk_indel_realigner bam
+  let gatk_indel_realigner
+        ?(configuration=Gatk.Configuration.default_indel_realigner)
+        bam
+    = Gatk_indel_realigner (configuration, bam)
   let picard_mark_duplicates
       ?(settings=Picard.Mark_duplicates_settings.default) bam =
     Picard_mark_duplicates (settings, bam)
@@ -150,7 +153,7 @@ module Construct = struct
   let germline_variant_caller t input_bam =
     Germline_variant_caller (t, input_bam)
 
-  let gatk_haplotype_caller input_bam = 
+  let gatk_haplotype_caller input_bam =
     let configuration_name = "default" in
     let configuration_json =
       `Assoc [
@@ -170,7 +173,7 @@ module Construct = struct
 
   let somatic_variant_caller t bam_pair =
     Somatic_variant_caller (t, bam_pair)
-  
+
   let mutect bam_pair =
     let configuration_name = "default" in
     let configuration_json =
@@ -192,7 +195,7 @@ module Construct = struct
 
   let somaticsniper
       ?(prior_probability=Somaticsniper.default_prior_probability)
-      ?(theta=Somaticsniper.default_theta) 
+      ?(theta=Somaticsniper.default_theta)
       bam_pair =
     let configuration_name =
       sprintf "S%F-T%F" prior_probability theta in
@@ -313,8 +316,12 @@ let rec to_file_prefix:
       sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
     | Mosaik (sample) ->
       sprintf "%s-mosaik" (to_file_prefix ?is sample)
-    | Gatk_indel_realigner bam ->
-      sprintf "%s-indelrealigned" (to_file_prefix ?is ?read bam)
+    | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
+       let open Gatk.Configuration in
+       sprintf "%s-indelrealigned-%s-%s"
+               (to_file_prefix ?is ?read bam)
+               indel_cfg.Indel_realigner.name
+               target_cfg.Realigner_target_creator.name
     | Gatk_bqsr bam ->
       sprintf "%s-bqsr" (to_file_prefix ?is ?read bam)
     | Picard_mark_duplicates (_, bam) ->
@@ -349,7 +356,7 @@ let rec to_json: type a. a t -> json =
       call "Bam-sample" [`String name; `String file#target#name]
     | Bam_to_fastq (how, bam) ->
       let how_string =
-        match how with `Paired -> "Paired" | `Single -> "Single" in 
+        match how with `Paired -> "Paired" | `Single -> "Single" in
       call "Bam-to-fastq" [`String how_string; to_json bam]
     | Paired_end_sample (name, r1, r2) ->
       call "Paired-end" [`String name; to_json r1; to_json r2]
@@ -374,9 +381,18 @@ let rec to_json: type a. a t -> json =
     | Mosaik (input) ->
       let input_json = to_json input in
       call "MOSAIK" [input_json]
-    | Gatk_indel_realigner bam ->
-      let input_json = to_json bam in
-      call "Gatk_indel_realigner" [`Assoc ["input", input_json]]
+    | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
+       let open Gatk.Configuration in
+       let input_json = to_json bam in
+       let indel_cfg_json = Indel_realigner.to_json indel_cfg in
+       let target_cfg_json = Realigner_target_creator.to_json target_cfg in
+       call "Gatk_indel_realigner" [`Assoc [
+          "Configuration", `Assoc [
+              "IndelRealigner Configuration", indel_cfg_json;
+              "RealignerTargetCreator Configuration", target_cfg_json;
+            ];
+          "Input", input_json;
+         ]]
     | Gatk_bqsr bam ->
       let input_json = to_json bam in
       call "Gatk_bqsr" [`Assoc ["input", input_json]]
@@ -470,12 +486,12 @@ module Compiler = struct
     let bam_node =
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
-      | Gatk_indel_realigner bam ->
+      | Gatk_indel_realigner (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler ?is bam in
         let output_bam = result_prefix ^ ".bam" in
         Gatk.indel_realigner
           ~processors ~reference_build ~run_with:machine input_bam ~compress:false
-          ~output_bam
+          ~configuration ~output_bam
       | Gatk_bqsr bam ->
         let input_bam = compile_aligner_step ~compiler ?is bam in
         let output_bam = result_prefix ^ ".bam" in
