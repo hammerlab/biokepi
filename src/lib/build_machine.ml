@@ -43,6 +43,8 @@ let create
           ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
       | `B37decoy -> Data_providers.pull_b37decoy
                        ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
+      | `mm10 -> Data_providers.pull_mm10
+                   ~host ~run_program ~destination_path:(meta_playground // "mm10-reference-genome")
       )
     ~host
     ~toolkit:(

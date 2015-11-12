@@ -1,7 +1,7 @@
 open Common
 
 type specification =
-  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ]
+  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
 
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.
@@ -36,12 +36,12 @@ let on_host ~host ?cosmic ?dbsnp ?gtf ?cdna name path =
 
 let name t = t.name
 let path t = t.location#product#path
-let cosmic_path_exn t = 
+let cosmic_path_exn t =
   let msg = sprintf "cosmic_path_exn of %s" t.name in
   let cosmic = Option.value_exn ~msg t.cosmic in
   cosmic#product#path
 
-let dbsnp_path_exn t = 
+let dbsnp_path_exn t =
   let msg = sprintf "dbsnp_path_exn of %s" t.name in
   let trgt = Option.value_exn ~msg t.dbsnp in
   trgt#product#path

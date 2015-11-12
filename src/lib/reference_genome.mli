@@ -21,7 +21,7 @@
 open Common
 
 type specification =
-  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ]
+  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
 
 type t = private {
   name : string;
@@ -47,8 +47,8 @@ val create :
 
 val on_host :
   host:KEDSL.Host.t ->
-  ?cosmic:string -> 
-  ?dbsnp:string -> 
+  ?cosmic:string ->
+  ?dbsnp:string ->
   ?gtf:string->
   ?cdna:string->
   string -> string -> t
@@ -63,7 +63,7 @@ val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
- 
+
 (** {5 Targets} *)
 
 val fasta: t -> KEDSL.file_workflow
