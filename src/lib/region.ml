@@ -40,7 +40,7 @@ let to_samtools_option r =
   | Some s -> sprintf "-r %s" s
   | None -> ""
 
-let to_gatk_option r = 
+let to_gatk_option r =
   match to_samtools_specification r with
   | Some s -> sprintf "--intervals %s" s
   | None -> ""
@@ -48,16 +48,16 @@ let to_gatk_option r =
 let parse_samtools s =
   match String.split ~on:(`Character ':') s with
   | [] -> assert false
-  | [one] -> `Chromosome one 
-  | [one; two] -> 
+  | [one] -> `Chromosome one
+  | [one; two] ->
     begin match String.split ~on:(`Character '-') two with
-    | [left; right] -> 
+    | [left; right] ->
       begin match Int.of_string left, Int.of_string right with
       | Some b, Some e -> `Chromosome_interval (one, b, e)
       | _ -> failwithf "Cannot parse %S into 2 loci" two
       end
     | _ -> failwithf "Not one '-' in %S" two
-    end 
+    end
   | _ -> failwithf "Not one or zero ':' in %S" s
 
 
@@ -65,7 +65,7 @@ let cmdliner_term () =
   let open Cmdliner in
   Term.(
     pure (function
-      | None -> `Full 
+      | None -> `Full
       | Some s -> parse_samtools s)
     $ Arg.(
         value & opt (some string) None
@@ -128,13 +128,35 @@ let all_chromosomes_hg19 = [
   `Chromosome "chrX";
   `Chromosome "chrY";
   `Chromosome "chrM";
+  ]
+
+let all_chromosomes_mm10 = [
+  `Chromosome "1";
+  `Chromosome "2";
+  `Chromosome "3";
+  `Chromosome "4";
+  `Chromosome "5";
+  `Chromosome "6";
+  `Chromosome "7";
+  `Chromosome "8";
+  `Chromosome "9";
+  `Chromosome "10";
+  `Chromosome "11";
+  `Chromosome "12";
+  `Chromosome "13";
+  `Chromosome "14";
+  `Chromosome "15";
+  `Chromosome "16";
+  `Chromosome "17";
+  `Chromosome "18";
+  `Chromosome "19";
+  `Chromosome "X";
+  `Chromosome "Y";
 ]
 
-let major_contigs ~reference_build = 
-  match reference_build with 
+let major_contigs ~reference_build =
+  match reference_build with
     | (`B37 | `B37decoy) -> all_chromosomes_b37
     | `B38 -> all_chromosomes_b37
     | (`hg19 | `hg18) -> all_chromosomes_hg19
-
-
-
+    | `mm10 -> all_chromosomes_mm10

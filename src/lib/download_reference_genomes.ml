@@ -216,3 +216,12 @@ let pull_hg18 ~host ~(run_program : Machine.run_function) ~destination_path =
     wget_gunzip ~host ~run_program dbsnp_hg18_url
       ~destination:(destination_path // "dbsnp.vcf") in
   Reference_genome.create "hg18" fasta ~dbsnp
+
+let mm10_url =
+  "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA_000001635.6_GRCm38.p4/GCA_000001635.6_GRCm38.p4_genomic.fna.gz"
+
+let pull_mm10 ~host ~(run_program : Machine.run_function) ~destination_path =
+  let fasta =
+    wget_gunzip ~host ~run_program hg18_url
+      ~destination:(destination_path // "mm10.fasta") in
+  Reference_genome.create "mm10" fasta
