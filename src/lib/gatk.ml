@@ -6,43 +6,16 @@ open Workflow_utilities
 module Configuration = struct
 
   module Indel_realigner = struct
-    type t = {
-      name: string;
-      parameters: (string * string) list;
-    }
-
-    let to_json {parameters; name}: Yojson.Basic.json =
-      `Assoc [
-        "name", `String name;
-        "parameters",
-        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
-      ]
-
-    let render {parameters; _} =
-      List.concat_map parameters ~f:(fun (a,b) -> [a; b])
+    include Tool_parameters
 
     let default = {
       name = "default";
       parameters = [];
     }
-
   end
 
   module Realigner_target_creator = struct
-    type t = {
-      name: string;
-      parameters: (string * string) list;
-    }
-
-    let render {parameters; _} =
-      List.concat_map parameters ~f:(fun (a,b) -> [a; b])
-
-    let to_json {parameters; name}: Yojson.Basic.json =
-      `Assoc [
-        "name", `String name;
-        "parameters",
-        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
-      ]
+    include Tool_parameters
 
     let default = {
       name = "default";
@@ -50,10 +23,31 @@ module Configuration = struct
     }
   end
 
+  module Bqsr = struct
+    include Tool_parameters
+
+    let default = {
+      name = "default";
+      parameters = [];
+    }
+
+  end
+
+  module Print_reads = struct
+    include Tool_parameters
+
+    let default = {
+      name = "default";
+      parameters = [];
+    }
+
+  end
 
   type indel_realigner = (Indel_realigner.t * Realigner_target_creator.t)
+  type bqsr = (Bqsr.t * Print_reads.t)
 
   let default_indel_realigner = (Indel_realigner.default, Realigner_target_creator.default)
+  let default_bqsr = (Bqsr.default, Print_reads.default)
 
 end
   (*
@@ -129,10 +123,11 @@ let call_gatk ~analysis ?(region=`Full) args =
   sh (String.concat ~sep:" "
         ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
 
-let base_quality_score_recalibrator 
-    ~run_with 
+let base_quality_score_recalibrator
+    ~configuration:(bqsr_configuration, print_reads_configuration)
+    ~run_with
     ~processors
-    ~reference_build 
+    ~reference_build
     ~input_bam ~output_bam =
   let open KEDSL in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
@@ -150,20 +145,20 @@ let base_quality_score_recalibrator
     Machine.run_program run_with ~name
       Program.(
         Tool.(init gatk)
-        && call_gatk ~analysis:"BaseRecalibrator" [
+        && call_gatk ~analysis:"BaseRecalibrator" ([
           "-nct"; Int.to_string processors;
           "-I"; sorted_bam#product#path;
           "-R"; fasta#product#path;
           "-knownSites"; db_snp#product#path;
           "-o"; recal_data_table;
-        ]
-        && call_gatk ~analysis:"PrintReads" [
+        ] @ Configuration.Bqsr.render bqsr_configuration)
+        && call_gatk ~analysis:"PrintReads" ([
           "-nct"; Int.to_string processors;
           "-R"; fasta#product#path;
           "-I"; sorted_bam#product#path;
           "-BQSR"; recal_data_table;
           "-o"; output_bam;
-        ]
+        ] @ Configuration.Print_reads.render print_reads_configuration)
       ) in
   workflow_node ~name
     (bam_file output_bam
