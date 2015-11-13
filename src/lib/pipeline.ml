@@ -76,19 +76,19 @@ type _ t =
   (* | List: 'a t list -> 'a list t *)
   | Bam_sample: string * bam -> bam t
   | Bam_to_fastq: [ `Single | `Paired ] * bam t -> fastq_sample t
-  | Paired_end_sample: string * fastq  t * fastq  t -> fastq_sample  t
-  | Single_end_sample: string * fastq  t -> fastq_sample  t
-  | Gunzip_concat: fastq_gz  t list -> fastq  t
-  | Concat_text: fastq  t list -> fastq  t
-  | Star: fastq_sample  t -> bam  t
-  | Hisat: fastq_sample  t -> bam  t
-  | Bwa: bwa_params * fastq_sample  t -> bam  t
-  | Bwa_mem: bwa_params * fastq_sample  t -> bam  t
+  | Paired_end_sample: string * fastq t * fastq t -> fastq_sample t
+  | Single_end_sample: string * fastq t -> fastq_sample t
+  | Gunzip_concat: fastq_gz t list -> fastq t
+  | Concat_text: fastq t list -> fastq t
+  | Star: fastq_sample t -> bam t
+  | Hisat: fastq_sample t -> bam t
+  | Bwa: bwa_params * fastq_sample t -> bam t
+  | Bwa_mem: bwa_params * fastq_sample t -> bam t
   | Mosaik: fastq_sample t -> bam t
   | Gatk_indel_realigner: Gatk.Configuration.indel_realigner * bam t -> bam t
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
-  | Gatk_bqsr: bam t -> bam t
-  | Bam_pair: bam  t * bam  t -> bam_pair  t
+  | Gatk_bqsr: (Gatk.Configuration.bqsr * bam t) -> bam t
+  | Bam_pair: bam t * bam t -> bam_pair t
   | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: Germline_variant_caller.t * bam t -> vcf t
 
@@ -146,7 +146,7 @@ module Construct = struct
       ?(settings=Picard.Mark_duplicates_settings.default) bam =
     Picard_mark_duplicates (settings, bam)
 
-  let gatk_bqsr bam = Gatk_bqsr bam
+  let gatk_bqsr ?(configuration=Gatk.Configuration.default_bqsr) bam = Gatk_bqsr (configuration, bam)
 
   let pair ~normal ~tumor = Bam_pair (normal, tumor)
 
@@ -320,8 +320,12 @@ let rec to_file_prefix:
                (to_file_prefix ?is ?read bam)
                indel_cfg.Indel_realigner.name
                target_cfg.Realigner_target_creator.name
-    | Gatk_bqsr bam ->
-      sprintf "%s-bqsr" (to_file_prefix ?is ?read bam)
+    | Gatk_bqsr ((bqsr_cfg, print_reads_cfg), bam) ->
+      let open Gatk.Configuration in
+      sprintf "%s-bqsr-%s-%s"
+        (to_file_prefix ?is ?read bam)
+        bqsr_cfg.Bqsr.name
+        bqsr_cfg.Print_reads.name
     | Picard_mark_duplicates (_, bam) ->
       (* The settings, for now, do not impact the result *)
       sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
@@ -391,9 +395,16 @@ let rec to_json: type a. a t -> json =
             ];
           "Input", input_json;
          ]]
-    | Gatk_bqsr bam ->
+    | Gatk_bqsr ((bqsr_cfg, print_reads_cfg), bam) ->
+      let open Gatk.Configuration in
       let input_json = to_json bam in
-      call "Gatk_bqsr" [`Assoc ["input", input_json]]
+      call "Gatk_bqsr" [`Assoc [
+          "Configuration", `Assoc [
+              "Bqsr", Bqsr.to_json bqsr_cfg;
+              "Print_reads", Print_reads.to_json print_reads_cfg;
+          ];
+          "Input", input_json;
+        ]]
     | Germline_variant_caller (gvc, bam) ->
       call gvc.Germline_variant_caller.name [`Assoc [
           "Configuration", gvc.Germline_variant_caller.configuration_json;
@@ -490,10 +501,11 @@ module Compiler = struct
         Gatk.indel_realigner
           ~processors ~reference_build ~run_with:machine input_bam ~compress:false
           ~configuration ~output_bam
-      | Gatk_bqsr bam ->
+      | Gatk_bqsr (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler ?is bam in
         let output_bam = result_prefix ^ ".bam" in
         Gatk.base_quality_score_recalibrator
+          ~configuration
           ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
       | Picard_mark_duplicates (settings, bam) ->
         let input_bam = compile_aligner_step ~compiler ?is bam in

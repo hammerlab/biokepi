@@ -37,7 +37,8 @@ Library biokepi
            Pipeline,
            Hisat,
            Kallisto,
-           Common_pipelines
+           Common_pipelines,
+           Tool_parameters
 
 Executable biokepi_tests
   Path: src/test/
