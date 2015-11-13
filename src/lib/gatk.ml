@@ -83,7 +83,7 @@ let indel_realigner
     Machine.run_program run_with ~name
       Program.(
         Tool.(init gatk)
-        && sh ("java -jar $GATK_JAR -T RealignerTargetCreator" ^
+        && sh ("java -jar $GATK_JAR -T RealignerTargetCreator " ^
                (String.concat ~sep:" " ([
                     "-R"; fasta#product#path;
                     "-I"; sorted_bam#product#path;
@@ -91,7 +91,7 @@ let indel_realigner
                     "-nt"; Int.to_string processors
                   ] @ Configuration.Realigner_target_creator.render target_config)))
         && sh ("java -jar $GATK_JAR -T IndelRealigner"
-               ^ (if compress then "" else "-compress 0")
+               ^ (if compress then " " else " -compress 0 ")
                ^ (String.concat ~sep:" " ([
                    "-R"; fasta#product#path;
                    "-I"; sorted_bam#product#path;
