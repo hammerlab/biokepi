@@ -95,7 +95,7 @@ let indel_realigner
                ^ (String.concat ~sep:" " ([
                    "-R"; fasta#product#path;
                    "-I"; sorted_bam#product#path;
-                   "-o %s"; output_bam;
+                   "-o"; output_bam;
                    "-targetIntervals"; intervals_file;
                  ] @ Configuration.Indel_realigner.render indel_config))))
   in
