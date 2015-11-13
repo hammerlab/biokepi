@@ -41,7 +41,7 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: Reference_genome.specification -> 
+      reference_build: Reference_genome.specification ->
       run_with:Run_environment.Machine.t ->
       normal: bam ->
       tumor: bam ->
@@ -59,7 +59,7 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: Reference_genome.specification -> 
+      reference_build: Reference_genome.specification ->
       run_with:Run_environment.Machine.t ->
       input_bam: bam ->
       result_prefix: string ->
@@ -174,16 +174,14 @@ module Construct = struct
   let somatic_variant_caller t bam_pair =
     Somatic_variant_caller (t, bam_pair)
 
-  let mutect bam_pair =
-    let configuration_name = "default" in
-    let configuration_json =
-      `Assoc [
-        "Name", `String configuration_name;
-      ] in
+  let mutect ?(configuration=Mutect.Configuration.default) bam_pair =
+    let configuration_name = configuration.Mutect.Configuration.name in
+    let configuration_json = Mutect.Configuration.to_json configuration in
     let make_target
         ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
         ?more_edges () =
       Mutect.run
+        ~configuration
         ?more_edges
         ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller
