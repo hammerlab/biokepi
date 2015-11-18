@@ -38,6 +38,9 @@ Library biokepi
            Hisat,
            Kallisto,
            Common_pipelines,
+           Download_reference_genomes,
+           Build_machine,
+           Tool_providers,
            Tool_parameters
 
 Executable biokepi_tests

@@ -28,6 +28,16 @@ module Remove = struct
         ))
       ~make:(Machine.quick_command run_with Program.(exec ["rm"; "-rf"; path]))
       ~tags:[Target_tags.clean_up]
+
+  (* This one is dirtier, it does not check its result and uses the `Host.t`
+     directly, it should be used only when the `Mchine.t` is not available
+     (i.e. while defining a `Machine.t`). *)
+  let path_on_host ~host path =
+    let open KEDSL in
+    workflow_node nothing
+      ~name:(sprintf "rm-%s" (Filename.basename path))
+      ~make:(daemonize ~using:`Python_daemon ~host
+               Program.(exec ["rm"; "-rf"; path]))
 end
 
 

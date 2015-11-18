@@ -23,7 +23,7 @@ open Common
 type specification =
   [`B37 | `B38 | `hg19 | `hg18 | `B37decoy ]
 
-type t = {
+type t = private {
   name : string;
   location : KEDSL.file_workflow;
   cosmic :  KEDSL.file_workflow option;
