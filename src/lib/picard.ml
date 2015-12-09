@@ -122,13 +122,16 @@ let bam_to_fastq
   let name =
     sprintf "picard-bam2fastq-%s" Filename.(basename input_bam#product#path) in
   let make = Machine.run_program ~name run_with program in
+  let edges =
+    (fun list ->
+       match r2opt with
+       | Some r2 -> on_failure_activate (Remove.file ~run_with r2) :: list
+       | None -> list)
+      [
+        depends_on sorted_bam;
+        depends_on Tool.(ensure picard_jar);
+        on_failure_activate (Remove.file ~run_with r1);
+      ]
+  in
   workflow_node (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
-    ~name ~make
-    ~edges:[
-      depends_on sorted_bam;
-      depends_on Tool.(ensure picard_jar);
-      on_failure_activate (Remove.file ~run_with r1);
-      Option.value_map r2opt ~default:Empty_edge
-        ~f:(fun r2 ->
-            on_failure_activate (Remove.file ~run_with r2));
-    ]
+    ~name ~make ~edges

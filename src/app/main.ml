@@ -155,8 +155,10 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
           `Target t,
           `Json_blob (
             `Assoc [
-              "target-name", `String t#target#name;
-              "target-id", `String t#target#id;
+              (* Using a bit of the “internal” representation of
+                 workflow-nodes here: *)
+              "target-name", `String t#render#name;
+              "target-id", `String t#render#id;
               "pipeline", Biokepi.Pipeline.to_json pl;
             ]))
   in
@@ -168,7 +170,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
           Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
         let params = Yojson.Basic.pretty_to_string json in
         Biokepi.Cycledash.post_vcf ~run_with:machine
-          ~vcf ~variant_caller_name:vcf#target#name ~dataset_name:dataset
+          ~vcf ~variant_caller_name:vcf#render#name ~dataset_name:dataset
           ~witness_output ~params
           (get_env "BIOKEPI_CYCLEDASH_URL")
         |> depends_on

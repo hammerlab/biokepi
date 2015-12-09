@@ -358,10 +358,10 @@ let rec to_json: type a. a t -> json =
   fun w ->
     let call name (args : json list): json = `List (`String name :: args) in
     match w with
-    | Fastq_gz file -> call "Fastq_gz" [`String file#target#name]
-    | Fastq file -> call "Fastq" [`String file#target#name]
+    | Fastq_gz file -> call "Fastq_gz" [`String file#product#path]
+    | Fastq file -> call "Fastq" [`String file#product#path]
     | Bam_sample (name, file) ->
-      call "Bam-sample" [`String name; `String file#target#name]
+      call "Bam-sample" [`String name; `String file#product#path]
     | Bam_to_fastq (how, bam) ->
       let how_string =
         match how with `Paired -> "Paired" | `Single -> "Single" in
