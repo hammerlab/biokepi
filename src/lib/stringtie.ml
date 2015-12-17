@@ -4,8 +4,8 @@ open Workflow_utilities
 
 let run ?(reference_build=`B37)
     ~(run_with:Machine.t)
-    ~processors 
-    ~bam 
+    ~processors
+    ~bam
     ~result_prefix =
   let open KEDSL in
   let name = sprintf "stringtie-%s" (Filename.basename result_prefix) in
