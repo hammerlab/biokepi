@@ -15,7 +15,7 @@ remove: [
 ]
 depends: [
   "base-threads"
-  "ketrew"
+  "ketrew" {>= "2.0.0"}
   ("oasis" {>= "0.4"} | "oasis-mirage" {>= "0.4"})
   "ocamlfind"
 ]
