@@ -35,7 +35,7 @@ travis_install_on_linux () {
 
     export PATH=$PATH:/usr/lib/postgresql/9.4/bin
     echo "PATH: $PATH"
-    
+
     export opam_init_options="--comp=$OCAML_VERSION"
     sudo apt-get install -qq  opam time git
 }
@@ -83,7 +83,7 @@ git config --global user.name "Your Name"
 
 opam update
 
-opam install ketrew
+opam install ketrew=2.0.0
 
 
 echo 'ocamlfind list | grep lwt'
@@ -99,5 +99,3 @@ export OCAMLPARAM="warn-error=A,_"
 
 opam pin add biokepi --yes .
 opam install --yes biokepi
-
-

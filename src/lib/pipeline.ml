@@ -30,6 +30,7 @@ type fastq_sample = Fastq_sample
 type bam = KEDSL.bam_file KEDSL.workflow_node
 type bam_pair = Bam_pair
 type vcf = Vcf
+type gtf = Gtf
 
 type bwa_params = {
   gap_open_penalty: int;
@@ -82,6 +83,7 @@ type _ t =
   | Concat_text: fastq t list -> fastq t
   | Star: fastq_sample t -> bam t
   | Hisat: fastq_sample t -> bam t
+  | Stringtie: bam t -> gtf t
   | Bwa: bwa_params * fastq_sample t -> bam t
   | Bwa_mem: bwa_params * fastq_sample t -> bam t
   | Mosaik: fastq_sample t -> bam t
@@ -137,6 +139,8 @@ module Construct = struct
   let star fastq = Star fastq
 
   let hisat fastq = Hisat fastq
+
+  let stringtie bam = Stringtie bam
 
   let gatk_indel_realigner
         ?(configuration=Gatk.Configuration.default_indel_realigner)
@@ -312,6 +316,8 @@ let rec to_file_prefix:
       sprintf "%s-star-aligned" (to_file_prefix ?is sample)
     | Hisat (sample) ->
       sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
+    | Stringtie (sample) ->
+      sprintf "%s-stringtie" (to_file_prefix ?is sample)
     | Mosaik (sample) ->
       sprintf "%s-mosaik" (to_file_prefix ?is sample)
     | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
@@ -380,6 +386,9 @@ let rec to_json: type a. a t -> json =
     | Hisat (input) ->
       let input_json = to_json input in
       call "HISAT" [input_json]
+    | Stringtie (input) ->
+      let input_json = to_json input in
+      call "STRINGTIE" [input_json]
     | Mosaik (input) ->
       let input_json = to_json input in
       call "MOSAIK" [input_json]
@@ -436,13 +445,18 @@ module Compiler = struct
       vcf pipeline ->
       KEDSL.single_file KEDSL.workflow_node ->
       KEDSL.single_file KEDSL.workflow_node;
+    wrap_gtf_node:
+      gtf pipeline ->
+      KEDSL.single_file KEDSL.workflow_node ->
+      KEDSL.single_file KEDSL.workflow_node;
   }
   let create
       ?(wrap_bam_node = fun _ x -> x)
       ?(wrap_vcf_node = fun _ x -> x)
+      ?(wrap_gtf_node = fun _ x -> x)
       ~processors ~reference_build ~work_dir ~machine () =
     {processors; reference_build; work_dir; machine;
-     wrap_bam_node; wrap_vcf_node}
+     wrap_bam_node; wrap_vcf_node; wrap_gtf_node}
 
   let rec compile_aligner_step
       ~compiler ?(is:[`Normal | `Tumor] option) (pipeline : bam pipeline) =
@@ -559,5 +573,18 @@ module Compiler = struct
           ~run_with:machine ~input_bam ~result_prefix ()
     in
     compiler.wrap_vcf_node pipeline vcf_node
+
+  let compile_gtf_step ~compiler (pipeline: gtf pipeline) =
+    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let result_prefix = work_dir // to_file_prefix pipeline in
+    dbg "Result_Prefix: %S" result_prefix;
+    let gtf_node =
+      match pipeline with
+      | Stringtie (bam) ->
+        let bam = compile_aligner_step ~compiler bam in
+        Stringtie.run ~reference_build ~processors
+          ~bam ~result_prefix ~run_with:machine
+    in
+    compiler.wrap_gtf_node pipeline gtf_node
 
 end
