@@ -34,11 +34,14 @@ let bamtofastq ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix inp
     depends_on Tool.(ensure bedtools);
     depends_on input_bam;
     on_failure_activate (Remove.file ~run_with r1);
-    Option.value_map r2opt ~default:Empty_edge
-      ~f:(fun r2 ->
-          on_failure_activate (Remove.file ~run_with r2));
     on_success_activate (Remove.file ~run_with sorted_bam#product#path);
-  ] in
+  ] |> fun list ->
+    begin match r2opt with
+    | None -> list
+    | Some r2 -> 
+      on_failure_activate (Remove.file ~run_with r2) :: list
+    end
+  in
   workflow_node
     (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
     ~edges ~name ~make

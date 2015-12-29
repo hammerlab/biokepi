@@ -36,7 +36,8 @@ let post_vcf
       Some ("-w", Option.value witness_output ~default:"/tmp/www")
     ]
     |> List.concat_map ~f:(fun (x, y) -> [x; y]) in
-  let name = sprintf "upload+cycledash: %s" vcf#target#name in
+  let name =
+    sprintf "upload+cycledash: %s" (Filename.basename vcf#product#path) in
   let make =
     Machine.quick_command run_with Program.(
         shf "curl -f %s > %s"
