@@ -83,8 +83,10 @@ git config --global user.name "Your Name"
 
 opam update
 
-opam install ketrew=2.0.0
 
+
+opam pin add trakeva https://github.com/smondet/trakeva.git
+opam pin add ketrew https://github.com/hammerlab/ketrew.git
 
 echo 'ocamlfind list | grep lwt'
 ocamlfind list | grep lwt
