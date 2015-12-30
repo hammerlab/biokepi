@@ -28,7 +28,7 @@ To install the pre-release through `opam`:
 To use the `master` branch you need also to track the `master` branch of Ketrew:
 
 
-    opam pin add ketrew https://github.com/smondet/trakeva.git
+    opam pin add trakeva https://github.com/smondet/trakeva.git
     opam pin add ketrew https://github.com/hammerlab/ketrew.git
     opam pin add biokepi https://github.com/hammerlab/biokepi.git
 
