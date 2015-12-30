@@ -20,10 +20,17 @@ Build
 The main dependency is [Ketrew](http://seb.mondet.org/software/ketrew/) (which
 requires OCaml ≥ 4.02.2).
 
-To install through `opam`:
+To install the pre-release through `opam`:
 
-    opam pin add biokepi https://github.com/hammerlab/biokepi.git
+    opam pin add biokepi "https://github.com/hammerlab/biokepi.git#biokepi.0.0.0"
     [opam install biokepi]
+
+To use the `master` branch you need also to track the `master` branch of Ketrew:
+
+
+    opam pin add ketrew https://github.com/smondet/trakeva.git
+    opam pin add ketrew https://github.com/hammerlab/ketrew.git
+    opam pin add biokepi https://github.com/hammerlab/biokepi.git
 
 
 To build locally:
