@@ -77,10 +77,6 @@ git --version
 opam init $opam_init_options
 eval `opam config env`
 
-# Bypass opam bug #1747
-git config --global user.email "you@example.com"
-git config --global user.name "Your Name"
-
 opam update
 
 
