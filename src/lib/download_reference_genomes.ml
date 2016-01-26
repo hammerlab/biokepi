@@ -222,6 +222,6 @@ let mm10_url =
 
 let pull_mm10 ~host ~(run_program : Machine.run_function) ~destination_path =
   let fasta =
-    wget_gunzip ~host ~run_program hg18_url
+    wget_gunzip ~host ~run_program mm10_url
       ~destination:(destination_path // "mm10.fasta") in
   Reference_genome.create "mm10" fasta
