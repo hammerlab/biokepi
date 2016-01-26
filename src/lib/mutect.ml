@@ -7,6 +7,7 @@ module Configuration = struct
   type t = {
     name: string;
     with_cosmic: bool;
+    with_dbsnp: bool;
     parameters: (string * string) list;
   }
 
@@ -21,9 +22,13 @@ module Configuration = struct
     List.concat_map parameters ~f:(fun (a,b) -> [a; b])
 
   let default =
-    {name = "default"; with_cosmic = true; parameters = []}
+    {name = "default";
+     with_cosmic = true; with_dbsnp = true;
+     parameters = []}
   let default_without_cosmic =
-    {name = "default_without_cosmic"; with_cosmic = false; parameters = []}
+    {name = "default_without_cosmic";
+     with_cosmic = false; with_dbsnp = true;
+     parameters = []}
 
 
 end
@@ -48,7 +53,10 @@ let run ?(reference_build=`B37)
       match configuration.Configuration.with_cosmic with
       | true -> Some (Reference_genome.cosmic_exn reference)
       | false -> None in
-    let dbsnp = Reference_genome.dbsnp_exn reference in
+    let dbsnp =
+      match configuration.Configuration.with_dbsnp with
+      | true -> Some (Reference_genome.dbsnp_exn reference)
+      | false -> None in
     let fasta_dot_fai = Samtools.faidx ~run_with fasta in
     let sequence_dict = Picard.create_dict ~run_with fasta in
     let sorted_normal =
@@ -61,7 +69,10 @@ let run ?(reference_build=`B37)
       let name = sprintf "%s" (Filename.basename output_file) in
       let cosmic_option =
         Option.value_map ~default:"" cosmic ~f:(fun node ->
-            sprintf "--cosmic %s" (Filename.quote node#product#path)) in 
+            sprintf "--cosmic %s" (Filename.quote node#product#path)) in
+      let dbsnp_option =
+        Option.value_map ~default:"" dbsnp ~f:(fun node ->
+            sprintf "--dbsnp %s" (Filename.quote node#product#path)) in
       let make =
         Machine.run_program run_with ~name ~processors:2 Program.(
             Tool.(init mutect)
@@ -70,9 +81,7 @@ let run ?(reference_build=`B37)
             && sh ("java -Xmx2g -jar $mutect_HOME/muTect-*.jar --analysis_type MuTect " ^
                    (String.concat ~sep:" " ([
                         "--reference_sequence"; fasta#product#path;
-                        cosmic_option;
-                        "--dbsnp"; dbsnp#product#path;
-                        ""; intervals_option;
+                        cosmic_option; dbsnp_option; intervals_option;
                         "--input_file:normal"; sorted_normal#product#path;
                         "--input_file:tumor"; sorted_tumor#product#path;
                         "--out"; dot_out_file;
@@ -82,13 +91,13 @@ let run ?(reference_build=`B37)
       in
       let edges =
         Option.value_map cosmic ~default:[] ~f:(fun n -> [depends_on n])
+        @ Option.value_map dbsnp ~default:[] ~f:(fun n -> [depends_on n])
         @ add_edges
         @ [
           depends_on Tool.(ensure mutect);
           depends_on sorted_normal;
           depends_on sorted_tumor;
           depends_on fasta;
-          depends_on dbsnp;
           depends_on fasta_dot_fai;
           depends_on sequence_dict;
           depends_on (Samtools.index_to_bai ~run_with sorted_normal);
