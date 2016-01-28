@@ -31,12 +31,12 @@ module Configuration = struct
     let open KEDSL in
     Program.(
       shf "echo '[user]' > %s" path
-      && chain 
+      && chain
         (List.map config.parameters (fun (k, v) ->
              shf "echo '%s = %s' >> %s" k v path))
     )
 
-  let default = 
+  let default =
     { name = "default";
       parameters = [
         "isSkipDepthFilters", "0";
@@ -84,7 +84,7 @@ module Configuration = struct
         "binSize", "25000000";
         "extraStrelkaArguments", "--eland-compatibility";
         "priorSomaticSnvRate", "1e-06";
-        "germlineSnvTheta", "0.001"; 
+        "germlineSnvTheta", "0.001";
       ]}
   let empty_exome =
     { name = "empty-exome";
@@ -121,9 +121,9 @@ end
 
 let run ~reference_build
     ~run_with ~normal ~tumor ~result_prefix ~processors ?(more_edges = [])
-    ~configuration () =
+    ?(configuration = Configuration.default) () =
   let open KEDSL in
-  let open Configuration in 
+  let open Configuration in
   let name = Filename.basename result_prefix in
   let result_file suffix = result_prefix ^ suffix in
   let output_dir = result_file "strelka_output" in
