@@ -30,7 +30,7 @@ module Remove = struct
       ~tags:[Target_tags.clean_up]
 
   (* This one is dirtier, it does not check its result and uses the `Host.t`
-     directly, it should be used only when the `Mchine.t` is not available
+     directly, it should be used only when the `Machine.t` is not available
      (i.e. while defining a `Machine.t`). *)
   let path_on_host ~host path =
     let open KEDSL in

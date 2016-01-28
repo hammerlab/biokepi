@@ -219,9 +219,22 @@ let pull_hg18 ~host ~(run_program : Machine.run_function) ~destination_path =
 
 let mm10_url =
   "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA_000001635.6_GRCm38.p4/GCA_000001635.6_GRCm38.p4_genomic.fna.gz"
+let dbsnp_mm10_snps_url =
+  "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.snps.rsIDdbSNPv137.vcf.gz"
+let dbsnp_mm10_indels_url =
+  "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.indels.rsIDdbSNPv137.vcf.gz"
 
 let pull_mm10 ~host ~(run_program : Machine.run_function) ~destination_path =
+  let dbsnp =
+    let snps = wget_gunzip ~host ~run_program dbsnp_mm10_snps_url
+        ~destination:(destination_path // "dbsnp.snps.vcf") in
+    let indels = wget_gunzip ~host ~run_program dbsnp_mm10_indels_url
+        ~destination:(destination_path // "dbsnp.indels.vcf") in
+    let final_vcf = (destination_path // "dbsnp.merged.vcf") in
+    let vcftools = Tool.create Tool.Default.vcftools in
+    Vcftools.vcf_concat_no_machine ~host ~vcftools ~run_program ~final_vcf [snps; indels]
+  in
   let fasta =
     wget_gunzip ~host ~run_program mm10_url
       ~destination:(destination_path // "mm10.fasta") in
-  Reference_genome.create "mm10" fasta
+  Reference_genome.create "mm10" fasta ~dbsnp
