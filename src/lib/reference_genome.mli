@@ -45,16 +45,6 @@ val create :
   string -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
 
-val on_host :
-  host:KEDSL.Host.t ->
-  ?cosmic:string ->
-  ?dbsnp:string ->
-  ?gtf:string->
-  ?cdna:string->
-  string -> string -> t
-(** Create a [Reference_genome.t] by applying [Ketrew.EDSL.file_target] for
-    each path on a given [host]. *)
-
 (** {5 Usual Accessors } *)
 
 val name : t -> string
