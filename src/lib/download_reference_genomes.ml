@@ -6,7 +6,7 @@ open Run_environment
 open Workflow_utilities.Download (* All the wget* functions *)
 
 let of_specification
-    ~host ~run_program ~destination_path specification =
+    ~toolkit ~host ~run_program ~destination_path specification =
   let open Reference_genome in
   let {
     Specification.
@@ -30,7 +30,7 @@ let of_specification
         List.map ~f:(fun (n, loc) -> compile_location n loc) l
       in
       let final_vcf = destination_path // filename in
-      let vcftools = Tool.create Tool.Default.vcftools in
+      let vcftools = Tool.Kit.get_exn toolkit Tool.Default.vcftools in
       Vcftools.vcf_concat_no_machine ~host ~vcftools ~run_program ~final_vcf vcfs
     | other ->
       failwithf "Reference_genome.compile_location this kind of location \
@@ -45,27 +45,33 @@ let of_specification
     ?gtf:(compile_location_opt "transcripts.gtf" exome_gtf)
     ?cdna:(compile_location_opt "cdns-all.fa" cdna)
 
+type pull_function =
+  toolkit:Run_environment.Tool.Kit.t ->
+  host:Common.KEDSL.Host.t ->
+  run_program:Run_environment.Machine.run_function ->
+  destination_path:string -> Reference_genome.t
 
-let pull_b37 ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+
+let pull_b37 ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b37
 
-let pull_b37decoy ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+let pull_b37decoy ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b37decoy
 
-let pull_b38 ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+let pull_b38 ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b38
 
-let pull_hg19 ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+let pull_hg19 ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.hg19
 
-let pull_hg18 ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+let pull_hg18 ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.hg18
 
-let pull_mm10 ~host ~(run_program : Machine.run_function) ~destination_path =
-  of_specification ~host ~run_program ~destination_path
+let pull_mm10 ~toolkit ~host ~(run_program : Machine.run_function) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.mm10

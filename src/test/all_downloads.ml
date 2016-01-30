@@ -37,21 +37,21 @@ let workflow =
                (Biokepi.Reference_genome.name genome))
       ~edges:(edges_of_genome genome)
   in
+  let toolkit =
+    Biokepi.Tool_providers.default_toolkit () ~host
+      ~meta_playground:(destination_path // "tools") in
   let edges =
-    List.map ~f:(fun genome ->
+    List.map ~f:(fun (pull, name) ->
+        let genome =
+          pull ~toolkit ~host ~destination_path:(destination_path // name)
+            ~run_program in
         depends_on (get_all genome)) [
-      Biokepi.Download_reference_genomes.pull_b37
-        ~host ~destination_path:(destination_path // "B37") ~run_program;
-      Biokepi.Download_reference_genomes.pull_b37decoy
-        ~host ~destination_path:(destination_path // "B37decoy") ~run_program;
-      Biokepi.Download_reference_genomes.pull_b38
-        ~host ~destination_path:(destination_path // "B38") ~run_program;
-      Biokepi.Download_reference_genomes.pull_hg18
-        ~host ~destination_path:(destination_path // "HG18") ~run_program;
-      Biokepi.Download_reference_genomes.pull_hg19
-        ~host ~destination_path:(destination_path // "HG19") ~run_program;
-      Biokepi.Download_reference_genomes.pull_mm10
-        ~host ~destination_path:(destination_path // "MM10") ~run_program;
+      Biokepi.Download_reference_genomes.pull_b37, "B37";
+      Biokepi.Download_reference_genomes.pull_b37decoy, "B37decoy";
+      Biokepi.Download_reference_genomes.pull_b38, "B38";
+      Biokepi.Download_reference_genomes.pull_hg18, "HG18";
+      Biokepi.Download_reference_genomes.pull_hg19, "HG19";
+      Biokepi.Download_reference_genomes.pull_mm10, "MM10";
     ]
   in
   workflow_node without_product

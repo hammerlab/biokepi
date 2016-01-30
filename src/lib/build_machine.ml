@@ -20,11 +20,15 @@ let create
     | None -> default_run_program ~host
     | Some r -> r
   in
+  let toolkit =
+    Tool_providers.default_toolkit ()
+      ~host ~meta_playground
+      ~gatk_jar_location ~mutect_jar_location in
   let actual_b37 =
     match b37 with
     | None  ->
       let destination_path = meta_playground // "B37-reference-genome" in
-      Data_providers.pull_b37 ~host ~run_program ~destination_path
+      Data_providers.pull_b37 ~host ~run_program ~destination_path ~toolkit
     | Some s -> s
   in
   Machine.create (sprintf "ssh-box-%s" uri)
@@ -33,24 +37,21 @@ let create
     ~get_reference_genome:(function
       | `B37 -> actual_b37
       | `B38 -> 
-        Data_providers.pull_b38 
+        Data_providers.pull_b38 ~toolkit
           ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
       | `hg18 ->
-        Data_providers.pull_hg18
+        Data_providers.pull_hg18 ~toolkit
           ~host ~run_program ~destination_path:(meta_playground // "hg18-reference-genome")
       | `hg19 -> 
-        Data_providers.pull_hg19 
+        Data_providers.pull_hg19 ~toolkit
           ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
-      | `B37decoy -> Data_providers.pull_b37decoy
+      | `B37decoy -> Data_providers.pull_b37decoy ~toolkit
                        ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
-      | `mm10 -> Data_providers.pull_mm10
+      | `mm10 -> Data_providers.pull_mm10 ~toolkit
                    ~host ~run_program ~destination_path:(meta_playground // "mm10-reference-genome")
       )
     ~host
-    ~toolkit:(
-      Tool_providers.default_toolkit ()
-        ~host ~meta_playground
-        ~gatk_jar_location ~mutect_jar_location)
+    ~toolkit
     ~run_program
     ~quick_command:(fun program -> run_program program)
     ~work_dir:(meta_playground // "work")
