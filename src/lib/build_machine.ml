@@ -48,7 +48,7 @@ let create
       )
     ~host
     ~toolkit:(
-      Tool_providers.default_toolkit
+      Tool_providers.default_toolkit ()
         ~host ~meta_playground
         ~gatk_jar_location ~mutect_jar_location)
     ~run_program

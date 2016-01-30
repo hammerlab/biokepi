@@ -357,6 +357,7 @@ let picard_tool ~host ~meta_playground =
 type broad_jar_location = [
   | `Scp of string
   | `Wget of string
+  | `Fail of string
 ]
 (**
    Mutect (and some other tools) are behind some web-login annoying thing:
@@ -369,6 +370,7 @@ let get_broad_jar ~host ~install_path loc =
   let open KEDSL in
   let jar_name =
     match loc with
+    | `Fail s -> "cannot-get-broad-jar.jar"
     | `Scp s -> Filename.basename s
     | `Wget s -> Filename.basename s in
   let local_box_path = install_path // jar_name in
@@ -382,6 +384,9 @@ let get_broad_jar ~host ~install_path loc =
              Program.(
                shf "mkdir -p %s" install_path
                && begin match loc with
+               | `Fail msg ->
+                 shf "echo 'Cannot download Broad JAR: %s'" msg
+                 && sh "exit 4"
                | `Scp s ->
                  shf "scp %s %s"
                    (Filename.quote s) (Filename.quote local_box_path)
@@ -470,11 +475,14 @@ let muse_tool ~host ~meta_playground =
   let init = Program.(shf "export muse_bin=%s" binary_path) in
   Tool.create Tool.Default.muse ~ensure ~init
 
-
+let default_jar_location msg (): broad_jar_location =
+  `Fail (sprintf "No location provided for %s" msg)
 
 let default_toolkit
     ~host ~meta_playground
-    ~mutect_jar_location ~gatk_jar_location =
+    ?(mutect_jar_location = default_jar_location "Mutect")
+    ?(gatk_jar_location = default_jar_location "GATK")
+    () =
   Tool.Kit.create [
     bwa_tool ~host ~meta_playground;
     samtools ~host ~meta_playground;
