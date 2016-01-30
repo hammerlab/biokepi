@@ -51,6 +51,14 @@ Executable biokepi_tests
   Install: false
   MainIs:     main.ml
 
+Executable test_all_downloads
+  Path: src/test/
+  BuildTools: ocamlbuild
+  CompiledObject: best
+  BuildDepends: biokepi, threads
+  Install: false
+  MainIs:     all_downloads.ml
+
 
 Executable "biokepi-demo"
   Path: src/app/
