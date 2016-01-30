@@ -22,6 +22,52 @@ open Common
 
 type specification =
   [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
+module Specification : sig
+  module Location : sig
+    type t = [
+      | `Url of string
+      | `Vcf_concat of (string * t) list (* name × location *)
+      | `Concat of t list
+      | `Gunzip of t (* Should this be guessed from the URL extension? *)
+      | `Untar of t
+    ]
+    val url : 'a -> [> `Url of 'a ]
+    val vcf_concat : 'a -> [> `Vcf_concat of 'a ]
+    val concat : 'a -> [> `Concat of 'a ]
+    val gunzip : 'a -> [> `Gunzip of 'a ]
+    val untar : 'a -> [> `Untar of 'a ]
+  end
+  type t = private {
+    name : string;
+    metadata : string option;
+    fasta : Location.t;
+    dbsnp : Location.t option;
+    cosmic : Location.t option;
+    exome_gtf : Location.t option;
+    cdna : Location.t option;
+    major_contigs : string list option;
+  }
+  val create :
+    ?metadata:string ->
+    fasta:Location.t ->
+    ?dbsnp:Location.t ->
+    ?cosmic:Location.t ->
+    ?exome_gtf:Location.t ->
+    ?cdna:Location.t ->
+    ?major_contigs:string list ->
+    string ->
+    t
+  module Default :
+  sig
+    val major_contigs_b37 : string list
+    val b37 : t
+    val b37decoy : t
+    val b38 : t
+    val hg18 : t
+    val hg19 : t
+    val mm10 : t
+  end
+end
 
 type t = private {
   name : string;
