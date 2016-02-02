@@ -145,7 +145,8 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
     // sprintf "on-%s" dataset in
   let compiler = 
     Biokepi.Pipeline.Compiler.create
-      ~reference_build:`B37 ~work_dir ~machine ~processors:2 () in
+      ~reference_build:"b37"
+      ~work_dir ~machine ~processors:2 () in
   let compiled =
     List.map pipelines
       ~f:(fun pl ->

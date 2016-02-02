@@ -20,8 +20,8 @@
 
 open Common
 
-type specification =
-  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
+type name = string
+
 module Specification : sig
   module Location : sig
     type t = [
@@ -38,7 +38,7 @@ module Specification : sig
     val untar : 'a -> [> `Untar of 'a ]
   end
   type t = private {
-    name : string;
+    name : name;
     metadata : string option;
     fasta : Location.t;
     dbsnp : Location.t option;
@@ -59,7 +59,17 @@ module Specification : sig
     t
   module Default :
   sig
-    val major_contigs_b37 : string list
+    module Name : sig
+      (** The “names” of the default genomes; the values are provided to
+          simplify code and make it less typo-error-prone but the string can be
+          ipused directly (e.g. [b37] is just ["b37"]). *)
+      val b37 : name
+      val b37decoy : name
+      val b38 : name
+      val hg18 : name
+      val hg19 : name
+      val mm10 : name
+    end
     val b37 : t
     val b37decoy : t
     val b38 : t
@@ -70,7 +80,7 @@ module Specification : sig
 end
 
 type t = private {
-  name : string;
+  specification: Specification.t;
   location : KEDSL.file_workflow;
   cosmic :  KEDSL.file_workflow option;
   dbsnp :  KEDSL.file_workflow option;
@@ -88,18 +98,19 @@ val create :
   ?dbsnp:KEDSL.file_workflow ->
   ?gtf:KEDSL.file_workflow ->
   ?cdna:KEDSL.file_workflow ->
-  string -> KEDSL.file_workflow -> t
+  Specification.t -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
 
 (** {5 Usual Accessors } *)
 
-val name : t -> string
+val name : t -> name
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
 
+val major_contigs : t -> Region.t list
 (** {5 Targets} *)
 
 val fasta: t -> KEDSL.file_workflow

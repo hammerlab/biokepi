@@ -34,7 +34,8 @@ let index
           ))
 
 (** Quantify transcript abundance from RNA fastqs, results in abundance.tsv file *)
-let run ?(reference_build=`B37)
+let run
+    ~reference_build
     ?(bootstrap_samples=100)
     ~(run_with:Machine.t)
     ~processors 

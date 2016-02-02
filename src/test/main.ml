@@ -19,9 +19,11 @@ let test_region () =
         (spec = Region.parse_samtools s)
     end
   in
-  List.iter Region.all_chromosomes_b37 ~f:check_samtools_format;
   List.iter ~f:check_samtools_format [
     `Full;
+    `Chromosome "chr1";
+    `Chromosome "1";
+    `Chromosome "helloworld";
     `Chromosome_interval ("42", 24, 289);
     `Chromosome_interval ("42", 24, 0);
     `Chromosome_interval ("wiueueiwioow", 0, 289);

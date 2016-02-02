@@ -33,10 +33,11 @@ module Configuration = struct
 
 end
 
-let run ?(reference_build=`B37)
+let run ~reference_build
     ~(run_with:Machine.t) ~normal ~tumor ~result_prefix
     ?(more_edges = []) ~configuration how =
   let open KEDSL in
+  let reference = Machine.get_reference_genome run_with reference_build in
   let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in
@@ -47,7 +48,6 @@ let run ?(reference_build=`B37)
     let coverage_file = result_file "coverage.wig" in
     let mutect = Machine.get_tool run_with Tool.Default.mutect in
     let run_path = Filename.dirname output_file in
-    let reference = Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference in
     let cosmic =
       match configuration.Configuration.with_cosmic with
@@ -114,7 +114,7 @@ let run ?(reference_build=`B37)
   | `Region region -> run_on_region ~add_edges:more_edges region
   | `Map_reduce ->
     let targets =
-      List.map (Region.major_contigs ~reference_build)
+      List.map (Reference_genome.major_contigs reference)
         (* We pass the more_edges only to the last step *)
         ~f:(run_on_region ~add_edges:[]) in
     let final_vcf = result_prefix ^ "-merged.vcf" in

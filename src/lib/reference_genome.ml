@@ -1,7 +1,7 @@
 open Common
 
-type specification =
-  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
+type name = string
+
 module Specification = struct
   module Location = struct
     type t = [
@@ -72,8 +72,17 @@ module Default = struct
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/\
      data/tools/mutect/b37_cosmic_v54_120711.vcf"
 
+  module Name = struct
+    let b37 = "b37"
+    let b37decoy = "b37decoy"
+    let b38 = "b38"
+    let hg18 = "hg18"
+    let hg19 = "hg19"
+    let mm10 = "mm10"
+  end
+
   let b37 =
-    create "B37"
+    create Name.b37
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -95,7 +104,7 @@ module Default = struct
           |> gunzip)
 
   let b37decoy =
-    create "B37decoy"
+    create Name.b37decoy
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -119,7 +128,7 @@ module Default = struct
     let cdna_b38_url =
       "http://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
-    create "B38"
+    create Name.b38
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(url b38_url|> gunzip)
@@ -134,7 +143,7 @@ module Default = struct
     let dbsnp_hg18_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg18/dbsnp_138.hg18.vcf.gz" in
-    create "hg18"
+    create Name.hg18
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg18_url|> gunzip)
@@ -146,7 +155,7 @@ module Default = struct
     let dbsnp_hg19_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg19/dbsnp_138.hg19.vcf.gz" in
-    create "hg19"
+    create Name.hg19
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg19_url|> gunzip)
@@ -162,7 +171,7 @@ module Default = struct
     let dbsnp_mm10_indels_url =
       "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/\
        mgp.v3.indels.rsIDdbSNPv137.vcf.gz" in
-    create "mm10"
+    create Name.mm10
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
       ~fasta:Location.(url mm10_url |> gunzip)
@@ -182,7 +191,7 @@ end
      Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.
 *)
 type t = {
-  name: string;
+  specification: Specification.t;
   location: KEDSL.file_workflow;
   cosmic:  KEDSL.file_workflow option;
   dbsnp:  KEDSL.file_workflow option;
@@ -190,38 +199,45 @@ type t = {
   cdna: KEDSL.file_workflow option;
 }
 
-let create ?cosmic ?dbsnp ?gtf ?cdna name location =
-  {name; location; cosmic; dbsnp; gtf; cdna}
+let create ?cosmic ?dbsnp ?gtf ?cdna specification location =
+  {specification; location; cosmic; dbsnp; gtf; cdna}
 
 
-let name t = t.name
+let name t = t.specification.Specification.name
 let path t = t.location#product#path
 let cosmic_path_exn t =
-  let msg = sprintf "cosmic_path_exn of %s" t.name in
+  let msg = sprintf "cosmic_path_exn of %s" (name t) in
   let cosmic = Option.value_exn ~msg t.cosmic in
   cosmic#product#path
 
 let dbsnp_path_exn t =
-  let msg = sprintf "dbsnp_path_exn of %s" t.name in
+  let msg = sprintf "dbsnp_path_exn of %s" (name t) in
   let trgt = Option.value_exn ~msg t.dbsnp in
   trgt#product#path
 
 let gtf_path_exn t =
-  let msg = sprintf "gtf_path_exn of %s" t.name in
+  let msg = sprintf "gtf_path_exn of %s" (name t) in
   let trgt = Option.value_exn ~msg t.gtf in
   trgt#product#path
 
 let cdna_path_exn t =
-    let msg = sprintf "cdna_path_exn of %s" t.name in
+    let msg = sprintf "cdna_path_exn of %s" (name t) in
     let target = Option.value_exn ~msg t.cdna in
     target#product#path
 
 let fasta: t -> KEDSL.file_workflow = fun t -> t.location
 let cosmic_exn t =
-  Option.value_exn ~msg:(sprintf "%s: no COSMIC" t.name) t.cosmic
+  Option.value_exn ~msg:(sprintf "%s: no COSMIC" (name t)) t.cosmic
 let dbsnp_exn t =
-  Option.value_exn ~msg:(sprintf "%s: no DBSNP" t.name) t.dbsnp
+  Option.value_exn ~msg:(sprintf "%s: no DBSNP" (name t)) t.dbsnp
 let gtf_exn t =
-  Option.value_exn ~msg:(sprintf "%s: no GTF" t.name) t.gtf
+  Option.value_exn ~msg:(sprintf "%s: no GTF" (name t)) t.gtf
 let cdna_exn t =
-  Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" t.name) t.cdna
+  Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" (name t)) t.cdna
+
+let major_contigs t =
+  match t.specification.Specification.major_contigs with
+  | None ->
+    failwithf "Reference %S does have major-contigs/chromosomes defined" (name t)
+  | Some l -> List.map l ~f:(fun s -> `Chromosome s)
+

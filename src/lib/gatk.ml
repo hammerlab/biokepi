@@ -177,6 +177,7 @@ let haplotype_caller
     ?(more_edges = [])
     ~run_with ~reference_build ~input_bam ~result_prefix how =
   let open KEDSL in
+  let reference = Machine.get_reference_genome run_with reference_build in
   let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in
@@ -184,7 +185,6 @@ let haplotype_caller
     let output_vcf = result_file "-germline.vcf" in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let run_path = Filename.dirname output_vcf in
-    let reference = Machine.get_reference_genome run_with reference_build in
     let reference_fasta = Reference_genome.fasta reference in
     let reference_dot_fai = Samtools.faidx ~run_with reference_fasta in
     let sequence_dict = Picard.create_dict ~run_with reference_fasta in
@@ -227,7 +227,7 @@ let haplotype_caller
   | `Region region -> run_on_region ~add_edges:more_edges region
   | `Map_reduce ->
     let targets =
-      List.map (Region.major_contigs ~reference_build)
+      List.map (Reference_genome.major_contigs reference)
         ~f:(run_on_region ~add_edges:[]) (* we add edges only to the last step *)
     in
     let final_vcf = result_prefix ^ "-merged.vcf" in

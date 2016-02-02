@@ -127,7 +127,7 @@ let run
     muse_call_on_region region |> muse_sump
   | `Map_reduce ->
     let call_files =
-      List.map (Region.major_contigs ~reference_build) ~f:muse_call_on_region
+      List.map (Reference_genome.major_contigs reference) ~f:muse_call_on_region
     in
     let concatenated =
       Cat.concat ~run_with call_files

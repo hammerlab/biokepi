@@ -2,7 +2,8 @@ open Common
 open Run_environment
 open Workflow_utilities
 
-let run ?(reference_build=`B37)
+let run
+    ~reference_build
     ~(run_with:Machine.t)
     ~processors
     ~bam
@@ -13,9 +14,11 @@ let run ?(reference_build=`B37)
   let output_dir = result_file "-stringtie_output" in
   let output_file_path = output_dir // "output.gtf" in
   let reference_fasta =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.fasta in
   let reference_annotations =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.gtf_exn in
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.gtf_exn in
   let stringtie_tool = Machine.get_tool run_with Tool.Default.stringtie in
   let make =
     Machine.run_program run_with ~name ~processors
@@ -26,7 +29,7 @@ let run ?(reference_build=`B37)
                 -p %d \
                 -G %s \
                 -o %s \
-                "
+               "
           bam#product#path
           processors
           reference_annotations#product#path
