@@ -41,21 +41,15 @@ let workflow =
     Biokepi.Tool_providers.default_toolkit () ~host
       ~meta_playground:(destination_path // "tools") in
   let edges =
-    List.map ~f:(fun (pull, name) ->
-        let genome =
-          pull ~toolkit ~host ~destination_path:(destination_path // name)
-            ~run_program in
-        depends_on (get_all genome)) [
-      Biokepi.Download_reference_genomes.pull_b37, "B37";
-      Biokepi.Download_reference_genomes.pull_b37decoy, "B37decoy";
-      Biokepi.Download_reference_genomes.pull_b38, "B38";
-      Biokepi.Download_reference_genomes.pull_hg18, "HG18";
-      Biokepi.Download_reference_genomes.pull_hg19, "HG19";
-      Biokepi.Download_reference_genomes.pull_mm10, "MM10";
-    ]
+    let genomes =
+      Biokepi.Download_reference_genomes.default_genome_providers in
+    List.map genomes ~f:(fun (name, pull) ->
+        let genome = pull ~toolkit ~host ~destination_path ~run_program in
+        depends_on (get_all genome))
   in
   workflow_node without_product
-    ~name:"All downloads Biokepi test"
+    ~name:(sprintf "All downloads to %s" destination_path)
+    ~tags:["biokepi"; "test"]
     ~edges
 
 let () =
