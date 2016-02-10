@@ -104,11 +104,25 @@ module Construct = struct
   let input_fastq ~dataset (fastqs: input_fastq) =
     let is_fastq_gz p =
       Filename.check_suffix p "fastq.gz" || Filename.check_suffix p "fq.gz"  in
+    let is_fastq p =
+      Filename.check_suffix p "fastq" || Filename.check_suffix p "fq"  in
+    let theyre_all l f = List.for_all l ~f:(fun file -> f file#product#path) in
     let bring_to_single_fastq l =
       match l with
-      | h :: _ as more when is_fastq_gz h#product#path ->
-        Gunzip_concat  (List.map more (fun f -> Fastq_gz f))
-      | _ -> failwith "for now, a sample must be a list of fastq.gz"
+      | [] -> failwithf "Dataset %S seems empty" dataset
+      | gzs when theyre_all gzs is_fastq_gz ->
+        Gunzip_concat  (List.map gzs (fun f -> Fastq_gz f))
+      | fqs when theyre_all fqs is_fastq ->
+        Concat_text (List.map fqs (fun f -> Fastq f))
+      | not_supported ->
+        failwithf
+          "For now, a sample must be a uniform list of \
+           fastq.gz/fq.gz or .fq/.fastq files. \
+           Dataset %S does not qualify: [%s]
+          "
+          dataset
+          (List.map not_supported ~f:(fun f -> Filename.basename f#product#path)
+           |> String.concat ~sep:", ")
     in
     match fastqs with
     | `Paired_end (l1, l2) ->
@@ -479,7 +493,7 @@ module Compiler = struct
       match pipeline with
       | Fastq f -> f
       | Concat_text (l: fastq pipeline list) ->
-        failwith "Concat_text: not implemented"
+        failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
       | Gunzip_concat (l: fastq_gz pipeline list) ->
         let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
         let result_path = work_dir // to_file_prefix ?is ?read pipeline ^ ".fastq" in
