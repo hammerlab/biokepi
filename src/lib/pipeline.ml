@@ -582,7 +582,7 @@ module Compiler = struct
         som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
           ~run_with:machine ~normal ~tumor ~result_prefix ()
       | Germline_variant_caller (gvc, bam) ->
-        let input_bam = compile_aligner_step ~compiler ~is:`Normal bam in
+        let input_bam = compile_aligner_step ~compiler ?is:None bam in
         gvc.Germline_variant_caller.make_target ~processors ~reference_build
           ~run_with:machine ~input_bam ~result_prefix ()
     in
