@@ -1,31 +1,19 @@
 (** Download reference-genormes (& associated data) with Ketrew *)
-  
-val pull_b37 :
+
+type pull_function =
+  toolkit:Run_environment.Tool.Kit.t ->
   host:Common.KEDSL.Host.t ->
   run_program:Run_environment.Machine.run_function ->
   destination_path:string -> Reference_genome.t
 
-val pull_b37decoy :
-  host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
-  destination_path:string -> Reference_genome.t
+val pull_b37 : pull_function
+val pull_b37decoy : pull_function
+val pull_b38 : pull_function
+val pull_hg18 : pull_function
+val pull_hg19 : pull_function
+val pull_mm10 : pull_function
 
-val pull_b38 :
-  host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
-  destination_path:string -> Reference_genome.t
 
-val pull_hg18 :
-  host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
-  destination_path:string -> Reference_genome.t
+val default_genome_providers : (string * pull_function) list
 
-val pull_hg19 :
-  host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
-  destination_path:string -> Reference_genome.t
-
-val pull_mm10 :
-  host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
-  destination_path:string -> Reference_genome.t
+val get_reference_genome : string -> pull_function

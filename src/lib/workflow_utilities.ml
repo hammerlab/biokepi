@@ -87,4 +87,116 @@ module Cat = struct
         on_failure_activate Remove.(file ~run_with result_path)
         :: List.map ~f:depends_on bunch_of_files)
       ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+
+  let cat_folder ~host ~(run_program : Machine.run_function)
+      ?(depends_on=[]) ~files_gzipped ~folder ~destination = 
+    let deps = depends_on in
+    let open KEDSL in
+    let name = "cat-folder-" ^ Filename.quote folder in
+    let edges =
+      on_failure_activate (Remove.path_on_host ~host destination)
+      :: List.map ~f:depends_on deps in
+    if files_gzipped then (
+      workflow_node (single_file destination ~host)
+        ~edges ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(
+              shf "gunzip -c %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
+    ) else (
+      workflow_node
+        (single_file destination ~host)
+        ~edges ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(
+              shf "cat %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
+    )
+
+end
+
+module Download = struct
+
+  let wget_to_folder ~host ~(run_program : Machine.run_function) ~test_file ~destination url  =
+    let open KEDSL in
+    let name = "wget-" ^ Filename.basename destination in
+    let test_target = destination // test_file in
+    workflow_node (single_file test_target ~host) ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; destination]
+            && shf "wget %s -P %s"
+              (Filename.quote url)
+              (Filename.quote destination)))
+      ~edges:[
+        on_failure_activate (Remove.path_on_host ~host destination);
+      ]
+
+  let wget ~host ~(run_program : Machine.run_function) url destination =
+    let open KEDSL in
+    let name = "wget-" ^ Filename.basename destination in
+    workflow_node
+      (single_file destination ~host) ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; Filename.dirname destination]
+            && shf "wget %s -O %s"
+              (Filename.quote url) (Filename.quote destination)))
+      ~edges:[
+        on_failure_activate (Remove.path_on_host ~host destination);
+      ]
+
+  let wget_gunzip ~host ~(run_program : Machine.run_function) ~destination url =
+    let open KEDSL in
+    let is_gz = Filename.check_suffix url ".gz" in
+    if is_gz then (
+      let name = "gunzip-" ^ Filename.basename (destination ^ ".gz") in
+      let wgot = wget ~host ~run_program url (destination ^ ".gz") in
+      workflow_node
+        (single_file destination ~host)
+        ~edges:[
+          depends_on (wgot);
+          on_failure_activate (Remove.path_on_host ~host destination);
+        ]
+        ~name
+        ~make:(
+          run_program ~name ~processors:1
+            Program.(shf "gunzip -c %s > %s"
+                       (Filename.quote wgot#product#path)
+                       (Filename.quote destination)))
+    ) else (
+      wget ~host ~run_program url destination
+    )
+
+  let wget_untar ~host ~(run_program : Machine.run_function)
+      ~destination_folder ~tar_contains url =
+    let open KEDSL in
+    let zip_flags =
+      let is_gz = Filename.check_suffix url ".gz" in
+      let is_bzip = Filename.check_suffix url ".bz2" in
+      if is_gz then "z" else if is_bzip then "j" else ""
+    in
+    let tar_filename = (destination_folder ^ ".tar") in
+    let name = "untar-" ^ tar_filename in
+    let wgot = wget ~host ~run_program url tar_filename in
+    let file_in_tar = (destination_folder // tar_contains) in
+    workflow_node
+      (single_file file_in_tar ~host)
+      ~edges:[
+        depends_on (wgot);
+        on_failure_activate (Remove.path_on_host ~host destination_folder);
+      ]
+      ~name
+      ~make:(
+        run_program ~name ~processors:1
+          Program.(
+            exec ["mkdir"; "-p"; destination_folder]
+            && shf "tar -x%s -f %s -C %s"
+              zip_flags
+              (Filename.quote wgot#product#path)
+              (Filename.quote destination_folder)))
+
+
 end

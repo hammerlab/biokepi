@@ -2,7 +2,7 @@ open Common
 open Run_environment
 open Workflow_utilities
 
-let run ?(reference_build=`B37)
+let run ~reference_build
     ~(run_with:Machine.t)
     ~processors 
     ~bam 
@@ -13,9 +13,11 @@ let run ?(reference_build=`B37)
   let output_dir = result_file "-cufflinks_output" in
   let genes_gtf_output = output_dir // "genes.fpkm_tracking" in
   let reference_fasta =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.fasta in
   let reference_annotations =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.gtf_exn in
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.gtf_exn in
   let cufflinks_tool = Machine.get_tool run_with Tool.Default.cufflinks in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in

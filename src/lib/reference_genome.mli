@@ -20,11 +20,67 @@
 
 open Common
 
-type specification =
-  [`B37 | `B38 | `hg19 | `hg18 | `B37decoy | `mm10 ]
+type name = string
+
+module Specification : sig
+  module Location : sig
+    type t = [
+      | `Url of string
+      | `Vcf_concat of (string * t) list (* name × location *)
+      | `Concat of t list
+      | `Gunzip of t (* Should this be guessed from the URL extension? *)
+      | `Untar of t
+    ]
+    val url : 'a -> [> `Url of 'a ]
+    val vcf_concat : 'a -> [> `Vcf_concat of 'a ]
+    val concat : 'a -> [> `Concat of 'a ]
+    val gunzip : 'a -> [> `Gunzip of 'a ]
+    val untar : 'a -> [> `Untar of 'a ]
+  end
+  type t = private {
+    name : name;
+    metadata : string option;
+    fasta : Location.t;
+    dbsnp : Location.t option;
+    cosmic : Location.t option;
+    exome_gtf : Location.t option;
+    cdna : Location.t option;
+    major_contigs : string list option;
+  }
+  val create :
+    ?metadata:string ->
+    fasta:Location.t ->
+    ?dbsnp:Location.t ->
+    ?cosmic:Location.t ->
+    ?exome_gtf:Location.t ->
+    ?cdna:Location.t ->
+    ?major_contigs:string list ->
+    string ->
+    t
+  module Default :
+  sig
+    module Name : sig
+      (** The “names” of the default genomes; the values are provided to
+          simplify code and make it less typo-error-prone but the string can be
+          ipused directly (e.g. [b37] is just ["b37"]). *)
+      val b37 : name
+      val b37decoy : name
+      val b38 : name
+      val hg18 : name
+      val hg19 : name
+      val mm10 : name
+    end
+    val b37 : t
+    val b37decoy : t
+    val b38 : t
+    val hg18 : t
+    val hg19 : t
+    val mm10 : t
+  end
+end
 
 type t = private {
-  name : string;
+  specification: Specification.t;
   location : KEDSL.file_workflow;
   cosmic :  KEDSL.file_workflow option;
   dbsnp :  KEDSL.file_workflow option;
@@ -42,28 +98,19 @@ val create :
   ?dbsnp:KEDSL.file_workflow ->
   ?gtf:KEDSL.file_workflow ->
   ?cdna:KEDSL.file_workflow ->
-  string -> KEDSL.file_workflow -> t
+  Specification.t -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
-
-val on_host :
-  host:KEDSL.Host.t ->
-  ?cosmic:string ->
-  ?dbsnp:string ->
-  ?gtf:string->
-  ?cdna:string->
-  string -> string -> t
-(** Create a [Reference_genome.t] by applying [Ketrew.EDSL.file_target] for
-    each path on a given [host]. *)
 
 (** {5 Usual Accessors } *)
 
-val name : t -> string
+val name : t -> name
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
 
+val major_contigs : t -> Region.t list
 (** {5 Targets} *)
 
 val fasta: t -> KEDSL.file_workflow

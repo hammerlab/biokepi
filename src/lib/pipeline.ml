@@ -42,7 +42,7 @@ module Somatic_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: Reference_genome.specification ->
+      reference_build: Reference_genome.name ->
       run_with:Run_environment.Machine.t ->
       normal: bam ->
       tumor: bam ->
@@ -60,7 +60,7 @@ module Germline_variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: Reference_genome.specification ->
+      reference_build: Reference_genome.name ->
       run_with:Run_environment.Machine.t ->
       input_bam: bam ->
       result_prefix: string ->
@@ -434,7 +434,7 @@ module Compiler = struct
   type 'a pipeline = 'a t
   type t = {
     processors : int;
-    reference_build: Reference_genome.specification;
+    reference_build: Reference_genome.name;
     work_dir: string;
     machine : Machine.t;
     wrap_bam_node:

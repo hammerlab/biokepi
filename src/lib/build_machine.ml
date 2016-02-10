@@ -7,7 +7,6 @@ let default_run_program : host:KEDSL.Host.t -> Machine.run_function =
     let open KEDSL in
     daemonize ~using:`Python_daemon ~host program
 
-module Data_providers = Download_reference_genomes
 let create
     ~gatk_jar_location
     ~mutect_jar_location
@@ -20,37 +19,22 @@ let create
     | None -> default_run_program ~host
     | Some r -> r
   in
-  let actual_b37 =
-    match b37 with
-    | None  ->
-      let destination_path = meta_playground // "B37-reference-genome" in
-      Data_providers.pull_b37 ~host ~run_program ~destination_path
-    | Some s -> s
-  in
+  let toolkit =
+    Tool_providers.default_toolkit ()
+      ~host ~meta_playground
+      ~gatk_jar_location ~mutect_jar_location in
   Machine.create (sprintf "ssh-box-%s" uri)
     ~ssh_name:(
       Uri.of_string uri |> Uri.host |> Option.value ~default:"No-NAME")
-    ~get_reference_genome:(function
-      | `B37 -> actual_b37
-      | `B38 -> 
-        Data_providers.pull_b38 
-          ~host ~run_program ~destination_path:(meta_playground // "B38-reference-genome")
-      | `hg18 ->
-        Data_providers.pull_hg18
-          ~host ~run_program ~destination_path:(meta_playground // "hg18-reference-genome")
-      | `hg19 -> 
-        Data_providers.pull_hg19 
-          ~host ~run_program ~destination_path:(meta_playground // "hg19-reference-genome")
-      | `B37decoy -> Data_providers.pull_b37decoy
-                       ~host ~run_program ~destination_path:(meta_playground // "hs37d5-reference-genome")
-      | `mm10 -> Data_providers.pull_mm10
-                   ~host ~run_program ~destination_path:(meta_playground // "mm10-reference-genome")
-      )
+    ~get_reference_genome:(fun name ->
+        match name, b37 with
+        | name, Some some37 when name = Reference_genome.name some37 -> some37
+        | name, _ ->        
+          Download_reference_genomes.get_reference_genome name
+            ~toolkit ~host ~run_program
+            ~destination_path:(meta_playground // "reference-genome"))
     ~host
-    ~toolkit:(
-      Tool_providers.default_toolkit
-        ~host ~meta_playground
-        ~gatk_jar_location ~mutect_jar_location)
+    ~toolkit
     ~run_program
     ~quick_command:(fun program -> run_program program)
     ~work_dir:(meta_playground // "work")

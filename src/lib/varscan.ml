@@ -108,6 +108,9 @@ let somatic_map_reduce
     let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
     somatic_on_region ~run_with ~reference_build
       ?adjust_mapq ~normal ~tumor ~result_prefix region in
-  let targets = List.map (Region.major_contigs ~reference_build) ~f:run_on_region in
+  let reference = Machine.get_reference_genome run_with reference_build in
+  let targets =
+    List.map (Reference_genome.major_contigs reference)
+      ~f:run_on_region in
   let final_vcf = result_prefix ^ "-merged.vcf" in
   Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges

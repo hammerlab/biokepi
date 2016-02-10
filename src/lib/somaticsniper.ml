@@ -7,7 +7,7 @@ open Workflow_utilities
 let default_prior_probability = 0.01
 let default_theta = 0.85
 
-let run ?(reference_build=`B37)
+let run ~reference_build
     ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
   let open KEDSL in
   let name =
@@ -18,7 +18,8 @@ let run ?(reference_build=`B37)
   let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
   let sniper = Machine.get_tool run_with Tool.Default.somaticsniper in
   let reference_fasta =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.fasta in
   let output_file = result_file "-snvs.vcf" in
   let run_path = Filename.dirname output_file in
   let sorted_normal =
