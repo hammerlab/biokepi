@@ -232,6 +232,7 @@ let dbsnp_exn t =
   Option.value_exn ~msg:(sprintf "%s: no DBSNP" (name t)) t.dbsnp
 let gtf_exn t =
   Option.value_exn ~msg:(sprintf "%s: no GTF" (name t)) t.gtf
+let gtf t = t.gtf
 let cdna_exn t =
   Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" (name t)) t.cdna
 
