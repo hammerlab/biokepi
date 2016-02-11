@@ -83,7 +83,7 @@ type _ t =
   | Concat_text: fastq t list -> fastq t
   | Star: fastq_sample t -> bam t
   | Hisat: fastq_sample t -> bam t
-  | Stringtie: bam t -> gtf t
+  | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
   | Bwa: bwa_params * fastq_sample t -> bam t
   | Bwa_mem: bwa_params * fastq_sample t -> bam t
   | Mosaik: fastq_sample t -> bam t
@@ -104,11 +104,25 @@ module Construct = struct
   let input_fastq ~dataset (fastqs: input_fastq) =
     let is_fastq_gz p =
       Filename.check_suffix p "fastq.gz" || Filename.check_suffix p "fq.gz"  in
+    let is_fastq p =
+      Filename.check_suffix p "fastq" || Filename.check_suffix p "fq"  in
+    let theyre_all l f = List.for_all l ~f:(fun file -> f file#product#path) in
     let bring_to_single_fastq l =
       match l with
-      | h :: _ as more when is_fastq_gz h#product#path ->
-        Gunzip_concat  (List.map more (fun f -> Fastq_gz f))
-      | _ -> failwith "for now, a sample must be a list of fastq.gz"
+      | [] -> failwithf "Dataset %S seems empty" dataset
+      | gzs when theyre_all gzs is_fastq_gz ->
+        Gunzip_concat  (List.map gzs (fun f -> Fastq_gz f))
+      | fqs when theyre_all fqs is_fastq ->
+        Concat_text (List.map fqs (fun f -> Fastq f))
+      | not_supported ->
+        failwithf
+          "For now, a sample must be a uniform list of \
+           fastq.gz/fq.gz or .fq/.fastq files. \
+           Dataset %S does not qualify: [%s]
+          "
+          dataset
+          (List.map not_supported ~f:(fun f -> Filename.basename f#product#path)
+           |> String.concat ~sep:", ")
     in
     match fastqs with
     | `Paired_end (l1, l2) ->
@@ -140,7 +154,8 @@ module Construct = struct
 
   let hisat fastq = Hisat fastq
 
-  let stringtie bam = Stringtie bam
+  let stringtie ?(configuration = Stringtie.Configuration.default) bam =
+    Stringtie (configuration, bam)
 
   let gatk_indel_realigner
         ?(configuration=Gatk.Configuration.default_indel_realigner)
@@ -316,16 +331,18 @@ let rec to_file_prefix:
       sprintf "%s-star-aligned" (to_file_prefix ?is sample)
     | Hisat (sample) ->
       sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
-    | Stringtie (sample) ->
-      sprintf "%s-stringtie" (to_file_prefix ?is sample)
+    | Stringtie (conf, sample) ->
+      sprintf "%s-%sstringtie"
+        (to_file_prefix ?is sample)
+        (conf.Stringtie.Configuration.name)
     | Mosaik (sample) ->
       sprintf "%s-mosaik" (to_file_prefix ?is sample)
     | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
-       let open Gatk.Configuration in
-       sprintf "%s-indelrealigned-%s-%s"
-               (to_file_prefix ?is ?read bam)
-               indel_cfg.Indel_realigner.name
-               target_cfg.Realigner_target_creator.name
+      let open Gatk.Configuration in
+      sprintf "%s-indelrealigned-%s-%s"
+        (to_file_prefix ?is ?read bam)
+        indel_cfg.Indel_realigner.name
+        target_cfg.Realigner_target_creator.name
     | Gatk_bqsr ((bqsr_cfg, print_reads_cfg), bam) ->
       let open Gatk.Configuration in
       sprintf "%s-bqsr-%s-%s"
@@ -386,31 +403,34 @@ let rec to_json: type a. a t -> json =
     | Hisat (input) ->
       let input_json = to_json input in
       call "HISAT" [input_json]
-    | Stringtie (input) ->
+    | Stringtie (conf, input) ->
       let input_json = to_json input in
-      call "STRINGTIE" [input_json]
+      call "Stringtie" [
+        `Assoc ["configuration", Stringtie.Configuration.to_json conf];
+        input_json;
+      ]
     | Mosaik (input) ->
       let input_json = to_json input in
       call "MOSAIK" [input_json]
     | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
-       let open Gatk.Configuration in
-       let input_json = to_json bam in
-       let indel_cfg_json = Indel_realigner.to_json indel_cfg in
-       let target_cfg_json = Realigner_target_creator.to_json target_cfg in
-       call "Gatk_indel_realigner" [`Assoc [
+      let open Gatk.Configuration in
+      let input_json = to_json bam in
+      let indel_cfg_json = Indel_realigner.to_json indel_cfg in
+      let target_cfg_json = Realigner_target_creator.to_json target_cfg in
+      call "Gatk_indel_realigner" [`Assoc [
           "Configuration", `Assoc [
-              "IndelRealigner Configuration", indel_cfg_json;
-              "RealignerTargetCreator Configuration", target_cfg_json;
-            ];
+            "IndelRealigner Configuration", indel_cfg_json;
+            "RealignerTargetCreator Configuration", target_cfg_json;
+          ];
           "Input", input_json;
-         ]]
+        ]]
     | Gatk_bqsr ((bqsr_cfg, print_reads_cfg), bam) ->
       let open Gatk.Configuration in
       let input_json = to_json bam in
       call "Gatk_bqsr" [`Assoc [
           "Configuration", `Assoc [
-              "Bqsr", Bqsr.to_json bqsr_cfg;
-              "Print_reads", Print_reads.to_json print_reads_cfg;
+            "Bqsr", Bqsr.to_json bqsr_cfg;
+            "Print_reads", Print_reads.to_json print_reads_cfg;
           ];
           "Input", input_json;
         ]]
@@ -465,7 +485,7 @@ module Compiler = struct
       match pipeline with
       | Fastq f -> f
       | Concat_text (l: fastq pipeline list) ->
-        failwith "Concat_text: not implemented"
+        failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
       | Gunzip_concat (l: fastq_gz pipeline list) ->
         let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
         let result_path = work_dir // to_file_prefix ?is ?read pipeline ^ ".fastq" in
@@ -568,7 +588,7 @@ module Compiler = struct
         som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
           ~run_with:machine ~normal ~tumor ~result_prefix ()
       | Germline_variant_caller (gvc, bam) ->
-        let input_bam = compile_aligner_step ~compiler ~is:`Normal bam in
+        let input_bam = compile_aligner_step ~compiler ?is:None bam in
         gvc.Germline_variant_caller.make_target ~processors ~reference_build
           ~run_with:machine ~input_bam ~result_prefix ()
     in
@@ -580,10 +600,10 @@ module Compiler = struct
     dbg "Result_Prefix: %S" result_prefix;
     let gtf_node =
       match pipeline with
-      | Stringtie (bam) ->
+      | Stringtie (configuration, bam) ->
         let bam = compile_aligner_step ~compiler bam in
-        Stringtie.run ~reference_build ~processors
-          ~bam ~result_prefix ~run_with:machine
+        Stringtie.run ~reference_build ~processors ~configuration
+          ~bam ~result_prefix ~run_with:machine ()
     in
     compiler.wrap_gtf_node pipeline gtf_node
 

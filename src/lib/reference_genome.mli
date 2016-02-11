@@ -117,4 +117,5 @@ val fasta: t -> KEDSL.file_workflow
 val cosmic_exn: t -> KEDSL.file_workflow
 val dbsnp_exn: t -> KEDSL.file_workflow
 val gtf_exn: t -> KEDSL.file_workflow
+val gtf: t -> KEDSL.file_workflow option
 val cdna_exn: t -> KEDSL.file_workflow

@@ -30,7 +30,13 @@ end
 let (//) = Filename.concat
 (** [path // filename] will concat [filename] to the end of [path]. *)
 
-let dbg fmt = ksprintf (eprintf "biokepi-debug: %s\n%!") fmt
+let debug_mode = 
+  ref (try Sys.getenv "BIOKEPI_DEBUG" = "true" with _ -> false)
+let dbg fmt = ksprintf (fun s ->
+    if !debug_mode
+    then eprintf "biokepi-debug: %s\n%!" s
+    else ()
+  ) fmt
 (** A consistent debugging mechanism. *)
 
 let failwithf fmt = ksprintf failwith fmt
