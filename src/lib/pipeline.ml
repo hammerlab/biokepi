@@ -83,7 +83,7 @@ type _ t =
   | Concat_text: fastq t list -> fastq t
   | Star: fastq_sample t -> bam t
   | Hisat: fastq_sample t -> bam t
-  | Stringtie: Stringtie.gtf_usage_preference * bam t -> gtf t
+  | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
   | Bwa: bwa_params * fastq_sample t -> bam t
   | Bwa_mem: bwa_params * fastq_sample t -> bam t
   | Mosaik: fastq_sample t -> bam t
@@ -154,8 +154,8 @@ module Construct = struct
 
   let hisat fastq = Hisat fastq
 
-  let stringtie ?(use_reference_gtf =`If_available) bam =
-    Stringtie (use_reference_gtf, bam)
+  let stringtie ?(configuration = Stringtie.Configuration.default) bam =
+    Stringtie (configuration, bam)
 
   let gatk_indel_realigner
         ?(configuration=Gatk.Configuration.default_indel_realigner)
@@ -331,13 +331,10 @@ let rec to_file_prefix:
       sprintf "%s-star-aligned" (to_file_prefix ?is sample)
     | Hisat (sample) ->
       sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
-    | Stringtie (use_reference_gtf, sample) ->
+    | Stringtie (conf, sample) ->
       sprintf "%s-%sstringtie"
         (to_file_prefix ?is sample)
-        (match use_reference_gtf with
-        | `Yes -> "yesgtf"
-        | `No -> "nogtf"
-        | `If_available -> "ifgtf")
+        (conf.Stringtie.Configuration.name)
     | Mosaik (sample) ->
       sprintf "%s-mosaik" (to_file_prefix ?is sample)
     | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
@@ -406,15 +403,10 @@ let rec to_json: type a. a t -> json =
     | Hisat (input) ->
       let input_json = to_json input in
       call "HISAT" [input_json]
-    | Stringtie (use_reference_gtf, input) ->
+    | Stringtie (conf, input) ->
       let input_json = to_json input in
       call "Stringtie" [
-        `Assoc ["use_reference_gtf",
-                `String 
-                  (match use_reference_gtf with
-                  | `Yes -> "YEs"
-                  | `No -> "No"
-                  | `If_available -> "If_available")];
+        `Assoc ["configuration", Stringtie.Configuration.to_json conf];
         input_json;
       ]
     | Mosaik (input) ->
@@ -608,9 +600,9 @@ module Compiler = struct
     dbg "Result_Prefix: %S" result_prefix;
     let gtf_node =
       match pipeline with
-      | Stringtie (use_reference_gtf, bam) ->
+      | Stringtie (configuration, bam) ->
         let bam = compile_aligner_step ~compiler bam in
-        Stringtie.run ~reference_build ~processors ~use_reference_gtf
+        Stringtie.run ~reference_build ~processors ~configuration
           ~bam ~result_prefix ~run_with:machine ()
     in
     compiler.wrap_gtf_node pipeline gtf_node

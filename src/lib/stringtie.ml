@@ -2,10 +2,22 @@ open Common
 open Run_environment
 open Workflow_utilities
 
-type gtf_usage_preference = [`Yes | `No | `If_available ]
+module Configuration = struct
+  type t = {
+    name : string;
+    use_reference_gtf : bool;
+  }
+  let to_json {name; use_reference_gtf}: Yojson.Basic.json =
+    `Assoc [
+      "name", `String name;
+      "use-reference-gtf", `Bool use_reference_gtf;
+    ]
+  let default = {name = "default"; use_reference_gtf = true}
+end
+
 let run
     ~reference_build
-    ?(use_reference_gtf : gtf_usage_preference =`If_available)
+    ~configuration
     ~(run_with:Machine.t)
     ~processors
     ~bam
@@ -19,15 +31,17 @@ let run
     Machine.get_reference_genome run_with reference_build
     |> Reference_genome.fasta in
   let reference_annotations =
-    let ref_gen = Machine.get_reference_genome run_with reference_build in
-    match use_reference_gtf, ref_gen |> Reference_genome.gtf with
-    | `Yes, Some some | `If_available, Some some -> Some some
-    | `No, _ | `If_available, None -> None
-    | `Yes, None ->
-      failwithf "Stringtie: use_reference_gtf is `Yes but the genome %s \
+    let genome = Machine.get_reference_genome run_with reference_build in
+    let gtf = Reference_genome.gtf genome in
+    let use_the_gtf = configuration.Configuration.use_reference_gtf in
+    match use_the_gtf, gtf with
+    | true, Some some -> Some some
+    | false, _ -> None
+    | true, None ->
+      failwithf "Stringtie: use_reference_gtf is `true` but the genome %s \
                  does not provide one (use another genome or allow this to run \
-                 without GTF by giving `No or `If_available)"
-        (Reference_genome.name ref_gen)
+                 without GTF by giving another Configuration.t)"
+        (Reference_genome.name genome)
   in
   let stringtie_tool = Machine.get_tool run_with Tool.Default.stringtie in
   let make =
