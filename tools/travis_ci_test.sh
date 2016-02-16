@@ -59,9 +59,6 @@ eval `opam config env`
 
 opam update
 
-
-
-opam pin add trakeva https://github.com/smondet/trakeva.git
 opam pin add ketrew https://github.com/hammerlab/ketrew.git
 
 echo 'ocamlfind list | grep lwt'
