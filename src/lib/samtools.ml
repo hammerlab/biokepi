@@ -132,12 +132,18 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   do_on_bam ~run_with input_bam ~product ~make_command
     ~name:(sprintf "Samtools-sort %s"
              Filename.(basename input_bam#product#path))
-
+(**
+    Uses ["samtools sort"] if the [input_bam] is not tagged as
+    “sorted as the [~by] argument.”
+    If it is indeed already sorted the function returns the [input_bam] node as
+    is.
+ *)
 let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   match input_bam#product#sorting with
-  | Some `Coordinate -> input_bam
+  | Some some when some = by -> (* Already sorted “the same way” *)
+    input_bam
   | other ->
-    sort_bam_no_check ~run_with input_bam ~processors ~by:`Coordinate
+    sort_bam_no_check ~run_with input_bam ~processors ~by
 
 let index_to_bai ~(run_with:Machine.t) input_bam =
   let product =
