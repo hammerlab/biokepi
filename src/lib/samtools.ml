@@ -133,7 +133,12 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     ~name:(sprintf "Samtools-sort %s"
              Filename.(basename input_bam#product#path))
 
-let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+(**
+   Uses ["samtools sort"] by coordinate if the [input_bam] is not tagged as
+   “sorted by coordinate.”
+   If it is indeed sorted the function returns the [input_bam] node as is.
+*)
+let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) input_bam =
   match input_bam#product#sorting with
   | Some `Coordinate -> input_bam
   | other ->
