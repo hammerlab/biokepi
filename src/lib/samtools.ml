@@ -145,7 +145,15 @@ let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   | other ->
     sort_bam_no_check ~run_with input_bam ~processors ~by
 
-let index_to_bai ~(run_with:Machine.t) input_bam =
+let index_to_bai ~(run_with:Machine.t) ?(check_sorted=true) input_bam =
+  begin match input_bam#product#sorting with
+  | (Some `Read_name | None) when check_sorted -> 
+    failwithf "In function Samtools.index_to_bai the input bam %s \
+               is not declared as sorted-by-coordinate (samtools-index \
+               requires that)"
+      input_bam#product#path
+  | _ -> ()
+  end;
   let product =
     KEDSL.single_file  ~host:(Machine.as_host run_with)
       (sprintf "%s.%s" input_bam#product#path "bai") in
