@@ -210,6 +210,25 @@ module Construct = struct
        make_target;}
       bam_pair
 
+  let mutect2 ?(configuration=Gatk.Configuration.Mutect2.default) bam_pair =
+    let configuration_name = configuration.Gatk.Configuration.Mutect2.name in
+    let configuration_json = Gatk.Configuration.Mutect2.to_json configuration in
+    let make_target
+        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ?more_edges () =
+      Gatk.mutect2
+        ~configuration
+        ?more_edges
+        ~reference_build ~run_with
+        ~input_normal_bam:normal ~input_tumor_bam:tumor
+        ~result_prefix `Map_reduce in
+    somatic_variant_caller
+      {Somatic_variant_caller.name = "Mutect";
+       configuration_json;
+       configuration_name;
+       make_target;}
+      bam_pair
+
   let somaticsniper
       ?(prior_probability=Somaticsniper.default_prior_probability)
       ?(theta=Somaticsniper.default_theta)
