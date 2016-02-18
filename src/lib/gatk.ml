@@ -202,6 +202,7 @@ let haplotype_caller
             && call_gatk ~region ~analysis:"HaplotypeCaller" [
               "-I"; sorted_bam#product#path;
               "-R"; reference_fasta#product#path;
+              "--dbsnp"; dbsnp#product#path;
               "-o"; output_vcf;
               "--filter_reads_with_N_cigar";
             ]
