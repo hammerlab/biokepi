@@ -30,6 +30,8 @@ let run
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
     |> Reference_genome.fasta in
+  let sorted_bam =
+    Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
   let reference_annotations =
     let genome = Machine.get_reference_genome run_with reference_build in
     let gtf = Reference_genome.gtf genome in
@@ -57,7 +59,7 @@ let run
                 %s \
                 -o %s \
                "
-          bam#product#path
+          sorted_bam#product#path
           processors
           reference_annotations_option
           output_file_path
@@ -67,11 +69,12 @@ let run
     Option.value_map ~default:[] reference_annotations
       ~f:(fun o -> [depends_on o])
     @ [
-      depends_on bam;
+      depends_on sorted_bam;
       depends_on reference_fasta;
       depends_on (Tool.ensure stringtie_tool);
-      depends_on (Samtools.index_to_bai ~run_with bam);
+      depends_on (Samtools.index_to_bai ~run_with sorted_bam);
     ]
   in
   workflow_node ~name ~make ~edges
     (single_file output_file_path ~host:(Machine.as_host run_with))
+
