@@ -311,67 +311,59 @@ end
 
 let rec to_file_prefix:
   type a.
-  ?is:[ `Normal | `Tumor] ->
   ?read:[ `R1 of string | `R2 of string ] ->
   a t -> string =
-  fun ?is ?read w ->
-    let is_suffix =
-      match is with
-      | None  -> ""
-      | Some `Normal -> "-normal"
-      | Some `Tumor -> "-tumor"
-    in
+  fun ?read w ->
     begin match w with
     | Fastq_gz _ -> failwith "TODO"
     | Fastq _ -> failwith "TODO"
-    | Single_end_sample (name, _) -> name ^ is_suffix
+    | Single_end_sample (name, _) -> name
     | Gunzip_concat [] -> failwith "TODO"
     | Gunzip_concat (_ :: _) ->
       begin match read with
-      | None -> is_suffix ^ "-cat"
-      | Some (`R1 s) -> sprintf "%s%s-R1-cat" s is_suffix
-      | Some (`R2 s) -> sprintf "%s%s-R2-cat" s is_suffix
+      | None -> "-cat"
+      | Some (`R1 s) -> sprintf "%s-R1-cat" s
+      | Some (`R2 s) -> sprintf "%s-R2-cat" s
       end
     | Concat_text _ -> failwith "TODO"
-    | Bam_sample (name, _) -> name ^ is_suffix
+    | Bam_sample (name, _) -> name
     | Bam_to_fastq (how, bam) ->
       sprintf "%s-b2fq-%s"
-        (to_file_prefix ?is bam)
+        (to_file_prefix bam)
         (match how with `Paired -> "PE" | `Single -> "SE")
-    | Paired_end_sample (name, _ , _) ->
-      name ^ is_suffix
+    | Paired_end_sample (name, _ , _) -> name
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-gap%d-gep%d"
-        (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
+        (to_file_prefix sample) gap_open_penalty gap_extension_penalty
     | Bwa_mem ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-mem-gap%d-gep%d"
-        (to_file_prefix ?is sample) gap_open_penalty gap_extension_penalty
+        (to_file_prefix sample) gap_open_penalty gap_extension_penalty
     | Star (sample) ->
-      sprintf "%s-star-aligned" (to_file_prefix ?is sample)
+      sprintf "%s-star-aligned" (to_file_prefix sample)
     | Hisat (sample) ->
-      sprintf "%s-hisat-aligned" (to_file_prefix ?is sample)
+      sprintf "%s-hisat-aligned" (to_file_prefix sample)
     | Stringtie (conf, sample) ->
       sprintf "%s-%sstringtie"
-        (to_file_prefix ?is sample)
+        (to_file_prefix sample)
         (conf.Stringtie.Configuration.name)
     | Mosaik (sample) ->
-      sprintf "%s-mosaik" (to_file_prefix ?is sample)
+      sprintf "%s-mosaik" (to_file_prefix sample)
     | Gatk_indel_realigner ((indel_cfg, target_cfg), bam) ->
       let open Gatk.Configuration in
       sprintf "%s-indelrealigned-%s-%s"
-        (to_file_prefix ?is ?read bam)
+        (to_file_prefix ?read bam)
         indel_cfg.Indel_realigner.name
         target_cfg.Realigner_target_creator.name
     | Gatk_bqsr ((bqsr_cfg, print_reads_cfg), bam) ->
       let open Gatk.Configuration in
       sprintf "%s-bqsr-%s-%s"
-        (to_file_prefix ?is ?read bam)
+        (to_file_prefix ?read bam)
         bqsr_cfg.Bqsr.name
         bqsr_cfg.Print_reads.name
     | Picard_mark_duplicates (_, bam) ->
       (* The settings, for now, do not impact the result *)
-      sprintf "%s-dedup" (to_file_prefix ?is ?read bam)
-    | Bam_pair (nor, tum) -> to_file_prefix ?is:None tum
+      sprintf "%s-dedup" (to_file_prefix ?read bam)
+    | Bam_pair (nor, tum) -> to_file_prefix tum
     | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
@@ -498,7 +490,7 @@ module Compiler = struct
      wrap_bam_node; wrap_vcf_node; wrap_gtf_node}
 
   let rec compile_aligner_step
-      ~compiler ?(is:[`Normal | `Tumor] option) (pipeline : bam pipeline) =
+      ~compiler (pipeline : bam pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     let gunzip_concat ?read (pipeline: fastq  pipeline) =
       match pipeline with
@@ -507,20 +499,20 @@ module Compiler = struct
         failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
       | Gunzip_concat (l: fastq_gz pipeline list) ->
         let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
-        let result_path = work_dir // to_file_prefix ?is ?read pipeline ^ ".fastq" in
+        let result_path = work_dir // to_file_prefix ?read pipeline ^ ".fastq" in
         dbg "Result_Path: %S" result_path;
         Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
     in
-    let result_prefix = work_dir // to_file_prefix ?is pipeline in
+    let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
     let compile_fastq_sample (fs : fastq_sample pipeline) =
       match fs with
       | Bam_to_fastq (how, what) ->
-        let bam = compile_aligner_step ~compiler ?is what in
+        let bam = compile_aligner_step ~compiler what in
         let sample_type =
           match how with `Single -> `Single_end | `Paired -> `Paired_end in
         let fastq_pair =
-          let output_prefix = work_dir // to_file_prefix ?is ?read:None what in
+          let output_prefix = work_dir // to_file_prefix ?read:None what in
           Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
             ~output_prefix bam
         in
@@ -549,19 +541,19 @@ module Compiler = struct
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
       | Gatk_indel_realigner (configuration, bam) ->
-        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
         Gatk.indel_realigner
           ~processors ~reference_build ~run_with:machine input_bam ~compress:false
           ~configuration ~output_bam
       | Gatk_bqsr (configuration, bam) ->
-        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
         Gatk.base_quality_score_recalibrator
           ~configuration
           ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
       | Picard_mark_duplicates (settings, bam) ->
-        let input_bam = compile_aligner_step ~compiler ?is bam in
+        let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
         Picard.mark_duplicates ~settings
           ~run_with:machine ~input_bam output_bam
@@ -602,12 +594,12 @@ module Compiler = struct
     let vcf_node =
       match pipeline with
       | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
-        let normal = compile_aligner_step ~compiler ~is:`Normal normal_t in
-        let tumor = compile_aligner_step ~compiler ~is:`Tumor tumor_t in
+        let normal = compile_aligner_step ~compiler normal_t in
+        let tumor = compile_aligner_step ~compiler tumor_t in
         som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
           ~run_with:machine ~normal ~tumor ~result_prefix ()
       | Germline_variant_caller (gvc, bam) ->
-        let input_bam = compile_aligner_step ~compiler ?is:None bam in
+        let input_bam = compile_aligner_step ~compiler bam in
         gvc.Germline_variant_caller.make_target ~processors ~reference_build
           ~run_with:machine ~input_bam ~result_prefix ()
     in
