@@ -94,7 +94,7 @@ let align
     | Some read2 -> 
       String.concat ~sep:" " [
         mosaik_build_base_command;
-        "-q2"; (Filename.quote r1_path);
+        "-q2"; (Filename.quote read2);
       ]
     | None -> mosaik_build_base_command  
   in   
