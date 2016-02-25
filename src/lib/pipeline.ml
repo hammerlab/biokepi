@@ -542,10 +542,9 @@ module Compiler = struct
       | Bam_sample (name, bam_target) -> bam_target
       | Gatk_indel_realigner (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
-        let output_bam = result_prefix ^ ".bam" in
         Gatk.indel_realigner
-          ~processors ~reference_build ~run_with:machine input_bam ~compress:false
-          ~configuration ~output_bam
+          ~processors ~reference_build ~run_with:machine ~compress:false
+          ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_bqsr (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
