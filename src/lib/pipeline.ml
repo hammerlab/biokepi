@@ -463,11 +463,15 @@ let rec to_json: type a. a t -> json =
 
 module Compiler = struct
   type 'a pipeline = 'a t
+  type workflow_option = [
+    | `Multi_sample_indel_realignment
+  ]
   type t = {
     processors : int;
     reference_build: Reference_genome.name;
     work_dir: string;
     machine : Machine.t;
+    options: workflow_option list;
     wrap_bam_node:
       bam pipeline ->
       KEDSL.bam_file KEDSL.workflow_node ->
@@ -485,9 +489,12 @@ module Compiler = struct
       ?(wrap_bam_node = fun _ x -> x)
       ?(wrap_vcf_node = fun _ x -> x)
       ?(wrap_gtf_node = fun _ x -> x)
+      ?(options=[])
       ~processors ~reference_build ~work_dir ~machine () =
-    {processors; reference_build; work_dir; machine;
+    {processors; reference_build; work_dir; machine; options;
      wrap_bam_node; wrap_vcf_node; wrap_gtf_node}
+
+  let has_option {options; _} opt = List.mem opt ~set:options
 
   let rec compile_aligner_step
       ~compiler (pipeline : bam pipeline) =
@@ -586,12 +593,47 @@ module Compiler = struct
     in
     compiler.wrap_bam_node pipeline bam_node
 
-  let compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
+  let rec compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
     let vcf_node =
       match pipeline with
+      | Somatic_variant_caller
+          (som_vc,
+           Bam_pair (
+             Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
+             , 
+             Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam))
+           )) 
+        when has_option compiler `Multi_sample_indel_realignment
+          && n_gir_conf = t_gir_conf ->
+        let normal = compile_aligner_step ~compiler n_bam in
+        let tumor = compile_aligner_step ~compiler t_bam in
+        let bam_list_node =
+          Gatk.indel_realigner
+            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
+        in
+        begin match KEDSL.expolode_bam_list_node bam_list_node with
+        | [realigned_normal; realigned_tumor] ->
+          let new_pipeline =
+            Somatic_variant_caller
+              (som_vc,
+               (Bam_pair (
+                   Gatk_bqsr (n_bqsr_config, 
+                              Bam_sample (realigned_normal#product#path,
+                                          realigned_normal)),
+                   Gatk_bqsr (t_bqsr_config, 
+                              Bam_sample (realigned_tumor#product#path,
+                                          realigned_tumor)))))
+          in
+          compile_variant_caller_step ~compiler new_pipeline
+        | other ->
+          failwithf "Gatk.indel_realigner did not return the correct list \
+                     of length 2 (tumor, normal): it gave %d bams"
+            (List.length other)
+        end
       | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
         let normal = compile_aligner_step ~compiler normal_t in
         let tumor = compile_aligner_step ~compiler tumor_t in

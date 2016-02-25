@@ -115,6 +115,14 @@ module KEDSL = struct
         )
     end
 
+  let expolode_bam_list_node (bln : bam_list workflow_node) =
+    List.map bln#product#bams ~f:(fun bam ->
+        workflow_node bam
+          ~name:(Filename.basename bam#path)
+          ~tags:["expolode_bam_list_node"]
+          ~edges:[depends_on bln]
+          ~equivalence:`None)
+
   (* this may be overkill: *)
   type _ bam_or_bams =
     | Single_bam: bam_file workflow_node -> bam_file workflow_node bam_or_bams
