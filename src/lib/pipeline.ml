@@ -464,7 +464,7 @@ let rec to_json: type a. a t -> json =
 module Compiler = struct
   type 'a pipeline = 'a t
   type workflow_option = [
-    | `Multi_sample_indel_realignment
+    | `Multi_sample_indel_realignment of [ `Silent | `Fail_if_not_happening ]
   ]
   type t = {
     processors : int;
@@ -494,7 +494,8 @@ module Compiler = struct
     {processors; reference_build; work_dir; machine; options;
      wrap_bam_node; wrap_vcf_node; wrap_gtf_node}
 
-  let has_option {options; _} opt = List.mem opt ~set:options
+  let has_option {options; _} f =
+    List.exists options ~f
 
   let rec compile_aligner_step
       ~compiler (pipeline : bam pipeline) =
@@ -606,7 +607,9 @@ module Compiler = struct
              , 
              Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam))
            )) 
-        when has_option compiler `Multi_sample_indel_realignment
+        when
+          has_option compiler
+            (function `Multi_sample_indel_realignment _ -> true)
           && n_gir_conf = t_gir_conf ->
         let normal = compile_aligner_step ~compiler n_bam in
         let tumor = compile_aligner_step ~compiler t_bam in
@@ -634,6 +637,14 @@ module Compiler = struct
                      of length 2 (tumor, normal): it gave %d bams"
             (List.length other)
         end
+      | Somatic_variant_caller (som_vc, Bam_pair (_, _)) as soma_pipeline
+        when
+          has_option compiler
+            ((=) (`Multi_sample_indel_realignment `Fail_if_not_happening)) ->
+        failwithf "Option (`Multi_sample_indel_realignment \
+                   `Fail_if_not_happening) is set and this pipeline does not \
+                   qualify:\n%s"
+          (to_json soma_pipeline |> Yojson.Basic.pretty_to_string)
       | Somatic_variant_caller (som_vc, Bam_pair (normal_t, tumor_t)) ->
         let normal = compile_aligner_step ~compiler normal_t in
         let tumor = compile_aligner_step ~compiler tumor_t in
