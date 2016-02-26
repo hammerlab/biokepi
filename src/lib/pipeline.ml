@@ -615,7 +615,7 @@ module Compiler = struct
             ~processors ~reference_build ~run_with:machine ~compress:false
             ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
         in
-        begin match KEDSL.expolode_bam_list_node bam_list_node with
+        begin match KEDSL.explode_bam_list_node bam_list_node with
         | [realigned_normal; realigned_tumor] ->
           let new_pipeline =
             Somatic_variant_caller

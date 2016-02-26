@@ -139,7 +139,7 @@ let indel_realigner :
         ~f:(Samtools.sort_bam_if_necessary
               ~run_with ~processors ~by:`Coordinate) in
     let name = 
-      sprintf "gatk-indelralign-%dx-%s" 
+      sprintf "gatk-indelrealign-%dx-%s" 
         (List.length more_input_bams + 1)
         (Filename.basename input_sorted_bam_1#product#path) in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in

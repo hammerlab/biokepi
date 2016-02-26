@@ -115,7 +115,7 @@ module KEDSL = struct
         )
     end
 
-  let expolode_bam_list_node (bln : bam_list workflow_node) =
+  let explode_bam_list_node (bln : bam_list workflow_node) =
     List.map bln#product#bams ~f:(fun bam ->
         workflow_node bam
           ~name:(Filename.basename bam#path)
