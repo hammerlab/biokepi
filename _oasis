@@ -17,6 +17,7 @@ Library biokepi
            Reference_genome,
            Run_environment,
            Workflow_utilities,
+           Opam,
            Samtools,
            Picard,
            Vcftools,
@@ -59,6 +60,13 @@ Executable test_all_downloads
   Install: false
   MainIs:     all_downloads.ml
 
+Executable we_have_opam
+  Path: src/test/
+  BuildTools: ocamlbuild
+  CompiledObject: best
+  BuildDepends: biokepi, threads
+  Install: false
+  MainIs: we_have_opam.ml
 
 Executable "biokepi-demo"
   Path: src/app/
