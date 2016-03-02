@@ -9,10 +9,10 @@
 
     The default [run_program] is daemonizing with [`Python_daemon].
 
-    This machine will get tools installations and data-fethcing form
+    This machine will get tools installations and data-fetching from
     Biokepi's defaults. The [?b37] argument allows to override the
-    locations of the “B37” genome; to override other deafult please use directly
-    {!Run_enviromment.Machine.create}.
+    locations of the “B37” genome; to override other default please use
+    {!Run_enviromment.Machine.create} directly.
 *)
 val create :
   gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
