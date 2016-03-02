@@ -475,6 +475,26 @@ let muse_tool ~host ~meta_playground =
   let init = Program.(shf "export muse_bin=%s" binary_path) in
   Tool.create Tool.Default.muse ~ensure ~init
 
+let opam_tool ~host ~meta_playground =
+  let open KEDSL in
+  let url =
+    "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
+  in
+  let install_path = meta_playground // "opam" in
+  let binary_path = install_path // "opam" in
+  let ensure =
+    workflow_node (single_file binary_path ~host)
+      ~name:"Install opam"
+      ~make:(daemonize ~host ~using:`Python_daemon
+        Program.(
+          exec ["mkdir"; "-p"; install_path]
+          && exec ["cd"; install_path]
+          && download_url_program url ~output_filename:"opam"
+          && shf "chmod +x %s" binary_path))
+  in
+  Tool.create Tool.Default.opam ~ensure
+    ~init:(Program.shf "export \"PATH=%s:$PATH\"" install_path)
+
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
 
@@ -504,5 +524,6 @@ let default_toolkit
     hisat_tool ~host ~meta_playground;
     mosaik_tool ~host ~meta_playground;
     kallisto_tool ~host ~meta_playground;
+    opam_tool ~host ~meta_playground;
   ]
 

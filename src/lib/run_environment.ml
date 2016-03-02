@@ -28,10 +28,11 @@ module Tool = struct
       [@@@ocaml.warning "-11"]
       type t = [
         | `Bwa of [ `V_0_7_10 ]
-        | `Custom of string * string
+        (* A tool that is manually installed by retrieving source or binary.*)
+        | `Custom of string * string      
       ] [@@deriving yojson, show, eq]
     end
-    let custom n ~version = `Custom (n, version)
+    let custom name ~version = `Custom (name, version)
   end
   module Default = struct
     open Definition
@@ -53,6 +54,7 @@ module Tool = struct
     let hisat = custom "hisat" ~version:"0.1.6-beta"
     let mosaik = custom "mosaik" ~version:"2.2.3"
     let kallisto = custom "kallisto" ~version:"0.42.3"
+    let opam = custom "opam" ~version:"1.2.2"
   end
   type t = {
     definition: Definition.t;
