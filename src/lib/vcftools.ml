@@ -4,6 +4,10 @@ open Workflow_utilities
 
 
 
+(** 
+   Call a command on a list of [~vcfs] to produce a given [~final_vcf] (hence
+   the {i n-to-1} naming).
+*)
 let vcf_process_n_to_1_no_machine
     ~host
     ~vcftools
@@ -34,8 +38,11 @@ let vcf_process_n_to_1_no_machine
       :: List.map ~f:depends_on vcfs
       @ more_edges)
 
-(* We use this version where we don't yet have a Machine.t, as in
-   download_reference_genome.ml
+(**
+   Concatenate VCF files. 
+
+   We use this version where we don't yet have a Machine.t, as in
+   ["download_reference_genome.ml"].
 *)
 let vcf_concat_no_machine
     ~host
@@ -48,6 +55,13 @@ let vcf_concat_no_machine
     ~host ~vcftools ~run_program ?more_edges ~vcfs ~final_vcf
     "vcf-concat"
 
+(**
+   Sort a VCF file by choromosome position (it uses ["vcf-sort"] which itself
+   relies on the ["sort"] unix tool having the ["--version-sort"] option). 
+
+   We use this version where we don't yet have a Machine.t, as in
+   ["download_reference_genome.ml"].
+*)
 let vcf_sort_no_machine
     ~host
     ~vcftools
