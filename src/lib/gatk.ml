@@ -93,67 +93,149 @@ module Configuration = struct
 
 
 end
+
   (*
      For now we have the two steps in the same target but this could
      be split in two.
      c.f. https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php
-  *)
-let indel_realigner
-    ?(compress=false)
-    ~configuration
-    ~reference_build
-    ~processors
-    ~run_with input_bam ~output_bam =
-  let open KEDSL in
-  let indel_config, target_config = configuration in
-  let name = sprintf "gatk-%s" (Filename.basename output_bam) in
-  let gatk = Machine.get_tool run_with Tool.Default.gatk in
-  let reference_genome = Machine.get_reference_genome run_with reference_build in
-  let fasta = Reference_genome.fasta reference_genome in
-  let intervals_file =
-    Filename.chop_suffix input_bam#product#path ".bam" ^ "-target.intervals"
-  in
-  let sorted_bam =
-    Samtools.sort_bam_if_necessary
-      ~run_with ~processors ~by:`Coordinate input_bam in
-  let make =
-    Machine.run_program run_with ~name
-      Program.(
-        Tool.(init gatk)
-        && sh ("java -jar $GATK_JAR -T RealignerTargetCreator " ^
-               (String.concat ~sep:" " ([
-                    "-R"; fasta#product#path;
-                    "-I"; sorted_bam#product#path;
-                    "-o"; intervals_file;
-                    "-nt"; Int.to_string processors
-                  ] @ Configuration.Realigner_target_creator.render target_config)))
-        && sh ("java -jar $GATK_JAR -T IndelRealigner"
-               ^ (if compress then " " else " -compress 0 ")
-               ^ (String.concat ~sep:" " ([
-                   "-R"; fasta#product#path;
-                   "-I"; sorted_bam#product#path;
-                   "-o"; output_bam;
-                   "-targetIntervals"; intervals_file;
-                 ] @ Configuration.Indel_realigner.render indel_config))))
-  in
-  let sequence_dict = Picard.create_dict ~run_with fasta in
-  workflow_node ~name
-    (bam_file ~sorting:`Coordinate
-       output_bam ~host:Machine.(as_host run_with))
-    ~make
-    ~edges:[
-      depends_on Tool.(ensure gatk);
-      depends_on fasta;
-      depends_on sorted_bam;
-      depends_on (Samtools.index_to_bai ~run_with sorted_bam);
-      (* RealignerTargetCreator wants the `.fai`: *)
-      depends_on (Samtools.faidx ~run_with fasta);
-      depends_on input_bam;
-      depends_on sequence_dict;
-      on_failure_activate (Remove.file ~run_with output_bam);
-      on_failure_activate (Remove.file ~run_with intervals_file);
-    ]
 
+     We want to be able to run the indel-realigner on mutliple bams, so we
+     cannot use the usual `~result_prefix` argument:
+     See the documentation for the `--nWayOut` option:
+     https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php#--nWayOut
+     See also 
+     http://gatkforums.broadinstitute.org/gatk/discussion/5588/best-practice-for-multi-sample-non-human-indel-realignment
+
+     On top of that we the GADT `_ KEDSL.bam_or_bams` to return have 2 possible
+     return types:
+     bam_file workflow_node or bam_list workflow_node
+  *)
+open Configuration
+let indel_realigner :
+  type a.
+  ?compress:bool ->
+  configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
+  reference_build:string ->
+  processors:int ->
+  run_with:Run_environment.Machine.t ->
+  a KEDSL.bam_or_bams ->
+  a =
+  fun ?(compress=false)
+    ~configuration ~reference_build ~processors ~run_with input_bam_or_bams ->
+    let open KEDSL in
+    let input_bam_1, more_input_bams = (* this an at-least-length-1 list :)  *)
+      match input_bam_or_bams with
+      | Single_bam bam -> bam, []
+      | Bam_workflow_list [] -> 
+        failwithf "Empty bam-list in Gatk.indel_realigner`"
+      | Bam_workflow_list (one :: more) -> (one, more)
+    in
+    let indel_config, target_config = configuration in
+    let input_sorted_bam_1 =
+      Samtools.sort_bam_if_necessary
+        ~run_with ~processors ~by:`Coordinate input_bam_1 in
+    let more_input_sorted_bams =
+      List.map more_input_bams
+        ~f:(Samtools.sort_bam_if_necessary
+              ~run_with ~processors ~by:`Coordinate) in
+    let name = 
+      sprintf "gatk-indelrealign-%dx-%s" 
+        (List.length more_input_bams + 1)
+        (Filename.basename input_sorted_bam_1#product#path) in
+    let gatk = Machine.get_tool run_with Tool.Default.gatk in
+    let reference_genome =
+      Machine.get_reference_genome run_with reference_build in
+    let fasta = Reference_genome.fasta reference_genome in
+    let digest_of_input =
+      List.map (input_sorted_bam_1 :: more_input_sorted_bams)
+        ~f:(fun o -> o#product#path)
+      |> String.concat ~sep:"" 
+      (* we make this file “unique” with an MD5 sum of the input paths *)
+      |> Digest.string |> Digest.to_hex in
+    let output_suffix =
+      sprintf "_target-%s-%dx-%s"
+        target_config.Configuration.Indel_realigner.name
+        (List.length more_input_bams + 1)
+        (if more_input_bams = [] then "" else "-" ^ digest_of_input)
+    in
+    let intervals_file =
+      Filename.chop_suffix input_sorted_bam_1#product#path ".bam" 
+      ^ output_suffix ^ ".intervals" in
+    let make =
+      let target_creation_args =
+        [
+          "-R"; Filename.quote fasta#product#path;
+          "-I"; Filename.quote input_sorted_bam_1#product#path;
+          "-o"; Filename.quote intervals_file;
+          "-nt"; Int.to_string processors
+        ]
+        @ Realigner_target_creator.render target_config
+        @ List.concat_map more_input_bams
+          ~f:(fun bam -> ["-I"; Filename.quote bam#product#path])
+      in
+      let indel_real_args =
+        [ "-R"; fasta#product#path;
+          "-I"; input_sorted_bam_1#product#path;
+          "-targetIntervals"; intervals_file;
+        ] @ Indel_realigner.render indel_config @
+        begin match more_input_bams with
+        | [] ->
+          ["-o";
+           Filename.chop_extension
+             input_sorted_bam_1#product#path ^ output_suffix ^ ".bam" ;]
+        | more ->
+          List.concat_map more
+            ~f:(fun b -> ["-I"; Filename.quote b#product#path])
+          @ ["--nWayOut"; output_suffix ^ ".bam"]
+        end
+      in
+      Machine.run_program run_with ~name
+        Program.(
+          Tool.(init gatk)
+          && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s"
+            (String.concat ~sep:" " target_creation_args)
+          && sh ("java -jar $GATK_JAR -T IndelRealigner"
+                 ^ (if compress then " " else " -compress 0 ")
+                 ^ (String.concat ~sep:" " indel_real_args)))
+    in
+    let output_bam_path input =
+      Filename.chop_extension input#product#path ^ output_suffix ^ ".bam" in
+    let edges =
+      let sequence_dict = (* implicit dependency *)
+        Picard.create_dict ~run_with fasta in
+      [
+        depends_on Tool.(ensure gatk);
+        depends_on fasta;
+        (* RealignerTargetCreator wants the `.fai`: *)
+        depends_on (Samtools.faidx ~run_with fasta);
+        depends_on sequence_dict;
+        on_failure_activate (Remove.file ~run_with intervals_file);
+      ]
+      @ List.concat_map (input_sorted_bam_1 :: more_input_bams) ~f:(fun b -> [
+            depends_on b;
+            depends_on (Samtools.index_to_bai ~run_with b);
+            on_failure_activate (Remove.file ~run_with (output_bam_path b));
+          ])
+    in
+    let node : type a. a bam_or_bams -> a =
+      (* we need a function to force `type a.` *)
+      function
+      | Single_bam b ->
+        (* This is what we give to the `-o` option: *)
+        workflow_node  ~name ~make ~edges
+          (bam_file ~sorting:`Coordinate ~host:Machine.(as_host run_with)
+             (output_bam_path b))
+      | Bam_workflow_list bamlist ->
+        workflow_node  ~name ~make ~edges
+          (bam_list 
+             (List.map bamlist ~f:(fun b ->
+                  (* This is what the documentation says it will to
+                     with the `--nWayOut` option *)
+                  bam_file
+                    ~sorting:`Coordinate ~host:Machine.(as_host run_with)
+                    (output_bam_path b))))
+    in
+    node input_bam_or_bams
 
 (* Again doing two steps in one target for now:
    http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator
