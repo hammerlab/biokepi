@@ -153,7 +153,7 @@ let indel_realigner :
       (* we make this file “unique” with an MD5 sum of the input paths *)
       |> Digest.string |> Digest.to_hex in
     let output_suffix =
-      sprintf "-target-%s-%dx-%s"
+      sprintf "_target-%s-%dx-%s"
         target_config.Configuration.Indel_realigner.name
         (List.length more_input_bams + 1)
         (if more_input_bams = [] then "" else "-" ^ digest_of_input)
