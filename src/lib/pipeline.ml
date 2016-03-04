@@ -564,6 +564,23 @@ module Compiler = struct
         let output_bam = result_prefix ^ ".bam" in
         Picard.mark_duplicates ~settings
           ~run_with:machine ~input_bam output_bam
+      | Bwa_mem ({gap_open_penalty; gap_extension_penalty},
+                 Paired_end_sample (name,
+                                    Gunzip_concat r1_list, Gunzip_concat r2_list))
+        when List.length r1_list > 1 ->
+        let exploded =
+          let count = ref 0 in
+          List.map2 r1_list r2_list
+            ~f:(fun (Fastq_gz wf1 as r1) (Fastq_gz wf2 as r2) ->
+                let new_name =
+                  incr count; sprintf "%s-fragment-%d" name !count in
+                Bwa_mem ({gap_open_penalty; gap_extension_penalty},
+                         Paired_end_sample (new_name,
+                                            Gunzip_concat [r1],
+                                            Gunzip_concat [r2]))) in
+        let bams = List.map exploded ~f:(compile_aligner_step ~compiler) in
+        Samtools.merge_bams ~run_with:machine bams
+          (result_prefix ^ "-merged.bam")
       | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
         let fastq = compile_fastq_sample what in
         Bwa.mem_align_to_sam
