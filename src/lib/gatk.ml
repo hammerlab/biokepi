@@ -106,8 +106,16 @@ end
      See also 
      http://gatkforums.broadinstitute.org/gatk/discussion/5588/best-practice-for-multi-sample-non-human-indel-realignment
 
-     On top of that we the GADT `_ KEDSL.bam_or_bams` to return have 2 possible
-     return types:
+     Also, the documentation is incomplete (or buggy), the option `--nWayOut`
+     will output the Bam files in the current directory (i.e. the one GATK is
+     running in).
+     So, unless the user uses the `?run_directory` option, we extract that
+     directory from the input-bams; if they do not coincide we consider this an
+     error.
+
+
+     On top of that we use the GADT `_ KEDSL.bam_or_bams` to return have 2
+     possible return types:
      bam_file workflow_node or bam_list workflow_node
   *)
 open Configuration
@@ -118,10 +126,12 @@ let indel_realigner :
   reference_build:string ->
   processors:int ->
   run_with:Run_environment.Machine.t ->
+  ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
   fun ?(compress=false)
-    ~configuration ~reference_build ~processors ~run_with input_bam_or_bams ->
+    ~configuration ~reference_build ~processors ~run_with ?run_directory
+    input_bam_or_bams ->
     let open KEDSL in
     let input_bam_1, more_input_bams = (* this an at-least-length-1 list :)  *)
       match input_bam_or_bams with
@@ -129,6 +139,23 @@ let indel_realigner :
       | Bam_workflow_list [] -> 
         failwithf "Empty bam-list in Gatk.indel_realigner`"
       | Bam_workflow_list (one :: more) -> (one, more)
+    in
+    let run_directory =
+      match run_directory with
+      | None ->
+        let dir = Filename.dirname input_bam_1#product#path in
+        List.iter more_input_bams ~f:(fun bam ->
+            if Filename.dirname bam#product#path <> dir then
+              failwithf "These two BAMS are not in the same directory:\n\
+                        \    %s\n\
+                        \    %s\n\
+                         GATK.indel_realigner when running on multiple bams \
+                         requires a proper run-directory, clean-up your bams \
+                         or provide the option ~run_directory
+                      " input_bam_1#product#path bam#product#path
+          );
+        dir
+      | Some rundir -> rundir
     in
     let indel_config, target_config = configuration in
     let input_sorted_bam_1 =
@@ -138,9 +165,12 @@ let indel_realigner :
       List.map more_input_bams
         ~f:(Samtools.sort_bam_if_necessary
               ~run_with ~processors ~by:`Coordinate) in
+    let more_input_bams = `Use_the_sorted_ones_please in
+    let input_bam_1 = `Use_the_sorted_ones_please in
+    ignore (more_input_bams, input_bam_1);
     let name = 
       sprintf "gatk-indelrealign-%dx-%s" 
-        (List.length more_input_bams + 1)
+        (List.length more_input_sorted_bams + 1)
         (Filename.basename input_sorted_bam_1#product#path) in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome =
@@ -155,12 +185,17 @@ let indel_realigner :
     let output_suffix =
       sprintf "_target-%s-%dx-%s"
         target_config.Configuration.Indel_realigner.name
-        (List.length more_input_bams + 1)
-        (if more_input_bams = [] then "" else "-" ^ digest_of_input)
+        (List.length more_input_sorted_bams + 1)
+        (if more_input_sorted_bams = [] then "" else "-" ^ digest_of_input)
     in
     let intervals_file =
       Filename.chop_suffix input_sorted_bam_1#product#path ".bam" 
       ^ output_suffix ^ ".intervals" in
+    let output_bam_path input =
+      run_directory // (
+        Filename.chop_extension input#product#path ^ output_suffix ^ ".bam"
+        |> Filename.basename)
+    in
     let make =
       let target_creation_args =
         [
@@ -170,7 +205,7 @@ let indel_realigner :
           "-nt"; Int.to_string processors
         ]
         @ Realigner_target_creator.render target_config
-        @ List.concat_map more_input_bams
+        @ List.concat_map more_input_sorted_bams
           ~f:(fun bam -> ["-I"; Filename.quote bam#product#path])
       in
       let indel_real_args =
@@ -178,11 +213,9 @@ let indel_realigner :
           "-I"; input_sorted_bam_1#product#path;
           "-targetIntervals"; intervals_file;
         ] @ Indel_realigner.render indel_config @
-        begin match more_input_bams with
+        begin match more_input_sorted_bams with
         | [] ->
-          ["-o";
-           Filename.chop_extension
-             input_sorted_bam_1#product#path ^ output_suffix ^ ".bam" ;]
+          ["-o"; output_bam_path input_sorted_bam_1]
         | more ->
           List.concat_map more
             ~f:(fun b -> ["-I"; Filename.quote b#product#path])
@@ -192,14 +225,13 @@ let indel_realigner :
       Machine.run_program run_with ~name
         Program.(
           Tool.(init gatk)
+          && shf "cd %s" (Filename.quote run_directory)
           && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s"
             (String.concat ~sep:" " target_creation_args)
           && sh ("java -jar $GATK_JAR -T IndelRealigner"
                  ^ (if compress then " " else " -compress 0 ")
                  ^ (String.concat ~sep:" " indel_real_args)))
     in
-    let output_bam_path input =
-      Filename.chop_extension input#product#path ^ output_suffix ^ ".bam" in
     let edges =
       let sequence_dict = (* implicit dependency *)
         Picard.create_dict ~run_with fasta in
@@ -211,7 +243,7 @@ let indel_realigner :
         depends_on sequence_dict;
         on_failure_activate (Remove.file ~run_with intervals_file);
       ]
-      @ List.concat_map (input_sorted_bam_1 :: more_input_bams) ~f:(fun b -> [
+      @ List.concat_map (input_sorted_bam_1 :: more_input_sorted_bams) ~f:(fun b -> [
             depends_on b;
             depends_on (Samtools.index_to_bai ~run_with b);
             on_failure_activate (Remove.file ~run_with (output_bam_path b));
@@ -220,15 +252,16 @@ let indel_realigner :
     let node : type a. a bam_or_bams -> a =
       (* we need a function to force `type a.` *)
       function
-      | Single_bam b ->
+      | Single_bam _ ->
         (* This is what we give to the `-o` option: *)
         workflow_node  ~name ~make ~edges
           (bam_file ~sorting:`Coordinate ~host:Machine.(as_host run_with)
-             (output_bam_path b))
-      | Bam_workflow_list bamlist ->
+             (output_bam_path input_sorted_bam_1))
+      | Bam_workflow_list _ ->
         workflow_node  ~name ~make ~edges
           (bam_list 
-             (List.map bamlist ~f:(fun b ->
+             (List.map (input_sorted_bam_1 :: more_input_sorted_bams)
+                ~f:(fun b ->
                   (* This is what the documentation says it will to
                      with the `--nWayOut` option *)
                   bam_file
