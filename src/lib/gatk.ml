@@ -293,12 +293,13 @@ let base_quality_score_recalibrator
   let reference_genome = Machine.get_reference_genome run_with reference_build in
   let fasta = Reference_genome.fasta reference_genome in
   let db_snp = Reference_genome.dbsnp_exn reference_genome in
-  let recal_data_table =
-    Filename.chop_suffix input_bam#product#path ".bam" ^ "-recal_data.table"
-  in
   let sorted_bam =
     Samtools.sort_bam_if_necessary
       ~run_with ~processors ~by:`Coordinate input_bam in
+  let input_bam = `Please_use_the_sorted_one in ignore input_bam;
+  let recal_data_table =
+    Filename.chop_suffix sorted_bam#product#path ".bam" ^ "-recal_data.table"
+  in
   let make =
     Machine.run_program run_with ~name
       Program.(
