@@ -326,7 +326,7 @@ let rec to_file_prefix:
       | Some (`R2 s) -> sprintf "%s-R2-cat" s
       end
     | Concat_text _ -> failwith "TODO"
-    | Bam_sample (name, _) -> name
+    | Bam_sample (name, _) -> Filename.basename name
     | Bam_to_fastq (how, bam) ->
       sprintf "%s-b2fq-%s"
         (to_file_prefix bam)
