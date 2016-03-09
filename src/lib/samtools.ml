@@ -216,7 +216,7 @@ let merge_bams
     Tool.(init samtools)
     && exec (
       ["samtools"; "merge"; output_bam_path]
-      @ List.map sorted_bams ~f:(fun bam -> Filename.quote bam#product#path)
+      @ List.map sorted_bams ~f:(fun bam -> bam#product#path)
     )
   in
   let name =
