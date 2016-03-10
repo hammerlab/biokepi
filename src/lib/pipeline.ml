@@ -463,8 +463,12 @@ let rec to_json: type a. a t -> json =
 
 module Compiler = struct
   type 'a pipeline = 'a t
+  type workflow_option_failure_mode = [ `Silent | `Fail_if_not_happening ] 
   type workflow_option = [
-    | `Multi_sample_indel_realignment of [ `Silent | `Fail_if_not_happening ]
+    | `Multi_sample_indel_realignment of workflow_option_failure_mode
+    | `Parallel_alignment_over_fastq_fragments of
+        [ `Bwa_mem | `Bwa | `Mosaik | `Star | `Hisat ] list
+        * workflow_option_failure_mode
   ]
   type t = {
     processors : int;
@@ -545,6 +549,67 @@ module Compiler = struct
           ~name:(sprintf "single-end %s"
                    (Filename.basename r1#product#path))
     in
+    let parallelize_alignment ~make_aligner sample =
+      match sample with
+      | Paired_end_sample (name,
+                           Gunzip_concat r1_list,
+                           Gunzip_concat r2_list) ->
+        let exploded =
+          let count = ref 0 in
+          List.map2 r1_list r2_list
+            ~f:(fun (Fastq_gz wf1 as r1) (Fastq_gz wf2 as r2) ->
+                let new_name =
+                  incr count; sprintf "%s-fragment-%d" name !count in
+                make_aligner (
+                  Paired_end_sample (new_name,
+                                     Gunzip_concat [r1],
+                                     Gunzip_concat [r2]))) in
+        let bams = List.map exploded ~f:(compile_aligner_step ~compiler) in
+        Samtools.merge_bams ~run_with:machine bams
+          (result_prefix ^ "-merged.bam")
+      | other ->
+        failwith "parallelize_alignment: Not fully implemented"
+    in
+    let catch_parallelize_aligner aligner sample =
+      let option =
+        List.find_map compiler.options
+          (function
+          | `Parallel_alignment_over_fastq_fragments (al, todo)
+            when List.mem ~set:al aligner -> Some todo
+          | _ -> None)
+      in
+      match sample with
+      | Paired_end_sample (name,
+                           Gunzip_concat r1_list,
+                           Gunzip_concat r2_list)
+        when List.length r1_list > 1 ->
+        begin match option with
+        | Some _ -> `Caught
+        | None -> `Not_caught
+        end
+      | Paired_end_sample (name,
+                           Gunzip_concat r1_list,
+                           Gunzip_concat r2_list)
+        when List.length r1_list = 1 -> `Not_caught
+      | other ->
+        begin match option with
+        | Some `Silent
+        | None -> `Not_caught
+        | Some `Fail_if_not_happening ->
+          failwithf "Option Parallel_alignment_over_fastq_fragments is set to \
+                     Fail_if_not_happening and it didn't happen:\n%s"
+            (to_json other |> Yojson.Basic.pretty_to_string)
+        end
+    in
+    let perform_aligner_parallelization aligner_tag ~make_aligner
+        ~make_workflow sample =
+      begin match catch_parallelize_aligner aligner_tag sample  with
+      | `Caught -> parallelize_alignment ~make_aligner sample
+      | `Not_caught ->
+        let fastq = compile_fastq_sample sample in
+        make_workflow fastq
+      end
+    in
     let bam_node =
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
@@ -564,33 +629,46 @@ module Compiler = struct
         let output_bam = result_prefix ^ ".bam" in
         Picard.mark_duplicates ~settings
           ~run_with:machine ~input_bam output_bam
-      | Bwa_mem ({gap_open_penalty; gap_extension_penalty}, what) ->
-        let fastq = compile_fastq_sample what in
-        Bwa.mem_align_to_sam
-          ~reference_build ~processors
-          ~gap_open_penalty ~gap_extension_penalty
-          ~fastq ~result_prefix ~run_with:machine ()
-        |> Samtools.sam_to_bam ~run_with:machine
-      | Bwa ({gap_open_penalty; gap_extension_penalty}, what) ->
-        let fastq = compile_fastq_sample what in
-        Bwa.align_to_sam
-          ~reference_build ~processors
-          ~gap_open_penalty ~gap_extension_penalty
-          ~fastq ~result_prefix ~run_with:machine ()
-        |> Samtools.sam_to_bam ~run_with:machine
+      | Bwa_mem (bwa_mem_config, fq_sample) ->
+        perform_aligner_parallelization
+          `Bwa_mem ~make_aligner:(fun pe -> Bwa_mem (bwa_mem_config, pe))
+          fq_sample
+          ~make_workflow:(fun fastq ->
+              let {gap_open_penalty; gap_extension_penalty} = bwa_mem_config in
+              Bwa.mem_align_to_sam
+                ~reference_build ~processors
+                ~gap_open_penalty ~gap_extension_penalty
+                ~fastq ~result_prefix ~run_with:machine ()
+              |> Samtools.sam_to_bam ~run_with:machine)
+      | Bwa ({gap_open_penalty; gap_extension_penalty} as bwa_config, what) ->
+        perform_aligner_parallelization
+          `Bwa ~make_aligner:(fun pe -> Bwa (bwa_config, pe)) what
+          ~make_workflow:(fun fastq ->
+              Bwa.align_to_sam
+                ~reference_build ~processors
+                ~gap_open_penalty ~gap_extension_penalty
+                ~fastq ~result_prefix ~run_with:machine ()
+              |> Samtools.sam_to_bam ~run_with:machine)
       | Mosaik (what) ->
-        let fastq = compile_fastq_sample what in
-        Mosaik.align ~reference_build ~processors
-          ~fastq ~result_prefix ~run_with:machine ()
+        perform_aligner_parallelization
+          `Mosaik ~make_aligner:(fun pe -> Mosaik (pe)) what
+          ~make_workflow:(fun fastq ->
+              Mosaik.align ~reference_build ~processors
+                ~fastq ~result_prefix ~run_with:machine ())
       | Star (what) ->
-        let fastq = compile_fastq_sample what in
-        Star.align ~reference_build ~processors
-          ~fastq ~result_prefix ~run_with:machine ()
+        perform_aligner_parallelization
+          `Star ~make_aligner:(fun pe -> Star (pe)) what
+          ~make_workflow:(fun fastq ->
+              Star.align ~reference_build ~processors
+                ~fastq ~result_prefix ~run_with:machine ())
       | Hisat (what) ->
-        let fastq = compile_fastq_sample what in
-        Hisat.align ~reference_build ~processors
-          ~fastq ~result_prefix ~run_with:machine ()
-        |> Samtools.sam_to_bam ~run_with:machine
+        perform_aligner_parallelization
+          `Hisat ~make_aligner:(fun pe -> Hisat (pe)) what
+          ~make_workflow:(fun fastq ->
+              Hisat.align ~reference_build ~processors
+                ~fastq ~result_prefix ~run_with:machine ()
+              |> Samtools.sam_to_bam ~run_with:machine
+            )
     in
     compiler.wrap_bam_node pipeline bam_node
 
@@ -604,7 +682,7 @@ module Compiler = struct
       ) 
       when
         has_option compiler
-          (function `Multi_sample_indel_realignment _ -> true)
+          (function `Multi_sample_indel_realignment _ -> true | _ -> false)
         && n_gir_conf = t_gir_conf ->
       let normal = compile_aligner_step ~compiler n_bam in
       let tumor = compile_aligner_step ~compiler t_bam in

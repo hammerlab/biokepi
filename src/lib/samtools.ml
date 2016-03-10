@@ -200,3 +200,39 @@ let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
     on_failure_activate (Remove.file ~run_with pileup);
   ] in
   workflow_node ~name (single_file pileup ~host) ~make ~edges 
+
+
+let merge_bams
+    ~(run_with : Machine.t)
+    ?(delete_input_on_success = true)
+    (input_bam_list : KEDSL.bam_file KEDSL.workflow_node list)
+    (output_bam_path : string) =
+  let open KEDSL in
+  let samtools = Machine.get_tool run_with Tool.Default.samtools in
+  let sorted_bams =
+    List.map input_bam_list ~f:(sort_bam_if_necessary ~run_with ~by:`Coordinate) in
+  let program =
+    let open  Program in
+    Tool.(init samtools)
+    && exec (
+      ["samtools"; "merge"; output_bam_path]
+      @ List.map sorted_bams ~f:(fun bam -> bam#product#path)
+    )
+  in
+  let name =
+    sprintf "merge-%d-bams-into-%s" (List.length input_bam_list)
+      (Filename.basename output_bam_path) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  let edges =
+    depends_on Tool.(ensure samtools)
+    :: on_failure_activate (Remove.file ~run_with output_bam_path)
+    :: List.map sorted_bams ~f:depends_on
+    @ List.map input_bam_list ~f:(fun src ->
+        on_success_activate (Remove.file ~run_with src#product#path))
+  in
+  let product =
+    (* samtools merge creates sorted bams: *)
+    (bam_file ~sorting:`Coordinate output_bam_path ~host) in
+  workflow_node ~name product ~make ~edges
+
