@@ -36,7 +36,7 @@ module Tool = struct
   module Default = struct
     open Definition
     let bwa = `Bwa `V_0_7_10
-    let samtools = custom "samtools" ~version:"1.1"
+    let samtools = custom "samtools" ~version:"1.3"
     let vcftools = custom "vcftools" ~version:"0.1.12b"
     let bedtools = custom "bedtools" ~version:"2.23.0"
     let somaticsniper = custom "somaticsniper" ~version:"1.0.3"
