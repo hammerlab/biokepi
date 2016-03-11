@@ -92,7 +92,6 @@ let tabix ~run_with ~tabular_format input_file =
       on_failure_activate (Remove.file ~run_with output_path);
     ]
 
-
 let do_on_bam
     ~(run_with:Machine.t)
     ?(more_depends_on=[]) ~name input_bam ~product ~make_command =
@@ -119,12 +118,14 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   in
   let dest_prefix =
     sprintf "%s-%s" (Filename.chop_suffix source ".bam") dest_suffix in
+  let dest = sprintf "%s.%s" dest_prefix "bam" in
   let product =
     KEDSL.bam_file ~sorting:by
       ~host:Machine.(as_host run_with)
-      (sprintf "%s.%s" dest_prefix "bam") in
+      dest in
   let make_command src des =
-    let command = ["-@"; Int.to_string processors; src; dest_prefix] in
+    let command = ["-@"; Int.to_string processors; src;
+                   "-T"; dest_prefix; "-o"; dest] in
     match by with
     | `Coordinate -> "sort" :: command
     | `Read_name -> "sort" :: "-n" :: command
@@ -145,10 +146,15 @@ let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   | other ->
     sort_bam_no_check ~run_with input_bam ~processors ~by
 
+(* Produce an index for the given BAM file.
+
+- [?check_sorted] First check that the BAM is sorted, and fail if not.
+  (default: true)
+*)
 let index_to_bai ~(run_with:Machine.t) ?(check_sorted=true) input_bam =
   begin match input_bam#product#sorting with
-  | (Some `Read_name | None) when check_sorted -> 
-    failwithf "In function Samtools.index_to_bai the input bam %s \
+  | (Some `Read_name | None) when check_sorted ->
+    failwithf "In function Samtools.index the input bam %s \
                is not declared as sorted-by-coordinate (samtools-index \
                requires that)"
       input_bam#product#path
@@ -166,7 +172,7 @@ let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Tool.Default.samtools in
   let src = input_bam#product#path in
-  let adjust_mapq_option = 
+  let adjust_mapq_option =
     match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
   let samtools_region_option = Region.to_samtools_option region in
   let reference_genome = Machine.get_reference_genome run_with reference_build in
@@ -196,26 +202,57 @@ let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
     depends_on Tool.(ensure samtools);
     depends_on sorted_bam;
     depends_on fasta;
-    index_to_bai ~run_with sorted_bam |> depends_on;
+    index ~run_with sorted_bam |> depends_on;
     on_failure_activate (Remove.file ~run_with pileup);
   ] in
-  workflow_node ~name (single_file pileup ~host) ~make ~edges 
+  workflow_node ~name (single_file pileup ~host) ~make ~edges
 
+(*
+Merge a list of BAM files.
 
+The BAMs will be sorted, by coordinate, if they are not already.
+
+By default, duplicate @PG and @RG IDs will be automatically uniquified with a
+random suffix.
+
+- [?delete_input_on_success]: Delete the list of input BAMs when this node
+  succeeds. (default: true)
+- [?attach_rg_tag]: Attach an RG tag to each alignment. The tag value is
+  inferred from file names.(default: false)
+- [?uncompressed_bam_output]: Uncompressed BAM output. (default: false)
+- [?compress_level_one]: Use zlib compression level 1 to compress the output.
+  (default: false)
+- [?combine_rg_headers]: When several input files contain @RG headers with the
+  same ID, emit only one the first of them. (default: false)
+- [?combine_pg_headers]: When several input files contain @PG headers with the
+  same ID, emit only one the first of them. (default: false)
+ *)
 let merge_bams
     ~(run_with : Machine.t)
     ?(delete_input_on_success = true)
+    ?(attach_rg_tag = false)
+    ?(uncompressed_bam_output = false)
+    ?(compress_level_one = false)
+    ?(combine_rg_headers = false)
+    ?(combine_pg_headers = false)
     (input_bam_list : KEDSL.bam_file KEDSL.workflow_node list)
     (output_bam_path : string) =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Tool.Default.samtools in
   let sorted_bams =
     List.map input_bam_list ~f:(sort_bam_if_necessary ~run_with ~by:`Coordinate) in
+  let options =
+    (if attach_rg_tag then ["-r"] else [])
+    @ (if uncompressed_bam_output then ["-u"] else [])
+    @ (if compress_level_one then ["-1"] else [])
+    @ (if combine_rg_headers then ["-c"] else [])
+    @ (if combine_pg_headers then ["-p"] else [])
+  in
   let program =
     let open  Program in
     Tool.(init samtools)
     && exec (
-      ["samtools"; "merge"; output_bam_path]
+      ["samtools"; "merge"] @ options @ [output_bam_path]
       @ List.map sorted_bams ~f:(fun bam -> bam#product#path)
     )
   in
@@ -224,12 +261,15 @@ let merge_bams
       (Filename.basename output_bam_path) in
   let make = Machine.run_program ~name run_with program in
   let host = Machine.(as_host run_with) in
+  let remove_input_bams =
+    List.map input_bam_list ~f:(fun src ->
+        on_success_activate (Remove.file ~run_with src#product#path))
+  in
   let edges =
     depends_on Tool.(ensure samtools)
     :: on_failure_activate (Remove.file ~run_with output_bam_path)
     :: List.map sorted_bams ~f:depends_on
-    @ List.map input_bam_list ~f:(fun src ->
-        on_success_activate (Remove.file ~run_with src#product#path))
+    @ if delete_input_on_success then remove_input_bams else []
   in
   let product =
     (* samtools merge creates sorted bams: *)
