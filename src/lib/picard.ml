@@ -24,6 +24,48 @@ let create_dict ~(run_with:Machine.t) fasta =
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
+(* Sort the given VCF.
+
+- [?sequence_dict] A sequence dictionary by which the VCF will be sorted.
+*)
+let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
+  let open KEDSL in
+  let picard = Machine.get_tool run_with Tool.Default.picard in
+  let sequence_name =
+    match sequence_dict with
+    | None -> "default"
+    | Some d -> Filename.basename d#product#path
+  in
+  let src = input_vcf#product#path in
+  let input_vcf_base = Filename.basename src in
+  let dest =
+    sprintf "%s.sorted-by-%s.vcf"
+      (Filename.chop_suffix src ".vcf") sequence_name in
+  let name = sprintf "picard-sort-vcf-%s-by-%s" input_vcf_base sequence_name in
+  let sequence_dict_opt =
+    match sequence_dict with
+    | None -> ""
+    | Some d -> sprintf "SEQUENCE_DICTIONARY= %s" (Filename.quote d#product#path)
+  in
+  let sequence_dict_edge =
+    match sequence_dict with
+    | None -> []
+    | Some d -> [depends_on d]
+  in
+  let program =
+    Program.(Tool.(init picard) &&
+             (shf "java -jar $PICARD_JAR SortVcf %s I= %s O= %s"
+                sequence_dict_opt
+                (Filename.quote src) (Filename.quote dest)))
+  in
+  let host = Machine.(as_host run_with) in
+  let make = Machine.run_program run_with program ~name in
+  workflow_node (single_file dest ~host) ~name ~make
+    ~edges:([
+      depends_on input_vcf; depends_on Tool.(ensure picard);
+      on_failure_activate (Remove.file ~run_with dest)
+    ] @ sequence_dict_edge)
+
 module Mark_duplicates_settings = struct
   type t = {
     tmpdir: string;
