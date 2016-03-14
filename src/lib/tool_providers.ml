@@ -185,8 +185,8 @@ let stringtie_tool ~host ~meta_playground =
 let samtools ~host ~meta_playground =
   let open KEDSL in
   let install_path = meta_playground // "samtools" in
-  let url = "http://downloads.sourceforge.net/project/samtools/samtools/\
-             1.1/samtools-1.1.tar.bz2" in
+  let url = "https://github.com/samtools/samtools/releases/download/1.3/\
+             samtools-1.3.tar.bz2" in
   let archive = Filename.basename url in
   let ensure =
     let tar_option = if Filename.check_suffix url "bz2" then "j" else "z" in
