@@ -117,6 +117,13 @@ end
 
 module Download = struct
 
+  let wget_program ?output_filename url =
+    KEDSL.Program.exec [
+      "wget";
+      "-O"; Option.value output_filename ~default:Filename.(basename url);
+      url
+    ]
+
   let wget_to_folder ~host ~(run_program : Machine.run_function) ~test_file ~destination url  =
     let open KEDSL in
     let name = "wget-" ^ Filename.basename destination in
