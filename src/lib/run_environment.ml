@@ -28,11 +28,14 @@ module Tool = struct
       [@@@ocaml.warning "-11"]
       type t = [
         | `Bwa of [ `V_0_7_10 ]
-        (* A tool that is manually installed by retrieving source or binary.*)
+        (* A tool that is installed by retrieving source or binary.*)
         | `Custom of string * string      
+        (* A tool that is installed via Biopam. *)
+        | `Biopamed of string
       ] [@@deriving yojson, show, eq]
     end
     let custom name ~version = `Custom (name, version)
+    let biopam name = `Biopamed name
   end
   module Default = struct
     open Definition
