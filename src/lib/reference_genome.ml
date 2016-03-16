@@ -64,14 +64,6 @@ module Default = struct
     List.init 19 (fun i -> sprintf "%d" (i + 1))
     @ [ "X"; "Y" ]
 
-  (* Used by both B37 and B37decoy *)
-  let b37_dbsnp_url =
-    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
-     b37/dbsnp_138.b37.vcf.gz"
-  let b37_cosmic_url =
-    "http://www.broadinstitute.org/cancer/cga/sites/default/files/\
-     data/tools/mutect/b37_cosmic_v54_120711.vcf"
-
   module Name = struct
     let b37 = "b37"
     let b37decoy = "b37decoy"
@@ -80,6 +72,21 @@ module Default = struct
     let hg19 = "hg19"
     let mm10 = "mm10"
   end
+
+
+  (* Used by both B37 and B37decoy *)
+  let b37_dbsnp_url =
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+     b37/dbsnp_138.b37.vcf.gz"
+  let b37_cosmic_url =
+    "http://www.broadinstitute.org/cancer/cga/sites/default/files/\
+     data/tools/mutect/b37_cosmic_v54_120711.vcf"
+  let b37_exome_gtf_url =
+    "http://ftp.ensembl.org/pub/release-75/gtf/\
+     homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
+  let b37_cdna_url =
+    "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/\
+     Homo_sapiens.GRCh37.75.cdna.all.fa.gz"
 
   let b37 =
     create Name.b37
@@ -94,14 +101,8 @@ module Default = struct
          "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/VCF/v4.0/00-All.vcf.gz"
       *)
       ~cosmic:Location.(url b37_cosmic_url)
-      ~exome_gtf:Location.(
-          url "http://ftp.ensembl.org/pub/release-75/gtf/\
-               homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"
-          |> gunzip)
-      ~cdna:Location.(
-          url "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/\
-               Homo_sapiens.GRCh37.75.cdna.all.fa.gz"
-          |> gunzip)
+      ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
+      ~cdna:Location.(url b37_cdna_url |> gunzip)
 
   let b37decoy =
     create Name.b37decoy
@@ -113,9 +114,12 @@ module Default = struct
              phase2_reference_assembly_sequence/hs37d5.fa.gz"
           |> gunzip)
       ~dbsnp:Location.(url b37_dbsnp_url |> gunzip)
+      ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cosmic:Location.(url b37_cosmic_url)
+      ~cdna:Location.(url b37_cdna_url |> gunzip)
 
   let b38 =
+    (* Release 79 *)
     let b38_url =
       "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/\
        Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
@@ -123,10 +127,10 @@ module Default = struct
       "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/\
        VCF/00-All.vcf.gz" in
     let gtf_b38_url =
-      "http://ftp.ensembl.org/pub/release-80/gtf/homo_sapiens/\
-       Homo_sapiens.GRCh38.80.gtf.gz" in
+      "http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/\
+       Homo_sapiens.GRCh38.79.gtf.gz" in
     let cdna_b38_url =
-      "http://ftp.ensembl.org/pub/release-80/fasta/homo_sapiens/cdna/\
+      "http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
     create Name.b38
       ~metadata:"Provided by the Biokepi library"
