@@ -30,8 +30,9 @@ module Opam = struct
     else
       Printf.sprintf ("OPAMROOT=%s %s " ^^ fmt) root bin
 
-  let file_command ?(switch=true) ~meta_playground ~package f =
-    let s = com ~switch ~meta_playground "config var %s:lib" package in
+  let file_command ?(switch=true) ~meta_playground ~package lb f =
+    let l = match lb with `Lib -> "lib" | `Bin -> "bin" in
+    let s = com ~switch ~meta_playground "config var %s:%s" package l in
     (* Are there places where this tick logic is flaky? *)
     (Printf.sprintf "$(%s)" s) // f
 
@@ -78,7 +79,7 @@ let install_picard ~host ~meta_playground =
   let name  = "Installing picard" in
   let opam fmt = Opam.com ~meta_playground fmt in
   let make  = daemonize ~host Program.(sh (opam "install picard")) in
-  let jar_path = Opam.file_command ~meta_playground ~package:"picard" "picard.jar" in
+  let jar_path = Opam.file_command ~meta_playground ~package:"picard" `Lib "picard.jar" in
   let jar_set = Command.shell ~host (Printf.sprintf "test -e %s" jar_path) in
   let cond  = object method is_done = Some (`Command_returns (jar_set, 0)) end in
   workflow_node cond ~name ~make ~edges
@@ -87,7 +88,30 @@ let picard_tool ~host ~meta_playground =
   Tool.create Tool.Definition.(biopam "picard")
     ~ensure:(install_picard ~host ~meta_playground)
 
+(* A workflow to ensure that seq2HLA is available. *)
+let install_seq2HLA ~host ~meta_playground =
+  let open KEDSL in
+  let edges =
+    [ depends_on (configured ~host ~meta_playground ())
+    ; depends_on (Conda.configured ~host ~meta_playground)
+    ]
+  in
+  let name  = "Installing seq2HLA" in
+  let opam fmt = Opam.com ~meta_playground fmt in
+  let make  =
+    daemonize ~host (Conda.run_in_biokepi_env ~meta_playground (Program.(sh (opam "install seq2HLA"))))
+  in
+  let seq2HLA = Opam.file_command ~meta_playground ~package:"seq2HLA" `Bin "seq2HLA" in
+  let call_version = Command.shell ~host (seq2HLA ^ " --version") in
+  let cond = object method is_done = Some (`Command_returns (call_version, 0)) end in
+  workflow_node cond ~name ~make ~edges
+
+let seq2HLA_tool ~host ~meta_playground =
+  Tool.create Tool.Definition.(biopam "seq2HLA")
+    ~ensure:(install_seq2HLA ~host ~meta_playground)
+
 let toolkit ~host ~meta_playground () =
-  Tool.Kit.create [
-    picard_tool  ~host ~meta_playground
-  ]
+  Tool.Kit.create
+    [ picard_tool ~host ~meta_playground
+    ; seq2HLA_tool ~host ~meta_playground
+    ]
