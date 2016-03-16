@@ -380,7 +380,7 @@ let get_broad_jar ~host ~install_path loc =
     ~edges:[
       on_failure_activate (rm_path ~host local_box_path)
     ]
-    ~make:(daemonize ~using:`Python_daemon
+    ~make:(daemonize ~using:`Python_daemon ~host
              Program.(
                shf "mkdir -p %s" install_path
                && begin match loc with
