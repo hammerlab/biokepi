@@ -8,8 +8,8 @@ let default_run_program : host:KEDSL.Host.t -> Machine.run_function =
     daemonize ~using:`Python_daemon ~host program
 
 let create
-    ~gatk_jar_location
-    ~mutect_jar_location
+    ?gatk_jar_location
+    ?mutect_jar_location
     ?run_program ?b37 uri =
   let open KEDSL in
   let host = Host.parse (uri // "ketrew_playground") in
@@ -22,7 +22,7 @@ let create
   let toolkit =
     Tool_providers.default_toolkit ()
       ~host ~meta_playground
-      ~gatk_jar_location ~mutect_jar_location in
+      ?gatk_jar_location ?mutect_jar_location in
   Machine.create (sprintf "ssh-box-%s" uri)
     ~ssh_name:(
       Uri.of_string uri |> Uri.host |> Option.value ~default:"No-NAME")

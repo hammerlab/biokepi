@@ -3,13 +3,6 @@ open Run_environment
 
 let rm_path = Workflow_utilities.Remove.path_on_host
 
-let download_url_program ?output_filename url =
-  KEDSL.Program.exec [
-    "wget";
-    "-O"; Option.value output_filename ~default:Filename.(basename url);
-    url
-  ]
-
 let install_bwa_like ~host ?install_command ?witness ~install_path ~url tool_name =
   let open KEDSL in
   let archive = Filename.basename url in
@@ -33,7 +26,7 @@ let install_bwa_like ~host ?install_command ?witness ~install_path ~url tool_nam
         Program.(
           shf "mkdir -p %s" install_path
           && shf "cd %s" install_path
-          && download_url_program url
+          && Workflow_utilities.Download.wget_program url
           && shf "tar xvf%s %s" tar_option archive
           && shf "cd %s*" tool_name
           && sh "make"
@@ -69,7 +62,7 @@ let mosaik_tool ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "tar xvf %s" archive
             && shf "cd MOSAIK*"
             && sh "make"
@@ -108,7 +101,7 @@ let star_tool ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "tar xvf%s %s" tar_option archive
             && shf "cd STAR-*"
             && shf "cp %s ../" star_binary_path
@@ -135,7 +128,7 @@ let hisat_tool ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "unzip %s" archive
             && sh "cd hisat-*"
             && sh "mv hisat* ../"
@@ -162,7 +155,7 @@ let kallisto_tool ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "tar xvzf %s" archive
             && shf "cd kallisto_*"
             && sh "cp -r * ../"
@@ -204,7 +197,7 @@ let samtools ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "tar xvf%s %s" tar_option archive
             && shf "cd samtools-*"
             && sh "make"
@@ -237,7 +230,7 @@ let cufflinks_tools ~host ~meta_playground =
           Program.(
             shf "mkdir -p %s" install_path
             && shf "cd %s" install_path
-            && download_url_program url
+            && Workflow_utilities.Download.wget_program url
             && shf "tar xvf%s %s" tar_option archive
             && shf "cd cufflinks-*"
             && sh "cp * ../"
@@ -292,7 +285,7 @@ let get_somaticsniper_binary ~host ~path = function
              Program.(
                exec ["mkdir"; "-p"; path]
                && exec ["cd"; path]
-               && download_url_program deb_url
+               && Workflow_utilities.Download.wget_program deb_url
                && exec ["ar"; "x"; deb_file]
                && exec ["tar"; "xvfz"; "data.tar.gz"]
              ))
@@ -328,7 +321,7 @@ let varscan_tool ~host ~meta_playground =
                Program.(
                  exec ["mkdir"; "-p"; install_path]
                  && exec ["cd"; install_path]
-                 && download_url_program url))
+                 && Workflow_utilities.Download.wget_program url))
   in
   let init = Program.(shf "export VARSCAN_JAR=%s" jar) in
   Tool.create Tool.Default.varscan ~ensure ~init
@@ -347,7 +340,7 @@ let picard_tool ~host ~meta_playground =
                Program.(
                  exec ["mkdir"; "-p"; install_path]
                  && exec ["cd"; install_path]
-                 && download_url_program url
+                 && Workflow_utilities.Download.wget_program url
                  && exec ["unzip"; Filename.basename url]
                ))
   in
@@ -425,7 +418,7 @@ let strelka_tool ~host ~meta_playground =
                Program.(
                  exec ["mkdir"; "-p"; install_path]
                  && exec ["cd"; install_path]
-                 && download_url_program url
+                 && Workflow_utilities.Download.wget_program url
                  && shf "tar xvfz %s" (Filename.basename url)
                  && sh "cd strelka_workflow-1.0.14/"
                  && shf "./configure --prefix=%s" (install_path // "usr")
@@ -448,7 +441,7 @@ let virmid_tool ~host ~meta_playground =
                Program.(
                  exec ["mkdir"; "-p"; install_path]
                  && exec ["cd"; install_path]
-                 && download_url_program url
+                 && Workflow_utilities.Download.wget_program url
                  && shf "tar xvfz %s" (Filename.basename url)
                ))
   in
@@ -468,7 +461,7 @@ let muse_tool ~host ~meta_playground =
                Program.(
                  exec ["mkdir"; "-p"; install_path]
                  && exec ["cd"; install_path]
-                 && download_url_program url
+                 && Workflow_utilities.Download.wget_program url
                  && shf "chmod +x %s" binary_path
                ))
   in
