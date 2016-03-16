@@ -120,4 +120,3 @@ let run_in_biokepi_env ~meta_playground inside =
   KEDSL.Program.(shf "source %s %s" (activate ~meta_playground) env_name
                 && inside
                 && shf "source %s" (deactivate ~meta_playground))
-

@@ -2,6 +2,8 @@
 Provide tools via Biopam: https://github.com/solvuu/biopam
 *)
 
+(* TODO: add cleanup on_success commands. *)
+
 open Common
 open Run_environment
 
