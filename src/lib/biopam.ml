@@ -30,7 +30,7 @@ module Opam = struct
     else
       Printf.sprintf ("OPAMROOT=%s %s " ^^ fmt) root bin
 
-  let file ?(switch=true) ~meta_playground ~package f =
+  let file_command ?(switch=true) ~meta_playground ~package f =
     let s = com ~switch ~meta_playground "config var %s:lib" package in
     (* Are there places where this tick logic is flaky? *)
     (Printf.sprintf "$(%s)" s) // f
@@ -78,7 +78,7 @@ let install_picard ~host ~meta_playground =
   let name  = "Installing picard" in
   let opam fmt = Opam.com ~meta_playground fmt in
   let make  = daemonize ~host Program.(sh (opam "install picard")) in
-  let jar_path = Opam.file ~meta_playground ~package:"picard" "picard.jar" in
+  let jar_path = Opam.file_command ~meta_playground ~package:"picard" "picard.jar" in
   let jar_set = Command.shell ~host (Printf.sprintf "test -e %s" jar_path) in
   let cond  = object method is_done = Some (`Command_returns (jar_set, 0)) end in
   workflow_node cond ~name ~make ~edges
