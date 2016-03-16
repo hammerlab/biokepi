@@ -32,6 +32,9 @@ type bam_pair = Bam_pair
 type vcf = Vcf
 type gtf = Gtf
 
+(* TODO: There isn't a unified file format for this result. *)
+type hla_types = Hla_types
+
 type bwa_params = {
   gap_open_penalty: int;
   gap_extension_penalty: int;
@@ -84,6 +87,7 @@ type _ t =
   | Bam_pair: bam t * bam t -> bam_pair t
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
+  | Hla_typer: fastq_sample t -> hla_types t
 
 module Construct = struct
 
@@ -392,6 +396,10 @@ let rec to_file_prefix:
       sprintf "%s-%s-%s" prev
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
+        vc.Germline_variant_caller.name
+        vc.Germline_variant_caller.configuration_name
+    | Hla_typer s ->
+      sprintf "HLA_typer-%s" (to_file_prefix ?read s)
     end
 
 
@@ -478,6 +486,8 @@ let rec to_json: type a. a t -> json =
           "Configuration", svc.Variant_caller.configuration_json;
           "Input", to_json bam_pair;
         ]]
+    | Hla_typer input ->
+      call "HLA_typer" [to_json input]
 
 module Compiler = struct
   type 'a pipeline = 'a t

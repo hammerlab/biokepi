@@ -68,6 +68,13 @@ Executable "biokepi-demo"
   BuildDepends: biokepi, threads
   MainIs:     main.ml
 
+Executable "hla-typer"
+  Path:           src/app/
+  BuildTools:     ocamlbuild
+  CompiledObject: best
+  BuildDepends:   biokepi, threads
+  MainIs:         hla_typer.ml
+
 Document biokepi
   Title:                API reference for Biokepi
   Type:                 ocamlbuild (0.4)
