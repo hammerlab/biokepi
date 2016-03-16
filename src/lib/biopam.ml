@@ -33,7 +33,7 @@ module Opam = struct
   let file ?(switch=true) ~meta_playground ~package f =
     let s = com ~switch ~meta_playground "config var %s:lib" package in
     (* Are there places where this tick logic is flaky? *)
-    (Printf.sprintf "`%s`" s) // f
+    (Printf.sprintf "$(%s)" s) // f
 
 end
 
