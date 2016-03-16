@@ -57,7 +57,6 @@ module Tool = struct
     let hisat = custom "hisat" ~version:"0.1.6-beta"
     let mosaik = custom "mosaik" ~version:"2.2.3"
     let kallisto = custom "kallisto" ~version:"0.42.3"
-    let opam = custom "opam" ~version:"1.2.2"
   end
   type t = {
     definition: Definition.t;
