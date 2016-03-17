@@ -17,6 +17,7 @@ Library biokepi
            Reference_genome,
            Run_environment,
            Workflow_utilities,
+           Conda,
            Biopam,
            Samtools,
            Picard,
