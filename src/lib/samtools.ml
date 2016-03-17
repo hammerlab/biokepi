@@ -44,6 +44,27 @@ let faidx ~(run_with:Machine.t) fasta =
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
+let flagstat ~(run_with:Machine.t) bam =
+  let open KEDSL in
+  let samtools = Machine.get_tool run_with Tool.Default.samtools in
+  let src = bam#product#path in
+  let dest = sprintf "%s.%s" src "flagstat" in
+  let program =
+    Program.(
+      Tool.(init samtools) &&
+      shf "samtools flagstat %s > %s" (Filename.quote src) (Filename.quote dest)
+    ) in
+  let name = sprintf "samtools-flagstat-%s" Filename.(basename src) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  workflow_node
+    (single_file dest ~host) ~name ~make
+    ~edges:[
+      depends_on bam;
+      depends_on Tool.(ensure samtools);
+      on_failure_activate (Remove.file ~run_with dest);
+    ]
+
 let bgzip ~run_with input_file output_path =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Tool.Default.samtools in
