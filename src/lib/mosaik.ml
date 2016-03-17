@@ -25,7 +25,7 @@ let index
       depends_on Tool.(ensure mosaik_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
               Tool.(init mosaik_tool)
               && shf "mkdir -p %s" mosaik_tmp_dir
@@ -108,7 +108,7 @@ let align
         depends_on Tool.(ensure mosaik_tool);
       ]
       ~tags:[Target_tags.aligner]
-      ~make:(Machine.run_program run_with ~processors ~name
+      ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
                  Tool.(init mosaik_tool)
                  && in_work_dir

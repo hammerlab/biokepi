@@ -17,6 +17,6 @@
 val create :
   ?gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
-  ?run_program:Run_environment.Machine.run_function ->
+  ?run_program:Run_environment.Make_fun.t ->
   ?b37:Reference_genome.t -> string ->
   Run_environment.Machine.t

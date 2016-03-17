@@ -22,7 +22,7 @@ let run ~reference_build
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in
   let make =
-    Machine.run_program run_with ~name ~processors
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.init cufflinks_tool
         && shf "mkdir -p %s" output_dir

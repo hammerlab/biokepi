@@ -94,10 +94,37 @@ module Tool = struct
   end
 end
 
+module Make_fun = struct
+  module Requirement = struct
+    type t = [
+      | `Processors of int
+      | `Internet_access
+      | `Memory of [ `GB of float | `Decent | `Big ]
+      | `Quick_run
+      | `Spark of string list (* custom parameters *)
+      | `Custom of string
+    ] [@@deriving yojson, show]
+  end
+
+  type t =
+    ?name: string ->
+    ?requirements: Requirement.t list ->
+    Program.t ->
+    KEDSL.Build_process.t
+
+  let streamish requirements = `Processors 1 :: `Memory `Decent :: requirements
+  let quick requirements = `Quick_run :: requirements
+  let downloading requirements = `Internet_access :: streamish requirements 
+
+  let with_requirements : t -> Requirement.t list -> t = fun f l ->
+    fun ?name ?(requirements = []) prog ->
+      f ?name ~requirements:(l @ requirements) prog
+end
+
 module Machine = struct
 
-  type run_function = ?name:string -> ?processors:int -> Program.t ->
-    Ketrew_pure.Target.Build_process.t
+  (* type run_function = ?name:string -> ?processors:int -> Program.t -> *)
+  (*   Ketrew_pure.Target.Build_process.t *)
 
   type t = {
     name: string;
@@ -105,15 +132,14 @@ module Machine = struct
     host: Host.t;
     get_reference_genome: string -> Reference_genome.t;
     toolkit: Tool.Kit.t;
-    quick_command: Program.t -> Ketrew_pure.Target.Build_process.t;
-    run_program: run_function;
+    run_program: Make_fun.t;
     work_dir: string;
   }
   let create
       ~ssh_name ~host ~get_reference_genome ~toolkit
-      ~quick_command ~run_program ~work_dir  name =
+      ~run_program ~work_dir  name =
     {name; ssh_name; toolkit; get_reference_genome; host;
-     quick_command; run_program; work_dir}
+     run_program; work_dir}
 
   let name t = t.name
   let ssh_name t = t.ssh_name
@@ -121,8 +147,23 @@ module Machine = struct
   let get_reference_genome t = t.get_reference_genome
   let get_tool t =
     Tool.Kit.get_exn t.toolkit
-  let quick_command t = t.quick_command
   let run_program t = t.run_program
+
+  let quick_run_program t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.quick [])
+
+  (** Run a program that does not use much memory and runs on one core *)
+  let run_streamish_program t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.streamish [])
+
+  (** Run a program that does not use much memory, runs on one core, and uses the internet *)
+  let run_download_program t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.downloading [])
+
+  let run_big_program t : ?processors: int -> Make_fun.t =
+    fun ?(processors = 1) ->
+      Make_fun.with_requirements t.run_program [`Memory `Big; `Processors processors]
+
   let work_dir t = t.work_dir
 
 end

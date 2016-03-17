@@ -25,7 +25,7 @@ let index
       depends_on reference_transcriptome;
       depends_on Tool.(ensure kallisto_tool);
     ]
-    ~make:(Machine.run_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
               Tool.(init kallisto_tool)
               && shf "kallisto index -i %s %s"
@@ -70,7 +70,7 @@ let run
     | None -> kallisto_quant_base_cmd
   in
   let make =
-    Machine.run_program run_with ~name ~processors
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.init kallisto_tool
         && sh kallisto_quant

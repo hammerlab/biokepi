@@ -25,7 +25,7 @@ let index
       depends_on Tool.(ensure hisat_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
               Tool.(init hisat_tool)
               && shf "mkdir %s" result_dir 
@@ -77,7 +77,7 @@ let align
         depends_on Tool.(ensure hisat_tool);
       ]
       ~tags:[Target_tags.aligner]
-      ~make:(Machine.run_program run_with ~processors ~name
+      ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
                  Tool.(init hisat_tool)
                  && in_work_dir

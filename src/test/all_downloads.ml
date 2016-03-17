@@ -18,7 +18,7 @@ let host =
 let destination_path =
   get_env "DEST_PATH" "Directory path on the host where every download should go"
 
-let run_program ?name ?processors prog =
+let run_program ?name ?requirements prog =
   let open Ketrew.EDSL in
   daemonize ~using:`Python_daemon ~host prog
 

@@ -3,7 +3,7 @@
 type pull_function =
   toolkit:Run_environment.Tool.Kit.t ->
   host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Machine.run_function ->
+  run_program:Run_environment.Make_fun.t ->
   destination_path:string -> Reference_genome.t
 
 val pull_b37 : pull_function

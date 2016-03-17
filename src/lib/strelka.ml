@@ -141,7 +141,7 @@ let run ~reference_build
       ~run_with ~processors ~by:`Coordinate tumor in
   let working_dir = Filename.(dirname result_prefix) in
   let make =
-    Machine.run_program run_with ~name ~processors
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.init strelka_tool && Tool.init gatk_tool
         && shf "mkdir -p %s"  working_dir

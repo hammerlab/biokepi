@@ -50,7 +50,7 @@ let run
     let reference_annotations_option =
       Option.value_map ~default:"" reference_annotations
         ~f:(fun o -> sprintf "-G %s" Filename.(quote o#product#path)) in
-    Machine.run_program run_with ~name ~processors
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.init stringtie_tool
         && shf "mkdir -p %s" output_dir

@@ -27,7 +27,7 @@ let run ~reference_build
   let sorted_tumor =
     Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate tumor in
   let make =
-    Machine.run_program run_with
+    Machine.run_big_program run_with
       ~name ~processors:1 Program.(
           Tool.init sniper
           && shf "mkdir -p %s" run_path
