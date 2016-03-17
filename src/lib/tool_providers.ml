@@ -170,7 +170,7 @@ let stringtie_tool ~host ~meta_playground =
   let install_path = meta_playground // "stringtie" in
   let ensure =
     install_bwa_like ~host "stringtie"
-      ~url:"http://ccb.jhu.edu/software/stringtie/dl/stringtie-1.0.4.tar.gz"
+      ~url:"https://github.com/gpertea/stringtie/archive/v1.2.2.tar.gz"
       ~install_path in
   Tool.create Tool.Default.stringtie ~ensure
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)

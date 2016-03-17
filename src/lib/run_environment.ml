@@ -29,7 +29,7 @@ module Tool = struct
       type t = [
         | `Bwa of [ `V_0_7_10 ]
         (* A tool that is installed by retrieving source or binary.*)
-        | `Custom of string * string      
+        | `Custom of string * string
         (* A tool that is installed via Biopam. *)
         | `Biopamed of string
       ] [@@deriving yojson, show, eq]
@@ -52,7 +52,7 @@ module Tool = struct
     let virmid = custom "virmid" ~version:"1.1.1"
     let muse = custom "muse" ~version:"1.0b"
     let star = custom "star" ~version:"2.4.1d"
-    let stringtie = custom "stringtie" ~version:"1.0.4"
+    let stringtie = custom "stringtie" ~version:"1.2.2"
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
     let hisat = custom "hisat" ~version:"0.1.6-beta"
     let mosaik = custom "mosaik" ~version:"2.2.3"
