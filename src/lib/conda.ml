@@ -47,8 +47,8 @@ let cfg_exists ~host ~meta_playground =
   let open KEDSL in
   let file = meta_playground // config in
   let make = daemonize ~host
-      Program.(shf "echo '%s' >> %s"
-{python|# This file may be used to create an environment using:
+      Program.(shf "echo %s >> %s"
+(Filename.quote {conda|# This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: linux-64
 @EXPLICIT
@@ -92,7 +92,7 @@ https://repo.continuum.io/pkgs/free/linux-64/sqlite-3.9.2-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/tk-8.5.18-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/wheel-0.29.0-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/yaml-0.1.6-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|python}
+https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda})
         file)
   in
   workflow_node (single_file ~host file)
