@@ -62,9 +62,7 @@ module Gunzip = struct
     workflow_node
       (single_file result_path ~host:Machine.(as_host run_with))
       ~name
-      ~make:(Machine.run_program ~name
-               ~requirements:[`Processors 1; `Memory `Decent]
-               run_with  program)
+      ~make:(Machine.run_stream_processor ~name run_with  program)
       ~edges:(
         on_failure_activate Remove.(file ~run_with result_path)
         :: List.map ~f:depends_on bunch_of_dot_gzs)

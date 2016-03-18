@@ -94,15 +94,33 @@ module Tool = struct
   end
 end
 
+(** Jobs in Biokepi ask the computing environment (defined below in
+    {!Machine}) for ressources.
+
+    The implementation of the {!Make_fun.t} function defined by the user
+    is free to interpret those requirements according to the user's
+    computing infrastructure.
+*)
 module Make_fun = struct
   module Requirement = struct
     type t = [
-      | `Processors of int
-      | `Internet_access
-      | `Memory of [ `GB of float | `Decent | `Big ]
-      | `Quick_run
-      | `Spark of string list (* custom parameters *)
-      | `Custom of string
+      | `Processors of int (** A number of cores on a shared-memory setting. *)
+      | `Internet_access (** Able to access public HTTP(S) or FTP URLs. *)
+      | `Memory of [
+          | `GB of float (** Ask for a specific amount of memory. *)
+          | `Small (** Tell that the program does not expect HPC-like memory
+                       usage (i.e. not more than 2 GB or your usual laptop). *)
+          | `Big (** Tell that the program may ask for a lot of memory
+                     but you don't know how much precisely. *)
+        ]
+      | `Quick_run (** Programs that run fast, with little resources.  Usually,
+                       you can interpret this as "OK to run on the login node
+                       of my cluster." *)
+      | `Spark of string list (** Ask for a Spark (on-YARN) environment with
+                                  custom parameters (not in use for now,
+                                  ["#WIP"]). *)
+      | `Custom of string (** Pass arbitrary data (useful for temporary
+                              extensions/experiements outside of Biokepi). *)
     ] [@@deriving yojson, show]
   end
 
@@ -111,9 +129,15 @@ module Make_fun = struct
     ?requirements: Requirement.t list ->
     Program.t ->
     KEDSL.Build_process.t
+  (** The type of the “run function” used accross the library. *)
 
-  let stream_processor requirements = `Processors 1 :: `Memory `Decent :: requirements
+  (** A stream processor, for this purpose, is a program that runs on one core
+      and does not grow in memory arbirarily. *)
+  let stream_processor requirements =
+    `Processors 1 :: `Memory `Small :: requirements
+
   let quick requirements = `Quick_run :: requirements
+
   let downloading requirements =
     `Internet_access :: stream_processor requirements 
 
