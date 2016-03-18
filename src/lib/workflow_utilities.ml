@@ -90,7 +90,7 @@ module Cat = struct
       ~edges:(
         on_failure_activate Remove.(file ~run_with result_path)
         :: List.map ~f:depends_on bunch_of_files)
-      ~make:(Machine.run_streamish_program run_with ~name  program)
+      ~make:(Machine.run_stream_processor run_with ~name  program)
 
   let cat_folder ~host
       ~(run_program : Run_environment.Make_fun.t)
@@ -184,7 +184,7 @@ module Download = struct
         ~name
         ~make:(
           run_program ~name
-            ~requirements:(Make_fun.streamish [])
+            ~requirements:(Make_fun.stream_processor [])
             Program.(shf "gunzip -c %s > %s"
                        (Filename.quote wgot#product#path)
                        (Filename.quote destination)))
@@ -214,7 +214,7 @@ module Download = struct
       ~name
       ~make:(
         run_program ~name
-          ~requirements:(Make_fun.streamish [])
+          ~requirements:(Make_fun.stream_processor [])
           Program.(
             exec ["mkdir"; "-p"; destination_folder]
             && shf "tar -x%s -f %s -C %s"

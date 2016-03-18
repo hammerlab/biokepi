@@ -112,9 +112,10 @@ module Make_fun = struct
     Program.t ->
     KEDSL.Build_process.t
 
-  let streamish requirements = `Processors 1 :: `Memory `Decent :: requirements
+  let stream_processor requirements = `Processors 1 :: `Memory `Decent :: requirements
   let quick requirements = `Quick_run :: requirements
-  let downloading requirements = `Internet_access :: streamish requirements 
+  let downloading requirements =
+    `Internet_access :: stream_processor requirements 
 
   let with_requirements : t -> Requirement.t list -> t = fun f l ->
     fun ?name ?(requirements = []) prog ->
@@ -149,17 +150,19 @@ module Machine = struct
   let quick_run_program t : Make_fun.t =
     Make_fun.with_requirements t.run_program (Make_fun.quick [])
 
-  (** Run a program that does not use much memory and runs on one core *)
-  let run_streamish_program t : Make_fun.t =
-    Make_fun.with_requirements t.run_program (Make_fun.streamish [])
+  (** Run a program that does not use much memory and runs on one core. *)
+  let run_stream_processor t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.stream_processor [])
 
-  (** Run a program that does not use much memory, runs on one core, and uses the internet *)
+  (** Run a program that does not use much memory, runs on one core, and needs
+      the internet. *)
   let run_download_program t : Make_fun.t =
     Make_fun.with_requirements t.run_program (Make_fun.downloading [])
 
   let run_big_program t : ?processors: int -> Make_fun.t =
     fun ?(processors = 1) ->
-      Make_fun.with_requirements t.run_program [`Memory `Big; `Processors processors]
+      Make_fun.with_requirements
+        t.run_program [`Memory `Big; `Processors processors]
 
   let work_dir t = t.work_dir
 
