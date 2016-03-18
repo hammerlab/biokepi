@@ -39,6 +39,7 @@ Library biokepi
            Pipeline,
            Hisat,
            Kallisto,
+           Seq2HLA,
            Common_pipelines,
            Download_reference_genomes,
            Build_machine,

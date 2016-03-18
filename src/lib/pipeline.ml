@@ -87,7 +87,7 @@ type _ t =
   | Bam_pair: bam t * bam t -> bam_pair t
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
-  | Hla_typer: fastq_sample t -> hla_types t
+  | Rna_hla_typer: fastq_sample t -> hla_types t
 
 module Construct = struct
 
@@ -328,8 +328,10 @@ module Construct = struct
        make_target }
       bam_pair
 
-end
+  let rna_hla_typer fastq_sample = Rna_hla_typer fastq_sample
 
+
+end (* Construct *)
 
 let rec to_file_prefix:
   type a.
@@ -398,8 +400,8 @@ let rec to_file_prefix:
         vc.Variant_caller.configuration_name
         vc.Germline_variant_caller.name
         vc.Germline_variant_caller.configuration_name
-    | Hla_typer s ->
-      sprintf "HLA_typer-%s" (to_file_prefix ?read s)
+    | Rna_hla_typer s ->
+      sprintf "RNA_HLA_typer-%s" (to_file_prefix ?read s)
     end
 
 
@@ -486,8 +488,8 @@ let rec to_json: type a. a t -> json =
           "Configuration", svc.Variant_caller.configuration_json;
           "Input", to_json bam_pair;
         ]]
-    | Hla_typer input ->
-      call "HLA_typer" [to_json input]
+    | Rna_hla_typer input ->
+      call "RNA_HLA_typer" [to_json input]
 
 module Compiler = struct
   type 'a pipeline = 'a t
@@ -529,54 +531,55 @@ module Compiler = struct
   let has_option {options; _} f =
     List.exists options ~f
 
-  let rec compile_aligner_step
-      ~compiler (pipeline : bam pipeline) =
+  (* This compiler variable name is confusing, perhaps 'state' is better? *)
+  let fastq_step ~read ~compiler (pipeline: fastq pipeline) =
+    let {work_dir; machine ; _ } = compiler in
+    match pipeline with
+    | Fastq f -> f
+    | Concat_text (l: fastq pipeline list) ->
+      failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
+    | Gunzip_concat (l: fastq_gz pipeline list) ->
+      let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
+      let result_path = work_dir // to_file_prefix ~read pipeline ^ ".fastq" in
+      dbg "Result_Path: %S" result_path;
+      Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
+
+  let rec fastq_sample_step ~compiler (fs : fastq_sample pipeline) =
+    let {processors ; work_dir; machine ; _ } = compiler in
+    match fs with
+    | Bam_to_fastq (how, what) ->
+      let bam = compile_aligner_step ~compiler what in
+      let sample_type =
+        match how with `Single -> `Single_end | `Paired -> `Paired_end in
+      let fastq_pair =
+        let output_prefix = work_dir // to_file_prefix ?read:None what in
+        Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
+          ~output_prefix bam
+      in
+      fastq_pair
+    | Paired_end_sample (dataset, l1, l2) ->
+      let r1 = fastq_step ~read:(`R1 dataset) ~compiler l1 in
+      let r2 = fastq_step ~read:(`R2 dataset) ~compiler l2 in
+      let open KEDSL in
+      workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                        r1#product#path (Some r2#product#path))
+        ~name:(sprintf "pairing %s and %s"
+                  (Filename.basename r1#product#path)
+                  (Filename.basename r2#product#path))
+        ~edges:[ depends_on r1; depends_on r2 ]
+    | Single_end_sample (dataset, single) ->
+      let r1 = fastq_step ~read:(`R1 dataset) ~compiler single in
+      let open KEDSL in
+      workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                        r1#product#path None)
+        ~equivalence:`None
+        ~edges:[ depends_on r1 ]
+        ~name:(sprintf "single-end %s"
+                  (Filename.basename r1#product#path))
+  and compile_aligner_step ~compiler (pipeline : bam pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
-    let gunzip_concat ?read (pipeline: fastq  pipeline) =
-      match pipeline with
-      | Fastq f -> f
-      | Concat_text (l: fastq pipeline list) ->
-        failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
-      | Gunzip_concat (l: fastq_gz pipeline list) ->
-        let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
-        let result_path = work_dir // to_file_prefix ?read pipeline ^ ".fastq" in
-        dbg "Result_Path: %S" result_path;
-        Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
-    in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
-    let compile_fastq_sample (fs : fastq_sample pipeline) =
-      match fs with
-      | Bam_to_fastq (how, what) ->
-        let bam = compile_aligner_step ~compiler what in
-        let sample_type =
-          match how with `Single -> `Single_end | `Paired -> `Paired_end in
-        let fastq_pair =
-          let output_prefix = work_dir // to_file_prefix ?read:None what in
-          Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
-            ~output_prefix bam
-        in
-        fastq_pair
-      | Paired_end_sample (dataset, l1, l2) ->
-        let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
-        let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
-        let open KEDSL in
-        workflow_node (fastq_reads ~host:Machine.(as_host machine)
-                         r1#product#path (Some r2#product#path))
-          ~name:(sprintf "pairing %s and %s"
-                   (Filename.basename r1#product#path)
-                   (Filename.basename r2#product#path))
-          ~edges:[ depends_on r1; depends_on r2 ]
-      | Single_end_sample (dataset, single) ->
-        let r1 = gunzip_concat ~read:(`R1 dataset) single in
-        let open KEDSL in
-        workflow_node (fastq_reads ~host:Machine.(as_host machine)
-                         r1#product#path None)
-          ~equivalence:`None
-          ~edges:[ depends_on r1 ]
-          ~name:(sprintf "single-end %s"
-                   (Filename.basename r1#product#path))
-    in
     let parallelize_alignment ~make_aligner sample =
       match sample with
       | Paired_end_sample (name,
@@ -634,7 +637,7 @@ module Compiler = struct
       begin match catch_parallelize_aligner aligner_tag sample  with
       | `Caught -> parallelize_alignment ~make_aligner sample
       | `Not_caught ->
-        let fastq = compile_fastq_sample sample in
+        let fastq = fastq_sample_step ~compiler sample in
         make_workflow fastq
       end
     in
@@ -787,4 +790,19 @@ module Compiler = struct
     in
     compiler.wrap_gtf_node pipeline gtf_node
 
-end
+  let hla_types_step ~compiler (pipeline : hla_types pipeline) =
+    let { machine ; _ } = compiler in
+    match pipeline with
+    | Rna_hla_typer sample ->
+      match sample with
+      | Paired_end_sample (dataset, l1, l2) ->
+          (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
+             need a unique type for that. *)
+          let r1 = fastq_step ~read:(`R1 dataset) ~compiler l1 in
+          let r2 = fastq_step ~read:(`R2 dataset) ~compiler l2 in
+          Seq2HLA.hla_type ~run_with:machine ~run_name:dataset ~r1 ~r2
+      | _ -> failwithf
+              "Seq2HLA doesn't support single_end_samples or paired end \
+                samples of length greater than 1."
+
+end (* Compiler *)

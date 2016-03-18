@@ -112,29 +112,9 @@ let opam_conda_box () : Ru.Machine.t =
     uri
 
 
-(*let environmental_box () : Biokepi.Run_environment.Machine.t =
-  let box_uri = get_env "BIOKEPI_SSH_BOX_URI" in
-  let jar_location name () =
-    begin match ksprintf get_opt "BIOKEPI_%s_JAR_SCP" name with
-    | Some s -> `Scp s
-    | None ->
-      begin match ksprintf get_opt "BIOKEPI_%s_JAR_WGET" name with
-      | Some s -> `Wget s
-      | None ->
-        failwithf "BIOKEPI_%s_JAR_SCP or BIOKEPI_%s_JAR_WGET \
-                   are required when you wanna run %s" name name name
-      end
-    end  
-  in
-  let mutect_jar_location = jar_location "MUTECT" in
-  let gatk_jar_location = jar_location "GATK" in
-  Biokepi.Build_machine.create
-    ~gatk_jar_location ~mutect_jar_location box_uri
-  *)
-
 let with_environmental_dataset =
   function
-  | `Somatic_from_fastqs  make_pipe_line ->
+  | `Somatic_from_fastqs make_pipe_line ->
     let dataset = get_env "BIOKEPI_DATASET_NAME" in
     let get_list kind =
       get_env (sprintf "BIOKEPI_%s" kind)
