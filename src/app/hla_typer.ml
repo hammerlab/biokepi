@@ -99,7 +99,7 @@ let opam_conda_box () : Ru.Machine.t =
   in
   let host     = KEDSL.Host.parse (uri // "ketrew_playground") in
   let meta_playground = Uri.of_string uri |> Uri.path in
-  let toolkit  = Biopam.toolkit ~host ~meta_playground () in
+  let toolkit  = Biopam.default ~host ~install_path:meta_playground in
   let run ?(name="biokepi-ssh-box") ?(processors=1) program =
     KEDSL.daemonize ~host ~using:`Python_daemon program
   in
@@ -110,7 +110,6 @@ let opam_conda_box () : Ru.Machine.t =
     ~run_program:run
     ~work_dir:(meta_playground // "work")
     uri
-
 
 let with_environmental_dataset =
   function
