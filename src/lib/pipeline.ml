@@ -36,33 +36,24 @@ type bwa_params = {
   gap_open_penalty: int;
   gap_extension_penalty: int;
 }
-module Somatic_variant_caller = struct
-  type t = {
-    name: string;
-    configuration_json: json;
-    configuration_name: string;
-    make_target:
-      reference_build: Reference_genome.name ->
-      run_with:Run_environment.Machine.t ->
-      normal: bam ->
-      tumor: bam ->
-      result_prefix: string ->
-      processors: int ->
-      ?more_edges: KEDSL.workflow_edge list ->
-      unit ->
-      KEDSL.file_workflow
-  }
-end
 
-module Germline_variant_caller = struct
-  type t = {
+type somatic = { normal : bam; tumor : bam }
+type germline = bam
+
+module Variant_caller = struct
+
+  type _ input =
+    | Somatic: somatic -> somatic input
+    | Germline: germline -> germline input
+
+  type 'a t = {
     name: string;
     configuration_json: json;
     configuration_name: string;
     make_target:
       reference_build: Reference_genome.name ->
       run_with:Run_environment.Machine.t ->
-      input_bam: bam ->
+      input: 'a input ->
       result_prefix: string ->
       processors: int ->
       ?more_edges: KEDSL.workflow_edge list ->
@@ -91,8 +82,8 @@ type _ t =
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
   | Gatk_bqsr: (Gatk.Configuration.bqsr * bam t) -> bam t
   | Bam_pair: bam t * bam t -> bam_pair t
-  | Somatic_variant_caller: Somatic_variant_caller.t * bam_pair t -> vcf t
-  | Germline_variant_caller: Germline_variant_caller.t * bam t -> vcf t
+  | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
+  | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
 
 module Construct = struct
 
@@ -179,12 +170,14 @@ module Construct = struct
         "Name", `String configuration_name;
       ] in
     let make_target
-        ~reference_build ~run_with ~input_bam ~result_prefix ~processors
+        ~reference_build ~run_with ~input ~result_prefix ~processors
         ?more_edges () =
-      Gatk.haplotype_caller ?more_edges ~reference_build ~run_with
-        ~input_bam ~result_prefix `Map_reduce in
+      match input with
+      | Variant_caller.Germline input_bam ->
+        Gatk.haplotype_caller ?more_edges ~reference_build ~run_with
+          ~input_bam ~result_prefix `Map_reduce in
     germline_variant_caller
-      {Germline_variant_caller.name = "Gatk-HaplotypeCaller";
+      {Variant_caller.name = "Gatk-HaplotypeCaller";
         configuration_json;
         configuration_name;
         make_target;}
@@ -197,14 +190,17 @@ module Construct = struct
     let configuration_name = configuration.Mutect.Configuration.name in
     let configuration_json = Mutect.Configuration.to_json configuration in
     let make_target
-        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ~reference_build ~run_with ~input ~result_prefix ~processors
         ?more_edges () =
+      match input with | Variant_caller.Somatic {normal; tumor} ->
       Mutect.run
         ~configuration
         ?more_edges
-        ~reference_build ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
+        ~reference_build ~run_with
+        ~normal ~tumor
+        ~result_prefix `Map_reduce in
     somatic_variant_caller
-      {Somatic_variant_caller.name = "Mutect";
+      {Variant_caller.name = "Mutect";
        configuration_json;
        configuration_name;
        make_target;}
@@ -214,16 +210,17 @@ module Construct = struct
     let configuration_name = configuration.Gatk.Configuration.Mutect2.name in
     let configuration_json = Gatk.Configuration.Mutect2.to_json configuration in
     let make_target
-        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ~reference_build ~run_with ~input ~result_prefix ~processors
         ?more_edges () =
-      Gatk.mutect2
+      match input with
+      | Variant_caller.Somatic {normal; tumor} -> Gatk.mutect2
         ~configuration
         ?more_edges
         ~reference_build ~run_with
         ~input_normal_bam:normal ~input_tumor_bam:tumor
         ~result_prefix `Map_reduce in
     somatic_variant_caller
-      {Somatic_variant_caller.name = "Mutect";
+      {Variant_caller.name = "Mutect";
        configuration_json;
        configuration_name;
        make_target;}
@@ -242,13 +239,14 @@ module Construct = struct
         "Theta", `Float theta;
       ] in
     let make_target
-        ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+        ~reference_build ~run_with ~input ~result_prefix ~processors
         ?more_edges () =
+      match input with | Variant_caller.Somatic {normal; tumor} ->
       Somaticsniper.run ~reference_build
         ~run_with ~minus_s:prior_probability ~minus_T:theta
         ~normal ~tumor ~result_prefix () in
     somatic_variant_caller
-      {Somatic_variant_caller.name = "Somaticsniper";
+      {Variant_caller.name = "Somaticsniper";
        configuration_json;
        configuration_name;
        make_target;}
@@ -264,13 +262,14 @@ module Construct = struct
         "Adjust_mapq",
         `String (Option.value_map adjust_mapq ~f:Int.to_string ~default:"None");
       ] in
-    somatic_variant_caller 
-      {Somatic_variant_caller.name = "Varscan-somatic";
+    somatic_variant_caller
+      {Variant_caller.name = "Varscan-somatic";
        configuration_json;
        configuration_name;
        make_target = begin
-         fun ~reference_build ~run_with ~normal ~tumor ~result_prefix ~processors
+         fun ~reference_build ~run_with ~input ~result_prefix ~processors
            ?more_edges () ->
+           match input with | Variant_caller.Somatic {normal; tumor} ->
            Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
              ?more_edges
              ~run_with ~normal ~tumor ~result_prefix ()
@@ -278,29 +277,48 @@ module Construct = struct
       bam_pair
 
   let strelka ~configuration bam_pair =
-    somatic_variant_caller 
-      {Somatic_variant_caller.name = "Strelka";
+    somatic_variant_caller
+      {Variant_caller.name = "Strelka";
        configuration_json = Strelka.Configuration.to_json configuration;
        configuration_name = configuration.Strelka.Configuration.name;
-       make_target = Strelka.run ~configuration;}
+       make_target =
+         fun ~reference_build ~run_with ~input ~result_prefix ~processors
+            ?more_edges () ->
+            match input with | Variant_caller.Somatic {normal; tumor} ->
+            Strelka.run ~reference_build
+              ?more_edges
+              ~configuration ~normal ~tumor
+              ~run_with ~result_prefix ~processors
+              ()
+      }
       bam_pair
 
   let virmid ~configuration bam_pair =
-    somatic_variant_caller 
-      {Somatic_variant_caller.name = "Virmid";
+    somatic_variant_caller
+      {Variant_caller.name = "Virmid";
        configuration_json = Virmid.Configuration.to_json configuration;
        configuration_name = configuration.Virmid.Configuration.name;
-       make_target = Virmid.run ~configuration;}
+       make_target =
+          fun ~reference_build ~run_with ~input ~result_prefix ~processors
+            ?more_edges () ->
+            match input with | Variant_caller.Somatic {normal; tumor} ->
+            Virmid.run ~reference_build
+              ?more_edges
+              ~configuration ~normal ~tumor
+              ~run_with ~result_prefix ~processors
+              ()
+      }
       bam_pair
 
   let muse ~configuration bam_pair =
     let make_target ~reference_build
-        ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ~processors
+        ~(run_with:Machine.t) ~input ~result_prefix ~processors
         ?more_edges () =
+      match input with | Variant_caller.Somatic {normal; tumor} ->
       Muse.run ~reference_build ~configuration ?more_edges
         ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
-    somatic_variant_caller 
-      {Somatic_variant_caller.name = "Muse";
+    somatic_variant_caller
+      {Variant_caller.name = "Muse";
        configuration_json = Muse.Configuration.to_json configuration;
        configuration_name = configuration.Muse.Configuration.name;
        make_target }
@@ -367,13 +385,13 @@ let rec to_file_prefix:
     | Somatic_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
-        vc.Somatic_variant_caller.name
-        vc.Somatic_variant_caller.configuration_name
+        vc.Variant_caller.name
+        vc.Variant_caller.configuration_name
     | Germline_variant_caller (vc, bp) ->
       let prev = to_file_prefix bp in
       sprintf "%s-%s-%s" prev
-        vc.Germline_variant_caller.name
-        vc.Germline_variant_caller.configuration_name
+        vc.Variant_caller.name
+        vc.Variant_caller.configuration_name
     end
 
 
@@ -446,8 +464,8 @@ let rec to_json: type a. a t -> json =
           "Input", input_json;
         ]]
     | Germline_variant_caller (gvc, bam) ->
-      call gvc.Germline_variant_caller.name [`Assoc [
-          "Configuration", gvc.Germline_variant_caller.configuration_json;
+      call gvc.Variant_caller.name [`Assoc [
+          "Configuration", gvc.Variant_caller.configuration_json;
           "Input", to_json bam;
         ]]
     | Picard_mark_duplicates (settings, bam) ->
@@ -456,14 +474,14 @@ let rec to_json: type a. a t -> json =
     | Bam_pair (normal, tumor) ->
       call "Bam-pair" [`Assoc ["normal", to_json normal; "tumor", to_json tumor]]
     | Somatic_variant_caller (svc, bam_pair) ->
-      call svc.Somatic_variant_caller.name [`Assoc [
-          "Configuration", svc.Somatic_variant_caller.configuration_json;
+      call svc.Variant_caller.name [`Assoc [
+          "Configuration", svc.Variant_caller.configuration_json;
           "Input", to_json bam_pair;
         ]]
 
 module Compiler = struct
   type 'a pipeline = 'a t
-  type workflow_option_failure_mode = [ `Silent | `Fail_if_not_happening ] 
+  type workflow_option_failure_mode = [ `Silent | `Fail_if_not_happening ]
   type workflow_option = [
     | `Multi_sample_indel_realignment of workflow_option_failure_mode
     | `Parallel_alignment_over_fastq_fragments of
@@ -677,9 +695,9 @@ module Compiler = struct
     begin function
     | Bam_pair (
         Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
-        , 
+        ,
         Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam))
-      ) 
+      )
       when
         has_option compiler
           (function `Multi_sample_indel_realignment _ -> true | _ -> false)
@@ -695,10 +713,10 @@ module Compiler = struct
       | [realigned_normal; realigned_tumor] ->
         let new_pipeline =
           Bam_pair (
-            Gatk_bqsr (n_bqsr_config, 
+            Gatk_bqsr (n_bqsr_config,
                        Bam_sample (Filename.chop_extension realigned_normal#product#path,
                                    realigned_normal)),
-            Gatk_bqsr (t_bqsr_config, 
+            Gatk_bqsr (t_bqsr_config,
                        Bam_sample (Filename.chop_extension realigned_tumor#product#path,
                                    realigned_tumor)))
         in
@@ -708,7 +726,7 @@ module Compiler = struct
                    of length 2 (tumor, normal): it gave %d bams"
           (List.length other)
       end
-    | Bam_pair ( Gatk_bqsr (_, Gatk_indel_realigner (_, _)), 
+    | Bam_pair ( Gatk_bqsr (_, Gatk_indel_realigner (_, _)),
                  Gatk_bqsr (_, Gatk_indel_realigner (_, _))) as bam_pair
       when
         has_option compiler
@@ -735,14 +753,14 @@ module Compiler = struct
           work_dir
           // to_file_prefix (Somatic_variant_caller (som_vc, new_bam_pair)) in
         dbg "Result_Prefix: %S" result_prefix;
-        som_vc.Somatic_variant_caller.make_target ~reference_build ~processors
-          ~run_with:machine ~normal ~tumor ~result_prefix ()
+        som_vc.Variant_caller.make_target ~reference_build ~processors
+          ~run_with:machine ~input:(Variant_caller.Somatic {normal; tumor}) ~result_prefix ()
       | Germline_variant_caller (gvc, bam) ->
         let result_prefix = work_dir // to_file_prefix pipeline in
         dbg "Result_Prefix: %S" result_prefix;
         let input_bam = compile_aligner_step ~compiler bam in
-        gvc.Germline_variant_caller.make_target ~processors ~reference_build
-          ~run_with:machine ~input_bam ~result_prefix ()
+        gvc.Variant_caller.make_target ~processors ~reference_build
+          ~run_with:machine ~input:(Variant_caller.Germline input_bam) ~result_prefix ()
     in
     compiler.wrap_vcf_node pipeline vcf_node
 
