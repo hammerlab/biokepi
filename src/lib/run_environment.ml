@@ -123,9 +123,6 @@ end
 
 module Machine = struct
 
-  (* type run_function = ?name:string -> ?processors:int -> Program.t -> *)
-  (*   Ketrew_pure.Target.Build_process.t *)
-
   type t = {
     name: string;
     ssh_name: string;
