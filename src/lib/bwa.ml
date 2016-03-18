@@ -28,7 +28,7 @@ let index
       depends_on Tool.(ensure bwa_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_program run_with ~processors:1 ~name
+    ~make:(Machine.run_big_program run_with ~processors:1 ~name
              Program.(
                Tool.(init bwa_tool)
                && shf "bwa index %s"
@@ -92,7 +92,7 @@ let mem_align_to_sam
         :: on_failure_activate (Remove.file ~run_with result)
         :: [])
       ~tags:[Target_tags.aligner]
-      ~make:(Machine.run_program run_with ~processors ~name
+      ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
                  Tool.(init bwa_tool)
                  && in_work_dir
@@ -160,7 +160,7 @@ let align_to_sam
         on_failure_activate (Remove.file ~run_with result);
       ]
       ~tags:[Target_tags.aligner]
-      ~make:(Machine.run_program run_with ~processors ~name
+      ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
                  Tool.(init bwa_tool)
                  && in_work_dir
@@ -210,6 +210,6 @@ let align_to_sam
       (single_file result ~host:Machine.(as_host run_with))
       ~name ~edges
       ~tags:[Target_tags.aligner]
-      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+      ~make:(Machine.run_big_program run_with ~processors:1 ~name  program)
   in
   sam

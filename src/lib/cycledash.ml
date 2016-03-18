@@ -39,7 +39,7 @@ let post_vcf
   let name =
     sprintf "upload+cycledash: %s" (Filename.basename vcf#product#path) in
   let make =
-    Machine.quick_command run_with Program.(
+    Machine.run_download_program run_with Program.(
         shf "curl -f %s > %s"
           (Filename.quote post_to_cycledash_script)
           (Filename.quote unik_script)

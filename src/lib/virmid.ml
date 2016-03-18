@@ -52,7 +52,7 @@ let run ~reference_build
        annoyed by the a space in the header. *)
     work_dir // Filename.basename tumor#product#path ^ ".virmid.som.passed.vcf" in
   let make =
-    Machine.run_program run_with ~name ~processors
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.init virmid_tool
         && shf "mkdir -p %s" work_dir

@@ -2,8 +2,8 @@ open Common
 
 open Run_environment
 
-let default_run_program : host:KEDSL.Host.t -> Machine.run_function =
-  fun ~host ?(name="biokepi-ssh-box") ?(processors=1) program ->
+let default_run_program : host:KEDSL.Host.t -> Make_fun.t =
+  fun ~host ?(name="biokepi-ssh-box") ?(requirements = []) program ->
     let open KEDSL in
     daemonize ~using:`Python_daemon ~host program
 
@@ -36,5 +36,4 @@ let create
     ~host
     ~toolkit
     ~run_program
-    ~quick_command:(fun program -> run_program program)
     ~work_dir:(meta_playground // "work")

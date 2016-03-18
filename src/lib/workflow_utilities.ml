@@ -14,7 +14,8 @@ module Remove = struct
             (sprintf "ls %s" path),
           2
         ))
-      ~make:(Machine.quick_command run_with Program.(exec ["rm"; "-f"; path]))
+      ~make:(Machine.quick_run_program
+               run_with Program.(exec ["rm"; "-f"; path]))
       ~tags:[Target_tags.clean_up]
 
   let directory ~run_with path =
@@ -26,7 +27,8 @@ module Remove = struct
             (sprintf "ls %s" path),
           2
         ))
-      ~make:(Machine.quick_command run_with Program.(exec ["rm"; "-rf"; path]))
+      ~make:(Machine.quick_run_program
+               run_with Program.(exec ["rm"; "-rf"; path]))
       ~tags:[Target_tags.clean_up]
 
   (* This one is dirtier, it does not check its result and uses the `Host.t`
@@ -60,7 +62,7 @@ module Gunzip = struct
     workflow_node
       (single_file result_path ~host:Machine.(as_host run_with))
       ~name
-      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+      ~make:(Machine.run_stream_processor ~name run_with  program)
       ~edges:(
         on_failure_activate Remove.(file ~run_with result_path)
         :: List.map ~f:depends_on bunch_of_dot_gzs)
@@ -86,9 +88,10 @@ module Cat = struct
       ~edges:(
         on_failure_activate Remove.(file ~run_with result_path)
         :: List.map ~f:depends_on bunch_of_files)
-      ~make:(Machine.run_program run_with ~processors:1 ~name  program)
+      ~make:(Machine.run_stream_processor run_with ~name  program)
 
-  let cat_folder ~host ~(run_program : Machine.run_function)
+  let cat_folder ~host
+      ~(run_program : Run_environment.Make_fun.t)
       ?(depends_on=[]) ~files_gzipped ~folder ~destination = 
     let deps = depends_on in
     let open KEDSL in
@@ -100,15 +103,16 @@ module Cat = struct
       workflow_node (single_file destination ~host)
         ~edges ~name
         ~make:(
-          run_program ~name ~processors:1
+          run_program ~name
             Program.(
-              shf "gunzip -c %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
+              shf "gunzip -c %s/* > %s" (Filename.quote folder)
+                (Filename.quote destination)))
     ) else (
       workflow_node
         (single_file destination ~host)
         ~edges ~name
         ~make:(
-          run_program ~name ~processors:1
+          run_program ~name
             Program.(
               shf "cat %s/* > %s" (Filename.quote folder) (Filename.quote destination)))
     )
@@ -124,13 +128,16 @@ module Download = struct
       url
     ]
 
-  let wget_to_folder ~host ~(run_program : Machine.run_function) ~test_file ~destination url  =
+  let wget_to_folder
+      ~host ~(run_program : Run_environment.Make_fun.t)
+      ~test_file ~destination url  =
     let open KEDSL in
     let name = "wget-" ^ Filename.basename destination in
     let test_target = destination // test_file in
     workflow_node (single_file test_target ~host) ~name
       ~make:(
-        run_program ~name ~processors:1
+        run_program ~name
+          ~requirements:(Make_fun.downloading [])
           Program.(
             exec ["mkdir"; "-p"; destination]
             && shf "wget %s -P %s"
@@ -140,13 +147,16 @@ module Download = struct
         on_failure_activate (Remove.path_on_host ~host destination);
       ]
 
-  let wget ~host ~(run_program : Machine.run_function) url destination =
+  let wget
+      ~host ~(run_program : Run_environment.Make_fun.t)
+      url destination =
     let open KEDSL in
     let name = "wget-" ^ Filename.basename destination in
     workflow_node
       (single_file destination ~host) ~name
       ~make:(
-        run_program ~name ~processors:1
+        run_program ~name
+          ~requirements:(Make_fun.downloading [])
           Program.(
             exec ["mkdir"; "-p"; Filename.dirname destination]
             && shf "wget %s -O %s"
@@ -155,7 +165,9 @@ module Download = struct
         on_failure_activate (Remove.path_on_host ~host destination);
       ]
 
-  let wget_gunzip ~host ~(run_program : Machine.run_function) ~destination url =
+  let wget_gunzip
+      ~host ~(run_program : Run_environment.Make_fun.t)
+      ~destination url =
     let open KEDSL in
     let is_gz = Filename.check_suffix url ".gz" in
     if is_gz then (
@@ -169,7 +181,8 @@ module Download = struct
         ]
         ~name
         ~make:(
-          run_program ~name ~processors:1
+          run_program ~name
+            ~requirements:(Make_fun.stream_processor [])
             Program.(shf "gunzip -c %s > %s"
                        (Filename.quote wgot#product#path)
                        (Filename.quote destination)))
@@ -177,7 +190,8 @@ module Download = struct
       wget ~host ~run_program url destination
     )
 
-  let wget_untar ~host ~(run_program : Machine.run_function)
+  let wget_untar
+      ~host ~(run_program : Run_environment.Make_fun.t)
       ~destination_folder ~tar_contains url =
     let open KEDSL in
     let zip_flags =
@@ -197,7 +211,8 @@ module Download = struct
       ]
       ~name
       ~make:(
-        run_program ~name ~processors:1
+        run_program ~name
+          ~requirements:(Make_fun.stream_processor [])
           Program.(
             exec ["mkdir"; "-p"; destination_folder]
             && shf "tar -x%s -f %s -C %s"

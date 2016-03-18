@@ -26,7 +26,7 @@ let index
       depends_on Tool.(ensure star_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
               Tool.(init star_tool)
               && shf "mkdir %s" result_dir 
@@ -91,7 +91,7 @@ let align
             depends_on Tool.(ensure star_tool);
         ]
         ~tags:[Target_tags.aligner]
-        ~make:(Machine.run_program run_with ~processors ~name
+        ~make:(Machine.run_big_program run_with ~processors ~name
              Program.(
                Tool.(init star_tool)
                && in_work_dir

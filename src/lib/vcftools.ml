@@ -11,7 +11,7 @@ open Workflow_utilities
 let vcf_process_n_to_1_no_machine
     ~host
     ~vcftools
-    ~(run_program : Machine.run_function)
+    ~(run_program : Make_fun.t)
     ?(more_edges = [])
     ~vcfs
     ~final_vcf
@@ -47,7 +47,7 @@ let vcf_process_n_to_1_no_machine
 let vcf_concat_no_machine
     ~host
     ~vcftools
-    ~(run_program : Machine.run_function)
+    ~(run_program : Make_fun.t)
     ?more_edges
     vcfs
     ~final_vcf =
@@ -65,9 +65,10 @@ let vcf_concat_no_machine
 let vcf_sort_no_machine
     ~host
     ~vcftools
-    ~(run_program : Machine.run_function)
+    ~(run_program : Make_fun.t)
     ?more_edges
     ~src ~dest () =
+  let run_program = Make_fun.with_requirements run_program [`Memory `Big] in 
   vcf_process_n_to_1_no_machine
     ~host ~vcftools ~run_program ?more_edges ~vcfs:[src] ~final_vcf:dest
     "vcf-sort -c"

@@ -94,10 +94,59 @@ module Tool = struct
   end
 end
 
-module Machine = struct
+(** Jobs in Biokepi ask the computing environment (defined below in
+    {!Machine}) for ressources.
 
-  type run_function = ?name:string -> ?processors:int -> Program.t ->
-    Ketrew_pure.Target.Build_process.t
+    The implementation of the {!Make_fun.t} function defined by the user
+    is free to interpret those requirements according to the user's
+    computing infrastructure.
+*)
+module Make_fun = struct
+  module Requirement = struct
+    type t = [
+      | `Processors of int (** A number of cores on a shared-memory setting. *)
+      | `Internet_access (** Able to access public HTTP(S) or FTP URLs. *)
+      | `Memory of [
+          | `GB of float (** Ask for a specific amount of memory. *)
+          | `Small (** Tell that the program does not expect HPC-like memory
+                       usage (i.e. not more than 2 GB or your usual laptop). *)
+          | `Big (** Tell that the program may ask for a lot of memory
+                     but you don't know how much precisely. *)
+        ]
+      | `Quick_run (** Programs that run fast, with little resources.  Usually,
+                       you can interpret this as "OK to run on the login node
+                       of my cluster." *)
+      | `Spark of string list (** Ask for a Spark (on-YARN) environment with
+                                  custom parameters (not in use for now,
+                                  ["#WIP"]). *)
+      | `Custom of string (** Pass arbitrary data (useful for temporary
+                              extensions/experiements outside of Biokepi). *)
+    ] [@@deriving yojson, show]
+  end
+
+  type t =
+    ?name: string ->
+    ?requirements: Requirement.t list ->
+    Program.t ->
+    KEDSL.Build_process.t
+  (** The type of the “run function” used accross the library. *)
+
+  (** A stream processor, for this purpose, is a program that runs on one core
+      and does not grow in memory arbirarily. *)
+  let stream_processor requirements =
+    `Processors 1 :: `Memory `Small :: requirements
+
+  let quick requirements = `Quick_run :: requirements
+
+  let downloading requirements =
+    `Internet_access :: stream_processor requirements 
+
+  let with_requirements : t -> Requirement.t list -> t = fun f l ->
+    fun ?name ?(requirements = []) prog ->
+      f ?name ~requirements:(l @ requirements) prog
+end
+
+module Machine = struct
 
   type t = {
     name: string;
@@ -105,15 +154,14 @@ module Machine = struct
     host: Host.t;
     get_reference_genome: string -> Reference_genome.t;
     toolkit: Tool.Kit.t;
-    quick_command: Program.t -> Ketrew_pure.Target.Build_process.t;
-    run_program: run_function;
+    run_program: Make_fun.t;
     work_dir: string;
   }
   let create
       ~ssh_name ~host ~get_reference_genome ~toolkit
-      ~quick_command ~run_program ~work_dir  name =
+      ~run_program ~work_dir  name =
     {name; ssh_name; toolkit; get_reference_genome; host;
-     quick_command; run_program; work_dir}
+     run_program; work_dir}
 
   let name t = t.name
   let ssh_name t = t.ssh_name
@@ -121,8 +169,25 @@ module Machine = struct
   let get_reference_genome t = t.get_reference_genome
   let get_tool t =
     Tool.Kit.get_exn t.toolkit
-  let quick_command t = t.quick_command
   let run_program t = t.run_program
+
+  let quick_run_program t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.quick [])
+
+  (** Run a program that does not use much memory and runs on one core. *)
+  let run_stream_processor t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.stream_processor [])
+
+  (** Run a program that does not use much memory, runs on one core, and needs
+      the internet. *)
+  let run_download_program t : Make_fun.t =
+    Make_fun.with_requirements t.run_program (Make_fun.downloading [])
+
+  let run_big_program t : ?processors: int -> Make_fun.t =
+    fun ?(processors = 1) ->
+      Make_fun.with_requirements
+        t.run_program [`Memory `Big; `Processors processors]
+
   let work_dir t = t.work_dir
 
 end
