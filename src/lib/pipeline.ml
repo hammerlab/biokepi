@@ -398,8 +398,6 @@ let rec to_file_prefix:
       sprintf "%s-%s-%s" prev
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
-        vc.Germline_variant_caller.name
-        vc.Germline_variant_caller.configuration_name
     | Rna_hla_typer s ->
       sprintf "RNA_HLA_typer-%s" (to_file_prefix ?read s)
     end
