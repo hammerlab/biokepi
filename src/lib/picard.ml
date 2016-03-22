@@ -136,6 +136,7 @@ let mark_duplicates
     ]
 
 let bam_to_fastq
+    ?sample_name
     ~run_with ~sample_type ~processors ~output_prefix input_bam =
   let open KEDSL in
   let sorted_bam =
@@ -175,5 +176,6 @@ let bam_to_fastq
         on_failure_activate (Remove.file ~run_with r1);
       ]
   in
-  workflow_node (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
+  workflow_node
+    (fastq_reads ?name:sample_name ~host:(Machine.as_host run_with) r1 r2opt)
     ~name ~make ~edges
