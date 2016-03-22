@@ -487,6 +487,7 @@ module Compiler = struct
     | `Parallel_alignment_over_fastq_fragments of
         [ `Bwa_mem | `Bwa | `Mosaik | `Star | `Hisat ] list
         * workflow_option_failure_mode
+    | `Map_reduce of [ `Gatk_indel_realigner ]
   ]
   type t = {
     processors : int;
@@ -631,6 +632,13 @@ module Compiler = struct
     let bam_node =
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
+      | Gatk_indel_realigner (configuration, bam)
+          when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
+        let input_bam = compile_aligner_step ~compiler bam in
+        Gatk.indel_realigner_map_reduce
+          ~result_prefix
+          ~processors ~reference_build ~run_with:machine ~compress:false
+          ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_indel_realigner (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner
