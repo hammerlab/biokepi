@@ -95,7 +95,7 @@ module Tool = struct
 end
 
 (** Jobs in Biokepi ask the computing environment (defined below in
-    {!Machine}) for ressources.
+    {!Machine}) for resources.
 
     The implementation of the {!Make_fun.t} function defined by the user
     is free to interpret those requirements according to the user's
