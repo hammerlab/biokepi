@@ -228,7 +228,7 @@ let indel_realigner :
         end
       in
       let intervals_option = Region.to_gatk_option on_region in
-      Machine.run_program run_with ~name
+      Machine.run_big_program run_with ~name
         Program.(
           Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
