@@ -552,6 +552,7 @@ module Compiler = struct
         let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         ~name:dataset
                          r1#product#path (Some r2#product#path))
           ~name:(sprintf "pairing %s and %s"
                    (Filename.basename r1#product#path)
@@ -561,6 +562,7 @@ module Compiler = struct
         let r1 = gunzip_concat ~read:(`R1 dataset) single in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         ~name:dataset
                          r1#product#path None)
           ~equivalence:`None
           ~edges:[ depends_on r1 ]
