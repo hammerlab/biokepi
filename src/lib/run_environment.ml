@@ -95,7 +95,7 @@ module Tool = struct
 end
 
 (** Jobs in Biokepi ask the computing environment (defined below in
-    {!Machine}) for ressources.
+    {!Machine}) for resources.
 
     The implementation of the {!Make_fun.t} function defined by the user
     is free to interpret those requirements according to the user's
@@ -129,10 +129,10 @@ module Make_fun = struct
     ?requirements: Requirement.t list ->
     Program.t ->
     KEDSL.Build_process.t
-  (** The type of the “run function” used accross the library. *)
+  (** The type of the “run function” used across the library. *)
 
   (** A stream processor, for this purpose, is a program that runs on one core
-      and does not grow in memory arbirarily. *)
+      and does not grow in memory arbitrarily. *)
   let stream_processor requirements =
     `Processors 1 :: `Memory `Small :: requirements
 
