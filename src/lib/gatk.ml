@@ -298,8 +298,9 @@ let indel_realigner_map_reduce :
     begin match input_bam_or_bams with
     | Single_bam bam_node ->
       let all_nodes =
-        let f region =
+        let f on_region =
           indel_realigner ?compress
+            ~on_region
             ~configuration ~reference_build ~processors ~run_with ?run_directory
             input_bam_or_bams
         in
@@ -316,9 +317,10 @@ let indel_realigner_map_reduce :
              [bam1_reg4; bam2_reg4; bam3_reg4];
            ]
         *)
-        let f region =
+        let f on_region =
           let bam_list_node =
             indel_realigner ?compress
+              ~on_region
               ~configuration ~reference_build ~processors ~run_with ?run_directory
               input_bam_or_bams
           in
