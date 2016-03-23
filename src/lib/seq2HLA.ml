@@ -3,7 +3,7 @@ open Common
 open Run_environment
 module K = KEDSL
 
-let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
+let hla_type ?host ~work_dir ~run_with ~r1 ~r2 ~run_name =
   let tool = Machine.get_tool run_with (`Biopamed "seq2HLA") in
   (* Why quote this here? Seems like it easy to create a bug,
      why not enforce this at node construction ?*)
@@ -17,8 +17,10 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
                 && exec ["cd"; work_dir]
                 && shf "seq2HLA -1 %s -2 %s -r %s" r1pt r2pt run_name)
   in
-  K.workflow_node K.nothing
-    ~make
+  let class1 = work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in
+  let class2 = work_dir // (sprintf "%s-ClassII.HLAgenotype4digits" run_name) in
+  let cond = K.list_of_files ?host [class1; class2] in
+  K.workflow_node cond ~make
     ~edges:[ K.depends_on (Tool.ensure tool)
            ; K.depends_on r1
            ; K.depends_on r2

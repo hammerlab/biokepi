@@ -803,7 +803,8 @@ module Compiler = struct
           let r1 = fastq_step ~read:(`R1 dataset) ~compiler l1 in
           let r2 = fastq_step ~read:(`R2 dataset) ~compiler l2 in
           let work_dir = work_dir // ("seq2HLA_wd_" ^ dataset) in
-          Seq2HLA.hla_type ~work_dir ~run_with:machine ~run_name:dataset ~r1 ~r2
+          Seq2HLA.hla_type ~host:Machine.(as_host machine) ~work_dir
+            ~run_with:machine ~run_name:dataset ~r1 ~r2
       | _ -> failwithf
               "Seq2HLA doesn't support single_end_samples or paired end \
                 samples of length greater than 1."
