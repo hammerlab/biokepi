@@ -44,9 +44,9 @@ let read_group_header_option algorithm ~sample_name ~read_group_id =
   *)
   match algorithm with
   |`Mem ->
-    sprintf "-R '@RG\tID:%s\tSM:%s\tLB:ga\tPL:Illumina'" read_group_id sample_name
+    sprintf "-R '@RG\\tID:%s\\tSM:%s\\tLB:ga\\tPL:Illumina'" read_group_id sample_name
   |`Aln ->
-    sprintf "-r '@RG\tID:%s\tSM:%s\tLB:ga\tPL:Illumina'" read_group_id sample_name
+    sprintf "-r '@RG\\tID:%s\\tSM:%s\\tLB:ga\\tPL:Illumina'" read_group_id sample_name
 
 let mem_align_to_sam
     ~reference_build
