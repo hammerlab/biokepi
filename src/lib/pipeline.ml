@@ -793,7 +793,7 @@ module Compiler = struct
     compiler.wrap_gtf_node pipeline gtf_node
 
   let hla_types_step ~compiler (pipeline : hla_types pipeline) =
-    let { machine ; _ } = compiler in
+    let { machine ; work_dir; _ } = compiler in
     match pipeline with
     | Rna_hla_typer sample ->
       match sample with
@@ -802,7 +802,8 @@ module Compiler = struct
              need a unique type for that. *)
           let r1 = fastq_step ~read:(`R1 dataset) ~compiler l1 in
           let r2 = fastq_step ~read:(`R2 dataset) ~compiler l2 in
-          Seq2HLA.hla_type ~run_with:machine ~run_name:dataset ~r1 ~r2
+          let work_dir = work_dir // ("seq2HLA_wd_" ^ dataset) in
+          Seq2HLA.hla_type ~work_dir ~run_with:machine ~run_name:dataset ~r1 ~r2
       | _ -> failwithf
               "Seq2HLA doesn't support single_end_samples or paired end \
                 samples of length greater than 1."
