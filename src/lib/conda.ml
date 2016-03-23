@@ -22,16 +22,16 @@ let com ~meta_playground fmt =
   Printf.sprintf ("%s " ^^ fmt) (bin ~meta_playground)
 
 (* A workflow to ensure that conda is installed. *)
-let installed ~host ~meta_playground =
+let installed ?host ~meta_playground =
   let open KEDSL in
   let url =
     "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
   in
-  let conda_exec  = single_file ~host (bin ~meta_playground) in
+  let conda_exec  = single_file ?host (bin ~meta_playground) in
   let install_dir = dir ~meta_playground in
   workflow_node conda_exec
     ~name:"Install conda"
-    ~make:(daemonize ~host
+    ~make:(daemonize ?host
              Program.(exec ["cd"; meta_playground]
                       && Workflow_utilities.Download.wget_program url
                                             (* -b : batch be silent -p prefix *)
@@ -43,10 +43,10 @@ let env_name = "biokepi"
 
 (* Ensure that a file exists describing the default linux conda enviroment.
    TODO: figure out a better solution to distribute this configuration.  *)
-let cfg_exists ~host ~meta_playground =
+let cfg_exists ?host ~meta_playground =
   let open KEDSL in
   let file = meta_playground // config in
-  let make = daemonize ~host
+  let make = daemonize ?host
       Program.(shf "echo %s >> %s"
 (Filename.quote {conda|# This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
@@ -95,23 +95,23 @@ https://repo.continuum.io/pkgs/free/linux-64/yaml-0.1.6-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda})
         file)
   in
-  workflow_node (single_file ~host file)
+  workflow_node (single_file ?host file)
     ~name:("Make sure we have a biokepi conda config file: " ^ config)
     ~make
 
-let configured ~host ~meta_playground =
+let configured ?host ~meta_playground =
   let open KEDSL in
   let conf =
     com ~meta_playground "create --name %s --file %s/%s" env_name
       meta_playground config
   in
-  let make = daemonize ~host (Program.sh conf) in
+  let make = daemonize ?host (Program.sh conf) in
   let edges =
-    [ depends_on (installed ~host ~meta_playground)
-    ; depends_on (cfg_exists ~host ~meta_playground)
+    [ depends_on (installed ?host ~meta_playground)
+    ; depends_on (cfg_exists ?host ~meta_playground)
     ] in
   let biokepi_env =
-    Command.shell ~host (com ~meta_playground "env list | grep %s" env_name) in
+    Command.shell ?host (com ~meta_playground "env list | grep %s" env_name) in
   let product =
     object method is_done = Some (`Command_returns (biokepi_env, 0)) end in
   workflow_node product ~make ~name:"Conda is configured." ~edges

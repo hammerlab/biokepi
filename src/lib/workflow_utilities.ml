@@ -34,11 +34,11 @@ module Remove = struct
   (* This one is dirtier, it does not check its result and uses the `Host.t`
      directly, it should be used only when the `Machine.t` is not available
      (i.e. while defining a `Machine.t`). *)
-  let path_on_host ~host path =
+  let path_on_host ?host path =
     let open KEDSL in
     workflow_node nothing
       ~name:(sprintf "rm-%s" (Filename.basename path))
-      ~make:(daemonize ~using:`Python_daemon ~host
+      ~make:(daemonize ~using:`Python_daemon ?host
                Program.(exec ["rm"; "-rf"; path]))
 end
 

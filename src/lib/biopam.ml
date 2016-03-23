@@ -18,11 +18,11 @@ type install_target =
   ; witness : string      (* file that must exist after install, ex:
                               - bowtie exec
                               - picard.jar *)
-  ; test    : (host:K.Host.t -> string -> K.Command.t) option
+  ; test    : (?host:K.Host.t -> string -> K.Command.t) option
   ; edges   : K.workflow_edge list
   }
 
-let default_test ~host path = K.Command.shell ~host (sprintf "test -e %s" path)
+let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
 
 let default_opam_url = "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
 
@@ -38,23 +38,23 @@ module Opam = struct
      Instead of just making sure that this file exists? Wouldn't it be better
      to make sure that a command from this program gives the right output?
      ie. $ opam --version = 1.2.2 *)
-  let target ~host ~install_path =
-    K.single_file ~host (bin ~install_path)
+  let target ?host ~install_path =
+    K.single_file ?host (bin ~install_path)
 
   (* A workflow to ensure that opam is installed. *)
-  let installed ~host ~install_path =
+  let installed ?host ~install_path =
     let url = default_opam_url in
-    let opam_exec   = target ~host ~install_path in
+    let opam_exec   = target ?host ~install_path in
     let install_dir = dir ~install_path in
     K.workflow_node opam_exec
       ~name:"Install opam"
-      ~make:(K.daemonize ~host
+      ~make:(K.daemonize ?host
         K.Program.(
           exec ["mkdir"; "-p"; install_dir]
           && exec ["cd"; install_dir]
           && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
           && shf "chmod +x %s" opam_exec#path))
-      ~edges:[K.on_failure_activate (Workflow_utilities.Remove.path_on_host ~host install_dir)]
+      ~edges:[K.on_failure_activate (Workflow_utilities.Remove.path_on_host ?host install_dir)]
 
   let kcom ?(switch=true) ~install_path k fmt =
     let bin = bin ~install_path in
@@ -71,8 +71,8 @@ module Opam = struct
   let program_sh ?switch ~install_path fmt =
     kcom ?switch ~install_path K.Program.sh fmt
 
-  let command_shell ?switch ~install_path ~host fmt =
-    kcom ?switch ~install_path (K.Command.shell ~host) fmt
+  let command_shell ?switch ?host ~install_path fmt =
+    kcom ?switch ~install_path (K.Command.shell ?host) fmt
 
   let tool_type_to_variable = function
     | Library     -> "lib"
@@ -89,31 +89,31 @@ end
 let default_biopam_url = "https://github.com/solvuu/biopam.git"
 
 (* A workflow to ensure that biopam is configured. *)
-let configured ?(biopam_home=default_biopam_url) ~host ~install_path () =
+let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
   let name  = sprintf "Configure biopam to %s" biopam_home in
   let make  =
-    K.daemonize ~host
+    K.daemonize ?host
       (Opam.program_sh ~install_path ~switch:false
           "init -n --compiler=0.0.0 biopam %s" biopam_home)
   in
-  let edges = [ K.depends_on (Opam.installed ~host ~install_path)] in
+  let edges = [ K.depends_on (Opam.installed ?host ~install_path)] in
   let biopam_is_repo =
-    Opam.command_shell ~install_path ~host "repo list | grep biopam"
+    Opam.command_shell ~install_path ?host "repo list | grep biopam"
   in
   let cond  =
     object method is_done = Some (`Command_returns (biopam_is_repo, 0)) end
   in
   K.workflow_node cond ~name ~make ~edges
 
-let install_tool ~host ~install_path ({package; test; edges; _ } as it) =
-  let edges = K.depends_on (configured ~host ~install_path ()) :: edges in
+let install_tool ?host ~install_path ({package; test; edges; _ } as it) =
+  let edges = K.depends_on (configured ?host ~install_path ()) :: edges in
   let name = "Installing " ^ package in
   let make =
-    K.daemonize ~host
+    K.daemonize ?host
       (Opam.program_sh ~install_path "install %s" package)
   in
   let path = Opam.which ~install_path it in
-  let test = (Option.value test ~default:default_test) ~host path in
+  let test = (Option.value test ~default:default_test) ?host path in
   let cond =
     object
       method is_done = Some (`Command_returns (test, 0))
@@ -122,8 +122,8 @@ let install_tool ~host ~install_path ({package; test; edges; _ } as it) =
   in
   K.workflow_node cond ~name ~make ~edges
 
-let provide ~host ~install_path ?(export_var="PATH") it =
-  let install_workflow = install_tool ~host ~install_path it in
+let provide ?host ?(export_var="PATH") ~install_path it =
+  let install_workflow = install_tool ?host ~install_path it in
   Tool.create Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
@@ -131,14 +131,14 @@ let provide ~host ~install_path ?(export_var="PATH") it =
              export_var install_workflow#product#path
              export_var export_var)
 
-let default ~host ~install_path =
+let default ?host ~install_path () =
   let mk ~package ~witness ?test ?(edges=[]) ?export_var tt =
-    provide ~host ~install_path
+    provide ?host ~install_path
       { tool_type = tt ; package ; witness ; test ; edges }
   in
-  let version ~host path = K.Command.shell ~host (sprintf "%s --version" path) in
+  let version ?host path = K.Command.shell ?host (sprintf "%s --version" path) in
   let need_conda =
-    [ K.depends_on (Conda.configured ~host ~meta_playground:install_path)]
+    [ K.depends_on (Conda.configured ?host ~meta_playground:install_path)]
   in
   Tool.Kit.create
     [ mk Library     ~package:"picard"  ~witness:"picard.jar" ~export_var:"PICARD_JAR"
