@@ -9,17 +9,18 @@ module K = KEDSL
 (* What are we installing via opam. This determines where we look for the
    witness; in [opam_install_path]/package or [opam_install_path]/bin. *)
 type tool_type =
-  | Library
+  | Library of string
   | Application
 
 type install_target =
   { tool_type : tool_type
-  ; package : string      (* What do we call 'install opam ' with *)
-  ; witness : string      (* file that must exist after install, ex:
-                              - bowtie exec
-                              - picard.jar *)
-  ; test    : (?host:K.Host.t -> string -> K.Command.t) option
-  ; edges   : K.workflow_edge list
+  ; package      : string      (* What do we call 'install opam ' with *)
+  ; witness      : string      (* file that must exist after install, ex:
+                                  - bowtie exec
+                                  - picard.jar *)
+  ; test         : (?host:K.Host.t -> string -> K.Command.t) option
+  ; edges        : K.workflow_edge list
+  ; install_wrap : (K.Program.t -> K.Program.t) option
   }
 
 let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
@@ -75,7 +76,7 @@ module Opam = struct
     kcom ?switch ~install_path (K.Command.shell ?host) fmt
 
   let tool_type_to_variable = function
-    | Library     -> "lib"
+    | Library _   -> "lib"
     | Application -> "bin"
 
   (* Answer Opam 'which' questions *)
@@ -122,26 +123,32 @@ let install_tool ?host ~install_path ({package; test; edges; _ } as it) =
   in
   K.workflow_node cond ~name ~make ~edges
 
-let provide ?host ?(export_var="PATH") ~install_path it =
+let provide ?host ~install_path it =
   let install_workflow = install_tool ?host ~install_path it in
+  let export_var, path =
+    match it.tool_type with
+    | Application -> "PATH", (Filename.dirname install_workflow#product#path)
+    | Library v   -> v, install_workflow#product#path
+  in
   Tool.create Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
     ~init:(K.Program.shf "export %s=\"%s${%s:+:}${%s}\""
-             export_var install_workflow#product#path
-             export_var export_var)
+              export_var path export_var export_var)
 
 let default ?host ~install_path () =
-  let mk ~package ~witness ?test ?(edges=[]) ?export_var tt =
+  let mk ~package ~witness ?test ?(edges=[]) ?export_var ?install_wrap tt =
     provide ?host ~install_path
-      { tool_type = tt ; package ; witness ; test ; edges }
+      { tool_type = tt ; package ; witness ; test ; edges ; install_wrap }
   in
   let version ?host path = K.Command.shell ?host (sprintf "%s --version" path) in
   let need_conda =
     [ K.depends_on (Conda.configured ?host ~meta_playground:install_path)]
   in
   Tool.Kit.create
-    [ mk Library     ~package:"picard"  ~witness:"picard.jar" ~export_var:"PICARD_JAR"
-    ; mk Application ~package:"bowtie"  ~witness:"bowtie"     ~test:version
-    ; mk Application ~package:"seq2HLA" ~witness:"seq2HLA"    ~test:version ~edges:need_conda (* opam handles bowtie dep. *)
+    [ mk (Library "PICARD_JAR") ~package:"picard"  ~witness:"picard.jar"
+    ; mk Application            ~package:"bowtie"  ~witness:"bowtie"     ~test:version
+    ; mk Application            ~package:"seq2HLA" ~witness:"seq2HLA"    ~test:version
+          ~edges:need_conda (* opam handles bowtie dep. *)
+          ~install_wrap:(Conda.run_in_biokepi_env ~meta_playground:install_path)
     ]
