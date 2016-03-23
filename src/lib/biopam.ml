@@ -106,12 +106,14 @@ let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
   in
   K.workflow_node cond ~name ~make ~edges
 
-let install_tool ?host ~install_path ({package; test; edges; _ } as it) =
+let install_tool ?host ~install_path
+    ({package; test; edges; install_wrap; _ } as it) =
   let edges = K.depends_on (configured ?host ~install_path ()) :: edges in
   let name = "Installing " ^ package in
   let make =
-    K.daemonize ?host
-      (Opam.program_sh ~install_path "install %s" package)
+    Opam.program_sh ~install_path "install %s" package
+    |> Option.value install_wrap ~default:(fun x -> x)
+    |> K.daemonize ?host
   in
   let path = Opam.which ~install_path it in
   let test = (Option.value test ~default:default_test) ?host path in
