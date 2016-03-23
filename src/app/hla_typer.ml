@@ -3,249 +3,102 @@ open Biokepi
 open Common
 module Ru = Run_environment
 
-let say fmt = ksprintf (printf "%s\n%!") fmt
+let construct_pipeline dataset ~r1fn ~r2fn =
+  let wf1 = KEDSL.(workflow_node (single_file r1fn) ~name:"Read1") in
+  let wf2 = KEDSL.(workflow_node (single_file r2fn) ~name:"Read2") in
+  let open Pipeline.Construct in
+  input_fastq ~dataset (`Paired_end ([wf1], [wf2]))
+  |> rna_hla_typer
 
-let get_env s =
-  try Sys.getenv s with _ -> failwithf "Missing environment variable: %s" s
-let get_opt s =
-  try Some (Sys.getenv s) with _ -> None
+let pipeline_to_json ppln =
+  Pipeline.to_json ppln
+  |> Yojson.Basic.pretty_to_string ~std:true
 
-let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi.Pipeline.Construct in
-  let normal = input_fastq ~dataset normal_fastqs in
-  let tumor = input_fastq ~dataset tumor_fastqs in
-  let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
-    let normal =
-      bwa ?gap_open_penalty ?gap_extension_penalty normal
-      |> gatk_indel_realigner
-      |> picard_mark_duplicates
-      |> gatk_bqsr
-    in
-    let tumor =
-      bwa ?gap_open_penalty ?gap_extension_penalty tumor
-      |> gatk_indel_realigner
-      |> picard_mark_duplicates
-      |> gatk_bqsr
-    in
-    pair ~normal ~tumor in
-  let bam_pairs = [
-    bam_pair ();
-    bam_pair ~gap_open_penalty:10 ~gap_extension_penalty:7 ();
-  ] in
-  let vcfs =
-    List.concat_map bam_pairs ~f:(fun bam_pair ->
-        [
-          mutect bam_pair;
-          somaticsniper bam_pair;
-          somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
-          varscan_somatic bam_pair;
-        ])
+let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
+  let open Pipeline.Compiler in
+  let machine =
+    let toolkit = Biopam.default ~install_path:(work_dir // "biopam") () in
+    Build_machine.create ~toolkit uri
   in
-  vcfs
-
-let simple_somatic_example ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi.Pipeline.Construct in
-  let normal = input_fastq ~dataset normal_fastqs in
-  let tumor = input_fastq ~dataset tumor_fastqs in
-  let make_bam data =
-    data |> bwa |> gatk_indel_realigner |> picard_mark_duplicates |> gatk_bqsr
+  let compiler =
+    create ~processors:1
+      ~reference_build:"should not need this" (*Reference_genome.Specification.Default.Name.b37*)
+      ~work_dir:(work_dir // "compiler")
+      ~machine ()
   in
-  let vc_input =
-    pair ~normal:(make_bam normal) ~tumor:(make_bam tumor) in
-  [variant_caller vc_input]
+  hla_types_step ~compiler ppln
 
-type somatic_from_fastqs =
-  normal_fastqs:Biokepi.Pipeline.Construct.input_fastq ->
-  tumor_fastqs:Biokepi.Pipeline.Construct.input_fastq ->
-  dataset:string -> Biokepi.Pipeline.vcf Biokepi.Pipeline.t list
+(* Argument extras *)
+let () = Random.self_init ()
 
-type example_pipeline = [
-  | `Somatic_from_fastqs of somatic_from_fastqs
-]
+let generate_dataset_name () = sprintf "HLA_ds%d" (Random.int 1000)
 
-let global_named_examples: (string * example_pipeline) list = [
-  "somatic-crazy"               , `Somatic_from_fastqs crazy_somatic_example;
-  "somatic-simple-somaticsniper", `Somatic_from_fastqs (simple_somatic_example ~variant_caller:Biokepi.Pipeline.Construct.somaticsniper);
-  "somatic-simple-varscan"      , `Somatic_from_fastqs (simple_somatic_example ~variant_caller:Biokepi.Pipeline.Construct.varscan_somatic);
-  "somatic-simple-mutect"       , `Somatic_from_fastqs (simple_somatic_example ~variant_caller:Biokepi.Pipeline.Construct.mutect);
-]
+let dataset_env_name = "HLA_DATASET"
 
-
-let dump_pipeline ?(format = `Json) =
-  function
-  | `Somatic_from_fastqs pipeline_example ->
-    let dumb_fastq name =
-      KEDSL.(
-        workflow_node
-          (single_file (sprintf "/path/to/dump-%s.fastq.gz" name))
-          ~name) in
-    let normal_fastqs =
-      `Paired_end ([dumb_fastq "R1-L001"; dumb_fastq "R1-L002"],
-                   [dumb_fastq "R2-L001"; dumb_fastq "R2-L002"]) in
-    let tumor_fastqs =
-      `Single_end [dumb_fastq "R1-L001"; dumb_fastq "R1-L002"] in
-    let vcfs = pipeline_example  ~normal_fastqs ~tumor_fastqs ~dataset:"DUMB" in
-    begin match format with
-    | `Json  -> 
-      say "Pipeline JSON (with DUMB dataset):\n%s"
-        (`List (List.map ~f:Biokepi.Pipeline.to_json vcfs)
-         |> Yojson.Basic.pretty_to_string ~std:true)
-    end
-
-let opam_conda_box () : Ru.Machine.t =
-  let uri      = get_env "BIOKEPI_SSH_BOX_URI" in
-  let ssh_name =
-    Uri.of_string uri |> Uri.host |> Option.value ~default:"No-NAME"
-  in
-  let host     = KEDSL.Host.parse (uri // "ketrew_playground") in
-  let meta_playground = Uri.of_string uri |> Uri.path in
-  let toolkit  = Biopam.default ~host ~install_path:meta_playground in
-  let run ?(name="biokepi-ssh-box") ?(requirements=[]) program =
-    KEDSL.daemonize ~host ~using:`Python_daemon program
-  in
-  Ru.Machine.create ~ssh_name ~host
-    ~get_reference_genome:(fun _ -> failwith "Not needed")
-    ~toolkit
-    ~run_program:run
-    ~work_dir:(meta_playground // "work")
-    uri
-
-let with_environmental_dataset =
-  function
-  | `Somatic_from_fastqs make_pipe_line ->
-    let dataset = get_env "BIOKEPI_DATASET_NAME" in
-    let get_list kind =
-      get_env (sprintf "BIOKEPI_%s" kind)
-      |> String.split ~on:(`Character ',')
-      |> List.map ~f:(String.strip ~on:`Both)
-      |> List.map ~f:(fun f ->
-          let name = sprintf "Input: %s (%s)" dataset kind in
-          KEDSL.(workflow_node (single_file f) ~name))
-    in
-    let normal_fastqs =
-      `Paired_end (get_list "NORMAL_R1", get_list "NORMAL_R2") in
-    let tumor_fastqs =
-      `Paired_end (get_list "TUMOR_R1", get_list "TUMOR_R2") in
-    (dataset, make_pipe_line ~normal_fastqs ~tumor_fastqs ~dataset)
-
-let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
-  let machine = opam_conda_box () in
-  let dataset, pipelines =
-    with_environmental_dataset pipeline_example in
-  let work_dir =
-    Biokepi.Run_environment.Machine.work_dir machine
-    // sprintf "on-%s" dataset in
-  let compiler = 
-    Biokepi.Pipeline.Compiler.create
-      ~reference_build:"b37"
-      ~work_dir ~machine ~processors:2 () in
-  let compiled =
-    List.map pipelines
-      ~f:(fun pl ->
-          let t =
-            Biokepi.Pipeline.Compiler.compile_variant_caller_step ~compiler pl
-          in
-          `Target t,
-          `Json_blob (
-            `Assoc [
-              (* Using a bit of the “internal” representation of
-                 workflow-nodes here: *)
-              "target-name", `String t#render#name;
-              "target-id", `String t#render#id;
-              "pipeline", Biokepi.Pipeline.to_json pl;
-            ]))
-  in
-  let open KEDSL in
-  let edges =
-    List.map compiled (function
-      | (`Target vcf, `Json_blob json) when push_result ->
-        let witness_output =
-          Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
-        let params = Yojson.Basic.pretty_to_string json in
-        Biokepi.Cycledash.post_vcf ~run_with:machine
-          ~vcf ~variant_caller_name:vcf#render#name ~dataset_name:dataset
-          ~witness_output ~params
-          (get_env "BIOKEPI_CYCLEDASH_URL")
-        |> depends_on
-      | (`Target t, _) ->  t |> depends_on
-      ) in
-  let whole_json =
-    `List (List.map compiled ~f:(fun (_, `Json_blob j) -> j)) in (*  *)
-  workflow_node nothing
-    ~name:(sprintf "%s on %s: common ancestor" pipeline_name dataset)
-    ~edges
-    ~metadata:(`String (Yojson.Basic.pretty_to_string whole_json))
-
-let run_pipeline_example ~push_result ~pipeline_name pipeline =
-  let workflow = pipeline_example_target ~push_result ~pipeline_name pipeline in
-  KEDSL.submit workflow
-
+(* Main *)
 let () =
   let open Cmdliner in
   let version = "0.0.0" in
+  (* Args *)
+  let dataset_flag =
+    Arg.(value
+          & opt string (generate_dataset_name ())
+          & info
+              ~doc:("Name of the dataset (used for identification).\
+                     A randomly numbered name prefixed by 'HLA_ds' is chosen if unspecified.")
+              ~env:(env_var dataset_env_name) ["D"; "dataset"])
+  in
+  let r1_fn =
+    Arg.(required
+          & opt (some non_dir_file) None
+          & info ~doc:"Filename of the first read pair."
+              ~env:(env_var "HLA_R1") ["r1"])
+  in
+  let r2_fn =
+    Arg.(required
+          & opt (some non_dir_file) None
+          & info ~doc:"Filename of the second read pair."
+              ~env:(env_var "HLA_R2") ["r2"])
+  in
+  let work_dir =
+    Arg.(required
+          & opt (some dir) None
+          & info ~doc:"Work directory, where tools are installed."
+              ~env:(env_var "HLA_WD") ["work_dir"]) in
+  (* Commands. *)
   let sub_command ~info ~term =
     (term,
-     Term.info (fst info) ~version ~sdocs:"COMMON OPTIONS" ~doc:(snd info)) in
-  let name_flag =
-    Arg.(required & opt (some string) None & info ["N"; "name"]
-           ~doc:"Choose the pipeline by name") in
-  let push_to_cycledash_flag =
-    Arg.(value & flag & info ["P"; "push-result"]
-           ~doc:"Push the result to a running Cycledash instance.") in
-  let dump_pipeline =
-    sub_command
-      ~info:("dump-pipeline", "Dump the JSON blob of a pipeline")
-      ~term:Term.(
-          pure (fun name ->
-              match
-                List.find global_named_examples ~f:(fun (n, _) -> n = name)
-              with
-              | Some (_, pipe) -> dump_pipeline pipe
-              | None -> failwithf "unknown pipeline: %S" name)
-          $ name_flag
-        )
+     Term.info (fst info) ~version ~sdocs:"COMMON OPTIONS" ~doc:(snd info))
   in
-  let run_pipeline =
-    sub_command
-      ~info:("run-pipeline",
-             "Run a pipeline the SSH-BOX defined by the environment")
-      ~term:Term.(
-          pure (fun name push_result ->
-              match
-                List.find global_named_examples ~f:(fun (n, _) -> n = name)
-              with
-              | Some (_, pipe) ->
-                run_pipeline_example ~push_result ~pipeline_name:name pipe
-              | None -> failwithf "unknown pipeline: %S" name)
-          $ name_flag
-          $ push_to_cycledash_flag
-        )
+  let print = sub_command
+    ~info:("print", "Print the pipeline as JSON.")
+    ~term:(Term.(const (fun dataset r1fn r2fn ->
+                          construct_pipeline dataset ~r1fn ~r2fn
+                          |> pipeline_to_json
+                          |> printf "%s\n")
+                  $ dataset_flag $ r1_fn $ r2_fn))
   in
-  let list_pipelines =
-    sub_command
-      ~info:("list-named-pipelines", "Display a list available pipelines")
-      ~term:Term.(
-          pure (fun () ->
-              List.iter global_named_examples ~f:(fun (n, _) ->
-                  say "* %s" n)
-            )
-          $ pure ()
-        ) in
+  let exec = sub_command
+    ~info:("exec", "Execute the pipeline.")
+    ~term:(Term.(const (fun dataset r1fn r2fn work_dir ->
+                          construct_pipeline dataset ~r1fn ~r2fn
+                          |> pipeline_to_workflow ~work_dir
+                          |> KEDSL.submit)
+                  $ dataset_flag $ r1_fn $ r2_fn $ work_dir))
+  in
   let default_cmd =
-    let doc = "Bio-related Ketrew Workflows – Example Application" in
+    let doc = "HLA Typing Pipeline example" in
     let man = [
       `S "AUTHORS";
-      `P "Sebastien Mondet <seb@mondet.org>"; `Noblank;
+      `P "Leonid Rozenberg <leonidr@gmail.com>"; `Noblank;
       `S "BUGS";
       `P "Browse and report new issues at"; `Noblank;
       `P "<https://github.com/hammerlab/biokepi>.";
     ] in
-    Term.(
-      ret (pure (`Help (`Plain, None))),
-      info "biokepi" ~version ~doc ~man)
+    Term.( ret (const (`Help (`Plain, None)))
+         , info "hla_typer" ~version ~doc ~man)
   in
-  let cmds = [dump_pipeline; run_pipeline; list_pipelines] in
-  match Term.eval_choice default_cmd cmds with
+  match Term.eval_choice default_cmd [print; exec] with
   | `Ok () -> ()
   | `Error _ -> failwithf "cmdliner error"
   | `Version | `Help -> exit 0
