@@ -32,7 +32,8 @@ let installed ?host ~meta_playground =
   workflow_node conda_exec
     ~name:"Install conda"
     ~make:(daemonize ?host
-             Program.(exec ["cd"; meta_playground]
+             Program.(exec ["mkdir"; "-p"; meta_playground]
+                      && exec ["cd"; meta_playground]
                       && Workflow_utilities.Download.wget_program url
                                             (* -b : batch be silent -p prefix *)
                       && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s"
