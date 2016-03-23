@@ -34,7 +34,7 @@ let index
                && shf "bwa index %s"
                  (Filename.quote reference_fasta#product#path)))
 
-let read_group_header_option algorithm sample_name =
+let read_group_header_option algorithm ~sample_name ~read_group_id =
   (* this option should magically make the sam file compatible
            mutect and other GATK-like pieces of software
            http://seqanswers.com/forums/showthread.php?t=17233
@@ -44,9 +44,9 @@ let read_group_header_option algorithm sample_name =
   *)
   match algorithm with
   |`Mem ->
-    sprintf "-R '@RG\tID:bwa\tSM:%s\tLB:ga\tPL:Illumina'" sample_name
+    sprintf "-R '@RG\tID:%s\tSM:%s\tLB:ga\tPL:Illumina'" read_group_id sample_name
   |`Aln ->
-    sprintf "-r '@RG\tID:bwa\tSM:%s\tLB:ga\tPL:Illumina'" sample_name
+    sprintf "-r '@RG\tID:%s\tSM:%s\tLB:ga\tPL:Illumina'" read_group_id sample_name
 
 let mem_align_to_sam
     ~reference_build
@@ -76,7 +76,9 @@ let mem_align_to_sam
   let bwa_base_command =
     String.concat ~sep:" " [
       "bwa mem";
-      (read_group_header_option `Mem fastq#product#escaped_sample_name);
+      (read_group_header_option `Mem 
+         ~sample_name:fastq#product#escaped_sample_name
+         ~read_group_id:(Filename.basename r1_path));
       "-t"; Int.to_string processors;
       "-O"; Int.to_string gap_open_penalty;
       "-E"; Int.to_string gap_extension_penalty;
@@ -189,7 +191,9 @@ let align_to_sam
           Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa sampe %s %s %s %s %s %s > %s"
-            (read_group_header_option `Aln fastq#product#escaped_sample_name)
+            (read_group_header_option `Aln 
+               ~sample_name:fastq#product#escaped_sample_name
+               ~read_group_id:(Filename.basename r1_path))
             (Filename.quote reference_fasta#product#path)
             (Filename.quote r1_sai#product#path)
             (Filename.quote r2_sai#product#path)
@@ -202,7 +206,9 @@ let align_to_sam
           Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa samse %s %s %s > %s"
-            (read_group_header_option `Aln fastq#product#escaped_sample_name)
+            (read_group_header_option `Aln 
+               ~sample_name:fastq#product#escaped_sample_name
+               ~read_group_id:(Filename.basename r1_path))
             (Filename.quote reference_fasta#product#path)
             (Filename.quote r1_sai#product#path)
             (Filename.quote result)),
