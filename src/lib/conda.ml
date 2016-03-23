@@ -77,7 +77,6 @@ https://repo.continuum.io/pkgs/free/linux-64/python-dateutil-2.4.2-py27_0.tar.bz
 https://repo.continuum.io/pkgs/free/linux-64/pytz-2015.7-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/pyyaml-3.11-py27_1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/qt-4.8.7-1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/readline-6.2-2.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/requests-2.9.1-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/setuptools-20.1.1-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/sip-4.16.9-py27_0.tar.bz2
@@ -87,6 +86,13 @@ https://repo.continuum.io/pkgs/free/linux-64/tk-8.5.18-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/wheel-0.29.0-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/yaml-0.1.6-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda}
+
+(* Removed:
+   https://repo.continuum.io/pkgs/free/linux-64/readline-6.2-2.tar.bz2
+   This default conda compiled readline isn't linked appropriately:
+   symbol lookup error: /tmp/_MEIzf9vto/libreadline.so.6: undefined symbol: PC
+   We'll ignore it from the configuration and hope that the computer has a sane
+   readline lib installed by default.  *)
 
 (* Ensure that a file exists describing the default linux conda enviroment.
    TODO: figure out a better solution to distribute this configuration.  *)
