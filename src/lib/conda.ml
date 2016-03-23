@@ -11,29 +11,29 @@ open Run_environment
 
 let rm_path = Workflow_utilities.Remove.path_on_host
 
-let dir ~meta_playground = meta_playground // "conda_dir"
-let commands ~meta_playground com = dir ~meta_playground // "bin" // com
+let dir ~install_path = install_path // "conda_dir"
+let commands ~install_path com = dir ~install_path // "bin" // com
 let bin = commands "conda"
 let activate = commands "activate"
 let deactivate = commands "deactivate"
 
 (* give a conda command. *)
-let com ~meta_playground fmt =
-  Printf.sprintf ("%s " ^^ fmt) (bin ~meta_playground)
+let com ~install_path fmt =
+  Printf.sprintf ("%s " ^^ fmt) (bin ~install_path)
 
 (* A workflow to ensure that conda is installed. *)
-let installed ?host ~meta_playground =
+let installed ?host ~install_path =
   let open KEDSL in
   let url =
     "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
   in
-  let conda_exec  = single_file ?host (bin ~meta_playground) in
-  let install_dir = dir ~meta_playground in
+  let conda_exec  = single_file ?host (bin ~install_path) in
+  let install_dir = dir ~install_path in
   workflow_node conda_exec
     ~name:"Install conda"
     ~make:(daemonize ?host
-             Program.(exec ["mkdir"; "-p"; meta_playground]
-                      && exec ["cd"; meta_playground]
+             Program.(exec ["mkdir"; "-p"; install_path]
+                      && exec ["cd"; install_path]
                       && Workflow_utilities.Download.wget_program url
                                             (* -b : batch be silent -p prefix *)
                       && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s"
@@ -90,35 +90,35 @@ https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda}
 
 (* Ensure that a file exists describing the default linux conda enviroment.
    TODO: figure out a better solution to distribute this configuration.  *)
-let cfg_exists ?host ~meta_playground =
+let cfg_exists ?host ~install_path =
   let open KEDSL in
-  let file = meta_playground // config in
+  let file = install_path // config in
   let make = daemonize ?host
-      Program.(exec ["mkdir"; "-p"; meta_playground]
+      Program.(exec ["mkdir"; "-p"; install_path]
                && shf "echo %s >> %s" (Filename.quote biokepi_conda_config) file)
   in
   workflow_node (single_file ?host file)
     ~name:("Make sure we have a biokepi conda config file: " ^ config)
     ~make
 
-let configured ?host ~meta_playground =
+let configured ?host ~install_path () =
   let open KEDSL in
   let conf =
-    com ~meta_playground "create --name %s --file %s/%s" env_name
-      meta_playground config
+    com ~install_path "create --name %s --file %s/%s" env_name
+      install_path config
   in
   let make = daemonize ?host (Program.sh conf) in
   let edges =
-    [ depends_on (installed ?host ~meta_playground)
-    ; depends_on (cfg_exists ?host ~meta_playground)
+    [ depends_on (installed ?host ~install_path)
+    ; depends_on (cfg_exists ?host ~install_path)
     ] in
   let biokepi_env =
-    Command.shell ?host (com ~meta_playground "env list | grep %s" env_name) in
+    Command.shell ?host (com ~install_path "env list | grep %s" env_name) in
   let product =
     object method is_done = Some (`Command_returns (biokepi_env, 0)) end in
   workflow_node product ~make ~name:"Conda is configured." ~edges
 
-let run_in_biokepi_env ~meta_playground inside =
-  KEDSL.Program.(shf "source %s %s" (activate ~meta_playground) env_name
+let run_in_biokepi_env ~install_path inside =
+  KEDSL.Program.(shf "source %s %s" (activate ~install_path) env_name
                 && inside
-                && shf "source %s" (deactivate ~meta_playground))
+                && shf "source %s" (deactivate ~install_path))

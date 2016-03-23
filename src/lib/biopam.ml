@@ -145,12 +145,12 @@ let default ?host ~install_path () =
   in
   let version ?host path = K.Command.shell ?host (sprintf "%s --version" path) in
   let need_conda =
-    [ K.depends_on (Conda.configured ?host ~meta_playground:install_path)]
+    [ K.depends_on (Conda.configured ?host ~install_path ())]
   in
   Tool.Kit.create
     [ mk (Library "PICARD_JAR") ~package:"picard"  ~witness:"picard.jar"
     ; mk Application            ~package:"bowtie"  ~witness:"bowtie"     ~test:version
     ; mk Application            ~package:"seq2HLA" ~witness:"seq2HLA"    ~test:version
           ~edges:need_conda (* opam handles bowtie dep. *)
-          ~install_wrap:(Conda.run_in_biokepi_env ~meta_playground:install_path)
+          ~install_wrap:(Conda.run_in_biokepi_env ~install_path)
     ]
