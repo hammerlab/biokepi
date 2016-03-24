@@ -55,7 +55,9 @@ module Opam = struct
           && exec ["cd"; install_dir]
           && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
           && shf "chmod +x %s" opam_exec#path))
-      ~edges:[K.on_failure_activate (Workflow_utilities.Remove.path_on_host ?host install_dir)]
+      ~edges:[K.on_failure_activate
+                (Workflow_utilities.Remove.path_on_host
+                   ~host:K.Host.tmp_on_localhost install_dir)]
 
   let kcom ?(switch=true) ~install_path k fmt =
     let bin = bin ~install_path in
