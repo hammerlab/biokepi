@@ -91,10 +91,6 @@ type _ t =
 
 module Construct = struct
 
-  (* Consider:
-     1. The name of this type makes more sense as a noun, fastq_input.
-     2. `Paired_end should contain (File.t * File.t) list ... since they are paired.
-     3. There needs to be a simpler type of `Single_pair and `Paired_type renamed. *)
   type input_fastq = [
     | `Paired_end of File.t list * File.t list
     | `Single_end of File.t list
