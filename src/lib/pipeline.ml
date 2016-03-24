@@ -636,7 +636,6 @@ module Compiler = struct
           when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner_map_reduce
-          ~result_prefix
           ~processors ~reference_build ~run_with:machine ~compress:false
           ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_indel_realigner (configuration, bam) ->
@@ -702,8 +701,7 @@ module Compiler = struct
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     begin function
     | Bam_pair (
-        (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
-         as normal_p)
+        (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam)))
         ,
         (Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam)))
       )
@@ -716,9 +714,7 @@ module Compiler = struct
       let bam_list_node =
         if has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner))
         then (
-          let result_prefix = work_dir // to_file_prefix normal_p in
           Gatk.indel_realigner_map_reduce
-            ~result_prefix
             ~processors ~reference_build ~run_with:machine ~compress:false
             ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
         ) else

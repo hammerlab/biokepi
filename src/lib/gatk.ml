@@ -119,6 +119,27 @@ end
      bam_file workflow_node or bam_list workflow_node
   *)
 open Configuration
+
+let indel_realinger_output_filenaame_tag
+    ~configuration:(ir_config, target_config)
+    ?region input_bams =
+  let digest_of_input () =
+    List.map input_bams ~f:(fun o -> o#product#path)
+    |> String.concat ~sep:"" 
+    (* we make this file “unique” with an MD5 sum of the input paths *)
+    |> Digest.string |> Digest.to_hex in
+  let bam_number = List.length input_bams in
+  String.concat ~sep:"" [
+    "_indelreal-";
+    ir_config.Configuration.Indel_realigner.name;
+    "-";
+    target_config.Configuration.Indel_realigner.name;
+    "-";
+    sprintf "-%dx" bam_number;
+    (if bam_number = 1 then "" else "-" ^ digest_of_input ());
+    Option.value_map ~f:(fun r -> "-" ^ Region.to_filename r) region ~default:"";
+  ]
+
 let indel_realigner :
   type a.
   ?compress:bool ->
@@ -180,18 +201,27 @@ let indel_realigner :
     let reference_genome =
       Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
+    (*
     let digest_of_input =
       List.map (input_sorted_bam_1 :: more_input_sorted_bams)
         ~f:(fun o -> o#product#path)
       |> String.concat ~sep:"" 
       (* we make this file “unique” with an MD5 sum of the input paths *)
       |> Digest.string |> Digest.to_hex in
+       *)
     let output_suffix =
+      indel_realinger_output_filenaame_tag
+        ~configuration ~region:on_region
+        (input_sorted_bam_1 :: more_input_sorted_bams)
+        (* ~bam_number:(List.length more_input_sorted_bams + 1) *)
+        (* ~digest_of_input *)
+        (*
       sprintf "_indelreal-%s-%s-%dx%s"
         target_config.Configuration.Indel_realigner.name
         (Region.to_filename on_region)
         (List.length more_input_sorted_bams + 1)
         (if more_input_sorted_bams = [] then "" else "-" ^ digest_of_input)
+           *)
     in
     let intervals_file =
       Filename.chop_suffix input_sorted_bam_1#product#path ".bam" 
@@ -285,13 +315,12 @@ let indel_realigner_map_reduce :
   reference_build:string ->
   processors:int ->
   run_with:Run_environment.Machine.t ->
-  result_prefix: string ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
   fun ?compress
     ~configuration ~reference_build ~processors ~run_with
-    ~result_prefix ?run_directory
+    ?run_directory
     input_bam_or_bams ->
     let reference = Machine.get_reference_genome run_with reference_build in
     let open KEDSL in
@@ -306,7 +335,13 @@ let indel_realigner_map_reduce :
         in
         List.map ~f (Reference_genome.major_contigs reference)
       in
-      Samtools.merge_bams ~run_with all_nodes (result_prefix ^ "-merged.bam")
+      let result_path =
+        Filename.chop_extension bam_node#product#path 
+        ^ indel_realinger_output_filenaame_tag
+          ~configuration [bam_node]
+        ^ "-merged.bam"
+      in
+      Samtools.merge_bams ~run_with all_nodes result_path
     | Bam_workflow_list bams ->
       let all_nodes =
         (* A list of lists that looks like:
@@ -336,9 +371,15 @@ let indel_realigner_map_reduce :
                   List.nth region_n index |>
                   Option.value_exn ~msg:"bug in Gatk.indel_realigner_map_reduce")
             in
-            Samtools.merge_bams ~run_with
-              all_regions_for_this_bam
-              (sprintf "%s-%d-merged.bam" result_prefix index))
+            let result_path =
+              Filename.chop_extension bam#product#path 
+              ^ sprintf "-%d-" index (* the index is there as debug/witness *)
+              ^ indel_realinger_output_filenaame_tag
+                ~configuration bams
+              ^ "-merged.bam"
+            in
+            Samtools.merge_bams ~run_with all_regions_for_this_bam result_path
+          )
       in
       workflow_node ~name:"Indel-realigner-map-reduce"
         ~edges:(List.map merged_bams ~f:depends_on)
