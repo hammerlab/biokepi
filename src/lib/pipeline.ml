@@ -702,9 +702,10 @@ module Compiler = struct
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     begin function
     | Bam_pair (
-        Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
+        (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
+         as normal_p)
         ,
-        Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam))
+        (Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam)))
       )
       when
         has_option compiler
@@ -713,9 +714,17 @@ module Compiler = struct
       let normal = compile_aligner_step ~compiler n_bam in
       let tumor = compile_aligner_step ~compiler t_bam in
       let bam_list_node =
-        Gatk.indel_realigner
-          ~processors ~reference_build ~run_with:machine ~compress:false
-          ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
+        if has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner))
+        then (
+          let result_prefix = work_dir // to_file_prefix normal_p in
+          Gatk.indel_realigner_map_reduce
+            ~result_prefix
+            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
+        ) else
+          Gatk.indel_realigner
+            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
       in
       begin match KEDSL.explode_bam_list_node bam_list_node with
       | [realigned_normal; realigned_tumor] ->
