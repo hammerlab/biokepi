@@ -399,7 +399,7 @@ let rec to_file_prefix:
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
     | Rna_hla_typer s ->
-      sprintf "RNA_HLA_typer-%s" (to_file_prefix ?read s)
+      sprintf "RNA_HLA_typer-%s-%s" "seq2HLA" (to_file_prefix ?read s)
     end
 
 
@@ -487,7 +487,10 @@ let rec to_json: type a. a t -> json =
           "Input", to_json bam_pair;
         ]]
     | Rna_hla_typer input ->
-      call "RNA_HLA_typer" [to_json input]
+      call "RNA_HLA_typer" [`Assoc [
+          "Typer", "Seq2HLA";
+          "Input", [to_json input]
+        ]]
 
 module Compiler = struct
   type 'a pipeline = 'a t
