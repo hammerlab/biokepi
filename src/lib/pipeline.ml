@@ -802,7 +802,6 @@ module Compiler = struct
           Seq2HLA.hla_type ~host:Machine.(as_host machine) ~work_dir
             ~run_with:machine ~run_name:dataset ~r1 ~r2
       | _ -> failwithf
-              "Seq2HLA doesn't support Single_end_sample(s) or \
-                Paired_end_sample(s) of length greater than 1."
+              "Seq2HLA doesn't support Single_end_sample(s)."
 
 end (* Compiler *)
