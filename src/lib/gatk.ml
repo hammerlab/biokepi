@@ -119,9 +119,31 @@ end
      bam_file workflow_node or bam_list workflow_node
   *)
 open Configuration
+
+let indel_realinger_output_filenaame_tag
+    ~configuration:(ir_config, target_config)
+    ?region input_bams =
+  let digest_of_input () =
+    List.map input_bams ~f:(fun o -> o#product#path)
+    |> String.concat ~sep:"" 
+    (* we make this file “unique” with an MD5 sum of the input paths *)
+    |> Digest.string |> Digest.to_hex in
+  let bam_number = List.length input_bams in
+  String.concat ~sep:"" [
+    "_indelreal-";
+    ir_config.Configuration.Indel_realigner.name;
+    "-";
+    target_config.Configuration.Indel_realigner.name;
+    "-";
+    sprintf "-%dx" bam_number;
+    (if bam_number = 1 then "" else "-" ^ digest_of_input ());
+    Option.value_map ~f:(fun r -> "-" ^ Region.to_filename r) region ~default:"";
+  ]
+
 let indel_realigner :
   type a.
   ?compress:bool ->
+  ?on_region: Region.t ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
   reference_build:string ->
   processors:int ->
@@ -130,6 +152,7 @@ let indel_realigner :
   a KEDSL.bam_or_bams ->
   a =
   fun ?(compress=false)
+    ?(on_region = `Full)
     ~configuration ~reference_build ~processors ~run_with ?run_directory
     input_bam_or_bams ->
     let open KEDSL in
@@ -169,24 +192,36 @@ let indel_realigner :
     let input_bam_1 = `Use_the_sorted_ones_please in
     ignore (more_input_bams, input_bam_1);
     let name = 
-      sprintf "gatk-indelrealign-%dx-%s" 
+      sprintf "gatk-indelrealign-%s-%dx-%s" 
+        (Region.to_filename on_region)
         (List.length more_input_sorted_bams + 1)
-        (Filename.basename input_sorted_bam_1#product#path) in
+        (Filename.basename input_sorted_bam_1#product#path)
+    in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome =
       Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
+    (*
     let digest_of_input =
       List.map (input_sorted_bam_1 :: more_input_sorted_bams)
         ~f:(fun o -> o#product#path)
       |> String.concat ~sep:"" 
       (* we make this file “unique” with an MD5 sum of the input paths *)
       |> Digest.string |> Digest.to_hex in
+       *)
     let output_suffix =
-      sprintf "_target-%s-%dx-%s"
+      indel_realinger_output_filenaame_tag
+        ~configuration ~region:on_region
+        (input_sorted_bam_1 :: more_input_sorted_bams)
+        (* ~bam_number:(List.length more_input_sorted_bams + 1) *)
+        (* ~digest_of_input *)
+        (*
+      sprintf "_indelreal-%s-%s-%dx%s"
         target_config.Configuration.Indel_realigner.name
+        (Region.to_filename on_region)
         (List.length more_input_sorted_bams + 1)
         (if more_input_sorted_bams = [] then "" else "-" ^ digest_of_input)
+           *)
     in
     let intervals_file =
       Filename.chop_suffix input_sorted_bam_1#product#path ".bam" 
@@ -202,7 +237,7 @@ let indel_realigner :
           "-R"; Filename.quote fasta#product#path;
           "-I"; Filename.quote input_sorted_bam_1#product#path;
           "-o"; Filename.quote intervals_file;
-          "-nt"; Int.to_string processors
+          "-nt"; Int.to_string processors;
         ]
         @ Realigner_target_creator.render target_config
         @ List.concat_map more_input_sorted_bams
@@ -222,13 +257,16 @@ let indel_realigner :
           @ ["--nWayOut"; output_suffix ^ ".bam"]
         end
       in
-      Machine.run_program run_with ~name
+      let intervals_option = Region.to_gatk_option on_region in
+      Machine.run_big_program run_with ~name ~processors
         Program.(
           Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
-          && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s"
+          && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s %s"
+            intervals_option
             (String.concat ~sep:" " target_creation_args)
-          && sh ("java -jar $GATK_JAR -T IndelRealigner"
+          && sh ("java -jar $GATK_JAR -T IndelRealigner "
+                 ^ intervals_option
                  ^ (if compress then " " else " -compress 0 ")
                  ^ (String.concat ~sep:" " indel_real_args)))
     in
@@ -262,13 +300,93 @@ let indel_realigner :
           (bam_list 
              (List.map (input_sorted_bam_1 :: more_input_sorted_bams)
                 ~f:(fun b ->
-                  (* This is what the documentation says it will to
-                     with the `--nWayOut` option *)
-                  bam_file
-                    ~sorting:`Coordinate ~host:Machine.(as_host run_with)
-                    (output_bam_path b))))
+                    (* This is what the documentation says it will to
+                       with the `--nWayOut` option *)
+                    bam_file
+                      ~sorting:`Coordinate ~host:Machine.(as_host run_with)
+                      (output_bam_path b))))
     in
     node input_bam_or_bams
+
+let indel_realigner_map_reduce :
+  type a.
+  ?compress:bool ->
+  configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
+  reference_build:string ->
+  processors:int ->
+  run_with:Run_environment.Machine.t ->
+  ?run_directory: string ->
+  a KEDSL.bam_or_bams ->
+  a =
+  fun ?compress
+    ~configuration ~reference_build ~processors ~run_with
+    ?run_directory
+    input_bam_or_bams ->
+    let reference = Machine.get_reference_genome run_with reference_build in
+    let open KEDSL in
+    begin match input_bam_or_bams with
+    | Single_bam bam_node ->
+      let all_nodes =
+        let f on_region =
+          indel_realigner ?compress
+            ~on_region
+            ~configuration ~reference_build ~processors ~run_with ?run_directory
+            input_bam_or_bams
+        in
+        List.map ~f (Reference_genome.major_contigs reference)
+      in
+      let result_path =
+        Filename.chop_extension bam_node#product#path 
+        ^ indel_realinger_output_filenaame_tag
+          ~configuration [bam_node]
+        ^ "-merged.bam"
+      in
+      Samtools.merge_bams ~run_with all_nodes result_path
+    | Bam_workflow_list bams ->
+      let all_nodes =
+        (* A list of lists that looks like:
+           [
+             [bam1_reg1; bam2_reg1; bam3_reg1];
+             [bam1_reg2; bam2_reg2; bam3_reg2];
+             [bam1_reg3; bam2_reg3; bam3_reg3];
+             [bam1_reg4; bam2_reg4; bam3_reg4];
+           ]
+        *)
+        let f on_region =
+          let bam_list_node =
+            indel_realigner ?compress
+              ~on_region
+              ~configuration ~reference_build ~processors ~run_with ?run_directory
+              input_bam_or_bams
+          in
+          let exploded = KEDSL.explode_bam_list_node bam_list_node in
+          exploded
+        in
+        List.map ~f (Reference_genome.major_contigs reference)
+      in
+      let merged_bams =
+        List.mapi bams ~f:(fun index bam ->
+            let all_regions_for_this_bam =
+              List.map all_nodes ~f:(fun region_n ->
+                  List.nth region_n index |>
+                  Option.value_exn ~msg:"bug in Gatk.indel_realigner_map_reduce")
+            in
+            let result_path =
+              Filename.chop_extension bam#product#path 
+              ^ sprintf "-%d-" index (* the index is there as debug/witness *)
+              ^ indel_realinger_output_filenaame_tag
+                ~configuration bams
+              ^ "-merged.bam"
+            in
+            Samtools.merge_bams ~run_with all_regions_for_this_bam result_path
+          )
+      in
+      workflow_node ~name:"Indel-realigner-map-reduce"
+        ~edges:(List.map merged_bams ~f:depends_on)
+        (bam_list (List.map merged_bams ~f:(fun n -> n#product)))
+    end
+
+
 
 (* Again doing two steps in one target for now:
    http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator

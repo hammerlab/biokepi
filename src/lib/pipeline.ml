@@ -494,6 +494,7 @@ module Compiler = struct
     | `Parallel_alignment_over_fastq_fragments of
         [ `Bwa_mem | `Bwa | `Mosaik | `Star | `Hisat ] list
         * workflow_option_failure_mode
+    | `Map_reduce of [ `Gatk_indel_realigner ]
   ]
   type t = {
     processors : int;
@@ -648,6 +649,12 @@ module Compiler = struct
     let bam_node =
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
+      | Gatk_indel_realigner (configuration, bam)
+          when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
+        let input_bam = compile_aligner_step ~compiler bam in
+        Gatk.indel_realigner_map_reduce
+          ~processors ~reference_build ~run_with:machine ~compress:false
+          ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_indel_realigner (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner
@@ -711,9 +718,9 @@ module Compiler = struct
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     begin function
     | Bam_pair (
-        Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam))
+        (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam)))
         ,
-        Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam))
+        (Gatk_bqsr (t_bqsr_config, Gatk_indel_realigner (t_gir_conf, t_bam)))
       )
       when
         has_option compiler
@@ -722,9 +729,15 @@ module Compiler = struct
       let normal = compile_aligner_step ~compiler n_bam in
       let tumor = compile_aligner_step ~compiler t_bam in
       let bam_list_node =
-        Gatk.indel_realigner
-          ~processors ~reference_build ~run_with:machine ~compress:false
-          ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
+        if has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner))
+        then (
+          Gatk.indel_realigner_map_reduce
+            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
+        ) else
+          Gatk.indel_realigner
+            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
       in
       begin match KEDSL.explode_bam_list_node bam_list_node with
       | [realigned_normal; realigned_tumor] ->
