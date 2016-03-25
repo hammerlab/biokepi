@@ -32,6 +32,9 @@ type bam_pair = Bam_pair
 type vcf = Vcf
 type gtf = Gtf
 
+(* TODO: There isn't a unified file format for this result. *)
+type hla_types = Hla_types
+
 type bwa_params = {
   gap_open_penalty: int;
   gap_extension_penalty: int;
@@ -89,6 +92,7 @@ type _ t =
   | Bam_pair: bam t * bam t -> bam_pair t
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
+  | Rna_hla_typer: fastq_sample t -> hla_types t
 
 module Construct = struct
 
@@ -330,8 +334,10 @@ module Construct = struct
        make_target }
       bam_pair
 
-end
+  let rna_hla_typer fastq_sample = Rna_hla_typer fastq_sample
 
+
+end (* Construct *)
 
 let rec to_file_prefix:
   type a.
@@ -398,6 +404,8 @@ let rec to_file_prefix:
       sprintf "%s-%s-%s" prev
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
+    | Rna_hla_typer s ->
+      sprintf "RNA_HLA_typer-%s-%s" "seq2HLA" (to_file_prefix ?read s)
     end
 
 
@@ -485,6 +493,11 @@ let rec to_json: type a. a t -> json =
           "Configuration", svc.Variant_caller.configuration_json;
           "Input", to_json bam_pair;
         ]]
+    | Rna_hla_typer input ->
+      call "RNA_HLA_typer" [`Assoc [
+          "Typer", `String "Seq2HLA";
+          "Input", to_json input
+        ]]
 
 module Compiler = struct
   type 'a pipeline = 'a t
@@ -527,23 +540,22 @@ module Compiler = struct
   let has_option {options; _} f =
     List.exists options ~f
 
-  let rec compile_aligner_step
-      ~compiler (pipeline : bam pipeline) =
-    let {processors ; reference_build; work_dir; machine ;} = compiler in
-    let gunzip_concat ?read (pipeline: fastq  pipeline) =
-      match pipeline with
-      | Fastq f -> f
-      | Concat_text (l: fastq pipeline list) ->
-        failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
-      | Gunzip_concat (l: fastq_gz pipeline list) ->
-        let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
-        let result_path = work_dir // to_file_prefix ?read pipeline ^ ".fastq" in
-        dbg "Result_Path: %S" result_path;
-        Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
-    in
-    let result_prefix = work_dir // to_file_prefix pipeline in
-    dbg "Result_Prefix: %S" result_prefix;
-    let compile_fastq_sample (fs : fastq_sample pipeline) =
+  (* This compiler variable name is confusing, perhaps 'state' is better? *)
+  let fastq_step ~read ~compiler (pipeline: fastq pipeline) =
+    let {work_dir; machine ; _ } = compiler in
+    match pipeline with
+    | Fastq f -> f
+    | Concat_text (l: fastq pipeline list) ->
+      failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
+    | Gunzip_concat (l: fastq_gz pipeline list) ->
+      let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
+      let result_path = work_dir // to_file_prefix ~read pipeline ^ ".fastq" in
+      dbg "Result_Path: %S" result_path;
+      Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
+
+  let rec fastq_sample_step ~compiler (fs : fastq_sample pipeline) =
+    let {processors ; work_dir; machine ; _ } = compiler in
+
       match fs with
       | Bam_to_fastq (info_opt, how, what) ->
         let bam = compile_aligner_step ~compiler what in
@@ -558,8 +570,8 @@ module Compiler = struct
         in
         fastq_pair
       | Paired_end_sample (info, l1, l2) ->
-        let r1 = gunzip_concat ~read:(`R1 info.fragment_id) l1 in
-        let r2 = gunzip_concat ~read:(`R2 info.fragment_id) l2 in
+        let r1 = fastq_step ~compiler ~read:(`R1 info.fragment_id) l1 in
+        let r2 = fastq_step ~compiler ~read:(`R2 info.fragment_id) l2 in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
                          ~name:info.sample_name
@@ -570,7 +582,7 @@ module Compiler = struct
                    (Filename.basename r2#product#path))
           ~edges:[ depends_on r1; depends_on r2 ]
       | Single_end_sample (info, single) ->
-        let r1 = gunzip_concat ~read:(`R1 info.fragment_id) single in
+        let r1 = fastq_step ~compiler ~read:(`R1 info.fragment_id) single in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
                          ~name:info.sample_name
@@ -580,7 +592,11 @@ module Compiler = struct
           ~name:(sprintf "single-end %s (%s)"
                    info.sample_name
                    (Filename.basename r1#product#path))
-    in
+
+  and compile_aligner_step ~compiler (pipeline : bam pipeline) =
+    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let result_prefix = work_dir // to_file_prefix pipeline in
+    dbg "Result_Prefix: %S" result_prefix;
     let parallelize_alignment ~make_aligner sample =
       match sample with
       | Paired_end_sample (info,
@@ -642,7 +658,7 @@ module Compiler = struct
       begin match catch_parallelize_aligner aligner_tag sample  with
       | `Caught -> parallelize_alignment ~make_aligner sample
       | `Not_caught ->
-        let fastq = compile_fastq_sample sample in
+        let fastq = fastq_sample_step ~compiler sample in
         make_workflow fastq
       end
     in
@@ -807,4 +823,20 @@ module Compiler = struct
     in
     compiler.wrap_gtf_node pipeline gtf_node
 
-end
+  let hla_types_step ~compiler (pipeline : hla_types pipeline) =
+    let { machine ; work_dir; _ } = compiler in
+    match pipeline with
+    | Rna_hla_typer sample ->
+      match sample with
+      | Paired_end_sample (info, l1, l2) ->
+          (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
+             need a unique type for that. *)
+          let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
+          let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
+          let work_dir = work_dir // ("seq2HLA_wd_" ^ info.fragment_id) in
+          Seq2HLA.hla_type ~host:Machine.(as_host machine) ~work_dir
+            ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
+      | _ -> failwithf
+              "Seq2HLA doesn't support Single_end_sample(s)."
+
+end (* Compiler *)

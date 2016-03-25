@@ -39,6 +39,7 @@ Library biokepi
            Pipeline,
            Hisat,
            Kallisto,
+           Seq2HLA,
            Common_pipelines,
            Download_reference_genomes,
            Build_machine,
@@ -67,6 +68,13 @@ Executable "biokepi-demo"
   CompiledObject: best
   BuildDepends: biokepi, threads
   MainIs:     main.ml
+
+Executable "hla-typer"
+  Path:           src/app/
+  BuildTools:     ocamlbuild
+  CompiledObject: best
+  BuildDepends:   biokepi, threads
+  MainIs:         hla_typer.ml
 
 Document biokepi
   Title:                API reference for Biokepi

@@ -4,114 +4,155 @@ Provide tools via Biopam: https://github.com/solvuu/biopam
 
 open Common
 open Run_environment
+module K = KEDSL
 
-let rm_path = Workflow_utilities.Remove.path_on_host
+(* What are we installing via opam. This determines where we look for the
+   witness; in [opam_install_path]/package or [opam_install_path]/bin. *)
+type tool_type =
+  | Library of string
+  | Application
 
+type install_target =
+  { tool_type : tool_type
+  ; package      : string      (* What do we call 'install opam ' with *)
+  ; witness      : string      (* file that must exist after install, ex:
+                                  - bowtie exec
+                                  - picard.jar *)
+  ; test         : (?host:K.Host.t -> string -> K.Command.t) option
+  ; edges        : K.workflow_edge list
+  ; install_wrap : (K.Program.t -> K.Program.t) option
+  }
+
+let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
+
+let default_opam_url = "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
+
+(* Hide the messy logic of calling opam in here. This should not be exported
+   and use the Biopam functions directly.*)
 module Opam = struct
 
-  let dir ~meta_playground = meta_playground // "opam_dir"
-  let bin ~meta_playground = dir ~meta_playground // "opam"
-  let root ~meta_playground = dir ~meta_playground // ".opam"
+  let dir ~install_path = install_path // "opam_dir"
+  let bin ~install_path = dir ~install_path // "opam"
+  let root ~install_path = dir ~install_path // ".opam"
 
   (* TODO:
      Instead of just making sure that this file exists? Wouldn't it be better
      to make sure that a command from this program gives the right output?
      ie. $ opam --version = 1.2.2 *)
-  let target ~host ~meta_playground =
-    KEDSL.single_file ~host (bin ~meta_playground)
+  let target ?host ~install_path =
+    K.single_file ?host (bin ~install_path)
 
-  let com ?(switch=true) ~meta_playground fmt =
-    let bin = bin ~meta_playground in
-    let root = root ~meta_playground in
+  (* A workflow to ensure that opam is installed. *)
+  let installed ?host ~install_path =
+    let url = default_opam_url in
+    let opam_exec   = target ?host ~install_path in
+    let install_dir = dir ~install_path in
+    K.workflow_node opam_exec
+      ~name:"Install opam"
+      ~make:(K.daemonize ?host
+        K.Program.(
+          exec ["mkdir"; "-p"; install_dir]
+          && exec ["cd"; install_dir]
+          && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
+          && shf "chmod +x %s" opam_exec#path))
+      ~edges:[K.on_failure_activate
+                (Workflow_utilities.Remove.path_on_host
+                   ~host:K.Host.tmp_on_localhost install_dir)]
+
+  let kcom ?(switch=true) ~install_path k fmt =
+    let bin = bin ~install_path in
+    let root = root ~install_path in
     (* Pass the ROOT and SWITCH args as environments to not disrupt the flow of
-       the rest of the arguments. *)
+       the rest of the arguments:
+        ie opam --root [root] init -n
+       doesn't parse correctly. *)
     if switch then
-      Printf.sprintf ("OPAMROOT=%s OPAMSWITCH=0.0.0 %s " ^^ fmt) root bin
+      ksprintf k ("OPAMROOT=%s OPAMSWITCH=0.0.0 %s " ^^ fmt) root bin
     else
-      Printf.sprintf ("OPAMROOT=%s %s " ^^ fmt) root bin
+      ksprintf k ("OPAMROOT=%s %s " ^^ fmt) root bin
 
-  let file_command ?(switch=true) ~meta_playground ~package lb f =
-    let l = match lb with `Lib -> "lib" | `Bin -> "bin" in
-    let s = com ~switch ~meta_playground "config var %s:%s" package l in
-    (* Are there places where this tick logic is flaky? *)
-    (Printf.sprintf "$(%s)" s) // f
+  let program_sh ?switch ~install_path fmt =
+    kcom ?switch ~install_path K.Program.sh fmt
+
+  let command_shell ?switch ?host ~install_path fmt =
+    kcom ?switch ~install_path (K.Command.shell ?host) fmt
+
+  let tool_type_to_variable = function
+    | Library _   -> "lib"
+    | Application -> "bin"
+
+  (* Answer Opam 'which' questions *)
+  let which ~install_path {package; witness; tool_type; _} =
+    let v = tool_type_to_variable tool_type in
+    let s = kcom ~install_path (fun x -> x) "config var %s:%s" package v in
+    (Printf.sprintf "$(%s)" s) // witness
 
 end
 
-(* A workflow to ensure that opam is installed. *)
-let installed ~host ~meta_playground =
-  let open KEDSL in
-  let url =
-    "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
-  in
-  let opam_exec   = Opam.target ~host ~meta_playground in
-  let install_dir = Opam.dir ~meta_playground in
-  workflow_node opam_exec
-    ~name:"Install opam"
-    ~make:(daemonize ~host
-      Program.(
-        exec ["mkdir"; "-p"; install_dir]
-        && exec ["cd"; install_dir]
-        && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
-        && shf "chmod +x %s" opam_exec#path))
-    ~edges:[on_failure_activate (rm_path ~host install_dir)]
-
-let default_biopam_home = "https://github.com/solvuu/biopam.git"
+let default_biopam_url = "https://github.com/solvuu/biopam.git"
 
 (* A workflow to ensure that biopam is configured. *)
-let configured ?(biopam_home=default_biopam_home) ~host ~meta_playground () =
-  let open KEDSL in
+let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
   let name  = sprintf "Configure biopam to %s" biopam_home in
-  let make  = daemonize ~host
-    (Program.sh (Opam.com ~meta_playground ~switch:false "init -n --compiler=0.0.0 biopam %s" biopam_home))
+  let make  =
+    K.daemonize ?host
+      (Opam.program_sh ~install_path ~switch:false
+          "init -n --compiler=0.0.0 biopam %s" biopam_home)
   in
-  let edges = [depends_on (installed ~host ~meta_playground)] in
-  let biopam_is_repo = Command.shell ~host (Opam.com ~meta_playground "repo list | grep biopam") in
+  let edges = [ K.depends_on (Opam.installed ?host ~install_path)] in
+  let biopam_is_repo =
+    Opam.command_shell ~install_path ?host "repo list | grep biopam"
+  in
   let cond  =
     object method is_done = Some (`Command_returns (biopam_is_repo, 0)) end
   in
-  workflow_node cond ~name ~make ~edges
+  K.workflow_node cond ~name ~make ~edges
 
-(* A workflow to ensure that picard is available. *)
-let install_picard ~host ~meta_playground =
-  let open KEDSL in
-  let edges = [ depends_on (configured ~host ~meta_playground ()) ] in
-  let name  = "Installing picard" in
-  let opam fmt = Opam.com ~meta_playground fmt in
-  let make  = daemonize ~host Program.(sh (opam "install picard")) in
-  let jar_path = Opam.file_command ~meta_playground ~package:"picard" `Lib "picard.jar" in
-  let jar_set = Command.shell ~host (Printf.sprintf "test -e %s" jar_path) in
-  let cond  = object method is_done = Some (`Command_returns (jar_set, 0)) end in
-  workflow_node cond ~name ~make ~edges
-
-let picard_tool ~host ~meta_playground =
-  Tool.create Tool.Definition.(biopam "picard")
-    ~ensure:(install_picard ~host ~meta_playground)
-
-(* A workflow to ensure that seq2HLA is available. *)
-let install_seq2HLA ~host ~meta_playground =
-  let open KEDSL in
-  let edges =
-    [ depends_on (configured ~host ~meta_playground ())
-    ; depends_on (Conda.configured ~host ~meta_playground)
-    ]
+let install_tool ?host ~install_path
+    ({package; test; edges; install_wrap; _ } as it) =
+  let edges = K.depends_on (configured ?host ~install_path ()) :: edges in
+  let name = "Installing " ^ package in
+  let make =
+    Opam.program_sh ~install_path "install %s" package
+    |> Option.value install_wrap ~default:(fun x -> x)
+    |> K.daemonize ?host
   in
-  let name  = "Installing seq2HLA" in
-  let opam fmt = Opam.com ~meta_playground fmt in
-  let make  =
-    daemonize ~host (Conda.run_in_biokepi_env ~meta_playground (Program.(sh (opam "install seq2HLA"))))
+  let path = Opam.which ~install_path it in
+  let test = (Option.value test ~default:default_test) ?host path in
+  let cond =
+    object
+      method is_done = Some (`Command_returns (test, 0))
+      method path = path
+    end
   in
-  let seq2HLA = Opam.file_command ~meta_playground ~package:"seq2HLA" `Bin "seq2HLA" in
-  let call_version = Command.shell ~host (seq2HLA ^ " --version") in
-  let cond = object method is_done = Some (`Command_returns (call_version, 0)) end in
-  workflow_node cond ~name ~make ~edges
+  K.workflow_node cond ~name ~make ~edges
 
-let seq2HLA_tool ~host ~meta_playground =
-  Tool.create Tool.Definition.(biopam "seq2HLA")
-    ~ensure:(install_seq2HLA ~host ~meta_playground)
+let provide ?host ~install_path it =
+  let install_workflow = install_tool ?host ~install_path it in
+  let export_var, path =
+    match it.tool_type with
+    | Application -> "PATH", (Filename.dirname install_workflow#product#path)
+    | Library v   -> v, install_workflow#product#path
+  in
+  Tool.create Tool.Definition.(biopam it.package)
+    ~ensure:install_workflow
+    (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
+    ~init:(K.Program.shf "export %s=\"%s${%s:+:}${%s}\""
+              export_var path export_var export_var)
 
-let toolkit ~host ~meta_playground () =
+let default ?host ~install_path () =
+  let mk ~package ~witness ?test ?(edges=[]) ?export_var ?install_wrap tt =
+    provide ?host ~install_path
+      { tool_type = tt ; package ; witness ; test ; edges ; install_wrap }
+  in
+  let version ?host path = K.Command.shell ?host (sprintf "%s --version" path) in
+  let need_conda =
+    [ K.depends_on (Conda.configured ?host ~install_path ())]
+  in
   Tool.Kit.create
-    [ picard_tool ~host ~meta_playground
-    ; seq2HLA_tool ~host ~meta_playground
+    [ mk (Library "PICARD_JAR") ~package:"picard"  ~witness:"picard.jar"
+    ; mk Application            ~package:"bowtie"  ~witness:"bowtie"     ~test:version
+    ; mk Application            ~package:"seq2HLA" ~witness:"seq2HLA"    ~test:version
+          ~edges:need_conda (* opam handles bowtie dep. *)
+          ~install_wrap:(Conda.run_in_biokepi_env ~install_path)
     ]
