@@ -301,7 +301,7 @@ let base_quality_score_recalibrator
     Filename.chop_suffix sorted_bam#product#path ".bam" ^ "-recal_data.table"
   in
   let make =
-    Machine.run_program run_with ~name
+    Machine.run_big_program run_with ~name ~processors
       Program.(
         Tool.(init gatk)
         && call_gatk ~analysis:"BaseRecalibrator" ([
