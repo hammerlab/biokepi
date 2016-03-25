@@ -1,7 +1,6 @@
 
 open Common
 open Run_environment
-module K = KEDSL
 
 let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
   let tool = Machine.get_tool run_with (`Biopamed "seq2HLA") in
@@ -13,17 +12,18 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
   let host = Machine.as_host run_with in
   let make =
     Machine.run_program run_with ~name
-      K.Program.(Tool.init tool
-                && exec ["mkdir"; "-p"; work_dir]
-                && exec ["cd"; work_dir]
-                && shf "seq2HLA -1 %s -2 %s -r %s" r1pt r2pt run_name)
+      KEDSL.Program.(Tool.init tool
+                     && exec ["mkdir"; "-p"; work_dir]
+                     && exec ["cd"; work_dir]
+                     && shf "seq2HLA -1 %s -2 %s -r %s" r1pt r2pt run_name)
   in
   let class1 = work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in
   let class2 = work_dir // (sprintf "%s-ClassII.HLAgenotype4digits" run_name) in
-  let cond = K.list_of_files ~host [class1; class2] in
-  K.workflow_node cond ~make
-    ~edges:[ K.depends_on (Tool.ensure tool)
-           ; K.depends_on r1
-           ; K.depends_on r2
-           ]
+  let cond = KEDSL.list_of_files ~host [class1; class2] in
+  KEDSL.workflow_node ~name cond ~make
+    ~edges:[
+      KEDSL.depends_on (Tool.ensure tool);
+      KEDSL.depends_on r1;
+      KEDSL.depends_on r2;
+    ]
 
