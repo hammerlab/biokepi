@@ -124,7 +124,7 @@ let mark_duplicates
                metrics_path) in
   let name =
     sprintf "picard-markdups-%s" Filename.(basename input_bam#product#path) in
-  let make = Machine.run_program ~name run_with program in
+  let make = Machine.run_big_program ~name run_with program in
   let host = Machine.(as_host run_with) in
   workflow_node (bam_file ~sorting:`Coordinate output_bam ~host)
     ~name ~make
