@@ -40,6 +40,11 @@ type bwa_params = {
 type somatic = { normal : bam; tumor : bam }
 type germline = bam
 
+type fastq_sample_info = {
+  sample_name: string; 
+  fragment_id: string;
+}
+
 module Variant_caller = struct
 
   type _ input =
@@ -67,9 +72,9 @@ type _ t =
   | Fastq: File.t -> fastq  t
   (* | List: 'a t list -> 'a list t *)
   | Bam_sample: string * bam -> bam t
-  | Bam_to_fastq: [ `Single | `Paired ] * bam t -> fastq_sample t
-  | Paired_end_sample: string * fastq t * fastq t -> fastq_sample t
-  | Single_end_sample: string * fastq t -> fastq_sample t
+  | Bam_to_fastq: fastq_sample_info option * [ `Single | `Paired ] * bam t -> fastq_sample t
+  | Paired_end_sample: fastq_sample_info * fastq t * fastq t -> fastq_sample t
+  | Single_end_sample: fastq_sample_info * fastq t -> fastq_sample t
   | Gunzip_concat: fastq_gz t list -> fastq t
   | Concat_text: fastq t list -> fastq t
   | Star: fastq_sample t -> bam t
@@ -115,15 +120,16 @@ module Construct = struct
           (List.map not_supported ~f:(fun f -> Filename.basename f#product#path)
            |> String.concat ~sep:", ")
     in
+    let sample_info = {sample_name = dataset; fragment_id = dataset} in
     match fastqs with
     | `Paired_end (l1, l2) ->
-      Paired_end_sample (dataset, bring_to_single_fastq l1, bring_to_single_fastq l2)
+      Paired_end_sample (sample_info, bring_to_single_fastq l1, bring_to_single_fastq l2)
     | `Single_end l ->
-      Single_end_sample (dataset, bring_to_single_fastq l)
+      Single_end_sample (sample_info, bring_to_single_fastq l)
 
   let bam ~dataset bam = Bam_sample (dataset, bam)
 
-  let bam_to_fastq how bam = Bam_to_fastq (how, bam)
+  let bam_to_fastq ?sample_name how bam = Bam_to_fastq (sample_name, how, bam)
 
   let bwa
       ?(gap_open_penalty=Bwa.default_gap_open_penalty)
@@ -335,7 +341,7 @@ let rec to_file_prefix:
     begin match w with
     | Fastq_gz _ -> failwith "TODO"
     | Fastq _ -> failwith "TODO"
-    | Single_end_sample (name, _) -> name
+    | Single_end_sample (info, _) -> info.fragment_id
     | Gunzip_concat [] -> failwith "TODO"
     | Gunzip_concat (_ :: _) ->
       begin match read with
@@ -345,11 +351,11 @@ let rec to_file_prefix:
       end
     | Concat_text _ -> failwith "TODO"
     | Bam_sample (name, _) -> Filename.basename name
-    | Bam_to_fastq (how, bam) ->
+    | Bam_to_fastq (_, how, bam) ->
       sprintf "%s-b2fq-%s"
         (to_file_prefix bam)
         (match how with `Paired -> "PE" | `Single -> "SE")
-    | Paired_end_sample (name, _ , _) -> name
+    | Paired_end_sample (info, _ , _) -> info.fragment_id
     | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
       sprintf "%s-bwa-gap%d-gep%d"
         (to_file_prefix sample) gap_open_penalty gap_extension_penalty
@@ -408,14 +414,15 @@ let rec to_json: type a. a t -> json =
     | Fastq file -> call "Fastq" [`String file#product#path]
     | Bam_sample (name, file) ->
       call "Bam-sample" [`String name; `String file#product#path]
-    | Bam_to_fastq (how, bam) ->
+    | Bam_to_fastq (name, how, bam) ->
       let how_string =
         match how with `Paired -> "Paired" | `Single -> "Single" in
       call "Bam-to-fastq" [`String how_string; to_json bam]
-    | Paired_end_sample (name, r1, r2) ->
-      call "Paired-end" [`String name; to_json r1; to_json r2]
-    | Single_end_sample (name, r) ->
-      call "Single-end" [`String name; to_json r]
+    | Paired_end_sample ({sample_name; fragment_id}, r1, r2) ->
+      call "Paired-end" [`String sample_name; `String fragment_id;
+                         to_json r1; to_json r2]
+    | Single_end_sample ({sample_name; fragment_id}, r) ->
+      call "Single-end" [`String sample_name; `String fragment_id; to_json r]
     | Gunzip_concat fastq_gz_list ->
       call "Gunzip-concat" (List.map ~f:to_json fastq_gz_list)
     | Concat_text fastq_list ->
@@ -537,49 +544,59 @@ module Compiler = struct
     dbg "Result_Prefix: %S" result_prefix;
     let compile_fastq_sample (fs : fastq_sample pipeline) =
       match fs with
-      | Bam_to_fastq (how, what) ->
+      | Bam_to_fastq (info_opt, how, what) ->
         let bam = compile_aligner_step ~compiler what in
         let sample_type =
           match how with `Single -> `Single_end | `Paired -> `Paired_end in
         let fastq_pair =
           let output_prefix = work_dir // to_file_prefix ?read:None what in
+          let sample_name = Option.map info_opt (fun x -> x.sample_name) in
           Picard.bam_to_fastq ~run_with:machine ~processors ~sample_type
+            ?sample_name
             ~output_prefix bam
         in
         fastq_pair
-      | Paired_end_sample (dataset, l1, l2) ->
-        let r1 = gunzip_concat ~read:(`R1 dataset) l1 in
-        let r2 = gunzip_concat ~read:(`R2 dataset) l2 in
+      | Paired_end_sample (info, l1, l2) ->
+        let r1 = gunzip_concat ~read:(`R1 info.fragment_id) l1 in
+        let r2 = gunzip_concat ~read:(`R2 info.fragment_id) l2 in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         ~name:info.sample_name
                          r1#product#path (Some r2#product#path))
-          ~name:(sprintf "pairing %s and %s"
+          ~name:(sprintf "Pairing sample %s (%s and %s)"
+                   info.sample_name
                    (Filename.basename r1#product#path)
                    (Filename.basename r2#product#path))
           ~edges:[ depends_on r1; depends_on r2 ]
-      | Single_end_sample (dataset, single) ->
-        let r1 = gunzip_concat ~read:(`R1 dataset) single in
+      | Single_end_sample (info, single) ->
+        let r1 = gunzip_concat ~read:(`R1 info.fragment_id) single in
         let open KEDSL in
         workflow_node (fastq_reads ~host:Machine.(as_host machine)
+                         ~name:info.sample_name
                          r1#product#path None)
           ~equivalence:`None
           ~edges:[ depends_on r1 ]
-          ~name:(sprintf "single-end %s"
+          ~name:(sprintf "single-end %s (%s)"
+                   info.sample_name
                    (Filename.basename r1#product#path))
     in
     let parallelize_alignment ~make_aligner sample =
       match sample with
-      | Paired_end_sample (name,
+      | Paired_end_sample (info,
                            Gunzip_concat r1_list,
                            Gunzip_concat r2_list) ->
         let exploded =
           let count = ref 0 in
           List.map2 r1_list r2_list
             ~f:(fun (Fastq_gz wf1 as r1) (Fastq_gz wf2 as r2) ->
-                let new_name =
-                  incr count; sprintf "%s-fragment-%d" name !count in
+                let new_info =
+                  incr count; 
+                  {info with
+                   fragment_id =
+                     (* fragmenting = creating fragments of previous fragment *)
+                     sprintf "%s-fragment-%d" info.fragment_id !count} in
                 make_aligner (
-                  Paired_end_sample (new_name,
+                  Paired_end_sample (new_info,
                                      Gunzip_concat [r1],
                                      Gunzip_concat [r2]))) in
         let bams = List.map exploded ~f:(compile_aligner_step ~compiler) in
