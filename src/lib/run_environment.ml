@@ -150,7 +150,6 @@ module Machine = struct
 
   type t = {
     name: string;
-    ssh_name: string;
     host: Host.t;
     get_reference_genome: string -> Reference_genome.t;
     toolkit: Tool.Kit.t;
@@ -158,13 +157,12 @@ module Machine = struct
     work_dir: string;
   }
   let create
-      ~ssh_name ~host ~get_reference_genome ~toolkit
+      ~host ~get_reference_genome ~toolkit
       ~run_program ~work_dir  name =
-    {name; ssh_name; toolkit; get_reference_genome; host;
+    {name; toolkit; get_reference_genome; host;
      run_program; work_dir}
 
   let name t = t.name
-  let ssh_name t = t.ssh_name
   let as_host t = t.host
   let get_reference_genome t = t.get_reference_genome
   let get_tool t =

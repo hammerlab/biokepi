@@ -24,8 +24,6 @@ let create
       ~host ~meta_playground
       ?gatk_jar_location ?mutect_jar_location in
   Machine.create (sprintf "ssh-box-%s" uri)
-    ~ssh_name:(
-      Uri.of_string uri |> Uri.host |> Option.value ~default:"No-NAME")
     ~get_reference_genome:(fun name ->
         match name, b37 with
         | name, Some some37 when name = Reference_genome.name some37 -> some37
