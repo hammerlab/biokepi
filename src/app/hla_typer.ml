@@ -8,7 +8,7 @@ let construct_pipeline dataset ~r1fn ~r2fn =
   let wf2 = KEDSL.(workflow_node (single_file r2fn) ~name:"Read2") in
   let open Pipeline.Construct in
   input_fastq ~dataset (`Paired_end ([wf1], [wf2]))
-  |> rna_hla_typer
+  |> seq2hla
 
 let pipeline_to_json ppln =
   Pipeline.to_json ppln
@@ -26,7 +26,7 @@ let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
       ~work_dir:(work_dir // "compiler")
       ~machine ()
   in
-  hla_types_step ~compiler ppln
+  seq2hla_hla_types_step ~compiler ppln
 
 (* Argument extras *)
 let () = Random.self_init ()

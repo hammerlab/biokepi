@@ -32,8 +32,8 @@ type bam_pair = Bam_pair
 type vcf = Vcf
 type gtf = Gtf
 
-(* TODO: There isn't a unified file format for this result. *)
-type hla_types = Hla_types
+(** Seq2HLA has a custom/unique return file format *)
+type seq2hla_hla_types = Seq2HLA_hla_types
 
 type bwa_params = {
   gap_open_penalty: int;
@@ -92,7 +92,7 @@ type _ t =
   | Bam_pair: bam t * bam t -> bam_pair t
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
-  | Rna_hla_typer: fastq_sample t -> hla_types t
+  | Seq2HLA: fastq_sample t -> seq2hla_hla_types t
 
 module Construct = struct
 
@@ -334,7 +334,7 @@ module Construct = struct
        make_target }
       bam_pair
 
-  let rna_hla_typer fastq_sample = Rna_hla_typer fastq_sample
+  let seq2hla fastq_sample = Seq2HLA fastq_sample
 
 
 end (* Construct *)
@@ -404,8 +404,8 @@ let rec to_file_prefix:
       sprintf "%s-%s-%s" prev
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
-    | Rna_hla_typer s ->
-      sprintf "RNA_HLA_typer-%s-%s" "seq2HLA" (to_file_prefix ?read s)
+    | Seq2HLA s ->
+      sprintf "seq@hla-%s" (to_file_prefix ?read s)
     end
 
 
@@ -493,9 +493,8 @@ let rec to_json: type a. a t -> json =
           "Configuration", svc.Variant_caller.configuration_json;
           "Input", to_json bam_pair;
         ]]
-    | Rna_hla_typer input ->
-      call "RNA_HLA_typer" [`Assoc [
-          "Typer", `String "Seq2HLA";
+    | Seq2HLA input ->
+      call "Seq2HLA" [`Assoc [
           "Input", to_json input
         ]]
 
@@ -823,10 +822,10 @@ module Compiler = struct
     in
     compiler.wrap_gtf_node pipeline gtf_node
 
-  let hla_types_step ~compiler (pipeline : hla_types pipeline) =
+  let seq2hla_hla_types_step ~compiler (pipeline : seq2hla_hla_types pipeline) =
     let { machine ; work_dir; _ } = compiler in
     match pipeline with
-    | Rna_hla_typer sample ->
+    | Seq2HLA sample ->
       match sample with
       | Paired_end_sample (info, l1, l2) ->
           (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
@@ -834,9 +833,8 @@ module Compiler = struct
           let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
           let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
           let work_dir = work_dir // ("seq2HLA_wd_" ^ info.fragment_id) in
-          Seq2HLA.hla_type ~work_dir
-            ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
-      | _ -> failwithf
-              "Seq2HLA doesn't support Single_end_sample(s)."
+          Seq2HLA.hla_type
+            ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
+      | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
 
 end (* Compiler *)
