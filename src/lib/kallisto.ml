@@ -7,7 +7,6 @@ open Workflow_utilities
 (** Create a kallisto specific index of the transcriptome (cDNA) *)
 let index
   ~reference_build
-  ~processors
   ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_transcriptome =
@@ -25,7 +24,7 @@ let index
       depends_on reference_transcriptome;
       depends_on Tool.(ensure kallisto_tool);
     ]
-    ~make:(Machine.run_big_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~name
             Program.(
               Tool.(init kallisto_tool)
               && shf "kallisto index -i %s %s"
@@ -47,7 +46,7 @@ let run
   let result_file suffix = result_prefix ^ suffix in
   let output_dir = result_file "-kallisto" in
   let abundance_file = output_dir // "abundance.tsv" in
-  let kallisto_index = index ~reference_build ~processors ~run_with in
+  let kallisto_index = index ~reference_build ~run_with in
   let kallisto_tool = Machine.get_tool run_with Tool.Default.kallisto in
   let r1_path, r2_path_opt = fastq#product#paths in
   let kallisto_quant_base_cmd = 

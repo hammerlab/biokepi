@@ -4,7 +4,6 @@ open Workflow_utilities
 
 let index
   ~reference_build
-  ~processors
   ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_fasta =
@@ -25,7 +24,7 @@ let index
       depends_on Tool.(ensure hisat_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_big_program run_with ~processors ~name
+    ~make:(Machine.run_big_program run_with ~name
             Program.(
               Tool.(init hisat_tool)
               && shf "mkdir %s" result_dir 
@@ -51,7 +50,7 @@ let align
   let in_work_dir =
     Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
   let hisat_tool = Machine.get_tool run_with Tool.Default.hisat in
-  let hisat_index = index ~reference_build ~run_with ~processors in
+  let hisat_index = index ~reference_build ~run_with in
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "hisat-rna-align-%s" (Filename.basename r1_path) in
