@@ -111,12 +111,24 @@ let star_tool ~host ~meta_playground =
   Tool.create Tool.Default.star ~ensure 
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
-let hisat_tool ~host ~meta_playground =
+let hisat_tool ~version ~host ~meta_playground =
   let open KEDSL in
-  let install_path = meta_playground // "hisat" in
-  let url = "http://ccb.jhu.edu/software/hisat/downloads/hisat-0.1.6-beta-Linux_x86_64.zip" in
+  let url = 
+    match version with
+    | `V_0_1_6_beta -> "http://ccb.jhu.edu/software/hisat/downloads/hisat-0.1.6-beta-Linux_x86_64.zip"
+    | `V_2_0_2_beta -> "ftp://ftp.ccb.jhu.edu/pub/infphilo/hisat2/downloads/hisat2-2.0.2-beta-Linux_x86_64.zip"
+  in
+  let install_path = 
+   match version with
+    | `V_0_1_6_beta ->  meta_playground // "hisat-V_0_1_6" 
+    | `V_2_0_2_beta ->  meta_playground // "hisat-V_2_0_2"
+  in
   let archive = Filename.basename url in
-  let hisat_binary = "hisat" in
+  let hisat_binary = 
+    match version with
+    | `V_0_1_6_beta -> "hisat"
+    | `V_2_0_2_beta -> "hisat2"
+  in
   let ensure =
     workflow_node (single_file ~host (install_path // hisat_binary))
       ~name:(sprintf "Install HISAT")
@@ -130,12 +142,12 @@ let hisat_tool ~host ~meta_playground =
             && shf "cd %s" install_path
             && Workflow_utilities.Download.wget_program url
             && shf "unzip %s" archive
-            && sh "cd hisat-*"
+            && sh "cd hisat*"
             && sh "mv hisat* ../"
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.hisat ~ensure 
+  Tool.create (`Hisat version) ~ensure 
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let kallisto_tool ~host ~meta_playground =
@@ -494,7 +506,7 @@ let default_toolkit
     star_tool ~host ~meta_playground;
     stringtie_tool ~host ~meta_playground;
     cufflinks_tools ~host ~meta_playground;
-    hisat_tool ~host ~meta_playground;
+    hisat_tool ~host ~meta_playground ~version:`V_0_1_6_beta;
     mosaik_tool ~host ~meta_playground;
     kallisto_tool ~host ~meta_playground;
   ]

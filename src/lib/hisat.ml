@@ -9,13 +9,21 @@ let index
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
       |> Reference_genome.fasta in
-  let hisat_tool = Machine.get_tool run_with Tool.Default.hisat in
-  let name =
-    sprintf "hisat-index-%s" (Filename.basename reference_fasta#product#path) in
-  let reference_dir = (Filename.dirname reference_fasta#product#path) in
-  let result_dir = sprintf "%s/hisat-index/" reference_dir in
-  let index_prefix = result_dir // "hisat-index" in
-  let first_index_file = sprintf "%s.1.bt2" index_prefix in
+  let result_dir = Filename.dirname index_prefix in
+  let version = configuration.Configuration.version in
+  let hisat_tool = Machine.get_tool run_with (`Hisat version) in
+  let build_binary = 
+    match version with
+    | `V_0_1_6_beta -> "hisat-build"
+    | `V_2_0_2_beta -> "hisat2-build"
+  in
+  let name = 
+    sprintf "%s-%s" build_binary (Filename.basename reference_fasta#product#path) in
+  let first_index_file = 
+    match version with
+      | `V_0_1_6_beta -> sprintf "%s.1.bt2" index_prefix
+      | `V_2_0_2_beta -> sprintf "%s.1.ht2" index_prefix 
+  in
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) first_index_file)
     ~edges:[
