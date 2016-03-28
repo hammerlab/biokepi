@@ -1,4 +1,4 @@
-(*
+(**
 Provide tools via Biopam: https://github.com/solvuu/biopam
 *)
 
@@ -12,16 +12,17 @@ type tool_type =
   | Library of string
   | Application
 
-type install_target =
-  { tool_type : tool_type
-  ; package      : string      (* What do we call 'install opam ' with *)
-  ; witness      : string      (* file that must exist after install, ex:
+type install_target = {
+  tool_type : tool_type;
+  package : string; (** What do we call 'install opam ' with *)
+  witness : string; (** File that must exist after install, ex:
                                   - bowtie exec
                                   - picard.jar *)
-  ; test         : (?host:K.Host.t -> string -> K.Command.t) option
-  ; edges        : K.workflow_edge list
-  ; install_wrap : (K.Program.t -> K.Program.t) option
-  }
+  test : (?host:K.Host.t -> string -> K.Command.t) option;
+  edges : K.workflow_edge list;
+
+  wrap_environment : (K.Program.t -> K.Program.t) option;
+}
 
 let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
 
@@ -109,12 +110,12 @@ let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
   K.workflow_node cond ~name ~make ~edges
 
 let install_tool ?host ~install_path
-    ({package; test; edges; install_wrap; _ } as it) =
+    ({package; test; edges; wrap_environment; _ } as it) =
   let edges = K.depends_on (configured ?host ~install_path ()) :: edges in
   let name = "Installing " ^ package in
   let make =
     Opam.program_sh ~install_path "install %s" package
-    |> Option.value install_wrap ~default:(fun x -> x)
+    |> Option.value wrap_environment ~default:(fun x -> x)
     |> K.daemonize ?host
   in
   let path = Opam.which ~install_path it in
@@ -137,22 +138,28 @@ let provide ?host ~install_path it =
   Tool.create Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
-    ~init:(K.Program.shf "export %s=\"%s${%s:+:}${%s}\""
-              export_var path export_var export_var)
+    ~init:(
+      K.Program.shf "export %s=\"%s${%s:+:}${%s}\""
+        export_var path export_var export_var
+      |> Option.value it.wrap_environment ~default:(fun x -> x)
+    )
 
 let default ?host ~install_path () =
-  let mk ~package ~witness ?test ?(edges=[]) ?export_var ?install_wrap tt =
+  let mk ~package ~witness ?test ?(edges=[])
+      ?export_var ?wrap_environment tt =
     provide ?host ~install_path
-      { tool_type = tt ; package ; witness ; test ; edges ; install_wrap }
+      { tool_type = tt ; package ;
+        witness ; test ; edges ; wrap_environment }
   in
-  let version ?host path = K.Command.shell ?host (sprintf "%s --version" path) in
+  let version ?host path =
+    K.Command.shell ?host (sprintf "%s --version" path) in
   let need_conda =
     [ K.depends_on (Conda.configured ?host ~install_path ())]
   in
-  Tool.Kit.create
-    [ mk (Library "PICARD_JAR") ~package:"picard"  ~witness:"picard.jar"
-    ; mk Application            ~package:"bowtie"  ~witness:"bowtie"     ~test:version
-    ; mk Application            ~package:"seq2HLA" ~witness:"seq2HLA"    ~test:version
-          ~edges:need_conda (* opam handles bowtie dep. *)
-          ~install_wrap:(Conda.run_in_biokepi_env ~install_path)
-    ]
+  Tool.Kit.create [
+    mk (Library "PICARD_JAR") ~package:"picard"  ~witness:"picard.jar";
+    mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
+    mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version
+      ~edges:need_conda (* opam handles bowtie dep. *)
+      ~wrap_environment:(Conda.run_in_biokepi_env ~install_path);
+  ]
