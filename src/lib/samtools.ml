@@ -228,7 +228,7 @@ let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
   ] in
   workflow_node ~name (single_file pileup ~host) ~make ~edges
 
-(*
+(**
 Merge a list of BAM files.
 
 The BAMs will be sorted, by coordinate, if they are not already.
@@ -247,7 +247,7 @@ random suffix.
   same ID, emit only one the first of them. (default: false)
 - [?combine_pg_headers]: When several input files contain @PG headers with the
   same ID, emit only one the first of them. (default: false)
- *)
+*)
 let merge_bams
     ~(run_with : Machine.t)
     ?(delete_input_on_success = true)
