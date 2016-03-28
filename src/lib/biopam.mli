@@ -21,26 +21,29 @@ type tool_type =
   | Application
 
 (** A description of what we'd like Biopam to install.*)
-type install_target =
-  { (** What are we installing? See {{type:tool_type}tool_type}. *)
-    tool_type    : tool_type
+type install_target = {
+  (** What are we installing? See {{type:tool_type}tool_type}. *)
+  tool_type : tool_type;
 
-    (** Name of the package: `opam install [package]` *)
-  ; package      : string
+  (** Name of the package: `opam install [package]` *)
+  package : string;
 
-    (** File that is passed to test determine success and what is exported. *)
-  ; witness      : string
+  (** File that is passed to test determine success and what is exported. *)
+  witness : string;
 
-    (** Test to determine success of the install. Defaults to `test -e witness`. *)
-  ; test         : (?host:Common.KEDSL.Host.t -> string -> Common.KEDSL.Command.t) option
+  (** Test to determine success of the install.
+      Defaults to `test -e witness`. *)
+  test :
+    (?host:Common.KEDSL.Host.t -> string -> Common.KEDSL.Command.t) option;
 
-    (* Install dependencies. *)
-  ; edges        : Common.KEDSL.workflow_edge list
+  (* Install dependencies. *)
+  edges : Common.KEDSL.workflow_edge list;
 
-    (* Transform the install program, e.g. it needs to be run in a specific
-       environment. Defaults to identity. *)
-  ; install_wrap : (Common.KEDSL.Program.t -> Common.KEDSL.Program.t) option
-  }
+  (* Transform the install and init programs, e.g. it needs to be run in a
+     specific environment. Defaults to identity. *)
+  wrap_environment :
+    (Common.KEDSL.Program.t -> Common.KEDSL.Program.t) option;
+}
 
 (** Provde the specified (via install_target) tool.*)
 val provide : ?host:Common.KEDSL.Host.t ->
