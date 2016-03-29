@@ -17,8 +17,10 @@ let pipeline_to_json ppln =
 let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
   let open Pipeline.Compiler in
   let machine =
-    let toolkit = Biopam.default ~install_path:(work_dir // "biopam") () in
-    Build_machine.create ~toolkit uri
+    let install_path = work_dir // "biopam" in
+    let toolkit_install_path = [`Biopam, install_path] in
+    let toolkit = Biopam.default ~install_path () in
+    Build_machine.create ~toolkit ~toolkit_install_path uri
   in
   let compiler =
     create ~processors:1

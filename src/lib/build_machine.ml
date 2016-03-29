@@ -10,7 +10,7 @@ let default_run_program : host:KEDSL.Host.t -> Make_fun.t =
 let create
     ?gatk_jar_location
     ?mutect_jar_location
-    ?run_program ?toolkit ?b37 uri =
+    ?run_program ?toolkit ?toolkit_install_path ?b37 uri =
   let open KEDSL in
   let host = Host.parse (uri // "ketrew_playground") in
   let meta_playground = Uri.of_string uri |> Uri.path in
@@ -35,5 +35,6 @@ let create
             ~destination_path:(meta_playground // "reference-genome"))
     ~host
     ~toolkit
+    ?toolkit_install_path
     ~run_program
     ~work_dir:(meta_playground // "work")

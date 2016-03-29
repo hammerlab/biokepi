@@ -155,18 +155,20 @@ module Machine = struct
     toolkit: Tool.Kit.t;
     run_program: Make_fun.t;
     work_dir: string;
+    toolkit_install_path : ([`Biopam ] * string) list
   }
   let create
       ~host ~get_reference_genome ~toolkit
-      ~run_program ~work_dir  name =
+      ~run_program ~work_dir ?(toolkit_install_path=[]) name =
     {name; toolkit; get_reference_genome; host;
-     run_program; work_dir}
+     run_program; work_dir; toolkit_install_path}
 
   let name t = t.name
   let as_host t = t.host
   let get_reference_genome t = t.get_reference_genome
   let get_tool t =
     Tool.Kit.get_exn t.toolkit
+  let get_toolkit_path t k = List.assoc k t.toolkit_install_path
   let run_program t = t.run_program
 
   let quick_run_program t : Make_fun.t =

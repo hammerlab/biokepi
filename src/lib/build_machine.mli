@@ -20,6 +20,7 @@ val create :
   ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?run_program:Run_environment.Make_fun.t ->
   ?toolkit:Run_environment.Tool.Kit.t ->
+  ?toolkit_install_path:([`Biopam] * string) list ->
   ?b37:Reference_genome.t ->
   string ->
   Run_environment.Machine.t
