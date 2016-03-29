@@ -40,9 +40,8 @@ type install_target = {
   edges : Common.KEDSL.workflow_edge list;
 
   (* Transform the install and init programs, e.g. it needs to be run in a
-     specific environment. Defaults to identity. *)
-  wrap_environment :
-    (Common.KEDSL.Program.t -> Common.KEDSL.Program.t) option;
+     specific environment. Defaults to a “no-op”. *)
+  init_environment : Common.KEDSL.Program.t option;
 }
 
 (** Provde the specified (via install_target) tool.*)
