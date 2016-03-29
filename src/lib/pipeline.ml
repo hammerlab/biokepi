@@ -70,6 +70,11 @@ module Variant_caller = struct
   }
 end
 
+type metadata_spec = [
+  | `Add_tags of string list
+  | `Add_tags_rec of string list
+]
+
 type _ t =
   | Fastq_gz: File.t -> fastq_gz  t
   | Fastq: File.t -> fastq  t
@@ -93,6 +98,7 @@ type _ t =
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
   | Seq2HLA: fastq_sample t -> seq2hla_hla_types t
+  | With_metadata: metadata_spec * 'a t -> 'a t
 
 module Construct = struct
 
@@ -336,8 +342,11 @@ module Construct = struct
 
   let seq2hla fastq_sample = Seq2HLA fastq_sample
 
+  let add_tags ?(recursively = false) tags pipeline =
+    With_metadata ((if recursively then `Add_tags_rec tags else `Add_tags tags),
+                   pipeline)
 
-end (* Construct *)
+end
 
 let rec to_file_prefix:
   type a.
@@ -345,6 +354,7 @@ let rec to_file_prefix:
   a t -> string =
   fun ?read w ->
     begin match w with
+    | With_metadata (_, p) -> to_file_prefix ?read p
     | Fastq_gz _ -> failwith "TODO"
     | Fastq _ -> failwith "TODO"
     | Single_end_sample (info, _) -> info.fragment_id
@@ -497,6 +507,7 @@ let rec to_json: type a. a t -> json =
       call "Seq2HLA" [`Assoc [
           "Input", to_json input
         ]]
+    | With_metadata (_, p) -> to_json p
 
 module Compiler = struct
   type 'a pipeline = 'a t
@@ -539,18 +550,34 @@ module Compiler = struct
   let has_option {options; _} f =
     List.exists options ~f
 
+  let apply_with_metadata ~metadata_spec wf =
+    begin match metadata_spec with
+    | `Add_tags tgs -> KEDSL.add_tags ~recursive:false wf tgs
+    | `Add_tags_rec tgs -> KEDSL.add_tags ~recursive:true wf tgs
+    end;
+    wf
+
   (* This compiler variable name is confusing, perhaps 'state' is better? *)
-  let fastq_step ~read ~compiler (pipeline: fastq pipeline) =
+  let rec fastq_step ~read ~compiler (pipeline: fastq pipeline) =
     let {work_dir; machine ; _ } = compiler in
     match pipeline with
     | Fastq f -> f
     | Concat_text (l: fastq pipeline list) ->
       failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
     | Gunzip_concat (l: fastq_gz pipeline list) ->
-      let fastqs = List.map l ~f:(function Fastq_gz t -> t) in
+      let fastqs =
+        let rec f = 
+          function
+          | Fastq_gz t -> t
+          | With_metadata (metadata_spec, p) -> 
+            apply_with_metadata ~metadata_spec (f p)
+        in
+        List.map l ~f in
       let result_path = work_dir // to_file_prefix ~read pipeline ^ ".fastq" in
       dbg "Result_Path: %S" result_path;
       Workflow_utilities.Gunzip.concat ~run_with:machine fastqs ~result_path
+    | With_metadata (metadata_spec, pipeline) ->
+      fastq_step ~read ~compiler pipeline |> apply_with_metadata ~metadata_spec
 
   let rec fastq_sample_step ~compiler (fs : fastq_sample pipeline) =
     let {processors ; work_dir; machine ; _ } = compiler in
@@ -591,12 +618,14 @@ module Compiler = struct
           ~name:(sprintf "single-end %s (%s)"
                    info.sample_name
                    (Filename.basename r1#product#path))
+      | With_metadata (metadata_spec, p) ->
+        fastq_sample_step ~compiler p |> apply_with_metadata ~metadata_spec
 
   and compile_aligner_step ~compiler (pipeline : bam pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
-    let parallelize_alignment ~make_aligner sample =
+    let rec parallelize_alignment ~make_aligner sample =
       match sample with
       | Paired_end_sample (info,
                            Gunzip_concat r1_list,
@@ -604,20 +633,27 @@ module Compiler = struct
         let exploded =
           let count = ref 0 in
           List.map2 r1_list r2_list
-            ~f:(fun (Fastq_gz wf1 as r1) (Fastq_gz wf2 as r2) ->
-                let new_info =
-                  incr count; 
-                  {info with
-                   fragment_id =
-                     (* fragmenting = creating fragments of previous fragment *)
-                     sprintf "%s-fragment-%d" info.fragment_id !count} in
-                make_aligner (
-                  Paired_end_sample (new_info,
-                                     Gunzip_concat [r1],
-                                     Gunzip_concat [r2]))) in
+            ~f:(fun r1 r2 ->
+                match r1, r2 with
+                | (Fastq_gz wf1, Fastq_gz wf2) ->
+                  let new_info =
+                    incr count; 
+                    {info with
+                     fragment_id =
+                       (* fragmenting = creating fragments of previous fragment *)
+                       sprintf "%s-fragment-%d" info.fragment_id !count} in
+                  make_aligner (
+                    Paired_end_sample (new_info,
+                                       Gunzip_concat [r1],
+                                       Gunzip_concat [r2]))
+                | other -> failwith "compile_aligner_step: not implemented"
+              ) in
         let bams = List.map exploded ~f:(compile_aligner_step ~compiler) in
         Samtools.merge_bams ~run_with:machine bams
           (result_prefix ^ "-merged.bam")
+      | With_metadata (metadata_spec, p) ->
+        parallelize_alignment ~make_aligner p
+        |> apply_with_metadata ~metadata_spec
       | other ->
         failwith "parallelize_alignment: Not fully implemented"
     in
@@ -665,7 +701,7 @@ module Compiler = struct
       match pipeline with
       | Bam_sample (name, bam_target) -> bam_target
       | Gatk_indel_realigner (configuration, bam)
-          when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
+        when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner_map_reduce
           ~processors ~reference_build ~run_with:machine ~compress:false
@@ -726,6 +762,9 @@ module Compiler = struct
                 ~fastq ~result_prefix ~run_with:machine ()
               |> Samtools.sam_to_bam ~run_with:machine
             )
+      | With_metadata (metadata_spec, p)  ->
+        compile_aligner_step ~compiler p
+        |> apply_with_metadata ~metadata_spec
     in
     compiler.wrap_bam_node pipeline bam_node
 
@@ -784,6 +823,12 @@ module Compiler = struct
       let normal = compile_aligner_step ~compiler normal_t in
       let tumor = compile_aligner_step ~compiler tumor_t in
       (`Normal normal, `Tumor tumor, `Pipeline final_pipeline)
+    | With_metadata (metadata_spec, p) ->
+      let `Normal n, `Tumor t, `Pipeline p = compile_bam_pair ~compiler p in
+
+      (`Normal (apply_with_metadata ~metadata_spec n),
+       `Tumor (apply_with_metadata ~metadata_spec n),
+       `Pipeline p)
     end
 
   let rec compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
@@ -806,10 +851,13 @@ module Compiler = struct
         let input_bam = compile_aligner_step ~compiler bam in
         gvc.Variant_caller.make_target ~processors ~reference_build
           ~run_with:machine ~input:(Variant_caller.Germline input_bam) ~result_prefix ()
+      | With_metadata (metadata_spec, p) ->
+        compile_variant_caller_step ~compiler p
+        |> apply_with_metadata ~metadata_spec
     in
     compiler.wrap_vcf_node pipeline vcf_node
 
-  let compile_gtf_step ~compiler (pipeline: gtf pipeline) =
+  let rec compile_gtf_step ~compiler (pipeline: gtf pipeline) =
     let {processors ; reference_build; work_dir; machine ;} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
@@ -819,22 +867,29 @@ module Compiler = struct
         let bam = compile_aligner_step ~compiler bam in
         Stringtie.run ~reference_build ~processors ~configuration
           ~bam ~result_prefix ~run_with:machine ()
+      | With_metadata (metadata_spec, p) ->
+        compile_gtf_step ~compiler p
+        |> apply_with_metadata ~metadata_spec
     in
     compiler.wrap_gtf_node pipeline gtf_node
 
-  let seq2hla_hla_types_step ~compiler (pipeline : seq2hla_hla_types pipeline) =
+  let rec seq2hla_hla_types_step ~compiler (pipeline : seq2hla_hla_types pipeline) =
     let { machine ; work_dir; _ } = compiler in
     match pipeline with
     | Seq2HLA sample ->
-      match sample with
+      begin match sample with
       | Paired_end_sample (info, l1, l2) ->
-          (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
-             need a unique type for that. *)
-          let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
-          let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
-          let work_dir = work_dir // ("seq2HLA_wd_" ^ info.fragment_id) in
-          Seq2HLA.hla_type
-            ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
+        (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
+           need a unique type for that. *)
+        let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
+        let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
+        let work_dir = work_dir // ("seq2HLA_wd_" ^ info.fragment_id) in
+        Seq2HLA.hla_type
+          ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
       | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
+      end
+    | With_metadata (metadata_spec, p) ->
+      seq2hla_hla_types_step ~compiler p
+      |> apply_with_metadata ~metadata_spec
 
 end (* Compiler *)
