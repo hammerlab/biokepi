@@ -21,7 +21,7 @@ type install_target = {
   test : (?host:K.Host.t -> string -> K.Command.t) option;
   edges : K.workflow_edge list;
 
-  wrap_environment : (K.Program.t -> K.Program.t) option;
+  init_environment : K.Program.t option;
 }
 
 let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
@@ -110,13 +110,15 @@ let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
   K.workflow_node cond ~name ~make ~edges
 
 let install_tool ?host ~install_path
-    ({package; test; edges; wrap_environment; _ } as it) =
-  let edges = K.depends_on (configured ?host ~install_path ()) :: edges in
+    ({package; test; edges; init_environment; _ } as it) =
+  let open KEDSL in
+  let edges = depends_on (configured ?host ~install_path ()) :: edges in
   let name = "Installing " ^ package in
   let make =
-    Opam.program_sh ~install_path "install %s" package
-    |> Option.value wrap_environment ~default:(fun x -> x)
-    |> K.daemonize ?host
+    daemonize ?host Program.(
+        Option.value init_environment ~default:(sh "echo 'Default init'")
+        && Opam.program_sh ~install_path "install %s" package
+      )
   in
   let path = Opam.which ~install_path it in
   let test = (Option.value test ~default:default_test) ?host path in
@@ -126,7 +128,7 @@ let install_tool ?host ~install_path
       method path = path
     end
   in
-  K.workflow_node cond ~name ~make ~edges
+  workflow_node cond ~name ~make ~edges
 
 let provide ?host ~install_path it =
   let install_workflow = install_tool ?host ~install_path it in
@@ -138,18 +140,18 @@ let provide ?host ~install_path it =
   Tool.create Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
-    ~init:(
-      K.Program.shf "export %s=\"%s${%s:+:}${%s}\""
-        export_var path export_var export_var
-      |> Option.value it.wrap_environment ~default:(fun x -> x)
-    )
+    ~init:KEDSL.Program.(
+        Option.value it.init_environment ~default:(sh "echo 'Default init'")
+        && shf "export %s=\"%s${%s:+:}${%s}\""
+          export_var path export_var export_var
+      )
 
 let default ?host ~install_path () =
   let mk ~package ~witness ?test ?(edges=[])
-      ?export_var ?wrap_environment tt =
+      ?export_var ?init_environment tt =
     provide ?host ~install_path
       { tool_type = tt ; package ;
-        witness ; test ; edges ; wrap_environment }
+        witness ; test ; edges ; init_environment }
   in
   let version ?host path =
     K.Command.shell ?host (sprintf "%s --version" path) in
@@ -161,5 +163,5 @@ let default ?host ~install_path () =
     mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
     mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version
       ~edges:need_conda (* opam handles bowtie dep. *)
-      ~wrap_environment:(Conda.run_in_biokepi_env ~install_path);
+      ~init_environment:(Conda.init_biokepi_env ~install_path);
   ]

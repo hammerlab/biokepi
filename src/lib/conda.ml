@@ -15,7 +15,6 @@ let dir ~install_path = install_path // "conda_dir"
 let commands ~install_path com = dir ~install_path // "bin" // com
 let bin = commands "conda"
 let activate = commands "activate"
-let deactivate = commands "deactivate"
 
 (* give a conda command. *)
 let com ~install_path fmt =
@@ -124,7 +123,5 @@ let configured ?host ~install_path () =
     object method is_done = Some (`Command_returns (biokepi_env, 0)) end in
   workflow_node product ~make ~name:"Conda is configured." ~edges
 
-let run_in_biokepi_env ~install_path inside =
-  KEDSL.Program.(shf "source %s %s" (activate ~install_path) env_name
-                && inside
-                && shf "source %s" (deactivate ~install_path))
+let init_biokepi_env ~install_path  =
+  KEDSL.Program.(shf "source %s %s" (activate ~install_path) env_name)
