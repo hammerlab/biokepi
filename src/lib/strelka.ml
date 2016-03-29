@@ -163,11 +163,11 @@ let run ~reference_build
         && shf "cd %s" output_dir
         && shf "make -j%d" processors
         && Gatk.call_gatk ~analysis:"CombineVariants" [
-          "--variant"; "results/passed.somatic.snvs.vcf";
-          "--variant"; "results/passed.somatic.indels.vcf";
+          "--variant:snvs"; "results/passed.somatic.snvs.vcf";
+          "--variant:indels"; "results/passed.somatic.indels.vcf";
           "-R"; reference_fasta#product#path;
-          "-genotypeMergeOptions"; "UNIQUIFY";
-          "-o"; output_file_path;
+          "-genotypeMergeOptions"; "PRIORITIZE";
+          "-o"; output_file_path; "-priority"; "snvs,indels"
         ]
       )
   in
