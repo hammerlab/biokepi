@@ -5,17 +5,15 @@ maintainer: "seb@mondet.org"
 authors: [ "Sebastien Mondet <seb@mondet.org>" ]
 license: "Apache-2.0"
 build: [
-  ["oasis" "setup"]
-  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
-  ["ocaml" "setup.ml" "-build"]
-  ["ocaml" "setup.ml" "-install"]
+  ["omake"]
+  ["omake" "install" "BINDIR=%{bin}%"]
 ]
 remove: [
-  ["ocamlfind" "remove" "biokepi"]
+  ["omake" "uninstall" "BINDIR=%{bin}%"]
 ]
 depends: [
   "base-threads"
   "ketrew" {>= "2.0.0"}
-  ("oasis" {>= "0.4"} | "oasis-mirage" {>= "0.4"})
+  "omake"
   "ocamlfind"
 ]
