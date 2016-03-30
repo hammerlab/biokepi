@@ -622,7 +622,7 @@ module Compiler = struct
         fastq_sample_step ~compiler p |> apply_with_metadata ~metadata_spec
 
   and compile_aligner_step ~compiler (pipeline : bam pipeline) =
-    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let {processors; reference_build; work_dir; machine; _} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
     let rec parallelize_alignment ~make_aligner sample =
@@ -769,7 +769,7 @@ module Compiler = struct
     compiler.wrap_bam_node pipeline bam_node
 
   let rec compile_bam_pair ~compiler =
-    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let {processors ; reference_build; work_dir; machine; _} = compiler in
     begin function
     | Bam_pair (
         (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam)))
@@ -832,7 +832,7 @@ module Compiler = struct
     end
 
   let rec compile_variant_caller_step ~compiler (pipeline: vcf pipeline) =
-    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let {processors ; reference_build; work_dir; machine; _} = compiler in
     (* result prefix ignore optimizations *)
     let vcf_node =
       match pipeline with
@@ -858,7 +858,7 @@ module Compiler = struct
     compiler.wrap_vcf_node pipeline vcf_node
 
   let rec compile_gtf_step ~compiler (pipeline: gtf pipeline) =
-    let {processors ; reference_build; work_dir; machine ;} = compiler in
+    let {processors ; reference_build; work_dir; machine; _} = compiler in
     let result_prefix = work_dir // to_file_prefix pipeline in
     dbg "Result_Prefix: %S" result_prefix;
     let gtf_node =
