@@ -99,7 +99,7 @@ let align
     | None -> mosaik_build_base_command  
   in   
   workflow_node ~name
-      (bam_file ~host:(Machine.(as_host run_with)) result)
+      (bam_file ~reference_build ~host:(Machine.(as_host run_with)) result)
       ~edges:[
         on_failure_activate (Remove.file ~run_with result);
         depends_on reference_fasta;

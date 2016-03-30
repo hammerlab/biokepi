@@ -5,7 +5,7 @@ open Run_environment
 open Workflow_utilities
 
 
-let sam_to_bam ~(run_with : Machine.t) file_t =
+let sam_to_bam ~(run_with : Machine.t) ~reference_build file_t =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Tool.Default.samtools in
   let src = file_t#product#path in
@@ -17,7 +17,7 @@ let sam_to_bam ~(run_with : Machine.t) file_t =
   let make = Machine.run_program ~name run_with program in
   let host = Machine.(as_host run_with) in
   workflow_node ~name
-    (bam_file dest ~host)
+    (bam_file ~reference_build dest ~host)
     ~make
     ~edges:[
       depends_on file_t;
@@ -141,9 +141,7 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     sprintf "%s-%s" (Filename.chop_suffix source ".bam") dest_suffix in
   let dest = sprintf "%s.%s" dest_prefix "bam" in
   let product =
-    KEDSL.bam_file ~sorting:by
-      ~host:Machine.(as_host run_with)
-      dest in
+    KEDSL.transform_bam ~change_sorting:by input_bam#product ~path:dest in
   let make_command src des =
     let command = ["-@"; Int.to_string processors; src;
                    "-T"; dest_prefix; "-o"; dest] in
@@ -160,7 +158,9 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     If it is indeed already sorted the function returns the [input_bam] node as
     is.
  *)
-let sort_bam_if_necessary ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+let sort_bam_if_necessary
+    ~(run_with:Machine.t) ?(processors=1) ~by
+    input_bam : KEDSL.bam_file KEDSL.workflow_node =
   match input_bam#product#sorting with
   | Some some when some = by -> (* Already sorted “the same way” *)
     input_bam
@@ -189,14 +189,15 @@ let index_to_bai ~(run_with:Machine.t) ?(check_sorted=true) input_bam =
     ~name:(sprintf "Samtools-index %s"
              Filename.(basename input_bam#product#path))
 
-let mpileup ~run_with ~reference_build ?adjust_mapq ~region input_bam =
+let mpileup ~run_with ?adjust_mapq ~region input_bam =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Tool.Default.samtools in
   let src = input_bam#product#path in
   let adjust_mapq_option =
     match adjust_mapq with | None -> "" | Some n -> sprintf "-C%d" n in
   let samtools_region_option = Region.to_samtools_option region in
-  let reference_genome = Machine.get_reference_genome run_with reference_build in
+  let reference_genome =
+    Machine.get_reference_genome run_with input_bam#product#reference_build in
   let fasta = Reference_genome.fasta reference_genome in
   let pileup =
     Filename.chop_suffix src ".bam" ^
@@ -236,17 +237,17 @@ The BAMs will be sorted, by coordinate, if they are not already.
 By default, duplicate @PG and @RG IDs will be automatically uniquified with a
 random suffix.
 
-- [?delete_input_on_success]: Delete the list of input BAMs when this node
-  succeeds. (default: true)
-- [?attach_rg_tag]: Attach an RG tag to each alignment. The tag value is
-  inferred from file names.(default: false)
-- [?uncompressed_bam_output]: Uncompressed BAM output. (default: false)
-- [?compress_level_one]: Use zlib compression level 1 to compress the output.
-  (default: false)
-- [?combine_rg_headers]: When several input files contain @RG headers with the
-  same ID, emit only one the first of them. (default: false)
-- [?combine_pg_headers]: When several input files contain @PG headers with the
-  same ID, emit only one the first of them. (default: false)
+   - [?delete_input_on_success]: Delete the list of input BAMs when this node
+   succeeds. (default: true)
+   - [?attach_rg_tag]: Attach an RG tag to each alignment. The tag value is
+   inferred from file names.(default: false)
+   - [?uncompressed_bam_output]: Uncompressed BAM output. (default: false)
+   - [?compress_level_one]: Use zlib compression level 1 to compress the output.
+   (default: false)
+   - [?combine_rg_headers]: When several input files contain @RG headers with the
+   same ID, emit only one the first of them. (default: false)
+   - [?combine_pg_headers]: When several input files contain @PG headers with the
+   same ID, emit only one the first of them. (default: false)
 *)
 let merge_bams
     ~(run_with : Machine.t)
@@ -281,7 +282,6 @@ let merge_bams
     sprintf "merge-%d-bams-into-%s" (List.length input_bam_list)
       (Filename.basename output_bam_path) in
   let make = Machine.run_program ~name run_with program in
-  let host = Machine.(as_host run_with) in
   let remove_input_bams =
     List.map input_bam_list ~f:(fun src ->
         on_success_activate (Remove.file ~run_with src#product#path))
@@ -294,6 +294,11 @@ let merge_bams
   in
   let product =
     (* samtools merge creates sorted bams: *)
-    (bam_file ~sorting:`Coordinate output_bam_path ~host) in
+    let one =
+      List.hd input_bam_list
+      |> Option.value_exn
+        ~msg:(sprintf "Samtools.merge_bams: input is empty list")
+    in
+    (transform_bam one#product ~path:output_bam_path) in
   workflow_node ~name product ~make ~edges
 

@@ -145,7 +145,6 @@ let indel_realigner :
   ?compress:bool ->
   ?on_region: Region.t ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
-  reference_build:string ->
   processors:int ->
   run_with:Run_environment.Machine.t ->
   ?run_directory: string ->
@@ -153,7 +152,7 @@ let indel_realigner :
   a =
   fun ?(compress=false)
     ?(on_region = `Full)
-    ~configuration ~reference_build ~processors ~run_with ?run_directory
+    ~configuration ~processors ~run_with ?run_directory
     input_bam_or_bams ->
     let open KEDSL in
     let input_bam_1, more_input_bams = (* this an at-least-length-1 list :)  *)
@@ -199,6 +198,7 @@ let indel_realigner :
     in
     let gatk = Machine.get_tool run_with Tool.Default.gatk in
     let reference_genome =
+      let reference_build = input_sorted_bam_1#product#reference_build in
       Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
     (*
@@ -293,7 +293,7 @@ let indel_realigner :
       | Single_bam _ ->
         (* This is what we give to the `-o` option: *)
         workflow_node  ~name ~make ~edges
-          (bam_file ~sorting:`Coordinate ~host:Machine.(as_host run_with)
+          (transform_bam input_sorted_bam_1#product
              (output_bam_path input_sorted_bam_1))
       | Bam_workflow_list _ ->
         workflow_node  ~name ~make ~edges
@@ -302,9 +302,7 @@ let indel_realigner :
                 ~f:(fun b ->
                     (* This is what the documentation says it will to
                        with the `--nWayOut` option *)
-                    bam_file
-                      ~sorting:`Coordinate ~host:Machine.(as_host run_with)
-                      (output_bam_path b))))
+                    transform_bam b#product (output_bam_path b))))
     in
     node input_bam_or_bams
 
@@ -312,17 +310,15 @@ let indel_realigner_map_reduce :
   type a.
   ?compress:bool ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
-  reference_build:string ->
   processors:int ->
   run_with:Run_environment.Machine.t ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
   fun ?compress
-    ~configuration ~reference_build ~processors ~run_with
+    ~configuration ~processors ~run_with
     ?run_directory
     input_bam_or_bams ->
-    let reference = Machine.get_reference_genome run_with reference_build in
     let open KEDSL in
     begin match input_bam_or_bams with
     | Single_bam bam_node ->
@@ -330,9 +326,12 @@ let indel_realigner_map_reduce :
         let f on_region =
           indel_realigner ?compress
             ~on_region
-            ~configuration ~reference_build ~processors ~run_with ?run_directory
+            ~configuration ~processors ~run_with ?run_directory
             input_bam_or_bams
         in
+        let reference =
+          Machine.get_reference_genome run_with
+            bam_node#product#reference_build in
         List.map ~f (Reference_genome.major_contigs reference)
       in
       let result_path =
@@ -356,12 +355,15 @@ let indel_realigner_map_reduce :
           let bam_list_node =
             indel_realigner ?compress
               ~on_region
-              ~configuration ~reference_build ~processors ~run_with ?run_directory
+              ~configuration ~processors ~run_with ?run_directory
               input_bam_or_bams
           in
           let exploded = KEDSL.explode_bam_list_node bam_list_node in
           exploded
         in
+        let reference =
+          Machine.get_reference_genome run_with
+            (List.hd_exn bams)#product#reference_build in
         List.map ~f (Reference_genome.major_contigs reference)
       in
       let merged_bams =
@@ -403,12 +405,12 @@ let base_quality_score_recalibrator
     ~configuration:(bqsr_configuration, print_reads_configuration)
     ~run_with
     ~processors
-    ~reference_build
     ~input_bam ~output_bam =
   let open KEDSL in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
   let gatk = Machine.get_tool run_with Tool.Default.gatk in
-  let reference_genome = Machine.get_reference_genome run_with reference_build in
+  let reference_genome =
+    Machine.get_reference_genome run_with input_bam#product#reference_build in
   let fasta = Reference_genome.fasta reference_genome in
   let db_snp = Reference_genome.dbsnp_exn reference_genome in
   let sorted_bam =
@@ -437,9 +439,7 @@ let base_quality_score_recalibrator
           "-o"; output_bam;
         ] @ Configuration.Print_reads.render print_reads_configuration)
       ) in
-  workflow_node ~name
-    (bam_file output_bam
-       ~sorting:`Coordinate ~host:Machine.(as_host run_with))
+  workflow_node ~name (transform_bam sorted_bam#product ~path:output_bam)
     ~make
     ~edges:[
       depends_on Tool.(ensure gatk); depends_on fasta; depends_on db_snp;
@@ -452,9 +452,10 @@ let base_quality_score_recalibrator
 
 let haplotype_caller
     ?(more_edges = [])
-    ~run_with ~reference_build ~input_bam ~result_prefix how =
+    ~run_with ~input_bam ~result_prefix how =
   let open KEDSL in
-  let reference = Machine.get_reference_genome run_with reference_build in
+  let reference =
+    Machine.get_reference_genome run_with input_bam#product#reference_build in
   let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in
@@ -521,11 +522,13 @@ let haplotype_caller
 let mutect2
     ?(more_edges = [])
     ~configuration
-    ~run_with ~reference_build
+    ~run_with
     ~input_normal_bam ~input_tumor_bam (* The doc says only one of each *)
     ~result_prefix how =
   let open KEDSL in
-  let reference = Machine.get_reference_genome run_with reference_build in
+  let reference =
+    Machine.get_reference_genome run_with
+      input_normal_bam#product#reference_build in
   let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in

@@ -29,15 +29,15 @@ let empty_vcf = "##fileformat=VCFv4.1
 "
 
 let somatic_on_region
-    ~run_with ~reference_build ?adjust_mapq ~normal ~tumor ~result_prefix region =
+    ~run_with ?adjust_mapq ~normal ~tumor ~result_prefix region =
   let open KEDSL in
   let name = Filename.basename result_prefix in
   let result_file suffix = result_prefix ^ suffix in
   let varscan_tool = Machine.get_tool run_with Tool.Default.varscan in
   let snp_output = result_file "-snp.vcf" in
   let indel_output = result_file "-indel.vcf" in
-  let normal_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq normal in
-  let tumor_pileup = Samtools.mpileup ~run_with ~reference_build ~region ?adjust_mapq tumor in
+  let normal_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq normal in
+  let tumor_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq tumor in
   let host = Machine.as_host run_with in
   let tags = [Target_tags.variant_caller; "varscan"] in
   let varscan_somatic =
@@ -102,13 +102,14 @@ let somatic_on_region
   varscan_filter
 
 let somatic_map_reduce
-    ?(more_edges = []) ~reference_build ~run_with ?adjust_mapq
+    ?(more_edges = []) ~run_with ?adjust_mapq
     ~normal ~tumor ~result_prefix () =
   let run_on_region region =
     let result_prefix = result_prefix ^ "-" ^ Region.to_filename region in
-    somatic_on_region ~run_with ~reference_build
+    somatic_on_region ~run_with
       ?adjust_mapq ~normal ~tumor ~result_prefix region in
-  let reference = Machine.get_reference_genome run_with reference_build in
+  let reference =
+    Machine.get_reference_genome run_with normal#product#reference_build in
   let targets =
     List.map (Reference_genome.major_contigs reference)
       ~f:run_on_region in

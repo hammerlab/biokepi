@@ -34,7 +34,7 @@ module Configuration = struct
 
 end
 
-let run ~reference_build
+let run
     ~run_with ~normal ~tumor ~result_prefix ~processors
     ?(more_edges = []) ~configuration () =
   let open KEDSL in
@@ -45,7 +45,8 @@ let run ~reference_build
   let output_prefix = "virmid-output" in
   let work_dir = result_file "-workdir" in
   let reference_fasta =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
+    Machine.get_reference_genome run_with normal#product#reference_build
+    |> Reference_genome.fasta in
   let virmid_tool = Machine.get_tool run_with Tool.Default.virmid in
   let virmid_somatic_broken_vcf =
     (* maybe it's actually not broken, but later tools can be

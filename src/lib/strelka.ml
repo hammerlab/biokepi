@@ -119,7 +119,7 @@ module Configuration = struct
 end
 
 
-let run ~reference_build
+let run
     ~run_with ~normal ~tumor ~result_prefix ~processors ?(more_edges = [])
     ?(configuration = Configuration.default) () =
   let open KEDSL in
@@ -130,7 +130,8 @@ let run ~reference_build
   let config_file_path = result_file  "configuration" in
   let output_file_path = output_dir // "results/passed_somatic_combined.vcf" in
   let reference_fasta =
-    Machine.get_reference_genome run_with reference_build |> Reference_genome.fasta in
+    Machine.get_reference_genome run_with normal#product#reference_build
+    |> Reference_genome.fasta in
   let strelka_tool = Machine.get_tool run_with Tool.Default.strelka in
   let gatk_tool = Machine.get_tool run_with Tool.Default.gatk in
   let sorted_normal =

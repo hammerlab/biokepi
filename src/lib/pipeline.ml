@@ -59,7 +59,6 @@ module Variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      reference_build: Reference_genome.name ->
       run_with:Run_environment.Machine.t ->
       input: 'a input ->
       result_prefix: string ->
@@ -186,11 +185,10 @@ module Construct = struct
         "Name", `String configuration_name;
       ] in
     let make_target
-        ~reference_build ~run_with ~input ~result_prefix ~processors
-        ?more_edges () =
+        ~run_with ~input ~result_prefix ~processors ?more_edges () =
       match input with
       | Variant_caller.Germline input_bam ->
-        Gatk.haplotype_caller ?more_edges ~reference_build ~run_with
+        Gatk.haplotype_caller ?more_edges ~run_with
           ~input_bam ~result_prefix `Map_reduce in
     germline_variant_caller
       {Variant_caller.name = "Gatk-HaplotypeCaller";
@@ -206,13 +204,12 @@ module Construct = struct
     let configuration_name = configuration.Mutect.Configuration.name in
     let configuration_json = Mutect.Configuration.to_json configuration in
     let make_target
-        ~reference_build ~run_with ~input ~result_prefix ~processors
-        ?more_edges () =
+        ~run_with ~input ~result_prefix ~processors ?more_edges () =
       match input with | Variant_caller.Somatic {normal; tumor} ->
       Mutect.run
         ~configuration
         ?more_edges
-        ~reference_build ~run_with
+        ~run_with
         ~normal ~tumor
         ~result_prefix `Map_reduce in
     somatic_variant_caller
@@ -226,15 +223,13 @@ module Construct = struct
     let configuration_name = configuration.Gatk.Configuration.Mutect2.name in
     let configuration_json = Gatk.Configuration.Mutect2.to_json configuration in
     let make_target
-        ~reference_build ~run_with ~input ~result_prefix ~processors
-        ?more_edges () =
+        ~run_with ~input ~result_prefix ~processors ?more_edges () =
       match input with
-      | Variant_caller.Somatic {normal; tumor} -> Gatk.mutect2
-        ~configuration
-        ?more_edges
-        ~reference_build ~run_with
-        ~input_normal_bam:normal ~input_tumor_bam:tumor
-        ~result_prefix `Map_reduce in
+      | Variant_caller.Somatic {normal; tumor} ->
+        Gatk.mutect2
+          ~configuration ?more_edges ~run_with
+          ~input_normal_bam:normal ~input_tumor_bam:tumor
+          ~result_prefix `Map_reduce in
     somatic_variant_caller
       {Variant_caller.name = "Mutect";
        configuration_json;
@@ -255,10 +250,9 @@ module Construct = struct
         "Theta", `Float theta;
       ] in
     let make_target
-        ~reference_build ~run_with ~input ~result_prefix ~processors
-        ?more_edges () =
+        ~run_with ~input ~result_prefix ~processors ?more_edges () =
       match input with | Variant_caller.Somatic {normal; tumor} ->
-      Somaticsniper.run ~reference_build
+      Somaticsniper.run
         ~run_with ~minus_s:prior_probability ~minus_T:theta
         ~normal ~tumor ~result_prefix () in
     somatic_variant_caller
@@ -283,12 +277,10 @@ module Construct = struct
        configuration_json;
        configuration_name;
        make_target = begin
-         fun ~reference_build ~run_with ~input ~result_prefix ~processors
-           ?more_edges () ->
+         fun ~run_with ~input ~result_prefix ~processors ?more_edges () ->
            match input with | Variant_caller.Somatic {normal; tumor} ->
-           Varscan.somatic_map_reduce ~reference_build ?adjust_mapq
-             ?more_edges
-             ~run_with ~normal ~tumor ~result_prefix ()
+           Varscan.somatic_map_reduce ?adjust_mapq
+             ?more_edges ~run_with ~normal ~tumor ~result_prefix ()
        end}
       bam_pair
 
@@ -298,10 +290,9 @@ module Construct = struct
        configuration_json = Strelka.Configuration.to_json configuration;
        configuration_name = configuration.Strelka.Configuration.name;
        make_target =
-         fun ~reference_build ~run_with ~input ~result_prefix ~processors
-            ?more_edges () ->
+         fun ~run_with ~input ~result_prefix ~processors ?more_edges () ->
             match input with | Variant_caller.Somatic {normal; tumor} ->
-            Strelka.run ~reference_build
+            Strelka.run
               ?more_edges
               ~configuration ~normal ~tumor
               ~run_with ~result_prefix ~processors
@@ -315,10 +306,10 @@ module Construct = struct
        configuration_json = Virmid.Configuration.to_json configuration;
        configuration_name = configuration.Virmid.Configuration.name;
        make_target =
-          fun ~reference_build ~run_with ~input ~result_prefix ~processors
+          fun ~run_with ~input ~result_prefix ~processors
             ?more_edges () ->
             match input with | Variant_caller.Somatic {normal; tumor} ->
-            Virmid.run ~reference_build
+            Virmid.run
               ?more_edges
               ~configuration ~normal ~tumor
               ~run_with ~result_prefix ~processors
@@ -327,11 +318,11 @@ module Construct = struct
       bam_pair
 
   let muse ~configuration bam_pair =
-    let make_target ~reference_build
+    let make_target
         ~(run_with:Machine.t) ~input ~result_prefix ~processors
         ?more_edges () =
       match input with | Variant_caller.Somatic {normal; tumor} ->
-      Muse.run ~reference_build ~configuration ?more_edges
+      Muse.run ~configuration ?more_edges
         ~run_with ~normal ~tumor ~result_prefix `Map_reduce in
     somatic_variant_caller
       {Variant_caller.name = "Muse";
@@ -704,19 +695,19 @@ module Compiler = struct
         when has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner)) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner_map_reduce
-          ~processors ~reference_build ~run_with:machine ~compress:false
+          ~processors ~run_with:machine ~compress:false
           ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_indel_realigner (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         Gatk.indel_realigner
-          ~processors ~reference_build ~run_with:machine ~compress:false
+          ~processors ~run_with:machine ~compress:false
           ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_bqsr (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
         Gatk.base_quality_score_recalibrator
           ~configuration
-          ~run_with:machine ~processors ~reference_build ~input_bam ~output_bam
+          ~run_with:machine ~processors ~input_bam ~output_bam
       | Picard_mark_duplicates (settings, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
@@ -732,7 +723,7 @@ module Compiler = struct
                 ~reference_build ~processors
                 ~gap_open_penalty ~gap_extension_penalty
                 ~fastq ~result_prefix ~run_with:machine ()
-              |> Samtools.sam_to_bam ~run_with:machine)
+              |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
       | Bwa ({gap_open_penalty; gap_extension_penalty} as bwa_config, what) ->
         perform_aligner_parallelization
           `Bwa ~make_aligner:(fun pe -> Bwa (bwa_config, pe)) what
@@ -741,7 +732,7 @@ module Compiler = struct
                 ~reference_build ~processors
                 ~gap_open_penalty ~gap_extension_penalty
                 ~fastq ~result_prefix ~run_with:machine ()
-              |> Samtools.sam_to_bam ~run_with:machine)
+              |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
       | Mosaik (what) ->
         perform_aligner_parallelization
           `Mosaik ~make_aligner:(fun pe -> Mosaik (pe)) what
@@ -760,7 +751,7 @@ module Compiler = struct
           ~make_workflow:(fun fastq ->
               Hisat.align ~reference_build ~processors
                 ~fastq ~result_prefix ~run_with:machine ()
-              |> Samtools.sam_to_bam ~run_with:machine
+              |> Samtools.sam_to_bam ~reference_build ~run_with:machine
             )
       | With_metadata (metadata_spec, p)  ->
         compile_aligner_step ~compiler p
@@ -786,11 +777,11 @@ module Compiler = struct
         if has_option compiler ((=) (`Map_reduce `Gatk_indel_realigner))
         then (
           Gatk.indel_realigner_map_reduce
-            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~processors ~run_with:machine ~compress:false
             ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
         ) else
           Gatk.indel_realigner
-            ~processors ~reference_build ~run_with:machine ~compress:false
+            ~processors ~run_with:machine ~compress:false
             ~configuration:n_gir_conf (KEDSL.Bam_workflow_list [normal; tumor])
       in
       begin match KEDSL.explode_bam_list_node bam_list_node with
@@ -843,14 +834,16 @@ module Compiler = struct
           work_dir
           // to_file_prefix (Somatic_variant_caller (som_vc, new_bam_pair)) in
         dbg "Result_Prefix: %S" result_prefix;
-        som_vc.Variant_caller.make_target ~reference_build ~processors
-          ~run_with:machine ~input:(Variant_caller.Somatic {normal; tumor}) ~result_prefix ()
+        som_vc.Variant_caller.make_target ~processors
+          ~run_with:machine ~input:(Variant_caller.Somatic {normal; tumor})
+          ~result_prefix ()
       | Germline_variant_caller (gvc, bam) ->
         let result_prefix = work_dir // to_file_prefix pipeline in
         dbg "Result_Prefix: %S" result_prefix;
         let input_bam = compile_aligner_step ~compiler bam in
-        gvc.Variant_caller.make_target ~processors ~reference_build
-          ~run_with:machine ~input:(Variant_caller.Germline input_bam) ~result_prefix ()
+        gvc.Variant_caller.make_target ~processors
+          ~run_with:machine ~input:(Variant_caller.Germline input_bam)
+          ~result_prefix ()
       | With_metadata (metadata_spec, p) ->
         compile_variant_caller_step ~compiler p
         |> apply_with_metadata ~metadata_spec
@@ -865,7 +858,7 @@ module Compiler = struct
       match pipeline with
       | Stringtie (configuration, bam) ->
         let bam = compile_aligner_step ~compiler bam in
-        Stringtie.run ~reference_build ~processors ~configuration
+        Stringtie.run ~processors ~configuration
           ~bam ~result_prefix ~run_with:machine ()
       | With_metadata (metadata_spec, p) ->
         compile_gtf_step ~compiler p

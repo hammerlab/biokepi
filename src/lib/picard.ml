@@ -103,13 +103,14 @@ module Mark_duplicates_settings = struct
       t.tmpdir
 
 end
+
 let mark_duplicates
     ?(settings = Mark_duplicates_settings.default)
-    ~(run_with: Machine.t) ~input_bam output_bam =
+    ~(run_with: Machine.t) ~input_bam output_bam_path =
   let open KEDSL in
   let picard_jar = Machine.get_tool run_with Tool.Default.picard in
   let metrics_path =
-    sprintf "%s.%s" (Filename.chop_suffix output_bam ".bam") ".metrics" in
+    sprintf "%s.%s" (Filename.chop_suffix output_bam_path ".bam") ".metrics" in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
   let program =
@@ -120,18 +121,18 @@ let mark_duplicates
                   INPUT=%s OUTPUT=%s METRICS_FILE=%s"
                java_call
                (Filename.quote sorted_bam#product#path)
-               (Filename.quote output_bam)
+               (Filename.quote output_bam_path)
                metrics_path) in
   let name =
     sprintf "picard-markdups-%s" Filename.(basename input_bam#product#path) in
   let make = Machine.run_big_program ~name run_with program in
-  let host = Machine.(as_host run_with) in
-  workflow_node (bam_file ~sorting:`Coordinate output_bam ~host)
+  let product = transform_bam  input_bam#product output_bam_path in
+  workflow_node product
     ~name ~make
     ~edges:[
       depends_on sorted_bam;
       depends_on Tool.(ensure picard_jar);
-      on_failure_activate (Remove.file ~run_with output_bam);
+      on_failure_activate (Remove.file ~run_with output_bam_path);
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
 

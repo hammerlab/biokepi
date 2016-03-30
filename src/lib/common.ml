@@ -94,18 +94,33 @@ module KEDSL = struct
 
   type bam_file = <
     is_done: Ketrew_pure.Target.Condition.t option;
+    host: Host.t;
     path : string;
     sorting: [ `Coordinate | `Read_name ] option;
-    content_type: [ `DNA | `RNA ];
+    reference_build: string;
   >
-  let bam_file ?host ?sorting ?(contains=`DNA) path : bam_file =
+  let bam_file ~host ?sorting ~reference_build path : bam_file =
     object
-      val file = single_file ?host path
+      val file = single_file ~host path
+      method host = host
       method path = file#path
       method is_done = file#is_done
       method sorting = sorting
-      method content_type = contains
+      method reference_build = reference_build
     end
+
+  (** Make a new bam sharing most of the metadata. *)
+  let transform_bam ?change_sorting (bam : bam_file) ~path : bam_file =
+    bam_file
+      ~host:bam#host
+      ?sorting:(
+        match change_sorting with
+        | Some new_sorting -> Some new_sorting
+        | None -> bam#sorting
+      )
+      ~reference_build:bam#reference_build
+      path
+
 
   type bam_list = <
     is_done:  Ketrew_pure.Target.Condition.t option;
