@@ -17,3 +17,11 @@
 _oredoc/
 biokepi.docdir
 /_apidoc/*
+.omakedb
+.omakedb.lock
+OMakeroot.omc
+biokepi-demo
+biokepi-hla-typer
+biokepi-test-all-downloads
+biokepi-tests
+tools/OMakeLibrary.omc

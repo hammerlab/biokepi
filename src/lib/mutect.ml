@@ -11,10 +11,11 @@ module Configuration = struct
     parameters: (string * string) list;
   }
 
-  let to_json {name; with_cosmic; parameters}: Yojson.Basic.json =
+  let to_json {name; with_cosmic; with_dbsnp; parameters}: Yojson.Basic.json =
     `Assoc [
       "name", `String name;
       "with-cosmic", `Bool with_cosmic;
+      "with-dbsnp", `Bool with_dbsnp;
       "parameters",
       `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
     ]
