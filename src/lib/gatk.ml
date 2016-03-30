@@ -471,7 +471,7 @@ let haplotype_caller
     let run_gatk_haplotype_caller =
       let name = sprintf "%s" (Filename.basename output_vcf) in
       let make =
-        Machine.run_program run_with ~name
+        Machine.run_big_program run_with ~name
           Program.(
             Tool.(init gatk)
             && shf "mkdir -p %s" run_path
