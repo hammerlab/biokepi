@@ -2,8 +2,27 @@ open Common
 open Run_environment
 open Workflow_utilities
 
+module Configuration = struct
+  type t = {
+    name : string;
+    version : [`V_0_1_6_beta | `V_2_0_2_beta];
+  }
+  let to_json {name; version}: Yojson.Basic.json =
+    `Assoc [
+      "name", `String name;
+      "version", 
+        match version with 
+        |`V_0_1_6_beta -> `String "V_0_1_6_beta"
+        |`V_2_0_2_beta -> `String "V_2_0_2_beta"
+      ;
+    ]
+  let default = {name = "default"; version = `V_0_1_6_beta}
+end
+
 let index
   ~reference_build
+  ~index_prefix
+  ~configuration
   ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_fasta =
@@ -36,7 +55,8 @@ let index
             Program.(
               Tool.(init hisat_tool)
               && shf "mkdir %s" result_dir 
-              && shf "hisat-build %s %s"
+              && shf "%s %s %s"
+                build_binary
                 reference_fasta#product#path
                 index_prefix
           ))
@@ -44,6 +64,7 @@ let index
 let align 
     ~reference_build
     ~processors
+    ~configuration
     ~fastq
     ~(result_prefix:string)
     ~(run_with : Machine.t)
@@ -53,20 +74,27 @@ let align
     Machine.get_reference_genome run_with reference_build
     |> Reference_genome.fasta in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
-  let index_dir = sprintf "%s/hisat-index/" reference_dir in
-  let index_prefix = index_dir // "hisat-index" in
+  let version = configuration.Configuration.version in
+  let hisat_binary = 
+    match version with
+      | `V_0_1_6_beta -> "hisat"
+      | `V_2_0_2_beta -> "hisat2"
+  in
+  let index_dir = sprintf "%s/%s-index/" reference_dir hisat_binary in
+  let index_prefix = index_dir // (sprintf  "%s-index" hisat_binary) in
   let in_work_dir =
     Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
-  let hisat_tool = Machine.get_tool run_with Tool.Default.hisat in
-  let hisat_index = index ~reference_build ~run_with in
+  let hisat_tool = Machine.get_tool run_with (`Hisat version) in
+  let hisat_index = index ~index_prefix ~reference_build ~run_with ~configuration in
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
-  let name = sprintf "hisat-rna-align-%s" (Filename.basename r1_path) in
+  let name = sprintf "%s-rna-align-%s" hisat_binary (Filename.basename r1_path) in
   let hisat_base_command = sprintf 
-      "hisat \
+      "%s \
        -p %d \
        -x %s \
        -S %s"
+      hisat_binary
       processors
       (Filename.quote index_prefix)
       (Filename.quote result)
