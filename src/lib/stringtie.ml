@@ -16,7 +16,6 @@ module Configuration = struct
 end
 
 let run
-    ~reference_build
     ~configuration
     ~(run_with:Machine.t)
     ~processors
@@ -27,14 +26,13 @@ let run
   let result_file suffix = result_prefix ^ suffix in
   let output_dir = result_file "-stringtie_output" in
   let output_file_path = output_dir // "output.gtf" in
-  let reference_fasta =
-    Machine.get_reference_genome run_with reference_build
-    |> Reference_genome.fasta in
+  let reference_genome =
+    Machine.get_reference_genome run_with bam#product#reference_build in
+  let reference_fasta = Reference_genome.fasta reference_genome in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
   let reference_annotations =
-    let genome = Machine.get_reference_genome run_with reference_build in
-    let gtf = Reference_genome.gtf genome in
+    let gtf = Reference_genome.gtf reference_genome in
     let use_the_gtf = configuration.Configuration.use_reference_gtf in
     match use_the_gtf, gtf with
     | true, Some some -> Some some
@@ -43,7 +41,7 @@ let run
       failwithf "Stringtie: use_reference_gtf is `true` but the genome %s \
                  does not provide one (use another genome or allow this to run \
                  without GTF by giving another Configuration.t)"
-        (Reference_genome.name genome)
+        (Reference_genome.name reference_genome)
   in
   let stringtie_tool = Machine.get_tool run_with Tool.Default.stringtie in
   let make =

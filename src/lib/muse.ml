@@ -32,10 +32,11 @@ module Configuration = struct
 end
 
 let run
-    ~reference_build ~configuration
+    ~configuration
     ~(run_with:Machine.t) ~normal ~tumor ~result_prefix ?(more_edges = []) how =
   let open KEDSL in
-  let reference = Machine.get_reference_genome run_with reference_build in
+  let reference =
+    Machine.get_reference_genome run_with normal#product#reference_build in
   let muse_tool = Machine.get_tool run_with Tool.Default.muse in
   let muse_call_on_region region =
     let result_file suffix =

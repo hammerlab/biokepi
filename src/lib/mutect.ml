@@ -34,11 +34,12 @@ module Configuration = struct
 
 end
 
-let run ~reference_build
+let run
     ~(run_with:Machine.t) ~normal ~tumor ~result_prefix
     ?(more_edges = []) ~configuration how =
   let open KEDSL in
-  let reference = Machine.get_reference_genome run_with reference_build in
+  let reference =
+    Machine.get_reference_genome run_with normal#product#reference_build in
   let run_on_region ~add_edges region =
     let result_file suffix =
       let region_name = Region.to_filename region in

@@ -79,9 +79,9 @@ let align
   let base_star_target ~star_command = 
     workflow_node ~name
       (bam_file 
-        ?sorting:(Some `Coordinate)
-        ?contains:(Some `RNA)
+        ~sorting:`Coordinate
         ~host:(Machine.(as_host run_with)) 
+        ~reference_build
         result)
       ~edges:[
             on_failure_activate (Remove.file ~run_with result);
