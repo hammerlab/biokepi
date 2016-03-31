@@ -158,7 +158,7 @@ module Construct = struct
 
   let star fastq = Star fastq
 
-  let hisat ?(configuration = Hisat.Configuration.default) fastq = Hisat(configuration, fastq)
+  let hisat ?(configuration = Hisat.Configuration.default_v1) fastq = Hisat(configuration, fastq)
 
   let stringtie ?(configuration = Stringtie.Configuration.default) bam =
     Stringtie (configuration, bam)
