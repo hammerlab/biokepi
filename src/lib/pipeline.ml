@@ -815,10 +815,11 @@ module Compiler = struct
       let tumor = compile_aligner_step ~compiler tumor_t in
       (`Normal normal, `Tumor tumor, `Pipeline final_pipeline)
     | With_metadata (metadata_spec, p) ->
-      let `Normal n, `Tumor t, `Pipeline p = compile_bam_pair ~compiler p in
+      let `Normal normal, `Tumor tumor, `Pipeline p =
+        compile_bam_pair ~compiler p in
 
-      (`Normal (apply_with_metadata ~metadata_spec n),
-       `Tumor (apply_with_metadata ~metadata_spec n),
+      (`Normal (apply_with_metadata ~metadata_spec normal),
+       `Tumor (apply_with_metadata ~metadata_spec tumor),
        `Pipeline p)
     end
 
