@@ -55,7 +55,7 @@ module Tool = struct
     let star = custom "star" ~version:"2.4.1d"
     let stringtie = custom "stringtie" ~version:"1.2.2"
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
-    let hisat = `Hisat `V_2_0_2_beta
+    let hisat = `Hisat `V_0_1_6_beta
     let mosaik = custom "mosaik" ~version:"2.2.3"
     let kallisto = custom "kallisto" ~version:"0.42.3"
   end
