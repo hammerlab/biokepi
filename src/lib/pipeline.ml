@@ -85,7 +85,7 @@ type _ t =
   | Gunzip_concat: fastq_gz t list -> fastq t
   | Concat_text: fastq t list -> fastq t
   | Star: fastq_sample t -> bam t
-  | Hisat: fastq_sample t -> bam t
+  | Hisat: Hisat.Configuration.t * fastq_sample t -> bam t
   | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
   | Bwa: bwa_params * fastq_sample t -> bam t
   | Bwa_mem: bwa_params * fastq_sample t -> bam t
@@ -158,7 +158,7 @@ module Construct = struct
 
   let star fastq = Star fastq
 
-  let hisat fastq = Hisat fastq
+  let hisat ?(configuration = Hisat.Configuration.default_v1) fastq = Hisat(configuration, fastq)
 
   let stringtie ?(configuration = Stringtie.Configuration.default) bam =
     Stringtie (configuration, bam)
@@ -371,10 +371,10 @@ let rec to_file_prefix:
         (to_file_prefix sample) gap_open_penalty gap_extension_penalty
     | Star (sample) ->
       sprintf "%s-star-aligned" (to_file_prefix sample)
-    | Hisat (sample) ->
-      sprintf "%s-hisat-aligned" (to_file_prefix sample)
+    | Hisat (conf, sample) ->
+      sprintf "%s-hisat-%s-aligned" (to_file_prefix sample) (conf.Hisat.Configuration.name)
     | Stringtie (conf, sample) ->
-      sprintf "%s-%sstringtie"
+      sprintf "%s-%s-stringtie"
         (to_file_prefix sample)
         (conf.Stringtie.Configuration.name)
     | Mosaik (sample) ->
@@ -445,9 +445,12 @@ let rec to_json: type a. a t -> json =
     | Star (input) ->
       let input_json = to_json input in
       call "STAR" [input_json]
-    | Hisat (input) ->
+    | Hisat (conf, input) ->
       let input_json = to_json input in
-      call "HISAT" [input_json]
+      call "HISAT" [
+        `Assoc ["configuration", Hisat.Configuration.to_json conf];
+        input_json;
+      ]
     | Stringtie (conf, input) ->
       let input_json = to_json input in
       call "Stringtie" [
@@ -745,11 +748,11 @@ module Compiler = struct
           ~make_workflow:(fun fastq ->
               Star.align ~reference_build ~processors
                 ~fastq ~result_prefix ~run_with:machine ())
-      | Hisat (what) ->
+      | Hisat (configuration, what) ->
         perform_aligner_parallelization
-          `Hisat ~make_aligner:(fun pe -> Hisat (pe)) what
+          `Hisat ~make_aligner:(fun pe -> Hisat (configuration, pe)) what
           ~make_workflow:(fun fastq ->
-              Hisat.align ~reference_build ~processors
+              Hisat.align ~configuration ~reference_build ~processors
                 ~fastq ~result_prefix ~run_with:machine ()
               |> Samtools.sam_to_bam ~reference_build ~run_with:machine
             )
