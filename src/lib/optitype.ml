@@ -2,6 +2,12 @@
 open Common
 open Run_environment
 
+(**
+   Run OptiType in [`RNA] or [`DNA] mode.
+
+   Please provide a fresh [work_dir] directory, it will be deleted in case of
+   failure.
+*)
 let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name nt =
   let tool = Machine.get_tool run_with (`Biopamed "optitype") in
   let r1pt = Filename.quote r1#product#path in
@@ -37,5 +43,7 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name nt =
       KEDSL.depends_on (Tool.ensure tool);
       KEDSL.depends_on r1;
       KEDSL.depends_on r2;
+      KEDSL.on_failure_activate
+        (Workflow_utilities.Remove.directory ~run_with work_dir);
     ]
 
