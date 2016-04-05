@@ -8,7 +8,7 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name nt =
   let r2pt = Filename.quote r2#product#path in
   let name = sprintf "optitype-%s" run_name in
   let make =
-    Machine.run_program run_with ~name KEDSL.Program.(
+    Machine.run_big_program run_with ~name KEDSL.Program.(
         Tool.init tool
         && exec ["mkdir"; "-p"; work_dir]
         && exec ["cd"; work_dir]
