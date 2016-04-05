@@ -112,7 +112,12 @@ let configured ?host ~install_path () =
     com ~install_path "create --name %s --file %s/%s" env_name
       install_path config
   in
-  let make = daemonize ?host (Program.sh conf) in
+  let make =
+    daemonize ?host
+      Program.(sh conf
+               && shf "source %s %s" (activate ~install_path) env_name
+               && sh "pip install -U pyomo")
+  in
   let edges =
     [ depends_on (installed ?host ~install_path)
     ; depends_on (cfg_exists ?host ~install_path)
