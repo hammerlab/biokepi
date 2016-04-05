@@ -24,7 +24,7 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name nt =
         && (* adjust config razers3 path *)
         sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
         &&
-        shf "OptiTypePipeline -i %s %s %s -o %s "
+        shf "OptiTypePipeline --verbose --input %s %s %s -o %s "
           r1pt r2pt (match nt with | `DNA -> "--dna" | `RNA -> "--rna") run_name)
   in
   let product =
