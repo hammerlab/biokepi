@@ -168,6 +168,8 @@ let default ?host ~install_path () =
       ~edges:need_conda (* opam handles razers3 via seqn. *)
       ~init_environment:KEDSL.Program.(
           Conda.init_biokepi_env ~install_path
-          && sh "export OPTITYPE_DATA=$(opam config var lib)"
+          && shf "export OPAMROOT=%s" (Opam.root ~install_path)
+          && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
+            (Opam.bin ~install_path)
         );
   ]

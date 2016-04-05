@@ -12,9 +12,9 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name nt =
         Tool.init tool
         && exec ["mkdir"; "-p"; work_dir]
         && exec ["cd"; work_dir]
-        && sh "cp -r ${OPTITYPE_DATA}/optitype/data ." (* HLA reference data *)
+        && sh "cp -r ${OPTITYPE_DATA}/data ." (* HLA reference data *)
         && (* config example *)
-        sh "cp -r ${OPTITYPE_DATA}/optitype/config.ini.example config.ini" 
+        sh "cp -r ${OPTITYPE_DATA}/config.ini.example config.ini" 
         && (* adjust config razers3 path *)
         sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
         &&

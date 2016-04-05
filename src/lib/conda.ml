@@ -118,10 +118,10 @@ let configured ?host ~install_path () =
                && shf "source %s %s" (activate ~install_path) env_name
                && sh "pip install -U pyomo")
   in
-  let edges =
-    [ depends_on (installed ?host ~install_path)
-    ; depends_on (cfg_exists ?host ~install_path)
-    ] in
+  let edges = [
+      depends_on (installed ?host ~install_path);
+      depends_on (cfg_exists ?host ~install_path);
+  ] in
   let biokepi_env =
     Command.shell ?host (com ~install_path "env list | grep %s" env_name) in
   let product =
