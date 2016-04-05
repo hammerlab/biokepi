@@ -159,12 +159,15 @@ let default ?host ~install_path () =
     [ K.depends_on (Conda.configured ?host ~install_path ())]
   in
   Tool.Kit.create [
-    mk (Library "PICARD_JAR") ~package:"picard"   ~witness:"picard.jar";
-    mk Application            ~package:"bowtie"   ~witness:"bowtie"       ~test:version;
-    mk Application            ~package:"seq2HLA"  ~witness:"seq2HLA"      ~test:version
+    mk (Library "PICARD_JAR") ~package:"picard" ~witness:"picard.jar";
+    mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
+    mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version
       ~edges:need_conda (* opam handles bowtie dep. *)
       ~init_environment:(Conda.init_biokepi_env ~install_path);
-    mk Application            ~package:"optitype" ~witness:"OptiTypePipeline"
+    mk Application ~package:"optitype" ~witness:"OptiTypePipeline"
       ~edges:need_conda (* opam handles razers3 via seqn. *)
-      ~init_environment:(Conda.init_biokepi_env ~install_path);
+      ~init_environment:KEDSL.Program.(
+          Conda.init_biokepi_env ~install_path
+          && sh "export OPTITYPE_DATA=$(opam config var lib)"
+        );
   ]
