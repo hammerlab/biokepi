@@ -46,6 +46,7 @@ let biokepi_conda_config =
 # platform: linux-64
 @EXPLICIT
 https://repo.continuum.io/pkgs/free/linux-64/anaconda-client-1.2.2-py27_0.tar.bz2
+https://conda.anaconda.org/bioconda/linux-64/bcftools-1.3-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/biopython-1.66-np110py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/cairo-1.12.18-6.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/clyent-1.2.0-py27_0.tar.bz2
@@ -54,6 +55,8 @@ https://repo.continuum.io/pkgs/free/linux-64/distribute-0.6.45-py27_1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/fontconfig-2.11.1-5.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/freetype-2.5.5-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/hdf5-1.8.15.1-2.tar.bz2
+https://conda.anaconda.org/bioconda/linux-64/htslib-1.3-0.tar.bz2
+https://conda.anaconda.org/r/linux-64/libgcc-4.8.5-1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/libpng-1.6.17-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/libxml2-2.9.2-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/matplotlib-1.5.1-np110py27_0.tar.bz2
@@ -69,7 +72,7 @@ https://repo.continuum.io/pkgs/free/linux-64/pycairo-1.10.0-py27_0.tar.bz2
 https://conda.anaconda.org/trung/linux-64/pyinstaller-3.1-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/pyparsing-2.0.3-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/pyqt-4.11.4-py27_1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pysam-0.6-py27_0.tar.bz2
+https://conda.anaconda.org/bioconda/linux-64/pysam-0.9.0-py27_2.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/pytables-3.2.2-np110py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/python-2.7.11-0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/python-dateutil-2.4.2-py27_0.tar.bz2
@@ -77,6 +80,7 @@ https://repo.continuum.io/pkgs/free/linux-64/pytz-2015.7-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/pyyaml-3.11-py27_1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/qt-4.8.7-1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/requests-2.9.1-py27_0.tar.bz2
+https://conda.anaconda.org/bioconda/linux-64/samtools-1.3-1.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/setuptools-20.1.1-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/sip-4.16.9-py27_0.tar.bz2
 https://repo.continuum.io/pkgs/free/linux-64/six-1.10.0-py27_0.tar.bz2
@@ -112,11 +116,16 @@ let configured ?host ~install_path () =
     com ~install_path "create --name %s --file %s/%s" env_name
       install_path config
   in
-  let make = daemonize ?host (Program.sh conf) in
-  let edges =
-    [ depends_on (installed ?host ~install_path)
-    ; depends_on (cfg_exists ?host ~install_path)
-    ] in
+  let make =
+    daemonize ?host
+      Program.(sh conf
+               && shf "source %s %s" (activate ~install_path) env_name
+               && sh "pip install -U pyomo")
+  in
+  let edges = [
+      depends_on (installed ?host ~install_path);
+      depends_on (cfg_exists ?host ~install_path);
+  ] in
   let biokepi_env =
     Command.shell ?host (com ~install_path "env list | grep %s" env_name) in
   let product =
