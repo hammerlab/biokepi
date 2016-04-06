@@ -1,6 +1,6 @@
+open Biokepi_run_environment
 open Common
 
-open Run_environment
 
 
 open Workflow_utilities.Download (* All the wget* functions *)
@@ -30,7 +30,8 @@ let of_specification
       let vcfs =
         List.map ~f:(fun (n, loc) -> compile_location n loc) l
       in
-      let vcftools = Tool.Kit.get_exn toolkit Tool.Default.vcftools in
+      let vcftools =
+        Machine.Tool.Kit.get_exn toolkit Machine.Tool.Default.vcftools in
       let concated =
         let tmp_vcf =
           dest_file (Filename.chop_extension filename ^ "-cat.vcf") in
@@ -56,33 +57,33 @@ let of_specification
     ?cdna:(compile_location_opt "cdns-all.fa" cdna)
 
 type pull_function =
-  toolkit:Run_environment.Tool.Kit.t ->
+  toolkit:Machine.Tool.Kit.t ->
   host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Make_fun.t ->
+  run_program:Machine.Make_fun.t ->
   destination_path:string -> Reference_genome.t
 
 
-let pull_b37 ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_b37 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b37
 
-let pull_b37decoy ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_b37decoy ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b37decoy
 
-let pull_b38 ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_b38 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b38
 
-let pull_hg19 ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_hg19 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.hg19
 
-let pull_hg18 ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_hg18 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.hg18
 
-let pull_mm10 ~toolkit ~host ~(run_program : Make_fun.t) ~destination_path =
+let pull_mm10 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.mm10
 

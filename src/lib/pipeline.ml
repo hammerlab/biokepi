@@ -15,8 +15,9 @@
 (**************************************************************************)
 
 
+open Biokepi_run_environment
 open Common
-open Run_environment
+
 
 module File = struct
   type t = KEDSL.file_workflow
@@ -59,7 +60,7 @@ module Variant_caller = struct
     configuration_json: json;
     configuration_name: string;
     make_target:
-      run_with:Run_environment.Machine.t ->
+      run_with: Machine.t ->
       input: 'a input ->
       result_prefix: string ->
       processors: int ->
@@ -319,7 +320,7 @@ module Construct = struct
 
   let muse ~configuration bam_pair =
     let make_target
-        ~(run_with:Machine.t) ~input ~result_prefix ~processors
+        ~(run_with: Machine.t) ~input ~result_prefix ~processors
         ?more_edges () =
       match input with | Variant_caller.Somatic {normal; tumor} ->
       Muse.run ~configuration ?more_edges

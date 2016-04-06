@@ -1,7 +1,7 @@
 
+open Biokepi_run_environment
 open Biokepi
 open Common
-module Ru = Run_environment
 
 let construct_pipeline dataset ~r1fn ~r2fn =
   let wf1 = KEDSL.(workflow_node (single_file r1fn) ~name:"Read1") in

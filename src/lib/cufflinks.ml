@@ -1,6 +1,6 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
 
 let run ~reference_build
     ~(run_with:Machine.t)
@@ -18,13 +18,14 @@ let run ~reference_build
   let reference_annotations =
     Machine.get_reference_genome run_with reference_build
     |> Reference_genome.gtf_exn in
-  let cufflinks_tool = Machine.get_tool run_with Tool.Default.cufflinks in
+  let cufflinks_tool =
+    Machine.get_tool run_with Machine.Tool.Default.cufflinks in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in
   let make =
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.init cufflinks_tool
+        Machine.Tool.init cufflinks_tool
         && shf "mkdir -p %s" output_dir
         && shf "cufflinks \
                 -p %d \
@@ -44,6 +45,6 @@ let run ~reference_build
       depends_on bam;
       depends_on reference_fasta;
       depends_on reference_annotations;
-      depends_on (Tool.ensure cufflinks_tool);
+      depends_on (Machine.Tool.ensure cufflinks_tool);
       depends_on (Samtools.index_to_bai ~run_with sorted_bam);
     ]

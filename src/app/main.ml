@@ -1,5 +1,6 @@
 
-open Biokepi.Common
+open Biokepi_run_environment.Common
+
 
 let say fmt = ksprintf (printf "%s\n%!") fmt
 
@@ -99,7 +100,7 @@ let dump_pipeline ?(format = `Json) =
          |> Yojson.Basic.pretty_to_string ~std:true)
     end
 
-let environmental_box () : Biokepi.Run_environment.Machine.t =
+let environmental_box () : Biokepi_run_environment.Machine.t =
   let box_uri = get_env "BIOKEPI_SSH_BOX_URI" in
   let jar_location name () =
     begin match ksprintf get_opt "BIOKEPI_%s_JAR_SCP" name with
@@ -141,7 +142,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
   let dataset, pipelines =
     with_environmental_dataset pipeline_example in
   let work_dir =
-    Biokepi.Run_environment.Machine.work_dir machine
+    Biokepi_run_environment.Machine.work_dir machine
     // sprintf "on-%s" dataset in
   let compiler = 
     Biokepi.Pipeline.Compiler.create

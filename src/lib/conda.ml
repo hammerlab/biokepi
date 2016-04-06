@@ -6,8 +6,8 @@
   on Python.
 *)
 
+open Biokepi_run_environment
 open Common
-open Run_environment
 
 let rm_path = Workflow_utilities.Remove.path_on_host
 

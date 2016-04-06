@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 
 module Configuration = struct
@@ -146,7 +147,7 @@ let indel_realigner :
   ?on_region: Region.t ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
   processors:int ->
-  run_with:Run_environment.Machine.t ->
+  run_with:Machine.t ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
@@ -196,7 +197,7 @@ let indel_realigner :
         (List.length more_input_sorted_bams + 1)
         (Filename.basename input_sorted_bam_1#product#path)
     in
-    let gatk = Machine.get_tool run_with Tool.Default.gatk in
+    let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
     let reference_genome =
       let reference_build = input_sorted_bam_1#product#reference_build in
       Machine.get_reference_genome run_with reference_build in
@@ -260,7 +261,7 @@ let indel_realigner :
       let intervals_option = Region.to_gatk_option on_region in
       Machine.run_big_program run_with ~name ~processors
         Program.(
-          Tool.(init gatk)
+          Machine.Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
           && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s %s"
             intervals_option
@@ -274,7 +275,7 @@ let indel_realigner :
       let sequence_dict = (* implicit dependency *)
         Picard.create_dict ~run_with fasta in
       [
-        depends_on Tool.(ensure gatk);
+        depends_on Machine.Tool.(ensure gatk);
         depends_on fasta;
         (* RealignerTargetCreator wants the `.fai`: *)
         depends_on (Samtools.faidx ~run_with fasta);
@@ -311,7 +312,7 @@ let indel_realigner_map_reduce :
   ?compress:bool ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
   processors:int ->
-  run_with:Run_environment.Machine.t ->
+  run_with:Machine.t ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
@@ -408,7 +409,7 @@ let base_quality_score_recalibrator
     ~input_bam ~output_bam =
   let open KEDSL in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
-  let gatk = Machine.get_tool run_with Tool.Default.gatk in
+  let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
   let reference_genome =
     Machine.get_reference_genome run_with input_bam#product#reference_build in
   let fasta = Reference_genome.fasta reference_genome in
@@ -423,7 +424,7 @@ let base_quality_score_recalibrator
   let make =
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.(init gatk)
+        Machine.Tool.(init gatk)
         && call_gatk ~analysis:"BaseRecalibrator" ([
           "-nct"; Int.to_string processors;
           "-I"; sorted_bam#product#path;
@@ -442,7 +443,8 @@ let base_quality_score_recalibrator
   workflow_node ~name (transform_bam sorted_bam#product ~path:output_bam)
     ~make
     ~edges:[
-      depends_on Tool.(ensure gatk); depends_on fasta; depends_on db_snp;
+      depends_on Machine.Tool.(ensure gatk);
+      depends_on fasta; depends_on db_snp;
       depends_on sorted_bam;
       depends_on (Samtools.index_to_bai ~run_with sorted_bam);
       on_failure_activate (Remove.file ~run_with output_bam);
@@ -461,7 +463,7 @@ let haplotype_caller
       let region_name = Region.to_filename region in
       sprintf "%s-%s%s" result_prefix region_name suffix in
     let output_vcf = result_file "-germline.vcf" in
-    let gatk = Machine.get_tool run_with Tool.Default.gatk in
+    let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
     let run_path = Filename.dirname output_vcf in
     let reference_fasta = Reference_genome.fasta reference in
     let reference_dot_fai = Samtools.faidx ~run_with reference_fasta in
@@ -474,7 +476,7 @@ let haplotype_caller
       let make =
         Machine.run_big_program run_with ~name
           Program.(
-            Tool.(init gatk)
+            Machine.Tool.(init gatk)
             && shf "mkdir -p %s" run_path
             && shf "cd %s" run_path
             && call_gatk ~region ~analysis:"HaplotypeCaller" [
@@ -490,7 +492,7 @@ let haplotype_caller
         (single_file output_vcf ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
         ~edges:(add_edges @ [
-            depends_on Tool.(ensure gatk);
+            depends_on Machine.Tool.(ensure gatk);
             depends_on sorted_bam;
             depends_on reference_fasta;
             depends_on dbsnp;
@@ -534,7 +536,7 @@ let mutect2
       let region_name = Region.to_filename region in
       sprintf "%s-%s%s" result_prefix region_name suffix in
     let output_vcf = result_file "-mutect2.vcf" in
-    let gatk = Machine.get_tool run_with Tool.Default.gatk in
+    let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
     let run_path = Filename.dirname output_vcf in
     let reference_fasta = Reference_genome.fasta reference in
     let reference_dot_fai = Samtools.faidx ~run_with reference_fasta in
@@ -552,7 +554,7 @@ let mutect2
       let make =
         Machine.run_program run_with ~name
           Program.(
-            Tool.(init gatk)
+            Machine.Tool.(init gatk)
             && shf "mkdir -p %s" run_path
             && shf "cd %s" run_path
             && call_gatk ~region ~analysis:"MuTect2"
@@ -567,7 +569,7 @@ let mutect2
         (single_file output_vcf ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
         ~edges:(add_edges @ confg_edges @ [
-            depends_on Tool.(ensure gatk);
+            depends_on Machine.Tool.(ensure gatk);
             depends_on sorted_normal_bam;
             depends_on sorted_tumor_bam;
             depends_on reference_fasta;

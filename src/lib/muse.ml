@@ -1,8 +1,9 @@
 (** Workflow-nodes to run {{:http://bioinformatics.mdanderson.org/main/MuSE}MuSE}. *)
 
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
 
@@ -37,7 +38,7 @@ let run
   let open KEDSL in
   let reference =
     Machine.get_reference_genome run_with normal#product#reference_build in
-  let muse_tool = Machine.get_tool run_with Tool.Default.muse in
+  let muse_tool = Machine.get_tool run_with Machine.Tool.Default.muse in
   let muse_call_on_region region =
     let result_file suffix =
       let region_name = Region.to_filename region in
@@ -59,7 +60,7 @@ let run
       let name = sprintf "muse-call-%s" (Filename.basename output_file) in
       let make =
         Machine.run_program run_with ~name Program.(
-            Tool.(init muse_tool)
+            Machine.Tool.(init muse_tool)
             && shf "mkdir -p %s" run_path
             && shf "$muse_bin call -f %s \
                     %s \
@@ -79,7 +80,7 @@ let run
         (single_file output_file ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller; "muse"]
         ~edges:[
-          depends_on Tool.(ensure muse_tool);
+          depends_on Machine.Tool.(ensure muse_tool);
           depends_on sorted_normal;
           depends_on sorted_tumor;
           depends_on fasta;
@@ -99,7 +100,7 @@ let run
     let name = sprintf "muse-sump-%s" (Filename.basename vcf_output) in
     let make =
       Machine.run_program run_with ~name Program.(
-          Tool.(init muse_tool)
+          Machine.Tool.(init muse_tool)
           && shf "$muse_bin sump -I %s \
                   %s \
                   -O %s \
@@ -115,7 +116,7 @@ let run
       (single_file vcf_output ~host:Machine.(as_host run_with))
       ~tags:[Target_tags.variant_caller; "muse"]
       ~edges:(more_edges @ [ (* muse_sump is the last step in every case *)
-        depends_on Tool.(ensure muse_tool);
+        depends_on Machine.Tool.(ensure muse_tool);
         depends_on call_file;
         depends_on bgzipped_dbsnp;
         depends_on
@@ -131,7 +132,7 @@ let run
       List.map (Reference_genome.major_contigs reference) ~f:muse_call_on_region
     in
     let concatenated =
-      Cat.concat ~run_with call_files
+      Workflow_utilities.Cat.concat ~run_with call_files
         ~result_path:(result_prefix ^ "-concat.txt")
     in
     muse_sump concatenated

@@ -1,8 +1,7 @@
 (** Workflow-nodes to run {{:https://pachterlab.github.io/kallisto/about.html}kallisto}. *)
 
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
 
 (** Create a kallisto specific index of the transcriptome (cDNA) *)
 let index
@@ -12,7 +11,7 @@ let index
   let reference_transcriptome =
     Machine.get_reference_genome run_with reference_build
       |> Reference_genome.cdna_exn in
-  let kallisto_tool = Machine.get_tool run_with Tool.Default.kallisto in
+  let kallisto_tool = Machine.get_tool run_with Machine.Tool.Default.kallisto in
   let name =
     sprintf "kallisto-index-%s" (Filename.basename reference_transcriptome#product#path) in
   let reference_dir = (Filename.dirname reference_transcriptome#product#path) in
@@ -20,13 +19,13 @@ let index
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) result)
     ~edges:[
-      on_failure_activate (Remove.file ~run_with result);
+      on_failure_activate (Workflow_utilities.Remove.file ~run_with result);
       depends_on reference_transcriptome;
-      depends_on Tool.(ensure kallisto_tool);
+      depends_on Machine.Tool.(ensure kallisto_tool);
     ]
     ~make:(Machine.run_big_program run_with ~name
             Program.(
-              Tool.(init kallisto_tool)
+              Machine.Tool.(init kallisto_tool)
               && shf "kallisto index -i %s %s"
                 result
                 reference_transcriptome#product#path
@@ -47,7 +46,7 @@ let run
   let output_dir = result_file "-kallisto" in
   let abundance_file = output_dir // "abundance.tsv" in
   let kallisto_index = index ~reference_build ~run_with in
-  let kallisto_tool = Machine.get_tool run_with Tool.Default.kallisto in
+  let kallisto_tool = Machine.get_tool run_with Machine.Tool.Default.kallisto in
   let r1_path, r2_path_opt = fastq#product#paths in
   let kallisto_quant_base_cmd = 
       sprintf 
@@ -71,14 +70,15 @@ let run
   let make =
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.init kallisto_tool
+        Machine.Tool.init kallisto_tool
         && sh kallisto_quant
       )
   in
   workflow_node ~name ~make
     (single_file abundance_file ~host:(Machine.as_host run_with))
     ~edges:[
-      on_failure_activate (Remove.directory ~run_with output_dir);
+      on_failure_activate
+        (Workflow_utilities.Remove.directory ~run_with output_dir);
       depends_on kallisto_index;
-      depends_on (Tool.ensure kallisto_tool);
+      depends_on (Machine.Tool.ensure kallisto_tool);
     ]

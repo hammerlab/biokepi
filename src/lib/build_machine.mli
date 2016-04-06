@@ -1,5 +1,9 @@
 (** Simplified creation of {!Run_environment.Machine.t} values *)
 
+open Biokepi_run_environment
+open Common
+
+
 (** Build a {!Run_environment.Machine.t} with convenient default values.
 
     The [string] argument is a URI like the one expected 
@@ -18,8 +22,8 @@
 val create :
   ?gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
-  ?run_program:Run_environment.Make_fun.t ->
-  ?toolkit:Run_environment.Tool.Kit.t ->
+  ?run_program:Machine.Make_fun.t ->
+  ?toolkit:Machine.Tool.Kit.t ->
   ?b37:Reference_genome.t ->
   string ->
-  Run_environment.Machine.t
+  Machine.t

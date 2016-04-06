@@ -1,9 +1,10 @@
 (** Download reference-genormes (& associated data) with Ketrew *)
+open Biokepi_run_environment
 
 type pull_function =
-  toolkit:Run_environment.Tool.Kit.t ->
+  toolkit:Machine.Tool.Kit.t ->
   host:Common.KEDSL.Host.t ->
-  run_program:Run_environment.Make_fun.t ->
+  run_program:Machine.Make_fun.t ->
   destination_path:string -> Reference_genome.t
 
 val pull_b37 : pull_function

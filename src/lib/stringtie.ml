@@ -1,6 +1,8 @@
+
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
   type t = {
@@ -43,14 +45,15 @@ let run
                  without GTF by giving another Configuration.t)"
         (Reference_genome.name reference_genome)
   in
-  let stringtie_tool = Machine.get_tool run_with Tool.Default.stringtie in
+  let stringtie_tool =
+    Machine.get_tool run_with Machine.Tool.Default.stringtie in
   let make =
     let reference_annotations_option =
       Option.value_map ~default:"" reference_annotations
         ~f:(fun o -> sprintf "-G %s" Filename.(quote o#product#path)) in
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.init stringtie_tool
+        Machine.Tool.init stringtie_tool
         && shf "mkdir -p %s" output_dir
         && shf "stringtie %s \
                 -p %d \
@@ -69,7 +72,7 @@ let run
     @ [
       depends_on sorted_bam;
       depends_on reference_fasta;
-      depends_on (Tool.ensure stringtie_tool);
+      depends_on (Machine.Tool.ensure stringtie_tool);
       depends_on (Samtools.index_to_bai ~run_with sorted_bam);
     ]
   in

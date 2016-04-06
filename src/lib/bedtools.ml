@@ -1,6 +1,8 @@
+
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 
 module Configuration = struct
@@ -36,10 +38,10 @@ let bamtofastq
       let r1 = sprintf "%s.fastq" output_prefix in
       (["-fq"; r1], r1, None)
   in
-  let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
+  let bedtools = Machine.get_tool run_with Machine.Tool.Default.bedtools in
   let src_bam = input_bam#product#path in
   let program =
-    Program.(Tool.(init bedtools)
+    Program.(Machine.Tool.(init bedtools)
              && exec ["mkdir"; "-p"; Filename.dirname r1]
              && exec ("bedtools" ::
                       "bamtofastq" ::  "-i" :: src_bam ::
@@ -49,7 +51,7 @@ let bamtofastq
       Filename.(basename src_bam |> chop_extension) in
   let make = Machine.run_program ~name run_with program in
   let edges = [
-    depends_on Tool.(ensure bedtools);
+    depends_on Machine.Tool.(ensure bedtools);
     depends_on input_bam;
     on_failure_activate (Remove.file ~run_with r1);
     on_success_activate (Remove.file ~run_with sorted_bam#product#path);
@@ -80,7 +82,7 @@ let intersect
     ~primary ~intersect_with output
   =
   let open KEDSL in
-  let bedtools = Machine.get_tool run_with Tool.Default.bedtools in
+  let bedtools = Machine.get_tool run_with Machine.Tool.Default.bedtools in
   let arguments =
     (sprintf "-a %s" (Filename.quote primary#product#path)) ^
     (List.map ~f:(fun n -> (Filename.quote n#product#path)) intersect_with
@@ -89,7 +91,7 @@ let intersect
     ^ (Configuration.Intersect.render configuration)
   in
   let program =
-    Program.(Tool.(init bedtools)
+    Program.(Machine.Tool.(init bedtools)
              && sh ("bedtools intersect "
                     ^ arguments ^ " > " ^ output)) in
   let name = sprintf "bedtools-intersect-%s-with-%s"
@@ -100,7 +102,7 @@ let intersect
   let make = Machine.run_program run_with ~name program in
   let edges = [
     depends_on primary;
-    depends_on Tool.(ensure bedtools);
+    depends_on Machine.Tool.(ensure bedtools);
     on_failure_activate (Remove.file run_with output)
   ] @ (List.map ~f:depends_on intersect_with) in
   let host = Machine.as_host run_with in

@@ -1,6 +1,6 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
 
   (*
 They happen to have a
@@ -132,8 +132,8 @@ let run
   let reference_fasta =
     Machine.get_reference_genome run_with normal#product#reference_build
     |> Reference_genome.fasta in
-  let strelka_tool = Machine.get_tool run_with Tool.Default.strelka in
-  let gatk_tool = Machine.get_tool run_with Tool.Default.gatk in
+  let strelka_tool = Machine.get_tool run_with Machine.Tool.Default.strelka in
+  let gatk_tool = Machine.get_tool run_with Machine.Tool.Default.gatk in
   let sorted_normal =
     Samtools.sort_bam_if_necessary
       ~run_with ~processors ~by:`Coordinate normal in
@@ -144,7 +144,7 @@ let run
   let make =
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.init strelka_tool && Tool.init gatk_tool
+        Machine.Tool.init strelka_tool && Machine.Tool.init gatk_tool
         && shf "mkdir -p %s"  working_dir
         && shf "cd %s" working_dir
         && generate_config_file ~path:config_file_path configuration
@@ -178,8 +178,8 @@ let run
       depends_on normal;
       depends_on tumor;
       depends_on reference_fasta;
-      depends_on (Tool.ensure strelka_tool);
-      depends_on (Tool.ensure gatk_tool);
+      depends_on (Machine.Tool.ensure strelka_tool);
+      depends_on (Machine.Tool.ensure gatk_tool);
       depends_on sorted_normal;
       depends_on sorted_tumor;
       depends_on (Picard.create_dict ~run_with reference_fasta);

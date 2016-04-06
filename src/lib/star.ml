@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 let index
   ~reference_build
@@ -10,7 +11,7 @@ let index
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
       |> Reference_genome.fasta in
-  let star_tool = Machine.get_tool run_with Tool.Default.star in
+  let star_tool = Machine.get_tool run_with Machine.Tool.Default.star in
   let name =
     sprintf "star-index-%s" (Filename.basename reference_fasta#product#path) in
   let reference_annotations =
@@ -23,12 +24,12 @@ let index
     ~edges:[
       on_failure_activate (Remove.directory ~run_with result_dir);
       depends_on reference_fasta;
-      depends_on Tool.(ensure star_tool);
+      depends_on Machine.Tool.(ensure star_tool);
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
-              Tool.(init star_tool)
+              Machine.Tool.(init star_tool)
               && shf "mkdir %s" result_dir 
               && shf "STAR --runMode genomeGenerate \
                 --genomeDir %s \
@@ -54,7 +55,7 @@ let align
       |> Reference_genome.fasta in
   let in_work_dir =
       Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
-  let star_tool = Machine.get_tool run_with Tool.Default.star in
+  let star_tool = Machine.get_tool run_with Machine.Tool.Default.star in
   let star_index = index ~reference_build ~run_with ~processors in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let star_index_dir = sprintf "%s/star-index/" reference_dir in
@@ -88,12 +89,12 @@ let align
             depends_on reference_fasta;
             depends_on star_index;
             depends_on fastq;
-            depends_on Tool.(ensure star_tool);
+            depends_on Machine.Tool.(ensure star_tool);
         ]
         ~tags:[Target_tags.aligner]
         ~make:(Machine.run_big_program run_with ~processors ~name
              Program.(
-               Tool.(init star_tool)
+               Machine.Tool.(init star_tool)
                && in_work_dir
                && sh star_command 
            ))

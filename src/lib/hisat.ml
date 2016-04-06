@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
   type t = {
@@ -49,12 +50,12 @@ let index
     ~edges:[
       on_failure_activate (Remove.directory ~run_with result_dir);
       depends_on reference_fasta;
-      depends_on Tool.(ensure hisat_tool);
+      depends_on Machine.Tool.(ensure hisat_tool);
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~name
             Program.(
-              Tool.(init hisat_tool)
+              Machine.Tool.(init hisat_tool)
               && shf "mkdir %s" result_dir 
               && shf "%s %s %s"
                 build_binary
@@ -110,12 +111,12 @@ let align
         depends_on reference_fasta;
         depends_on hisat_index;
         depends_on fastq;
-        depends_on Tool.(ensure hisat_tool);
+        depends_on Machine.Tool.(ensure hisat_tool);
       ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
-                 Tool.(init hisat_tool)
+                 Machine.Tool.(init hisat_tool)
                  && in_work_dir
                  && sh hisat_command 
                ))

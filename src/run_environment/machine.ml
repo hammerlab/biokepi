@@ -147,46 +147,44 @@ module Make_fun = struct
       f ?name ~requirements:(l @ requirements) prog
 end
 
-module Machine = struct
+type t = {
+  name: string;
+  host: Host.t;
+  get_reference_genome: string -> Reference_genome.t;
+  toolkit: Tool.Kit.t;
+  run_program: Make_fun.t;
+  work_dir: string;
+}
+let create
+    ~host ~get_reference_genome ~toolkit
+    ~run_program ~work_dir  name =
+  {name; toolkit; get_reference_genome; host;
+   run_program; work_dir}
 
-  type t = {
-    name: string;
-    host: Host.t;
-    get_reference_genome: string -> Reference_genome.t;
-    toolkit: Tool.Kit.t;
-    run_program: Make_fun.t;
-    work_dir: string;
-  }
-  let create
-      ~host ~get_reference_genome ~toolkit
-      ~run_program ~work_dir  name =
-    {name; toolkit; get_reference_genome; host;
-     run_program; work_dir}
+let name t = t.name
+let as_host t = t.host
+let get_reference_genome t = t.get_reference_genome
+let get_tool t =
+  Tool.Kit.get_exn t.toolkit
+let run_program t = t.run_program
 
-  let name t = t.name
-  let as_host t = t.host
-  let get_reference_genome t = t.get_reference_genome
-  let get_tool t =
-    Tool.Kit.get_exn t.toolkit
-  let run_program t = t.run_program
+let quick_run_program t : Make_fun.t =
+  Make_fun.with_requirements t.run_program (Make_fun.quick [])
 
-  let quick_run_program t : Make_fun.t =
-    Make_fun.with_requirements t.run_program (Make_fun.quick [])
+(** Run a program that does not use much memory and runs on one core. *)
+let run_stream_processor t : Make_fun.t =
+  Make_fun.with_requirements t.run_program (Make_fun.stream_processor [])
 
-  (** Run a program that does not use much memory and runs on one core. *)
-  let run_stream_processor t : Make_fun.t =
-    Make_fun.with_requirements t.run_program (Make_fun.stream_processor [])
+(** Run a program that does not use much memory, runs on one core, and needs
+    the internet. *)
+let run_download_program t : Make_fun.t =
+  Make_fun.with_requirements t.run_program (Make_fun.downloading [])
 
-  (** Run a program that does not use much memory, runs on one core, and needs
-      the internet. *)
-  let run_download_program t : Make_fun.t =
-    Make_fun.with_requirements t.run_program (Make_fun.downloading [])
+let run_big_program t : ?processors: int -> Make_fun.t =
+  fun ?(processors = 1) ->
+    Make_fun.with_requirements
+      t.run_program [`Memory `Big; `Processors processors]
 
-  let run_big_program t : ?processors: int -> Make_fun.t =
-    fun ?(processors = 1) ->
-      Make_fun.with_requirements
-        t.run_program [`Memory `Big; `Processors processors]
+let work_dir t = t.work_dir
 
-  let work_dir t = t.work_dir
 
-end

@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
 
@@ -48,7 +49,7 @@ let run
     let output_file = result_file "-somatic.vcf" in
     let dot_out_file = result_file "-output.out"in
     let coverage_file = result_file "coverage.wig" in
-    let mutect = Machine.get_tool run_with Tool.Default.mutect in
+    let mutect = Machine.get_tool run_with Machine.Tool.Default.mutect in
     let run_path = Filename.dirname output_file in
     let fasta = Reference_genome.fasta reference in
     let cosmic =
@@ -77,7 +78,7 @@ let run
             sprintf "--dbsnp %s" (Filename.quote node#product#path)) in
       let make =
         Machine.run_big_program run_with ~name ~processors:2 Program.(
-            Tool.(init mutect)
+            Machine.Tool.(init mutect)
             && shf "mkdir -p %s" run_path
             && shf "cd %s" run_path
             && sh ("java -Xmx2g -jar $mutect_HOME/muTect-*.jar --analysis_type MuTect " ^
@@ -96,7 +97,7 @@ let run
         @ Option.value_map dbsnp ~default:[] ~f:(fun n -> [depends_on n])
         @ add_edges
         @ [
-          depends_on Tool.(ensure mutect);
+          depends_on Machine.Tool.(ensure mutect);
           depends_on sorted_normal;
           depends_on sorted_tumor;
           depends_on fasta;

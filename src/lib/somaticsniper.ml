@@ -1,7 +1,7 @@
-
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 
 let default_prior_probability = 0.01
@@ -16,7 +16,7 @@ let run
     ^ Option.(value_map minus_T ~default:"" ~f:(sprintf "-T%F"))
   in
   let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
-  let sniper = Machine.get_tool run_with Tool.Default.somaticsniper in
+  let sniper = Machine.get_tool run_with Machine.Tool.Default.somaticsniper in
   let reference_fasta =
     Machine.get_reference_genome run_with normal#product#reference_build
     |> Reference_genome.fasta in
@@ -29,7 +29,7 @@ let run
   let make =
     Machine.run_big_program run_with
       ~name ~processors:1 Program.(
-          Tool.init sniper
+          Machine.Tool.init sniper
           && shf "mkdir -p %s" run_path
           && shf "cd %s" run_path
           && exec (
@@ -53,7 +53,7 @@ let run
     ~metadata:(`String name)
     ~tags:[Target_tags.variant_caller; "somaticsniper"]
     ~edges:[
-      depends_on (Tool.ensure sniper);
+      depends_on (Machine.Tool.ensure sniper);
       depends_on sorted_normal;
       depends_on sorted_tumor;
       depends_on (Samtools.index_to_bai ~run_with sorted_normal);

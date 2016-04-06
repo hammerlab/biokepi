@@ -1,18 +1,18 @@
-
+open Biokepi_run_environment
 open Common
 
-open Run_environment
+module Remove = Workflow_utilities.Remove
 
-open Workflow_utilities
 
 
 let create_dict ~(run_with:Machine.t) fasta =
   let open KEDSL in
-  let picard_create_dict = Machine.get_tool run_with Tool.Default.picard in
+  let picard_create_dict =
+    Machine.get_tool run_with Machine.Tool.Default.picard in
   let src = fasta#product#path in
   let dest = sprintf "%s.%s" (Filename.chop_suffix src ".fasta") "dict" in
   let program =
-    Program.(Tool.(init picard_create_dict) &&
+    Program.(Machine.Tool.(init picard_create_dict) &&
              shf "java -jar $PICARD_JAR CreateSequenceDictionary R= %s O= %s"
                (Filename.quote src) (Filename.quote dest)) in
   let name = sprintf "picard-create-dict-%s" Filename.(basename src) in
@@ -20,7 +20,7 @@ let create_dict ~(run_with:Machine.t) fasta =
   let host = Machine.(as_host run_with) in
   workflow_node (single_file dest ~host) ~name ~make
     ~edges:[
-      depends_on fasta; depends_on Tool.(ensure picard_create_dict);
+      depends_on fasta; depends_on Machine.Tool.(ensure picard_create_dict);
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
@@ -30,7 +30,7 @@ let create_dict ~(run_with:Machine.t) fasta =
 *)
 let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
   let open KEDSL in
-  let picard = Machine.get_tool run_with Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let sequence_name =
     match sequence_dict with
     | None -> "default"
@@ -53,7 +53,7 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
     | Some d -> [depends_on d]
   in
   let program =
-    Program.(Tool.(init picard) &&
+    Program.(Machine.Tool.(init picard) &&
              (shf "java -jar $PICARD_JAR SortVcf %s I= %s O= %s"
                 sequence_dict_opt
                 (Filename.quote src) (Filename.quote dest)))
@@ -62,7 +62,7 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
   let make = Machine.run_program run_with program ~name in
   workflow_node (single_file dest ~host) ~name ~make
     ~edges:([
-      depends_on input_vcf; depends_on Tool.(ensure picard);
+      depends_on input_vcf; depends_on Machine.Tool.(ensure picard);
       on_failure_activate (Remove.file ~run_with dest)
     ] @ sequence_dict_edge)
 
@@ -108,14 +108,14 @@ let mark_duplicates
     ?(settings = Mark_duplicates_settings.default)
     ~(run_with: Machine.t) ~input_bam output_bam_path =
   let open KEDSL in
-  let picard_jar = Machine.get_tool run_with Tool.Default.picard in
+  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
   let metrics_path =
     sprintf "%s.%s" (Filename.chop_suffix output_bam_path ".bam") ".metrics" in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
   let program =
     let java_call = Mark_duplicates_settings.to_java_shell_call settings in
-    Program.(Tool.(init picard_jar) &&
+    Program.(Machine.Tool.(init picard_jar) &&
              shf "%s -jar $PICARD_JAR MarkDuplicates \
                   VALIDATION_STRINGENCY=LENIENT \
                   INPUT=%s OUTPUT=%s METRICS_FILE=%s"
@@ -131,7 +131,7 @@ let mark_duplicates
     ~name ~make
     ~edges:[
       depends_on sorted_bam;
-      depends_on Tool.(ensure picard_jar);
+      depends_on Machine.Tool.(ensure picard_jar);
       on_failure_activate (Remove.file ~run_with output_bam_path);
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
@@ -155,10 +155,10 @@ let bam_to_fastq
       let r1 = sprintf "%s.fastq" output_prefix in
       ([sprintf "FASTQ=%s" r1], r1, None)
   in
-  let picard_jar = Machine.get_tool run_with Tool.Default.picard in
+  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
   let program =
     Program.(
-      Tool.(init picard_jar) &&
+      Machine.Tool.(init picard_jar) &&
       shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
         (Filename.quote sorted_bam#product#path)
         (String.concat ~sep:" " fastq_output_options)
@@ -173,7 +173,7 @@ let bam_to_fastq
        | None -> list)
       [
         depends_on sorted_bam;
-        depends_on Tool.(ensure picard_jar);
+        depends_on Machine.Tool.(ensure picard_jar);
         on_failure_activate (Remove.file ~run_with r1);
       ]
   in

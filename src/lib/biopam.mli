@@ -1,4 +1,7 @@
 
+open Biokepi_run_environment
+open Common
+
 (** The default location from where we download opam. *)
 val default_opam_url : string
 
@@ -6,9 +9,9 @@ val default_opam_url : string
 val default_biopam_url : string
 
 (** A workflow to make sure that Biopam is configured.*)
-val configured : ?biopam_home:string -> ?host:Common.KEDSL.Host.t ->
+val configured : ?biopam_home:string -> ?host:KEDSL.Host.t ->
   install_path:string -> unit ->
-  < is_done : Common.KEDSL.Condition.t option > Common.KEDSL.workflow_node
+  < is_done : KEDSL.Condition.t option > KEDSL.workflow_node
 
 (** The type of tool that we are installing via opam.
 
@@ -34,20 +37,20 @@ type install_target = {
   (** Test to determine success of the install.
       Defaults to `test -e witness`. *)
   test :
-    (?host:Common.KEDSL.Host.t -> string -> Common.KEDSL.Command.t) option;
+    (?host:KEDSL.Host.t -> string -> KEDSL.Command.t) option;
 
   (* Install dependencies. *)
-  edges : Common.KEDSL.workflow_edge list;
+  edges : KEDSL.workflow_edge list;
 
   (* Transform the install and init programs, e.g. it needs to be run in a
      specific environment. Defaults to a “no-op”. *)
-  init_environment : Common.KEDSL.Program.t option;
+  init_environment : KEDSL.Program.t option;
 }
 
 (** Provde the specified (via install_target) tool.*)
-val provide : ?host:Common.KEDSL.Host.t ->
-  install_path:string -> install_target -> Run_environment.Tool.t
+val provide : ?host:KEDSL.Host.t ->
+  install_path:string -> install_target -> Machine.Tool.t
 
 (** A set of default tools that have been specified in this module.*)
-val default : ?host:Common.KEDSL.Host.t -> install_path:string -> unit ->
-  Run_environment.Tool.Kit.t
+val default : ?host:KEDSL.Host.t -> install_path:string -> unit ->
+  Machine.Tool.Kit.t

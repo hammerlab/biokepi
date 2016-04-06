@@ -1,6 +1,7 @@
+
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
 
 
 (* See http://sourceforge.net/p/virmid/wiki/Home/ *)
@@ -47,7 +48,7 @@ let run
   let reference_fasta =
     Machine.get_reference_genome run_with normal#product#reference_build
     |> Reference_genome.fasta in
-  let virmid_tool = Machine.get_tool run_with Tool.Default.virmid in
+  let virmid_tool = Machine.get_tool run_with Machine.Tool.Default.virmid in
   let virmid_somatic_broken_vcf =
     (* maybe it's actually not broken, but later tools can be
        annoyed by the a space in the header. *)
@@ -55,7 +56,7 @@ let run
   let make =
     Machine.run_big_program run_with ~name ~processors
       Program.(
-        Tool.init virmid_tool
+        Machine.Tool.init virmid_tool
         && shf "mkdir -p %s" work_dir
         && sh (String.concat ~sep:" " ([
             "java -jar $VIRMID_JAR -f";
@@ -77,5 +78,5 @@ let run
       depends_on normal;
       depends_on tumor;
       depends_on reference_fasta;
-      depends_on (Tool.ensure virmid_tool);
+      depends_on (Machine.Tool.ensure virmid_tool);
     ])

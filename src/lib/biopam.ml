@@ -2,8 +2,8 @@
 Provide tools via Biopam: https://github.com/solvuu/biopam
 *)
 
+open Biokepi_run_environment
 open Common
-open Run_environment
 module K = KEDSL
 
 (* What are we installing via opam. This determines where we look for the
@@ -137,7 +137,7 @@ let provide ?host ~install_path it =
     | Application -> "PATH", (Filename.dirname install_workflow#product#path)
     | Library v   -> v, install_workflow#product#path
   in
-  Tool.create Tool.Definition.(biopam it.package)
+  Machine.Tool.create Machine.Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
     ~init:KEDSL.Program.(
@@ -158,7 +158,7 @@ let default ?host ~install_path () =
   let need_conda =
     [ K.depends_on (Conda.configured ?host ~install_path ())]
   in
-  Tool.Kit.create [
+  Machine.Tool.Kit.create [
     mk (Library "PICARD_JAR") ~package:"picard" ~witness:"picard.jar";
     mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
     mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version

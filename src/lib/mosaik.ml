@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 let index
   ~reference_build
@@ -10,7 +11,7 @@ let index
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
       |> Reference_genome.fasta in
-  let mosaik_tool = Machine.get_tool run_with Tool.Default.mosaik in
+  let mosaik_tool = Machine.get_tool run_with Machine.Tool.Default.mosaik in
   let name =
     sprintf "mosaik-build-%s" (Filename.basename reference_fasta#product#path) in
   let index_result = sprintf "%s.mosaik.dat" reference_fasta#product#path in
@@ -22,12 +23,12 @@ let index
       on_failure_activate (Remove.file ~run_with jump_file_result);
       on_failure_activate (Remove.file ~run_with index_result);
       depends_on reference_fasta;
-      depends_on Tool.(ensure mosaik_tool);
+      depends_on Machine.Tool.(ensure mosaik_tool);
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~processors ~name
             Program.(
-              Tool.(init mosaik_tool)
+              Machine.Tool.(init mosaik_tool)
               && shf "mkdir -p %s" mosaik_tmp_dir
               && shf "export MOSAIK_TMP=%s" mosaik_tmp_dir 
               (* Command to build basic MOSAIK reference file *)
@@ -59,7 +60,7 @@ let align
   let index_result = sprintf "%s.mosaik.dat" reference_fasta#product#path in
   let in_work_dir =
     Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
-  let mosaik_tool = Machine.get_tool run_with Tool.Default.mosaik in
+  let mosaik_tool = Machine.get_tool run_with Machine.Tool.Default.mosaik in
   let mosaik_index = index ~reference_build ~run_with ~processors in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "mosaik-align-%s" (Filename.basename r1_path) in
@@ -105,12 +106,12 @@ let align
         depends_on reference_fasta;
         depends_on mosaik_index;
         depends_on fastq;
-        depends_on Tool.(ensure mosaik_tool);
+        depends_on Machine.Tool.(ensure mosaik_tool);
       ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
-                 Tool.(init mosaik_tool)
+                 Machine.Tool.(init mosaik_tool)
                  && in_work_dir
                  && sh mosaik_build_command 
                  && sh mosaik_align_command

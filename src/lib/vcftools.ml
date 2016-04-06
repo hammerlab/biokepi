@@ -1,6 +1,5 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
 
 
 
@@ -11,7 +10,7 @@ open Workflow_utilities
 let vcf_process_n_to_1_no_machine
     ~host
     ~vcftools
-    ~(run_program : Make_fun.t)
+    ~(run_program : Machine.Make_fun.t)
     ?(more_edges = [])
     ~vcfs
     ~final_vcf
@@ -22,7 +21,7 @@ let vcf_process_n_to_1_no_machine
   let make =
     run_program ~name
       Program.(
-        Tool.(init vcftools)
+        Machine.Tool.(init vcftools)
         && shf "%s %s > %s"
           command_prefix
           (String.concat ~sep:" "
@@ -33,8 +32,9 @@ let vcf_process_n_to_1_no_machine
     (single_file final_vcf ~host)
     ~make
     ~edges:(
-      on_failure_activate (Remove.path_on_host ~host final_vcf)
-      :: depends_on Tool.(ensure vcftools)
+      on_failure_activate
+        (Workflow_utilities.Remove.path_on_host ~host final_vcf)
+      :: depends_on Machine.Tool.(ensure vcftools)
       :: List.map ~f:depends_on vcfs
       @ more_edges)
 
@@ -47,7 +47,7 @@ let vcf_process_n_to_1_no_machine
 let vcf_concat_no_machine
     ~host
     ~vcftools
-    ~(run_program : Make_fun.t)
+    ~(run_program : Machine.Make_fun.t)
     ?more_edges
     vcfs
     ~final_vcf =
@@ -65,16 +65,17 @@ let vcf_concat_no_machine
 let vcf_sort_no_machine
     ~host
     ~vcftools
-    ~(run_program : Make_fun.t)
+    ~(run_program : Machine.Make_fun.t)
     ?more_edges
     ~src ~dest () =
-  let run_program = Make_fun.with_requirements run_program [`Memory `Big] in 
+  let run_program =
+    Machine.Make_fun.with_requirements run_program [`Memory `Big] in 
   vcf_process_n_to_1_no_machine
     ~host ~vcftools ~run_program ?more_edges ~vcfs:[src] ~final_vcf:dest
     "vcf-sort -c"
 
 let vcf_concat ~(run_with:Machine.t) ?more_edges vcfs ~final_vcf =
-  let vcftools = Machine.get_tool run_with Tool.Default.vcftools in
+  let vcftools = Machine.get_tool run_with Machine.Tool.Default.vcftools in
   let host = Machine.(as_host run_with) in
   let run_program = Machine.run_program run_with in
   vcf_concat_no_machine ~host ~vcftools ~run_program ?more_edges vcfs ~final_vcf

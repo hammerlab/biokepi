@@ -1,6 +1,7 @@
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 
 let default_gap_open_penalty = 11
@@ -16,7 +17,7 @@ let index
   (* `bwa index` creates a bunch of files, c.f.
      [this question](https://www.biostars.org/p/73585/) we detect the
      `.bwt` one. *)
-  let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
+  let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
   let name =
     sprintf "bwa-index-%s" (Filename.basename reference_fasta#product#path) in
   let result = sprintf "%s.bwt" reference_fasta#product#path in
@@ -25,12 +26,12 @@ let index
     ~edges:[
       on_failure_activate (Remove.file ~run_with result);
       depends_on reference_fasta;
-      depends_on Tool.(ensure bwa_tool);
+      depends_on Machine.Tool.(ensure bwa_tool);
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~processors:1 ~name
              Program.(
-               Tool.(init bwa_tool)
+               Machine.Tool.(init bwa_tool)
                && shf "bwa index %s"
                  (Filename.quote reference_fasta#product#path)))
 
@@ -68,7 +69,7 @@ let mem_align_to_sam
   (* `bwa index` creates a bunch of files, c.f.
      [this question](https://www.biostars.org/p/73585/) we detect the
      `.bwt` one. *)
-  let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
+  let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
   let bwa_index = index ~reference_build ~run_with in
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
@@ -90,7 +91,7 @@ let mem_align_to_sam
       (single_file result ~host:Machine.(as_host run_with))
       ~name
       ~edges:(
-        depends_on Tool.(ensure bwa_tool)
+        depends_on Machine.Tool.(ensure bwa_tool)
         :: depends_on bwa_index
         :: depends_on fastq
         :: on_failure_activate (Remove.file ~run_with result)
@@ -98,7 +99,7 @@ let mem_align_to_sam
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
-                 Tool.(init bwa_tool)
+                 Machine.Tool.(init bwa_tool)
                  && in_work_dir
                  && sh bwa_command))
   in
@@ -139,7 +140,7 @@ let align_to_sam
   (* `bwa index` creates a bunch of files, c.f.
      [this question](https://www.biostars.org/p/73585/) we detect the
      `.bwt` one. *)
-  let bwa_tool = Machine.get_tool run_with Tool.Default.bwa in
+  let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
   let bwa_index = index ~reference_build ~run_with in
   let bwa_aln read_number read =
     let name = sprintf "bwa-aln-%s" (Filename.basename read) in
@@ -160,13 +161,13 @@ let align_to_sam
       ~edges:[
         depends_on fastq;
         depends_on bwa_index;
-        depends_on Tool.(ensure bwa_tool);
+        depends_on Machine.Tool.(ensure bwa_tool);
         on_failure_activate (Remove.file ~run_with result);
       ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
                Program.(
-                 Tool.(init bwa_tool)
+                 Machine.Tool.(init bwa_tool)
                  && in_work_dir
                  && sh bwa_command
                ))
@@ -182,13 +183,13 @@ let align_to_sam
         depends_on r1_sai;
         depends_on reference_fasta;
         depends_on bwa_index;
-        depends_on Tool.(ensure bwa_tool);
+        depends_on Machine.Tool.(ensure bwa_tool);
         on_failure_activate (Remove.file ~run_with result);
       ] in
       match r2_sai_opt with
       | Some (r2_sai, r2) ->
         Program.(
-          Tool.(init bwa_tool)
+          Machine.Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa sampe %s %s %s %s %s %s > %s"
             (read_group_header_option `Aln 
@@ -203,7 +204,7 @@ let align_to_sam
         (depends_on r2_sai :: common_edges)
       | None ->
         Program.(
-          Tool.(init bwa_tool)
+          Machine.Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa samse %s %s %s > %s"
             (read_group_header_option `Aln 

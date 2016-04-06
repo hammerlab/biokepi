@@ -1,8 +1,8 @@
+open Biokepi_run_environment
 open Common
 
-open Run_environment
 
-let default_run_program : host:KEDSL.Host.t -> Make_fun.t =
+let default_run_program : host:KEDSL.Host.t -> Machine.Make_fun.t =
   fun ~host ?(name="biokepi-ssh-box") ?(requirements = []) program ->
     let open KEDSL in
     daemonize ~using:`Python_daemon ~host program

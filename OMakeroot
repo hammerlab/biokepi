@@ -24,22 +24,27 @@ LIB_PACKAGES = ketrew ppx_deriving.std
 OCAMLFLAGS = -bin-annot -absname -thread -short-paths -g \
               -strict-formats -strict-sequence -w +9 -safe-string
 
-section # Main library
+section # Run-environment library
     OCAMLPACKS[] = $(LIB_PACKAGES)
-    _build/src/lib/metadata.ml: :value: $(VERSION)
+    _build/src/run_environment/metadata.ml: :value: $(VERSION)
         echo "(** Metadata generated at compile-time *)" > $@
         echo "let version = lazy \"$(VERSION)\"" >> $@
         echo "let git_commit = $(GIT_COMMIT)" >> $@
     OCAML_GENERATED_MODULES[] = metadata
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_run_environment, src/run_environment)
+
+section # Main library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi, src/lib)
 
 section # "main" demo application
-    OCAML_LOCAL_LIBS += src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     .DEFAULT: $(OCamlProgramOfFile biokepi-demo, $(file src/app/main.ml))
 
 section # Executable tests
-    OCAML_LOCAL_LIBS += src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     #.PHONY: biokepi-tests biokepi-test-all-downloads biokepi-hla-typing
     #biokepi-tests: $(OCamlProgramOfFile biokepi-tests, $(file src/test/main.ml))

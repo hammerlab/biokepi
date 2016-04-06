@@ -1,5 +1,6 @@
+
+open Biokepi_run_environment
 open Common
-open Run_environment
 
 let rm_path = Workflow_utilities.Remove.path_on_host
 
@@ -43,7 +44,7 @@ let bwa_tool ~host ~meta_playground =
             bwa-0.7.10.tar.bz2"
       (*http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2*)
       ~install_path in
-  Tool.create (`Bwa `V_0_7_10) ~ensure
+  Machine.Tool.create (`Bwa `V_0_7_10) ~ensure
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let mosaik_tool ~host ~meta_playground = 
@@ -72,7 +73,7 @@ let mosaik_tool ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.mosaik ~ensure 
+  Machine.Tool.create Machine.Tool.Default.mosaik ~ensure 
     ~init:(
       Program.(
         shf "export PATH=%s:$PATH" install_path
@@ -108,7 +109,7 @@ let star_tool ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.star ~ensure 
+  Machine.Tool.create Machine.Tool.Default.star ~ensure 
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let hisat_tool ~version ~host ~meta_playground =
@@ -147,7 +148,7 @@ let hisat_tool ~version ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create (`Hisat version) ~ensure 
+  Machine.Tool.create (`Hisat version) ~ensure 
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let kallisto_tool ~host ~meta_playground =
@@ -174,7 +175,7 @@ let kallisto_tool ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.kallisto ~ensure
+  Machine.Tool.create Machine.Tool.Default.kallisto ~ensure
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let stringtie_tool ~host ~meta_playground =
@@ -184,7 +185,7 @@ let stringtie_tool ~host ~meta_playground =
     install_bwa_like ~host "stringtie"
       ~url:"https://github.com/gpertea/stringtie/archive/v1.2.2.tar.gz"
       ~install_path in
-  Tool.create Tool.Default.stringtie ~ensure
+  Machine.Tool.create Machine.Tool.Default.stringtie ~ensure
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let samtools ~host ~meta_playground =
@@ -220,7 +221,7 @@ let samtools ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.samtools ~ensure
+  Machine.Tool.create Machine.Tool.Default.samtools ~ensure
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let cufflinks_tools ~host ~meta_playground = 
@@ -249,7 +250,7 @@ let cufflinks_tools ~host ~meta_playground =
             && sh "echo Done"
           ))
   in
-  Tool.create Tool.Default.cufflinks ~ensure 
+  Machine.Tool.create Machine.Tool.Default.cufflinks ~ensure 
     ~init:(Program.shf "export PATH=%s:$PATH" install_path)
 
 let vcftools ~host ~meta_playground =
@@ -263,7 +264,7 @@ let vcftools ~host ~meta_playground =
       ~url:"http://downloads.sourceforge.net/project/\
             vcftools/vcftools_0.1.12b.tar.gz"
   in
-  Tool.create Tool.Default.vcftools ~ensure
+  Machine.Tool.create Machine.Tool.Default.vcftools ~ensure
     ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path
                    && shf "export PERL5LIB=$PERL5LIB:%s/site_perl/"
                      install_path)
@@ -278,7 +279,7 @@ let bedtools ~host ~meta_playground =
       ~url:"https://github.com/arq5x/bedtools2/\
             archive/v2.23.0.tar.gz"
   in
-  Tool.create Tool.Default.bedtools ~ensure
+  Machine.Tool.create Machine.Tool.Default.bedtools ~ensure
     ~init:Program.(shf "export PATH=%s/bin/:$PATH" install_path)
 
 let get_somaticsniper_binary ~host ~path = function
@@ -318,7 +319,7 @@ let somaticsniper_tool ~host ~meta_playground =
                           Filename.(quote binary)))
   in
   let init = Program.(shf "export PATH=%s/:$PATH" install_path) in
-  Tool.create Tool.Default.somaticsniper ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.somaticsniper ~ensure ~init
 
 let varscan_tool ~host ~meta_playground =
   let open KEDSL in
@@ -336,7 +337,7 @@ let varscan_tool ~host ~meta_playground =
                  && Workflow_utilities.Download.wget_program url))
   in
   let init = Program.(shf "export VARSCAN_JAR=%s" jar) in
-  Tool.create Tool.Default.varscan ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.varscan ~ensure ~init
 
 let picard_tool ~host ~meta_playground =
   let open KEDSL in
@@ -357,7 +358,7 @@ let picard_tool ~host ~meta_playground =
                ))
   in
   let init = Program.(shf "export PICARD_JAR=%s" jar) in
-  Tool.create Tool.Default.picard ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.picard ~ensure ~init
 
 type broad_jar_location = [
   | `Scp of string
@@ -404,14 +405,14 @@ let mutect_tool ~host ~meta_playground loc =
   let open KEDSL in
   let install_path = meta_playground // "mutect" in
   let get_mutect = get_broad_jar ~host ~install_path loc in
-  Tool.create Tool.Default.mutect ~ensure:get_mutect
+  Machine.Tool.create Machine.Tool.Default.mutect ~ensure:get_mutect
     ~init:Program.(shf "export mutect_HOME=%s" install_path)
 
 let gatk_tool ~host ~meta_playground loc =
   let open KEDSL in
   let install_path = meta_playground // "gatk" in
   let ensure = get_broad_jar ~host ~install_path loc in
-  Tool.create Tool.Default.gatk ~ensure
+  Machine.Tool.create Machine.Tool.Default.gatk ~ensure
     ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
 
 let strelka_tool ~host ~meta_playground =
@@ -438,7 +439,7 @@ let strelka_tool ~host ~meta_playground =
                ))
   in
   let init = Program.(shf "export STRELKA_BIN=%s" strelka_bin) in
-  Tool.create Tool.Default.strelka ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.strelka ~ensure ~init
 
 let virmid_tool ~host ~meta_playground =
   let open KEDSL in
@@ -458,7 +459,7 @@ let virmid_tool ~host ~meta_playground =
                ))
   in
   let init = Program.(shf "export VIRMID_JAR=%s" jar) in
-  Tool.create Tool.Default.virmid ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.virmid ~ensure ~init
 
 let muse_tool ~host ~meta_playground =
   let open KEDSL in
@@ -478,7 +479,7 @@ let muse_tool ~host ~meta_playground =
                ))
   in
   let init = Program.(shf "export muse_bin=%s" binary_path) in
-  Tool.create Tool.Default.muse ~ensure ~init
+  Machine.Tool.create Machine.Tool.Default.muse ~ensure ~init
 
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
@@ -488,7 +489,7 @@ let default_toolkit
     ?(mutect_jar_location = default_jar_location "Mutect")
     ?(gatk_jar_location = default_jar_location "GATK")
     () =
-  Tool.Kit.create [
+  Machine.Tool.Kit.create [
     bwa_tool ~host ~meta_playground;
     samtools ~host ~meta_playground;
     bedtools ~host ~meta_playground;

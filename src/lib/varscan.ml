@@ -1,6 +1,8 @@
+
+open Biokepi_run_environment
 open Common
-open Run_environment
-open Workflow_utilities
+
+module Remove = Workflow_utilities.Remove
 
 (**
 
@@ -33,7 +35,7 @@ let somatic_on_region
   let open KEDSL in
   let name = Filename.basename result_prefix in
   let result_file suffix = result_prefix ^ suffix in
-  let varscan_tool = Machine.get_tool run_with Tool.Default.varscan in
+  let varscan_tool = Machine.get_tool run_with Machine.Tool.Default.varscan in
   let snp_output = result_file "-snp.vcf" in
   let indel_output = result_file "-indel.vcf" in
   let normal_pileup = Samtools.mpileup ~run_with ~region ?adjust_mapq normal in
@@ -59,14 +61,14 @@ let somatic_on_region
         ^ "echo '" ^ empty_vcf ^ "' > " ^ indel_output ^ " ; "
         ^ " fi "
       in
-      Program.(Tool.init varscan_tool && sh big_one_liner)
+      Program.(Machine.Tool.init varscan_tool && sh big_one_liner)
       |> Machine.run_big_program run_with ~name ~processors:1
     in
     workflow_node ~name ~make
       (single_file snp_output ~host)
       ~tags
       ~edges:[
-        depends_on (Tool.ensure varscan_tool);
+        depends_on (Machine.Tool.ensure varscan_tool);
         depends_on normal_pileup;
         depends_on tumor_pileup;
         on_failure_activate (Remove.file ~run_with snp_output);
@@ -79,7 +81,7 @@ let somatic_on_region
     let name = "filter-" ^ name in
     let make =
       Program.(
-        Tool.init varscan_tool
+        Machine.Tool.init varscan_tool
         && shf "java -jar $VARSCAN_JAR somaticFilter %s \
                 --indel-file %s \
                 --output-file %s"

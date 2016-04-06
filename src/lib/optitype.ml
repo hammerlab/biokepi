@@ -1,6 +1,6 @@
 
+open Biokepi_run_environment
 open Common
-open Run_environment
 
 (**
    Run OptiType in [`RNA] or [`DNA] mode.
@@ -15,7 +15,7 @@ let hla_type ~work_dir ~run_with ~r1 ?r2 ~run_name nt =
   let name = sprintf "optitype-%s" run_name in
   let make =
     Machine.run_big_program run_with ~name KEDSL.Program.(
-        Tool.init tool
+        Machine.Tool.init tool
         && exec ["mkdir"; "-p"; work_dir]
         && exec ["cd"; work_dir]
         && sh "cp -r ${OPTITYPE_DATA}/data ." (* HLA reference data *)
@@ -45,7 +45,7 @@ let hla_type ~work_dir ~run_with ~r1 ?r2 ~run_name nt =
     ~edges:(
       Option.value_map ~default:[] r2 ~f:(fun w -> [KEDSL.depends_on w])
       @ [
-        KEDSL.depends_on (Tool.ensure tool);
+        KEDSL.depends_on (Machine.Tool.ensure tool);
         KEDSL.depends_on r1;
         KEDSL.on_failure_activate
           (Workflow_utilities.Remove.directory ~run_with work_dir);
