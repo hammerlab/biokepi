@@ -71,6 +71,6 @@ doc:
     sh ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
 
 
-DIRS[] = src/lib
-LIBS[] = biokepi
+DIRS[] = src/run_environment/ src/lib
+LIBS[] = biokepi_run_environment biokepi
 DotOCamlinit($(DIRS), $(LIB_PACKAGES), $(LIBS))
