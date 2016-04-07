@@ -3,7 +3,11 @@
 set -e
 LIB_PACKAGES=$1
 
-OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread -I _build/src/lib/ src/lib/*"
+OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread "
+for dir in run_environment environment_setup bfx_tools lib ; do
+  OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS -I _build/src/$dir src/$dir/*"
+done
+echo "OCAMLDOC_OPTIONS: $OCAMLDOC_OPTIONS"
 OCAMLDOC_DOT_OPTIONS="-dot $OCAMLDOC_OPTIONS -dot-reduce"
 
 mkdir -p _build/apidoc/
