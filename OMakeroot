@@ -72,8 +72,16 @@ section # Executable tests
 
 DotMerlin(./src, $(LIB_PACKAGES))
 
-install: install-lib-biokepi install-app-biokepi-demo
-uninstall: uninstall-lib-biokepi uninstall-app-biokepi-demo
+install: install-lib-biokepi_run_environment \
+         install-lib-biokepi_environment_setup \
+         install-lib-biokepi_bfx_tools \
+         install-lib-biokepi \
+         install-app-biokepi-demo
+uninstall: uninstall-lib-biokepi_run_environment \
+           uninstall-lib-biokepi_environment_setup \
+           uninstall-lib-biokepi_bfx_tools \
+           uninstall-lib-biokepi \
+           uninstall-app-biokepi-demo
 
 # `omake build-all` to build also the tests:
 build-all: lib-biokepi app-biokepi-demo \
