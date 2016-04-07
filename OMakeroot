@@ -33,18 +33,28 @@ section # Run-environment library
     OCAML_GENERATED_MODULES[] = metadata
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_run_environment, src/run_environment)
 
-section # Main library
+section # Run-environment library
     OCAMLPACKS[] = $(LIB_PACKAGES)
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_environment_setup, src/environment_setup)
+
+section # Main library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi, src/lib)
 
 section # "main" demo application
-    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     .DEFAULT: $(OCamlProgramOfFile biokepi-demo, $(file src/app/main.ml))
 
 section # Executable tests
-    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     #.PHONY: biokepi-tests biokepi-test-all-downloads biokepi-hla-typing
     #biokepi-tests: $(OCamlProgramOfFile biokepi-tests, $(file src/test/main.ml))

@@ -41,11 +41,11 @@ let workflow =
       ~edges:(edges_of_genome genome)
   in
   let toolkit =
-    Biokepi.Tool_providers.default_toolkit () ~host
+    Biokepi_environment_setup.Tool_providers.default_toolkit () ~host
       ~meta_playground:(destination_path // "tools") in
   let edges =
     let genomes =
-      Biokepi.Download_reference_genomes.default_genome_providers in
+      Biokepi_environment_setup.Download_reference_genomes.default_genome_providers in
     List.map genomes ~f:(fun (name, pull) ->
         let genome = pull ~toolkit ~host ~destination_path ~run_program in
         depends_on (get_all genome))

@@ -1,5 +1,6 @@
 
 open Biokepi_run_environment
+open Biokepi_environment_setup
 open Biokepi
 open Common
 

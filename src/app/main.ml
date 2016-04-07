@@ -116,7 +116,7 @@ let environmental_box () : Biokepi_run_environment.Machine.t =
   in
   let mutect_jar_location = jar_location "MUTECT" in
   let gatk_jar_location = jar_location "GATK" in
-  Biokepi.Build_machine.create
+  Biokepi_environment_setup.Build_machine.create
     ~gatk_jar_location ~mutect_jar_location box_uri
 
 let with_environmental_dataset =

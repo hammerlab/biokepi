@@ -4,6 +4,7 @@ open Common
 
 
 open Workflow_utilities.Download (* All the wget* functions *)
+module Vcftools = Workflow_utilities.Vcftools
 
 let of_specification
     ~toolkit ~host ~run_program ~destination_path specification =
