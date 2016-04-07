@@ -16,6 +16,7 @@
 
 
 open Biokepi_run_environment
+open Biokepi_bfx_tools
 open Common
 
 

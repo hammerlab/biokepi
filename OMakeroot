@@ -38,15 +38,23 @@ section # Run-environment library
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_environment_setup, src/environment_setup)
 
-section # Main library
+section # Bioinformatics workflow nodes library
     OCAMLPACKS[] = $(LIB_PACKAGES)
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
                         src/environment_setup//biokepi_environment_setup
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_bfx_tools, src/bfx_tools)
+
+section # High-level pipeline library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi, src/lib)
 
 section # "main" demo application
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
                         src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
                         src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     .DEFAULT: $(OCamlProgramOfFile biokepi-demo, $(file src/app/main.ml))
@@ -54,12 +62,9 @@ section # "main" demo application
 section # Executable tests
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
                         src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
                         src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
-    #.PHONY: biokepi-tests biokepi-test-all-downloads biokepi-hla-typing
-    #biokepi-tests: $(OCamlProgramOfFile biokepi-tests, $(file src/test/main.ml))
-    #biokepi-test-all-downloads: $(OCamlProgramOfFile biokepi-test-all-downloads, $(file src/test/all_downloads.ml))
-    #biokepi-hla-typing: $(OCamlProgramOfFile biokepi-hla-typer, $(file src/app/hla_typer.ml))
     OCamlProgramOfFile(biokepi-tests, $(file src/test/main.ml))
     OCamlProgramOfFile(biokepi-test-all-downloads, $(file src/test/all_downloads.ml))
     OCamlProgramOfFile(biokepi-hla-typer, $(file src/app/hla_typer.ml))
@@ -81,6 +86,6 @@ doc:
     sh ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
 
 
-DIRS[] = src/run_environment/ src/lib
-LIBS[] = biokepi_run_environment biokepi
+DIRS[] = src/run_environment/ src/environment_setup/ src/bfx_tools/ src/lib
+LIBS[] = biokepi_run_environment biokepi_environment_setup biokepi_bfx_tools biokepi
 DotOCamlinit($(DIRS), $(LIB_PACKAGES), $(LIBS))

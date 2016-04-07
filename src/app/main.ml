@@ -171,7 +171,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
         let witness_output =
           Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
         let params = Yojson.Basic.pretty_to_string json in
-        Biokepi.Cycledash.post_vcf ~run_with:machine
+        Biokepi_bfx_tools.Cycledash.post_vcf ~run_with:machine
           ~vcf ~variant_caller_name:vcf#render#name ~dataset_name:dataset
           ~witness_output ~params
           (get_env "BIOKEPI_CYCLEDASH_URL")
