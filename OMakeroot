@@ -33,7 +33,7 @@ section # Run-environment library
     OCAML_GENERATED_MODULES[] = metadata
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_run_environment, src/run_environment)
 
-section # Run-environment library
+section # Setup-run-environment library
     OCAMLPACKS[] = $(LIB_PACKAGES)
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_environment_setup, src/environment_setup)

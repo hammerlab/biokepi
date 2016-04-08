@@ -13,7 +13,7 @@ Biokepi is split into 4 libraries:
 - `Biokepi_environment_setup`: provides a set of (*optional*/*customisable*)
   defaults to setup a `Biokepi_run_environment.Machine.t`, it includes Ketrew
   workflow-nodes to install tools (`Machine.Tool.t`) and to download/prepare
-  refeerence data (reference genomes, databases, etc.).
+  reference data (reference genomes, databases, etc.).
 - `Biokepi_bfx_tools`: contains the implementations of the Ketrew workflows to
   run all supported bioinformatics tools.
 - `Biokepi`: in-progress high-level API, to build very concise, typed, and
