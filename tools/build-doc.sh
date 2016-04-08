@@ -62,6 +62,5 @@ INPUT=src,$generated_dot_md  \
   TITLE_PREFIX="Biokepi: " \
   OUTPUT_DIR=_build/doc \
   API=_build/apidoc/ \
-  CATCH_MODULE_PATHS='^(Biokepi[A-Z_a-z]+):', \
   TITLE_SUBSTITUTIONS="main.ml:Literate Tests" \
   oredoc
