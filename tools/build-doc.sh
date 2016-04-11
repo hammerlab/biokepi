@@ -4,7 +4,7 @@ set -e
 LIB_PACKAGES=$1
 
 OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread "
-for dir in run_environment environment_setup bfx_tools lib ; do
+for dir in run_environment environment_setup bfx_tools pipeline_edsl lib ; do
   OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS -I _build/src/$dir src/$dir/*"
 done
 echo "OCAMLDOC_OPTIONS: $OCAMLDOC_OPTIONS"

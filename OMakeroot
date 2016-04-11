@@ -46,14 +46,22 @@ section # Bioinformatics workflow nodes library
 section # High-level pipeline library
     OCAMLPACKS[] = $(LIB_PACKAGES)
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
-                        src/environment_setup//biokepi_environment_setup \
                         src/bfx_tools/biokepi_bfx_tools
-    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi, src/lib)
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_pipeline_edsl, src/pipeline_edsl)
+
+section # Whole API library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl
+    .DEFAULT: $(OCamlSingleFileLibrary biokepi, src/lib/biokepi.ml)
 
 section # "main" demo application
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
                         src/environment_setup//biokepi_environment_setup \
                         src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl \
                         src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     .DEFAULT: $(OCamlProgramOfFile biokepi-demo, $(file src/app/main.ml))
@@ -62,6 +70,7 @@ section # Executable tests
     OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
                         src/environment_setup//biokepi_environment_setup \
                         src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl \
                         src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     OCamlProgramOfFile(biokepi-tests, $(file src/test/main.ml))
@@ -74,11 +83,13 @@ DotMerlin(./src, $(LIB_PACKAGES))
 install: install-lib-biokepi_run_environment \
          install-lib-biokepi_environment_setup \
          install-lib-biokepi_bfx_tools \
+         install-lib-biokepi_pipeline_edsl \
          install-lib-biokepi \
          install-app-biokepi-demo
 uninstall: uninstall-lib-biokepi_run_environment \
            uninstall-lib-biokepi_environment_setup \
            uninstall-lib-biokepi_bfx_tools \
+           uninstall-lib-biokepi_pipeline_edsl \
            uninstall-lib-biokepi \
            uninstall-app-biokepi-demo
 
@@ -86,6 +97,7 @@ uninstall: uninstall-lib-biokepi_run_environment \
 build-all: lib-biokepi_run_environment \
            lib-biokepi_environment_setup \
            lib-biokepi_bfx_tools \
+           lib-biokepi_pipeline_edsl \
            lib-biokepi \
            app-biokepi-demo \
            app-biokepi-tests app-biokepi-test-all-downloads app-biokepi-hla-typer
@@ -97,6 +109,7 @@ doc:
     sh ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
 
 
-DIRS[] = src/run_environment/ src/environment_setup/ src/bfx_tools/ src/lib
-LIBS[] = biokepi_run_environment biokepi_environment_setup biokepi_bfx_tools biokepi
+DIRS[] = src/run_environment/ src/environment_setup/ src/bfx_tools/ src/pipeline_edsl/ src/lib
+LIBS[] = biokepi_run_environment biokepi_environment_setup \
+         biokepi_bfx_tools biokepi_pipeline_edsl biokepi
 DotOCamlinit($(DIRS), $(LIB_PACKAGES), $(LIBS))
