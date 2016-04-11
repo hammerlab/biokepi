@@ -7,7 +7,7 @@ bioinformatics pipelines.
 
 Biokepi is split into 4 libraries:
 
-- `Biokepi_run_environment`: is the common API used all accross the library
+- `Biokepi_run_environment`: is the common API used all across the library
   (incl. extensions to Ketrew's EDSL, and the `Machine.t` interface to
   computing infrastructure).
 - `Biokepi_environment_setup`: provides a set of (*optional*/*customisable*)
