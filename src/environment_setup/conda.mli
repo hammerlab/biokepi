@@ -1,3 +1,5 @@
+open Biokepi_run_environment
+
 (** The contents of the default Conda configuration used in Biokepi. *)
 val biokepi_conda_config : string
 
