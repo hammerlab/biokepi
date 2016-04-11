@@ -47,8 +47,10 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
         protected.LIB_CMXS = $(addsuffix .cmx, $(LIB_MODULES))
         protected.LIB_OS = $(addsuffix .o, $(LIB_MODULES))
         echo "LIB $(libname) MODULES: $(LIB_MODULES)"
-        echo "$(LIB_CMXS)"
-        echo "$(LIB_CMIS)"
+        echo "      CMX:  $(LIB_CMXS)"
+        echo "      CMI:  $(LIB_CMIS)"
+        echo "      DEPS: $(local_deps)"
+        echo "      INCLUDES: $(OCAMLINCLUDES)"
         $(libname).cmo $(libname).cmi: $(LIB_CMOS) $(LIB_CMIS)
             ocamlc -pack -o $(libname).cmo $(OCamlLinkSort $(LIB_CMOS))
         $(libname).cmx $(libname).o: $(LIB_CMXS) $(LIB_OS) $(LIB_CMIS)
@@ -56,6 +58,8 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
         $(libname).cmxs: $(libname).cmx
             ocamlopt -shared -o $@ $(libname).cmx
         $(targetname): $(OCamlLibrary $(libname), $(libname)) $(libname).cmxs $(libname).cma
+            echo "RM-ing CMIS: $(LIB_CMIS)"
+            rm $(LIB_CMIS)
         META:  :value: $(VERSION) :value: $(DESCRIPTION) :value: $(OCAMLPACKS) :value: $(OCAML_LOCAL_LIBS)
             echo "description = \"$(DESCRIPTION)\"" > $@
             echo "version = \"$(VERSION)\"" >> $@

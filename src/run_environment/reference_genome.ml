@@ -240,7 +240,7 @@ let gtf t = t.gtf
 let cdna_exn t =
   Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" (name t)) t.cdna
 
-let major_contigs t =
+let major_contigs t : Region.t list =
   match t.specification.Specification.major_contigs with
   | None ->
     failwithf "Reference %S does have major-contigs/chromosomes defined" (name t)

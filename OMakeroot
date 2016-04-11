@@ -40,8 +40,7 @@ section # Setup-run-environment library
 
 section # Bioinformatics workflow nodes library
     OCAMLPACKS[] = $(LIB_PACKAGES)
-    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
-                        src/environment_setup//biokepi_environment_setup
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
     .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_bfx_tools, src/bfx_tools)
 
 section # High-level pipeline library
@@ -84,8 +83,12 @@ uninstall: uninstall-lib-biokepi_run_environment \
            uninstall-app-biokepi-demo
 
 # `omake build-all` to build also the tests:
-build-all: lib-biokepi app-biokepi-demo \
-    app-biokepi-tests app-biokepi-test-all-downloads app-biokepi-hla-typer
+build-all: lib-biokepi_run_environment \
+           lib-biokepi_environment_setup \
+           lib-biokepi_bfx_tools \
+           lib-biokepi \
+           app-biokepi-demo \
+           app-biokepi-tests app-biokepi-test-all-downloads app-biokepi-hla-typer
 
 .PHONY: doc
 
