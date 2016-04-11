@@ -5,19 +5,20 @@ This project provides a family of libraries to construct “Ketrew Workflows” 
 bioinformatics pipelines.
 
 
-Biokepi is split into 4 libraries:
+Biokepi is split into 5 libraries:
 
+- The `Biokepi` module is the main entry point for most use cases.
 - `Biokepi_run_environment`: is the common API used all across the library
   (incl. extensions to Ketrew's EDSL, and the `Machine.t` interface to
   computing infrastructure).
 - `Biokepi_environment_setup`: provides a set of (*optional*/*customisable*)
-  defaults to setup a `Biokepi_run_environment.Machine.t`, it includes Ketrew
+  defaults to setup a `Biokepi.Machine.t`, it includes Ketrew
   workflow-nodes to install tools (`Machine.Tool.t`) and to download/prepare
   reference data (reference genomes, databases, etc.).
 - `Biokepi_bfx_tools`: contains the implementations of the Ketrew workflows to
   run all supported bioinformatics tools.
-- `Biokepi`: in-progress high-level API, to build very concise, typed, and
-  readable bioinformatics workflows.
+- `Biokepi_pipeline_edsl`: in-progress high-level API, to build very concise,
+  typed, and readable bioinformatics workflows.
 
 
 There are “demo” command-line applications in the `src/app` directory and tests
