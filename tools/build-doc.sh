@@ -5,8 +5,9 @@ LIB_PACKAGES=$1
 
 OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread "
 for dir in run_environment environment_setup bfx_tools pipeline_edsl lib ; do
-  OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS -I _build/src/$dir src/$dir/*"
+  OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS -I _build/src/$dir "
 done
+OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS src/lib/biokepi.ml"
 echo "OCAMLDOC_OPTIONS: $OCAMLDOC_OPTIONS"
 OCAMLDOC_DOT_OPTIONS="-dot $OCAMLDOC_OPTIONS -dot-reduce"
 
