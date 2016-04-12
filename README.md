@@ -61,7 +61,7 @@ submit a few Biokepi “example” pipelines to that same Ketrew daemon.
 ### Using The Demo Application
 
 The application is meant to show how to program with the library, especially
-how to build pipelines with [Biokepi.Pipeline](src/lib/pipeline.ml).
+how to build pipelines with [Biokepi.Pipeline](src/pipeline_edsl/pipeline.ml).
 
 For now the demo looks like a somatic variant calling pipeline (hence
 the use of the words “tumor,” “normal,” etc.). They have not been debugged
