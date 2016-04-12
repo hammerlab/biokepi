@@ -5,6 +5,9 @@ downloaded/built in order to check potentially deadlinks.
 
 
 *)
+
+module Ref_genome = Biokepi_run_environment.Reference_genome
+
 open Nonstd
 let failwithf fmt = ksprintf failwith fmt
 let get_env v help =
@@ -24,7 +27,7 @@ let run_program ?name ?requirements prog =
 
 let workflow =
   let edges_of_genome g =
-    let open Biokepi.Reference_genome in
+    let open Ref_genome in
     List.filter_map [fasta; cosmic_exn; dbsnp_exn; gtf_exn; cdna_exn;]
       ~f:begin fun f ->
         try Some (f g |> Ketrew.EDSL.depends_on) with _ -> None
@@ -34,15 +37,15 @@ let workflow =
   let get_all genome =
     workflow_node without_product
       ~name:(sprintf "Get all of %s's files"
-               (Biokepi.Reference_genome.name genome))
+               (Ref_genome.name genome))
       ~edges:(edges_of_genome genome)
   in
   let toolkit =
-    Biokepi.Tool_providers.default_toolkit () ~host
+    Biokepi_environment_setup.Tool_providers.default_toolkit () ~host
       ~meta_playground:(destination_path // "tools") in
   let edges =
     let genomes =
-      Biokepi.Download_reference_genomes.default_genome_providers in
+      Biokepi_environment_setup.Download_reference_genomes.default_genome_providers in
     List.map genomes ~f:(fun (name, pull) ->
         let genome = pull ~toolkit ~host ~destination_path ~run_program in
         depends_on (get_all genome))

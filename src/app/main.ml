@@ -1,5 +1,6 @@
 
-open Biokepi.Common
+open Biokepi_run_environment.Common
+
 
 let say fmt = ksprintf (printf "%s\n%!") fmt
 
@@ -99,7 +100,7 @@ let dump_pipeline ?(format = `Json) =
          |> Yojson.Basic.pretty_to_string ~std:true)
     end
 
-let environmental_box () : Biokepi.Run_environment.Machine.t =
+let environmental_box () : Biokepi_run_environment.Machine.t =
   let box_uri = get_env "BIOKEPI_SSH_BOX_URI" in
   let jar_location name () =
     begin match ksprintf get_opt "BIOKEPI_%s_JAR_SCP" name with
@@ -115,7 +116,7 @@ let environmental_box () : Biokepi.Run_environment.Machine.t =
   in
   let mutect_jar_location = jar_location "MUTECT" in
   let gatk_jar_location = jar_location "GATK" in
-  Biokepi.Build_machine.create
+  Biokepi_environment_setup.Build_machine.create
     ~gatk_jar_location ~mutect_jar_location box_uri
 
 let with_environmental_dataset =
@@ -141,7 +142,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
   let dataset, pipelines =
     with_environmental_dataset pipeline_example in
   let work_dir =
-    Biokepi.Run_environment.Machine.work_dir machine
+    Biokepi_run_environment.Machine.work_dir machine
     // sprintf "on-%s" dataset in
   let compiler = 
     Biokepi.Pipeline.Compiler.create
@@ -170,7 +171,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
         let witness_output =
           Filename.chop_suffix vcf#product#path ".vcf" ^ "-cycledashed.html" in
         let params = Yojson.Basic.pretty_to_string json in
-        Biokepi.Cycledash.post_vcf ~run_with:machine
+        Biokepi.Tools.Cycledash.post_vcf ~run_with:machine
           ~vcf ~variant_caller_name:vcf#render#name ~dataset_name:dataset
           ~witness_output ~params
           (get_env "BIOKEPI_CYCLEDASH_URL")

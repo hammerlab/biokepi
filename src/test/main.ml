@@ -8,15 +8,16 @@ let test_assert n b =
   if b then () else say "%s failed!" n
 
 let test_region () =
+  let module R = Biokepi_run_environment.Region in
   let check_samtools_format spec =
-    let samtools = Biokepi.Region.to_samtools_specification spec in
+    let samtools = R.to_samtools_specification spec in
     begin match samtools with
     | None  -> test_assert "check_samtools_format %s → not `Full" (spec = `Full)
     | Some s ->
       test_assert
         (sprintf "check_samtools_format %s Vs %s"
-           (Biokepi.Region.to_filename spec) s)
-        (spec = Biokepi.Region.parse_samtools s)
+           (R.to_filename spec) s)
+        (spec = R.parse_samtools s)
     end
   in
   List.iter ~f:check_samtools_format [

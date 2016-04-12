@@ -22,29 +22,58 @@ else
 LIB_PACKAGES = ketrew ppx_deriving.std
 
 OCAMLFLAGS = -bin-annot -absname -thread -short-paths -g \
-              -strict-formats -strict-sequence -w +9 -safe-string
+             -keep-docs -keep-locs \
+             -strict-formats -strict-sequence -w +9 -safe-string
 
-section # Main library
+section # Run-environment library
     OCAMLPACKS[] = $(LIB_PACKAGES)
-    _build/src/lib/metadata.ml: :value: $(VERSION)
+    _build/src/run_environment/metadata.ml: :value: $(VERSION)
         echo "(** Metadata generated at compile-time *)" > $@
         echo "let version = lazy \"$(VERSION)\"" >> $@
         echo "let git_commit = $(GIT_COMMIT)" >> $@
     OCAML_GENERATED_MODULES[] = metadata
-    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi, src/lib)
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_run_environment, src/run_environment)
+
+section # Setup-run-environment library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_environment_setup, src/environment_setup)
+
+section # Bioinformatics workflow nodes library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_bfx_tools, src/bfx_tools)
+
+section # High-level pipeline library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/bfx_tools/biokepi_bfx_tools
+    .DEFAULT: $(OCamlPackedLibraryOfDir biokepi_pipeline_edsl, src/pipeline_edsl)
+
+section # Whole API library
+    OCAMLPACKS[] = $(LIB_PACKAGES)
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl
+    .DEFAULT: $(OCamlSingleFileLibrary biokepi, src/lib/biokepi.ml)
 
 section # "main" demo application
-    OCAML_LOCAL_LIBS += src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl \
+                        src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
     .DEFAULT: $(OCamlProgramOfFile biokepi-demo, $(file src/app/main.ml))
 
 section # Executable tests
-    OCAML_LOCAL_LIBS += src/lib/biokepi
+    OCAML_LOCAL_LIBS += src/run_environment/biokepi_run_environment \
+                        src/environment_setup//biokepi_environment_setup \
+                        src/bfx_tools/biokepi_bfx_tools \
+                        src/pipeline_edsl/biokepi_pipeline_edsl \
+                        src/lib/biokepi
     OCAMLPACKS[] = $(LIB_PACKAGES)
-    #.PHONY: biokepi-tests biokepi-test-all-downloads biokepi-hla-typing
-    #biokepi-tests: $(OCamlProgramOfFile biokepi-tests, $(file src/test/main.ml))
-    #biokepi-test-all-downloads: $(OCamlProgramOfFile biokepi-test-all-downloads, $(file src/test/all_downloads.ml))
-    #biokepi-hla-typing: $(OCamlProgramOfFile biokepi-hla-typer, $(file src/app/hla_typer.ml))
     OCamlProgramOfFile(biokepi-tests, $(file src/test/main.ml))
     OCamlProgramOfFile(biokepi-test-all-downloads, $(file src/test/all_downloads.ml))
     OCamlProgramOfFile(biokepi-hla-typer, $(file src/app/hla_typer.ml))
@@ -52,12 +81,27 @@ section # Executable tests
 
 DotMerlin(./src, $(LIB_PACKAGES))
 
-install: install-lib-biokepi install-app-biokepi-demo
-uninstall: uninstall-lib-biokepi uninstall-app-biokepi-demo
+install: install-lib-biokepi_run_environment \
+         install-lib-biokepi_environment_setup \
+         install-lib-biokepi_bfx_tools \
+         install-lib-biokepi_pipeline_edsl \
+         install-lib-biokepi \
+         install-app-biokepi-demo
+uninstall: uninstall-lib-biokepi_run_environment \
+           uninstall-lib-biokepi_environment_setup \
+           uninstall-lib-biokepi_bfx_tools \
+           uninstall-lib-biokepi_pipeline_edsl \
+           uninstall-lib-biokepi \
+           uninstall-app-biokepi-demo
 
 # `omake build-all` to build also the tests:
-build-all: lib-biokepi app-biokepi-demo \
-    app-biokepi-tests app-biokepi-test-all-downloads app-biokepi-hla-typer
+build-all: lib-biokepi_run_environment \
+           lib-biokepi_environment_setup \
+           lib-biokepi_bfx_tools \
+           lib-biokepi_pipeline_edsl \
+           lib-biokepi \
+           app-biokepi-demo \
+           app-biokepi-tests app-biokepi-test-all-downloads app-biokepi-hla-typer
 
 .PHONY: doc
 
@@ -66,6 +110,7 @@ doc:
     sh ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
 
 
-DIRS[] = src/lib
-LIBS[] = biokepi
+DIRS[] = src/run_environment/ src/environment_setup/ src/bfx_tools/ src/pipeline_edsl/ src/lib
+LIBS[] = biokepi_run_environment biokepi_environment_setup \
+         biokepi_bfx_tools biokepi_pipeline_edsl biokepi
 DotOCamlinit($(DIRS), $(LIB_PACKAGES), $(LIBS))

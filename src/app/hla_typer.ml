@@ -1,8 +1,9 @@
 
+open Biokepi_run_environment.Common (* [(//)], [Printf], [Sosa], etc. *)
 open Biokepi
+    (*
 open Common
-module Ru = Run_environment
-
+*)
 let construct_pipeline dataset ~r1fn ~r2fn =
   let wf1 = KEDSL.(workflow_node (single_file r1fn) ~name:"Read1") in
   let wf2 = KEDSL.(workflow_node (single_file r2fn) ~name:"Read2") in
@@ -17,8 +18,8 @@ let pipeline_to_json ppln =
 let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
   let open Pipeline.Compiler in
   let machine =
-    let toolkit = Biopam.default ~install_path:(work_dir // "biopam") () in
-    Build_machine.create ~toolkit uri
+    let toolkit = Setup.Biopam.default ~install_path:(work_dir // "biopam") () in
+    Setup.Build_machine.create ~toolkit uri
   in
   let compiler =
     create ~processors:1
