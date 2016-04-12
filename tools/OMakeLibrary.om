@@ -68,8 +68,10 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
             echo "archive(native) = \"$(libname).cmxa\"" >> $@
             echo "archive(native,plugin) = \"$(libname).cmxs\"" >> $@
         .PHONY: install-$(targetname) uninstall-$(targetname)
+        protected.ADD_TO_INSTALL=$(glob i, *.mli) $(glob i, *.ml) $(glob i, *.cmt) $(glob i, *.cmti)
         install-$(targetname): META $(targetname)
-            ocamlfind install $(libname) META $(libname).cm[aix] $(libname).cmx[as] $(libname).a
+            ocamlfind install $(libname) META $(libname).cm[aix] $(libname).cmx[as] $(libname).a \
+                               $(LIB_CMXS) $(LIB_OS) $(LIB_FILES) $(ADD_TO_INSTALL)
         uninstall-$(targetname):
             ocamlfind remove $(libname)
     return $(targetname)
@@ -111,8 +113,10 @@ public.OCamlSingleFileLibrary(libname, single_file) =
             echo "archive(native) = \"$(libname).cmxa\"" >> $@
             echo "archive(native,plugin) = \"$(libname).cmxs\"" >> $@
         .PHONY: install-$(targetname) uninstall-$(targetname)
+        protected.ADD_TO_INSTALL=$(glob i, *.mli) $(glob i, *.ml) $(glob i, *.cmt) $(glob i, *.cmti)
         install-$(targetname): META $(targetname)
-            ocamlfind install $(libname) META $(libname).cm[aix] $(libname).cmx[as] $(libname).a
+            ocamlfind install $(libname) META $(libname).cm[aix] $(libname).cmx[as] $(libname).a \
+                $(ADD_TO_INSTALL)
         uninstall-$(targetname):
             ocamlfind remove $(libname)
     return $(targetname)
