@@ -114,7 +114,9 @@ let tabix ~run_with ~tabular_format input_file =
 
 let do_on_bam
     ~(run_with:Machine.t)
-    ?(more_depends_on=[]) ~name input_bam ~product ~make_command =
+    ?(more_depends_on=[]) ~name
+    ?(more_requirements: Machine.Make_fun.Requirement.t list = [])
+    input_bam ~product ~make_command =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Machine.Tool.Default.samtools in
   let src = input_bam#product#path in
@@ -122,7 +124,9 @@ let do_on_bam
   let program =
     Program.(Machine.Tool.(init samtools) && exec ("samtools" :: sub_command))
   in
-  let make = Machine.run_program ~name run_with program in
+  let make =
+    Machine.run_program ~requirements:more_requirements ~name run_with program
+  in
   workflow_node product ~name ~make
     ~edges:(
       depends_on Machine.Tool.(ensure samtools)
@@ -150,6 +154,7 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     | `Read_name -> "sort" :: "-n" :: command
   in
   do_on_bam ~run_with input_bam ~product ~make_command
+    ~more_requirements:[`Memory `Big]
     ~name:(sprintf "Samtools-sort %s"
              Filename.(basename input_bam#product#path))
 (**
