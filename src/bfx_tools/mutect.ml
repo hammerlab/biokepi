@@ -77,7 +77,9 @@ let run
         Option.value_map ~default:"" dbsnp ~f:(fun node ->
             sprintf "--dbsnp %s" (Filename.quote node#product#path)) in
       let make =
-        Machine.run_big_program run_with ~name ~processors:2 Program.(
+        Machine.run_big_program run_with ~name ~processors:2
+          ~self_ids:["mutect"]
+          Program.(
             Machine.Tool.(init mutect)
             && shf "mkdir -p %s" run_path
             && shf "cd %s" run_path

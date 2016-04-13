@@ -260,6 +260,7 @@ let indel_realigner :
       in
       let intervals_option = Region.to_gatk_option on_region in
       Machine.run_big_program run_with ~name ~processors
+        ~self_ids:["gatk"; "indel-realigner"]
         Program.(
           Machine.Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
@@ -423,6 +424,7 @@ let base_quality_score_recalibrator
   in
   let make =
     Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["gatk"; "bqsr"]
       Program.(
         Machine.Tool.(init gatk)
         && call_gatk ~analysis:"BaseRecalibrator" ([
@@ -475,6 +477,7 @@ let haplotype_caller
       let name = sprintf "%s" (Filename.basename output_vcf) in
       let make =
         Machine.run_big_program run_with ~name
+          ~self_ids:["gatk"; "haplotype-caller"]
           Program.(
             Machine.Tool.(init gatk)
             && shf "mkdir -p %s" run_path
@@ -552,7 +555,8 @@ let mutect2
     let run_caller =
       let name = sprintf "%s" (Filename.basename output_vcf) in
       let make =
-        Machine.run_program run_with ~name
+        Machine.run_big_program run_with ~name
+          ~self_ids:["gatk"; "mutect2"]
           Program.(
             Machine.Tool.(init gatk)
             && shf "mkdir -p %s" run_path

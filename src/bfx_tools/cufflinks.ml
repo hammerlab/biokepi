@@ -24,6 +24,7 @@ let run ~reference_build
     Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in
   let make =
     Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["cufflinks"]
       Program.(
         Machine.Tool.init cufflinks_tool
         && shf "mkdir -p %s" output_dir

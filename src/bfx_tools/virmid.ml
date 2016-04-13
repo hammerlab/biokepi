@@ -55,6 +55,7 @@ let run
     work_dir // Filename.basename tumor#product#path ^ ".virmid.som.passed.vcf" in
   let make =
     Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["virmid"]
       Program.(
         Machine.Tool.init virmid_tool
         && shf "mkdir -p %s" work_dir
@@ -75,8 +76,8 @@ let run
   workflow_node ~name ~make
     (single_file output_file ~host:(Machine.as_host run_with))
     ~edges:(more_edges @ [
-      depends_on normal;
-      depends_on tumor;
-      depends_on reference_fasta;
-      depends_on (Machine.Tool.ensure virmid_tool);
-    ])
+        depends_on normal;
+        depends_on tumor;
+        depends_on reference_fasta;
+        depends_on (Machine.Tool.ensure virmid_tool);
+      ])

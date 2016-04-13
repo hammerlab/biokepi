@@ -143,6 +143,7 @@ let run
   let working_dir = Filename.(dirname result_prefix) in
   let make =
     Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["strelka"]
       Program.(
         Machine.Tool.init strelka_tool && Machine.Tool.init gatk_tool
         && shf "mkdir -p %s"  working_dir

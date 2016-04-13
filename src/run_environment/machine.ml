@@ -122,6 +122,11 @@ module Make_fun = struct
                                   ["#WIP"]). *)
       | `Custom of string (** Pass arbitrary data (useful for temporary
                               extensions/experiements outside of Biokepi). *)
+      | `Self_identification of string list
+        (** Set of names or tags for a workflow-node program to identify
+            itself to the {!Machine.t}.
+            This is useful for quickly bypassing incorrect requirements set
+            in the library (please also report an issue if you need this).  *)
     ] [@@deriving yojson, show]
   end
 
@@ -141,6 +146,11 @@ module Make_fun = struct
 
   let downloading requirements =
     `Internet_access :: stream_processor requirements 
+
+  let with_self_ids ?self_ids l =
+    match self_ids with
+    | Some tags -> `Self_identification tags :: l
+    | None -> l
 
   let with_requirements : t -> Requirement.t list -> t = fun f l ->
     fun ?name ?(requirements = []) prog ->
@@ -172,18 +182,21 @@ let quick_run_program t : Make_fun.t =
   Make_fun.with_requirements t.run_program (Make_fun.quick [])
 
 (** Run a program that does not use much memory and runs on one core. *)
-let run_stream_processor t : Make_fun.t =
-  Make_fun.with_requirements t.run_program (Make_fun.stream_processor [])
+let run_stream_processor ?self_ids t : Make_fun.t =
+  Make_fun.with_requirements t.run_program
+    (Make_fun.stream_processor [] |> Make_fun.with_self_ids ?self_ids)
 
 (** Run a program that does not use much memory, runs on one core, and needs
     the internet. *)
 let run_download_program t : Make_fun.t =
   Make_fun.with_requirements t.run_program (Make_fun.downloading [])
 
-let run_big_program t : ?processors: int -> Make_fun.t =
-  fun ?(processors = 1) ->
+let run_big_program t :
+  ?processors: int -> ?self_ids : string list -> Make_fun.t =
+  fun ?(processors = 1) ?self_ids ->
     Make_fun.with_requirements
-      t.run_program [`Memory `Big; `Processors processors]
+      t.run_program
+      (Make_fun.with_self_ids ?self_ids [`Memory `Big; `Processors processors])
 
 let work_dir t = t.work_dir
 
