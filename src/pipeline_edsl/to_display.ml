@@ -39,80 +39,26 @@ module List_repr = struct
       )
 end
 
-let input_value name kv =
-  let open SP in
-  fun ~var_count ->
-    entity (
-      ksprintf string "input-%s" name
-      ^^ (OCaml.list 
-                 (fun (k, v) -> parens (string k ^-^ string ":" ^^ string v))
-                 kv)
-    )
-
-let function_call name params =
-  let open SP in
-  entity (
-    ksprintf string "%s" name
-    ^^ (OCaml.list
-               (fun (k, v) -> parens (string k ^-^ string ":" ^^ v))
-               params)
-  )
-
-let fastq
-  ~sample_name ?fragment_id ~r1 ?r2 () =
-  input_value "fastq" [
-    "sample_name", sample_name;
-    "fragment_id", Option.value ~default:"NONE" fragment_id;
-    "R1", r1;
-    "R2", Option.value ~default:"NONE" r2;
-  ]
-
-let fastq_gz
-  ~sample_name ?fragment_id ~r1 ?r2 () =
-  input_value "fastq.gz" [
-    "sample_name", sample_name;
-    "fragment_id", Option.value ~default:"NONE" fragment_id;
-    "R1", r1;
-    "R2", Option.value ~default:"NONE" r2;
-  ]
-
-let bam ~path ?sorting ~reference_build () =
-  input_value "bam" [
-    "path", path;
-    "sorting",
-    Option.value_map ~default:"NONE" sorting
-      ~f:(function `Coordinate -> "Coordinate" | `Read_name -> "Read-name");
-    "reference_build", reference_build;
-  ]
+include To_json.Make_serializer (struct
+    type t = SP.t
+    let input_value name kv =
+      let open SP in
+      fun ~var_count ->
+        entity (
+          ksprintf string "input-%s" name
+          ^^ (OCaml.list 
+                (fun (k, v) -> parens (string k ^-^ string ":" ^^ string v))
+                kv)
+        )
+    let function_call name params =
+      let open SP in
+      entity (
+        ksprintf string "%s" name
+        ^^ (OCaml.list
+              (fun (k, v) -> parens (string k ^-^ string ":" ^^ v))
+              params)
+      )
+    let string = SP.string
+  end)
 
 
-let bwa_aln
-    ?(configuration = Tools.Bwa.Configuration.Aln.default)
-    ~reference_build fq ~var_count =
-  let fq_compiled = fq ~var_count in
-  function_call "bwa-aln" [
-    "configuration",
-    Tools.Bwa.Configuration.Aln.name configuration |> SP.string;
-    "reference_build", SP.string reference_build;
-    "input", fq_compiled;
-  ]
-
-let gunzip gz ~var_count =
-  function_call "gunzip" ["input", gz ~var_count]
-
-let gunzip_concat gzl ~var_count =
-  function_call "gunzip-concat" ["input-list", gzl ~var_count]
-
-let concat l ~var_count =
-  function_call "concat" ["input-list", l ~var_count]
-
-let merge_bams bl ~var_count =
-  function_call "merge-bams" ["input-list", bl ~var_count]
-
-let mutect ~configuration ~normal ~tumor ~var_count =
-  function_call "mutect" [
-    "configuration", SP.string  
-      configuration.Tools.Mutect.Configuration.name;
-    "normal", normal ~var_count;
-    "tumor", tumor ~var_count;
-  ]

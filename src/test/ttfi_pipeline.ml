@@ -38,17 +38,17 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
 
 end
 
-let normal_1 = 
+let normal_1 =
   ("normal-1", [
-      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq"); 
-      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq"); 
-      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz"); 
+      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq");
+      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq");
+      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz");
     ])
 
-let tumor_1 = 
+let tumor_1 =
   ("tumor-1", [
-      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz"); 
-      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz"); 
+      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz");
+      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz");
     ])
 
 let write_file file ~content =
@@ -60,7 +60,7 @@ let write_file file ~content =
     close_out out_file
 
 let cmdf fmt =
-  ksprintf (fun s -> 
+  ksprintf (fun s ->
       match Sys.command s with
       | 0 -> ()
       | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
@@ -75,6 +75,12 @@ let () =
   write_file pipeline_1_display
     ~content:(Display_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
               |> SmartPrint.to_string 80 2);
+
+  let module Jsonize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_json) in
+  let pipeline_1_json = test_dir // "pipeline-1.json" in
+  write_file pipeline_1_json
+    ~content:(Jsonize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+              |> Yojson.Basic.pretty_to_string ~std:true);
 
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct
@@ -96,7 +102,8 @@ let () =
     ~content:(workflow_1 |> Ketrew.EDSL.workflow_to_string);
   printf "Pipeline_1:\n\
          \  display: %s\n\
+         \  JSON: %s\n\
          \  ketrew-display: %s\n%!"
-    pipeline_1_display pipeline_1_workflow_display
+    pipeline_1_display pipeline_1_json pipeline_1_workflow_display
 
 
