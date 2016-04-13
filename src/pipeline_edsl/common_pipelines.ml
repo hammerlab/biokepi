@@ -32,24 +32,30 @@ module Somatic = struct
     let open Pipeline.Construct in
     let normal = input_fastq ~dataset normal_fastqs in
     let tumor = input_fastq ~dataset tumor_fastqs in
-    let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
+    let bam_pair ?configuration () =
       let normal =
-        bwa ?gap_open_penalty ?gap_extension_penalty normal
+        bwa ?configuration normal
         |> gatk_indel_realigner
         |> picard_mark_duplicates
         |> gatk_bqsr
       in
       let tumor =
-        bwa ?gap_open_penalty ?gap_extension_penalty tumor
+        bwa ?configuration tumor
         |> gatk_indel_realigner
         |> picard_mark_duplicates
         |> gatk_bqsr
       in
       pair ~normal ~tumor in
-    let bam_pairs = [
-      bam_pair ();
-      bam_pair ~gap_open_penalty:10 ~gap_extension_penalty:7 ();
-    ] in
+    let bam_pairs =
+      let non_default =
+        { Bwa.Configuration.Aln.
+          name = "config42";
+          gap_open_penalty = 10;
+          gap_extension_penalty = 7 } in
+      [
+        bam_pair ();
+        bam_pair ~configuration:non_default ();
+      ] in
     let vcfs =
       List.concat_map bam_pairs ~f:(fun bam_pair ->
           [

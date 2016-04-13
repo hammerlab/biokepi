@@ -9,38 +9,6 @@ let get_env s =
 let get_opt s =
   try Some (Sys.getenv s) with _ -> None
 
-let crazy_somatic_example ~normal_fastqs ~tumor_fastqs ~dataset =
-  let open Biokepi.Pipeline.Construct in
-  let normal = input_fastq ~dataset normal_fastqs in
-  let tumor = input_fastq ~dataset tumor_fastqs in
-  let bam_pair ?gap_open_penalty ?gap_extension_penalty () =
-    let normal =
-      bwa ?gap_open_penalty ?gap_extension_penalty normal
-      |> gatk_indel_realigner
-      |> picard_mark_duplicates
-      |> gatk_bqsr
-    in
-    let tumor =
-      bwa ?gap_open_penalty ?gap_extension_penalty tumor
-      |> gatk_indel_realigner
-      |> picard_mark_duplicates
-      |> gatk_bqsr
-    in
-    pair ~normal ~tumor in
-  let bam_pairs = [
-    bam_pair ();
-    bam_pair ~gap_open_penalty:10 ~gap_extension_penalty:7 ();
-  ] in
-  let vcfs =
-    List.concat_map bam_pairs ~f:(fun bam_pair ->
-        [
-          mutect bam_pair;
-          somaticsniper bam_pair;
-          somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
-          varscan_somatic bam_pair;
-        ])
-  in
-  vcfs
 
 let simple_somatic_example ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset =
   let open Biokepi.Pipeline.Construct in
@@ -63,7 +31,9 @@ type example_pipeline = [
 ]
 
 let global_named_examples: (string * example_pipeline) list = [
-  "somatic-crazy", `Somatic_from_fastqs crazy_somatic_example;
+  "somatic-crazy",
+  `Somatic_from_fastqs
+    Biokepi_pipeline_edsl.Common_pipelines.Somatic.crazy_example;
   "somatic-simple-somaticsniper",
   `Somatic_from_fastqs
     (simple_somatic_example

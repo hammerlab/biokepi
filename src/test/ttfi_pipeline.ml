@@ -8,7 +8,7 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
     List.map files ~f:begin function
     | `Pair (r1, r2) ->
       if Filename.check_suffix r1 ".gz"
-      || Filename.check_suffix r1 ".fqz"
+     || Filename.check_suffix r1 ".fqz"
       then
         Bfx.(fastq_gz ~sample_name:dataset ~r1 ~r2 () |> gunzip)
       else
@@ -17,10 +17,11 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
     |> Bfx.List_repr.make
 
 
-  let mutect_on_fastqs ~normal ~tumor =
+  let mutect_on_fastqs ~reference_build ~normal ~tumor =
+    let aligner =
+      Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build fq) in
     let align_list list_of_fastqs =
-      Bfx.List_repr.map list_of_fastqs ~f:(Bfx.lambda (fun fq -> Bfx.bwa_aln fq))
-      |> Bfx.merge_bams
+      Bfx.List_repr.map list_of_fastqs ~f:aligner |> Bfx.merge_bams
     in
     Bfx.mutect
       ~configuration:Biokepi.Tools.Mutect.Configuration.default
@@ -30,6 +31,7 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
   let run ~normal ~tumor =
     Bfx.observe (fun () ->
         mutect_on_fastqs
+          ~reference_build:"b37"
           ~normal:(fastq_list ~dataset:(fst normal) (snd normal))
           ~tumor:(fastq_list ~dataset:(fst tumor) (snd tumor))
       )

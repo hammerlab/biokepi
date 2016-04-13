@@ -1,6 +1,8 @@
 
 open Nonstd
 
+module Tools = Biokepi_bfx_tools
+
 module SP = SmartPrint
 module OCaml = SmartPrint.OCaml
 let entity sp = SP.(nest (parens  (sp)))
@@ -84,9 +86,16 @@ let bam ~path ?sorting ~reference_build () =
   ]
 
 
-let bwa_aln ?configuration fq ~var_count =
+let bwa_aln
+    ?(configuration = Tools.Bwa.Configuration.Aln.default)
+    ~reference_build fq ~var_count =
   let fq_compiled = fq ~var_count in
-  function_call "bwa-aln" ["input", fq_compiled]
+  function_call "bwa-aln" [
+    "configuration",
+    Tools.Bwa.Configuration.Aln.name configuration |> SP.string;
+    "reference_build", SP.string reference_build;
+    "input", fq_compiled;
+  ]
 
 let gunzip gz ~var_count =
   function_call "gunzip" ["input", gz ~var_count]
@@ -103,7 +112,7 @@ let merge_bams bl ~var_count =
 let mutect ~configuration ~normal ~tumor ~var_count =
   function_call "mutect" [
     "configuration", SP.string  
-      configuration.Biokepi_bfx_tools.Mutect.Configuration.name;
+      configuration.Tools.Mutect.Configuration.name;
     "normal", normal ~var_count;
     "tumor", tumor ~var_count;
   ]

@@ -19,13 +19,6 @@ module type Lambda_with_list_operations = sig
   end
 end
 
-(* this should move to the Bwa module *)
-type bwa_params = {
-  gap_open_penalty: int;
-  gap_extension_penalty: int;
-}
-
-
 module type Bioinformatics_base = sig
 
   include Lambda_with_list_operations
@@ -50,7 +43,8 @@ module type Bioinformatics_base = sig
     unit -> [ `Bam ] repr
 
   val bwa_aln:
-    ?configuration: bwa_params ->
+    ?configuration: Biokepi_bfx_tools.Bwa.Configuration.Aln.t ->
+    reference_build: Biokepi_run_environment.Reference_genome.name ->
     [ `Fastq ] repr ->
     [ `Bam ] repr
 
