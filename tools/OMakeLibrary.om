@@ -58,8 +58,9 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
         $(libname).cmxs: $(libname).cmx
             ocamlopt -shared -o $@ $(libname).cmx
         $(targetname): $(OCamlLibrary $(libname), $(libname)) $(libname).cmxs $(libname).cma
-            echo "RM-ing CMIS: $(LIB_CMIS)"
-            rm $(LIB_CMIS)
+            if $(test $(getenv REMOVE_CMIS, "") = true)
+                echo "RM-ing CMIS: $(LIB_CMIS)"
+                rm $(LIB_CMIS)
         META:  :value: $(VERSION) :value: $(DESCRIPTION) :value: $(OCAMLPACKS) :value: $(OCAML_LOCAL_LIBS)
             echo "description = \"$(DESCRIPTION)\"" > $@
             echo "version = \"$(VERSION)\"" >> $@
