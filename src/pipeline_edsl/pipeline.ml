@@ -37,10 +37,6 @@ type gtf = Gtf
 (** Seq2HLA has a custom/unique return file format *)
 type seq2hla_hla_types = Seq2HLA_hla_types
 
-type bwa_params = {
-  gap_open_penalty: int;
-  gap_extension_penalty: int;
-}
 
 type somatic = { normal : bam; tumor : bam }
 type germline = bam
@@ -89,8 +85,8 @@ type _ t =
   | Star: fastq_sample t -> bam t
   | Hisat: Hisat.Configuration.t * fastq_sample t -> bam t
   | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
-  | Bwa: bwa_params * fastq_sample t -> bam t
-  | Bwa_mem: bwa_params * fastq_sample t -> bam t
+  | Bwa: Bwa.Configuration.Aln.t * fastq_sample t -> bam t
+  | Bwa_mem: Bwa.Configuration.Mem.t * fastq_sample t -> bam t
   | Mosaik: fastq_sample t -> bam t
   | Gatk_indel_realigner: Gatk.Configuration.indel_realigner * bam t -> bam t
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
@@ -142,19 +138,13 @@ module Construct = struct
 
   let bam_to_fastq ?sample_name how bam = Bam_to_fastq (sample_name, how, bam)
 
-  let bwa
-      ?(gap_open_penalty=Bwa.default_gap_open_penalty)
-      ?(gap_extension_penalty=Bwa.default_gap_extension_penalty)
-      fastq =
-    let params = {gap_open_penalty; gap_extension_penalty} in
-    Bwa (params, fastq)
+  let bwa ?(configuration = Bwa.Configuration.Aln.default) fastq =
+    Bwa (configuration, fastq)
 
-  let bwa_mem
-      ?(gap_open_penalty=Bwa.default_gap_open_penalty)
-      ?(gap_extension_penalty=Bwa.default_gap_extension_penalty)
-      fastq =
-    let params = {gap_open_penalty; gap_extension_penalty} in
-    Bwa_mem (params, fastq)
+  let bwa_aln = bwa
+
+  let bwa_mem ?(configuration = Bwa.Configuration.Mem.default) fastq =
+    Bwa_mem (configuration, fastq)
 
   let mosaik fastq = Mosaik fastq
 
@@ -365,12 +355,12 @@ let rec to_file_prefix:
         (to_file_prefix bam)
         (match how with `Paired -> "PE" | `Single -> "SE")
     | Paired_end_sample (info, _ , _) -> info.fragment_id
-    | Bwa ({ gap_open_penalty; gap_extension_penalty }, sample) ->
-      sprintf "%s-bwa-gap%d-gep%d"
-        (to_file_prefix sample) gap_open_penalty gap_extension_penalty
-    | Bwa_mem ({ gap_open_penalty; gap_extension_penalty }, sample) ->
-      sprintf "%s-bwa-mem-gap%d-gep%d"
-        (to_file_prefix sample) gap_open_penalty gap_extension_penalty
+    | Bwa (configuration, sample) ->
+      sprintf "%s-bwa-%s"
+        (to_file_prefix sample) (Bwa.Configuration.Aln.name configuration)
+    | Bwa_mem (configuration, sample) ->
+      sprintf "%s-bwa-mem-%s"
+        (to_file_prefix sample) (Bwa.Configuration.Mem.name configuration)
     | Star (sample) ->
       sprintf "%s-star-aligned" (to_file_prefix sample)
     | Hisat (conf, sample) ->
@@ -414,10 +404,6 @@ let rec to_file_prefix:
 
 
 let rec to_json: type a. a t -> json =
-  let bwa_params {gap_open_penalty; gap_extension_penalty} input =
-    `Assoc ["gap_open_penalty", `Int gap_open_penalty;
-            "gap_extension_penalty", `Int gap_extension_penalty;
-            "input", input] in
   fun w ->
     let call name (args : json list): json = `List (`String name :: args) in
     match w with
@@ -438,12 +424,17 @@ let rec to_json: type a. a t -> json =
       call "Gunzip-concat" (List.map ~f:to_json fastq_gz_list)
     | Concat_text fastq_list ->
       call "Concat" (List.map ~f:to_json fastq_list)
-    | Bwa (params, input) ->
-      let input_json = to_json input in
-      call "BWA" [bwa_params params input_json]
+    | Bwa (config, input) ->
+      call "BWA" [
+        `Assoc ["configuration", Bwa.Configuration.Aln.to_json config];
+        to_json input
+      ]
     | Bwa_mem (params, input) ->
       let input_json = to_json input in
-      call "BWA-MEM" [bwa_params params input_json]
+      call "BWA-MEM" [
+        `Assoc ["configuration", Bwa.Configuration.Mem.to_json params];
+        input_json
+      ]
     | Star (input) ->
       let input_json = to_json input in
       call "STAR" [input_json]
@@ -723,19 +714,18 @@ module Compiler = struct
           `Bwa_mem ~make_aligner:(fun pe -> Bwa_mem (bwa_mem_config, pe))
           fq_sample
           ~make_workflow:(fun fastq ->
-              let {gap_open_penalty; gap_extension_penalty} = bwa_mem_config in
               Bwa.mem_align_to_sam
                 ~reference_build ~processors
-                ~gap_open_penalty ~gap_extension_penalty
+                ~configuration:bwa_mem_config
                 ~fastq ~result_prefix ~run_with:machine ()
               |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
-      | Bwa ({gap_open_penalty; gap_extension_penalty} as bwa_config, what) ->
+      | Bwa (bwa_config, what) ->
         perform_aligner_parallelization
           `Bwa ~make_aligner:(fun pe -> Bwa (bwa_config, pe)) what
           ~make_workflow:(fun fastq ->
               Bwa.align_to_sam
                 ~reference_build ~processors
-                ~gap_open_penalty ~gap_extension_penalty
+                ~configuration:bwa_config
                 ~fastq ~result_prefix ~run_with:machine ()
               |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
       | Mosaik (what) ->

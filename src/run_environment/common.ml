@@ -72,13 +72,21 @@ module KEDSL = struct
   type fastq_reads = <
     is_done: Ketrew_pure.Target.Condition.t option;
     paths : string * (string option);
+    r1 : single_file workflow_node;
+    r2 : single_file workflow_node option;
     sample_name: string;
     escaped_sample_name: string;
+    fragment_id: string option;
   >
-  let fastq_reads ?host ?name r1 r2_opt : fastq_reads =
+  let fastq_reads ?host ?name ?fragment_id r1 r2_opt : fastq_reads =
     object (self)
       val r1_file = single_file ?host r1
       val r2_file_opt = Option.map r2_opt ~f:(single_file ?host)
+      method r1 =
+        workflow_node r1_file
+      method r2 = 
+        Option.map r2_file_opt ~f:(fun r2_file ->
+            workflow_node r2_file)
       method paths = (r1, r2_opt)
       method is_done =
         Some (match r2_file_opt with
@@ -86,6 +94,7 @@ module KEDSL = struct
           | None -> `And [r1_file#exists; r1_file#exists;])
       method sample_name =
         Option.value name ~default:(Filename.basename r1)
+      method fragment_id = fragment_id
       method escaped_sample_name =
         String.map self#sample_name ~f:(function
           | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
