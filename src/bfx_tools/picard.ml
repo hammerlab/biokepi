@@ -16,7 +16,9 @@ let create_dict ~(run_with:Machine.t) fasta =
              shf "java -jar $PICARD_JAR CreateSequenceDictionary R= %s O= %s"
                (Filename.quote src) (Filename.quote dest)) in
   let name = sprintf "picard-create-dict-%s" Filename.(basename src) in
-  let make = Machine.run_program run_with program ~name in
+  let make =
+    Machine.run_stream_processor run_with program ~name
+      ~self_ids:["picard"; "create-dict"] in
   let host = Machine.(as_host run_with) in
   workflow_node (single_file dest ~host) ~name ~make
     ~edges:[
@@ -59,7 +61,9 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
                 (Filename.quote src) (Filename.quote dest)))
   in
   let host = Machine.(as_host run_with) in
-  let make = Machine.run_program run_with program ~name in
+  let make =
+    Machine.run_stream_processor
+      run_with program ~name ~self_ids:["picard"; "sort-vcf"] in
   workflow_node (single_file dest ~host) ~name ~make
     ~edges:([
       depends_on input_vcf; depends_on Machine.Tool.(ensure picard);
@@ -125,7 +129,9 @@ let mark_duplicates
                metrics_path) in
   let name =
     sprintf "picard-markdups-%s" Filename.(basename input_bam#product#path) in
-  let make = Machine.run_big_program ~name run_with program in
+  let make =
+    Machine.run_big_program ~name run_with program
+      ~self_ids:["picard"; "mark-duplicates"] in
   let product = transform_bam  input_bam#product output_bam_path in
   workflow_node product
     ~name ~make
@@ -165,7 +171,9 @@ let bam_to_fastq
     ) in
   let name =
     sprintf "picard-bam2fastq-%s" Filename.(basename input_bam#product#path) in
-  let make = Machine.run_program ~name run_with program in
+  let make =
+    Machine.run_big_program ~name run_with program
+      ~self_ids:["picard"; "bam-to-fastq"] in
   let edges =
     (fun list ->
        match r2opt with

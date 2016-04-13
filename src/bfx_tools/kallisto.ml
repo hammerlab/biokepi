@@ -5,12 +5,12 @@ open Common
 
 (** Create a kallisto specific index of the transcriptome (cDNA) *)
 let index
-  ~reference_build
-  ~(run_with : Machine.t) =
+    ~reference_build
+    ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_transcriptome =
     Machine.get_reference_genome run_with reference_build
-      |> Reference_genome.cdna_exn in
+    |> Reference_genome.cdna_exn in
   let kallisto_tool = Machine.get_tool run_with Machine.Tool.Default.kallisto in
   let name =
     sprintf "kallisto-index-%s" (Filename.basename reference_transcriptome#product#path) in
@@ -24,12 +24,13 @@ let index
       depends_on Machine.Tool.(ensure kallisto_tool);
     ]
     ~make:(Machine.run_big_program run_with ~name
-            Program.(
-              Machine.Tool.(init kallisto_tool)
-              && shf "kallisto index -i %s %s"
-                result
-                reference_transcriptome#product#path
-          ))
+             ~self_ids:["kallisto"; "index"]
+             Program.(
+               Machine.Tool.(init kallisto_tool)
+               && shf "kallisto index -i %s %s"
+                 result
+                 reference_transcriptome#product#path
+             ))
 
 (** Quantify transcript abundance from RNA fastqs, results in abundance.tsv file *)
 let run
@@ -69,6 +70,7 @@ let run
   in
   let make =
     Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["kallisto"; "quant"]
       Program.(
         Machine.Tool.init kallisto_tool
         && sh kallisto_quant

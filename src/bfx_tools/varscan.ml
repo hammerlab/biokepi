@@ -63,6 +63,7 @@ let somatic_on_region
       in
       Program.(Machine.Tool.init varscan_tool && sh big_one_liner)
       |> Machine.run_big_program run_with ~name ~processors:1
+        ~self_ids:["varscan"; "somatic"]
     in
     workflow_node ~name ~make
       (single_file snp_output ~host)
@@ -92,6 +93,7 @@ let somatic_on_region
         && shf "java -jar $VARSCAN_JAR processSomatic %s" indel_output
       )
       |> Machine.run_big_program run_with ~name ~processors:1
+        ~self_ids:["varscan"; "somaticfilter"]
     in
     workflow_node ~name
       (single_file snp_filtered ~host) ~make ~tags

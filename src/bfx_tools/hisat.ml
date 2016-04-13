@@ -11,8 +11,8 @@ module Configuration = struct
   let to_json {name; version}: Yojson.Basic.json =
     `Assoc [
       "name", `String name;
-      "version", 
-        match version with 
+      "version",
+        match version with
         |`V_0_1_6_beta -> `String "V_0_1_6_beta"
         |`V_2_0_2_beta -> `String "V_2_0_2_beta"
       ;
@@ -22,28 +22,28 @@ module Configuration = struct
 end
 
 let index
-  ~reference_build
-  ~index_prefix
-  ~configuration
-  ~(run_with : Machine.t) =
+    ~reference_build
+    ~index_prefix
+    ~configuration
+    ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
-      |> Reference_genome.fasta in
+    |> Reference_genome.fasta in
   let result_dir = Filename.dirname index_prefix in
   let version = configuration.Configuration.version in
   let hisat_tool = Machine.get_tool run_with (`Hisat version) in
-  let build_binary = 
+  let build_binary =
     match version with
     | `V_0_1_6_beta -> "hisat-build"
     | `V_2_0_2_beta -> "hisat2-build"
   in
-  let name = 
+  let name =
     sprintf "%s-%s" build_binary (Filename.basename reference_fasta#product#path) in
-  let first_index_file = 
+  let first_index_file =
     match version with
-      | `V_0_1_6_beta -> sprintf "%s.1.bt2" index_prefix
-      | `V_2_0_2_beta -> sprintf "%s.1.ht2" index_prefix 
+    | `V_0_1_6_beta -> sprintf "%s.1.bt2" index_prefix
+    | `V_2_0_2_beta -> sprintf "%s.1.ht2" index_prefix
   in
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) first_index_file)
@@ -54,16 +54,17 @@ let index
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~name
-            Program.(
-              Machine.Tool.(init hisat_tool)
-              && shf "mkdir %s" result_dir 
-              && shf "%s %s %s"
-                build_binary
-                reference_fasta#product#path
-                index_prefix
-          ))
+             ~self_ids:["hisat"; "index"]
+             Program.(
+               Machine.Tool.(init hisat_tool)
+               && shf "mkdir %s" result_dir
+               && shf "%s %s %s"
+                 build_binary
+                 reference_fasta#product#path
+                 index_prefix
+             ))
 
-let align 
+let align
     ~reference_build
     ~processors
     ~configuration
@@ -77,7 +78,7 @@ let align
     |> Reference_genome.fasta in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let version = configuration.Configuration.version in
-  let hisat_binary = 
+  let hisat_binary =
     match version with
       | `V_0_1_6_beta -> "hisat"
       | `V_2_0_2_beta -> "hisat2"
@@ -91,7 +92,7 @@ let align
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "%s-rna-align-%s" hisat_binary (Filename.basename r1_path) in
-  let hisat_base_command = sprintf 
+  let hisat_base_command = sprintf
       "%s \
        -p %d \
        -x %s \
@@ -101,10 +102,10 @@ let align
       (Filename.quote index_prefix)
       (Filename.quote result)
   in
-  let base_hisat_target ~hisat_command = 
+  let base_hisat_target ~hisat_command =
     workflow_node ~name
       (single_file
-         ~host:(Machine.(as_host run_with)) 
+         ~host:(Machine.(as_host run_with))
          result)
       ~edges:[
         on_failure_activate (Remove.file ~run_with result);
@@ -115,14 +116,15 @@ let align
       ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
+               ~self_ids:["hisat"; "align"]
                Program.(
                  Machine.Tool.(init hisat_tool)
                  && in_work_dir
-                 && sh hisat_command 
+                 && sh hisat_command
                ))
   in
   match r2_path_opt with
-  | Some read2 -> 
+  | Some read2 ->
     let hisat_command =
       String.concat ~sep:" " [
         hisat_base_command;
@@ -130,7 +132,7 @@ let align
         "-2"; (Filename.quote read2);
       ] in
     base_hisat_target ~hisat_command
-  | None -> 
+  | None ->
     let hisat_command = String.concat ~sep:" " [
         hisat_base_command;
         "-U"; (Filename.quote r1_path);

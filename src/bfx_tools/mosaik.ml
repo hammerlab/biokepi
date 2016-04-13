@@ -4,13 +4,13 @@ open Common
 module Remove = Workflow_utilities.Remove
 
 let index
-  ~reference_build
-  ~processors
-  ~(run_with : Machine.t) =
+    ~reference_build
+    ~processors
+    ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
-      |> Reference_genome.fasta in
+    |> Reference_genome.fasta in
   let mosaik_tool = Machine.get_tool run_with Machine.Tool.Default.mosaik in
   let name =
     sprintf "mosaik-build-%s" (Filename.basename reference_fasta#product#path) in
@@ -27,19 +27,20 @@ let index
     ]
     ~tags:[Target_tags.aligner]
     ~make:(Machine.run_big_program run_with ~processors ~name
-            Program.(
-              Machine.Tool.(init mosaik_tool)
-              && shf "mkdir -p %s" mosaik_tmp_dir
-              && shf "export MOSAIK_TMP=%s" mosaik_tmp_dir 
-              (* Command to build basic MOSAIK reference file *)
-              && shf "MosaikBuild -fr %s -oa %s"
-                reference_fasta#product#path
-                index_result
-              (* Command to build MOSAIK index file *)
-              && shf "MosaikJump -ia %s -hs 15 -out %s"
-                index_result
-                jump_file_result
-          ))
+             ~self_ids:["mosaik"; "index"]
+             Program.(
+               Machine.Tool.(init mosaik_tool)
+               && shf "mkdir -p %s" mosaik_tmp_dir
+               && shf "export MOSAIK_TMP=%s" mosaik_tmp_dir 
+               (* Command to build basic MOSAIK reference file *)
+               && shf "MosaikBuild -fr %s -oa %s"
+                 reference_fasta#product#path
+                 index_result
+               (* Command to build MOSAIK index file *)
+               && shf "MosaikJump -ia %s -hs 15 -out %s"
+                 index_result
+                 jump_file_result
+             ))
   
 
 
@@ -110,6 +111,7 @@ let align
       ]
       ~tags:[Target_tags.aligner]
       ~make:(Machine.run_big_program run_with ~processors ~name
+               ~self_ids:["mosaik"; "align"]
                Program.(
                  Machine.Tool.(init mosaik_tool)
                  && in_work_dir
