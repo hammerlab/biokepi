@@ -40,23 +40,63 @@ end
 
 let normal_1 = 
   ("normal-1", [
-      `Pair ("normal-1-001-r1.fastq", "normal-1-001-r2.fastq"); 
-      `Pair ("normal-1-002-r1.fastq", "normal-1-002-r2.fastq"); 
-      `Pair ("normal-1-003-r1.fqz", "normal-1-003-r2.fqz"); 
+      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq"); 
+      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq"); 
+      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz"); 
     ])
 
 let tumor_1 = 
   ("tumor-1", [
-      `Pair ("tumor-1-001-r1.fastq.gz", "tumor-1-001-r2.fastq.gz"); 
-      `Pair ("tumor-1-002-r1.fastq.gz", "tumor-1-002-r2.fastq.gz"); 
-      `Pair ("tumor-1-003-r1.fastq.gz", "tumor-1-003-r2.fastq.gz"); 
+      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz"); 
+      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz"); 
     ])
 
+let write_file file ~content =
+  let out_file = open_out file in
+  try
+    output_string out_file content;
+    close_out out_file
+  with _ ->
+    close_out out_file
+
+let cmdf fmt =
+  ksprintf (fun s -> 
+      match Sys.command s with
+      | 0 -> ()
+      | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
+
+let (//) = Filename.concat
+
 let () =
-  let module Display_pipeline_1 =
-    Pipeline_1(Biokepi.EDSL.Compile.To_display)
+  let module Display_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_display) in
+  let test_dir = "_build/ttfi-test-results/" in
+  cmdf "mkdir -p %s" test_dir;
+  let pipeline_1_display = test_dir // "pipeline-1-display.txt" in
+  write_file pipeline_1_display
+    ~content:(Display_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+              |> SmartPrint.to_string 80 2);
+
+  let module Workflow_compiler =
+    Biokepi.EDSL.Compile.To_workflow.Make(struct
+      let processors = 42
+      let work_dir = "/work/dir/"
+      let machine =
+        Biokepi.Setup.Build_machine.create
+          "ssh://example.com/tmp/KT/"
+    end)
   in
-  printf "Pipeline 1:\n\n%s\n\n%!"
-    (Display_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-     |> SmartPrint.to_string 80 2)
+  let module Ketrew_pipeline_1 = Pipeline_1(Workflow_compiler) in
+  let workflow_1 =
+    Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+    |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_vcf
+  in
+  let pipeline_1_workflow_display =
+    test_dir // "pipeline-1-workflow-display.txt" in
+  write_file pipeline_1_workflow_display
+    ~content:(workflow_1 |> Ketrew.EDSL.workflow_to_string);
+  printf "Pipeline_1:\n\
+         \  display: %s\n\
+         \  ketrew-display: %s\n%!"
+    pipeline_1_display pipeline_1_workflow_display
+
 

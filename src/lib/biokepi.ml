@@ -7,6 +7,7 @@ module EDSL = struct
 
   module Compile = struct
     module To_display = Biokepi_pipeline_edsl.To_display
+    module To_workflow = Biokepi_pipeline_edsl.To_workflow
   end
 
 end
