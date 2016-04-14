@@ -72,10 +72,14 @@ let align
        --genomeDir %s \
        --runThreadN %d \
        --outFileNamePrefix %s \
+       --outSAMattrRGline %s \
        --readFilesIn %s"
       (Filename.quote star_index_dir)
       processors
       result_prefix
+      (sprintf "ID:%s SM:\"%s\""
+         (Filename.basename r1_path)
+         fastq#product#sample_name)
       (Filename.quote r1_path)
   in
   let base_star_target ~star_command = 
