@@ -84,9 +84,12 @@ module KEDSL = struct
       val r2_file_opt = Option.map r2_opt ~f:(single_file ?host)
       method r1 =
         workflow_node r1_file
+          ~name:(sprintf "File: %s" (Filename.basename r1_file#path))
       method r2 = 
         Option.map r2_file_opt ~f:(fun r2_file ->
-            workflow_node r2_file)
+            workflow_node r2_file
+              ~name:(sprintf "File: %s" (Filename.basename r2_file#path))
+          )
       method paths = (r1, r2_opt)
       method is_done =
         Some (match r2_file_opt with

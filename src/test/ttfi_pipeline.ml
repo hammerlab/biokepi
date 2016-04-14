@@ -14,14 +14,14 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
       else
         Bfx.(fastq ~sample_name:dataset ~r1 ~r2 ())
     end
-    |> Bfx.List_repr.make
+    |> Bfx.list
 
 
   let mutect_on_fastqs ~reference_build ~normal ~tumor =
     let aligner =
       Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build fq) in
     let align_list list_of_fastqs =
-      Bfx.List_repr.map list_of_fastqs ~f:aligner |> Bfx.merge_bams
+      Bfx.list_map list_of_fastqs ~f:aligner |> Bfx.merge_bams
     in
     Bfx.mutect
       ~configuration:Biokepi.Tools.Mutect.Configuration.default
@@ -38,17 +38,17 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
 
 end
 
-let normal_1 = 
+let normal_1 =
   ("normal-1", [
-      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq"); 
-      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq"); 
-      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz"); 
+      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq");
+      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq");
+      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz");
     ])
 
-let tumor_1 = 
+let tumor_1 =
   ("tumor-1", [
-      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz"); 
-      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz"); 
+      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz");
+      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz");
     ])
 
 let write_file file ~content =
@@ -60,7 +60,7 @@ let write_file file ~content =
     close_out out_file
 
 let cmdf fmt =
-  ksprintf (fun s -> 
+  ksprintf (fun s ->
       match Sys.command s with
       | 0 -> ()
       | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
@@ -75,6 +75,30 @@ let () =
   write_file pipeline_1_display
     ~content:(Display_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
               |> SmartPrint.to_string 80 2);
+
+  let module Jsonize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_json) in
+  let pipeline_1_json = test_dir // "pipeline-1.json" in
+  write_file pipeline_1_json
+    ~content:(Jsonize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+              |> Yojson.Basic.pretty_to_string ~std:true);
+
+  let module Dotize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_dot) in
+  let pipeline_1_dot = test_dir // "pipeline-1.dot" in
+  write_file pipeline_1_dot
+    ~content:(Dotize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let pipeline_1_svg = test_dir // "pipeline-1.svg" in
+  cmdf "dot -x -Grotate=180 -v -Tsvg  %s -o %s" pipeline_1_dot pipeline_1_svg;
+  let pipeline_1_png = test_dir // "pipeline-1.png" in
+  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
+
+  let module Dotize_beta_reduced_pipeline_1 =
+    Pipeline_1(Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot))
+  in
+  let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
+  write_file pipeline_1_dot
+    ~content:(Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let pipeline_1_beta_png = test_dir // "pipeline-1-beta.png" in
+  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
 
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct
@@ -96,7 +120,18 @@ let () =
     ~content:(workflow_1 |> Ketrew.EDSL.workflow_to_string);
   printf "Pipeline_1:\n\
          \  display: %s\n\
+         \  JSON: %s\n\
+         \  Dot: %s\n\
+         \  SVG: %s\n\
+         \  PNG: %s\n\
+         \  Beta-reduced PNG: %s\n\
          \  ketrew-display: %s\n%!"
-    pipeline_1_display pipeline_1_workflow_display
+    pipeline_1_display
+    pipeline_1_json
+    pipeline_1_dot
+    pipeline_1_svg
+    pipeline_1_png
+    pipeline_1_beta_png
+    pipeline_1_workflow_display
 
 
