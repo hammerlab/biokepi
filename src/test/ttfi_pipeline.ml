@@ -82,6 +82,15 @@ let () =
     ~content:(Jsonize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
               |> Yojson.Basic.pretty_to_string ~std:true);
 
+  let module Dotize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_dot) in
+  let pipeline_1_dot = test_dir // "pipeline-1.dot" in
+  write_file pipeline_1_dot
+    ~content:(Dotize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let pipeline_1_svg = test_dir // "pipeline-1.svg" in
+  cmdf "dot -x -Grotate=180 -v -Tsvg  %s -o %s" pipeline_1_dot pipeline_1_svg;
+  let pipeline_1_png = test_dir // "pipeline-1.png" in
+  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
+
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct
       let processors = 42
@@ -103,7 +112,15 @@ let () =
   printf "Pipeline_1:\n\
          \  display: %s\n\
          \  JSON: %s\n\
+         \  Dot: %s\n\
+         \  SVG: %s\n\
+         \  PNG: %s\n\
          \  ketrew-display: %s\n%!"
-    pipeline_1_display pipeline_1_json pipeline_1_workflow_display
+    pipeline_1_display
+    pipeline_1_json
+    pipeline_1_dot
+    pipeline_1_svg
+    pipeline_1_png
+    pipeline_1_workflow_display
 
 

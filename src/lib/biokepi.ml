@@ -14,6 +14,13 @@ module EDSL = struct
        and
        type 'a observation = Yojson.Basic.json =
       Biokepi_pipeline_edsl.To_json
+
+    module To_dot : Semantics.Bioinformatics_base
+      with 
+        (* type 'a repr = var_count: int -> Yojson.Basic.json *)
+       (* and *)
+       type 'a observation = string =
+      Biokepi_pipeline_edsl.To_dot
   end
 
 end
