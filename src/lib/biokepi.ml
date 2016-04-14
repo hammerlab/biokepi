@@ -23,6 +23,12 @@ module EDSL = struct
       Biokepi_pipeline_edsl.To_dot
   end
 
+  module Transform = struct
+
+    module Beta_reduce = Biokepi_pipeline_edsl.Transform_applications.Make
+
+  end
+
 end
 
 module KEDSL = Biokepi_run_environment.Common.KEDSL

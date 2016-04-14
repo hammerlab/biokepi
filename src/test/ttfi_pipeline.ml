@@ -91,6 +91,15 @@ let () =
   let pipeline_1_png = test_dir // "pipeline-1.png" in
   cmdf "dot -v -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
 
+  let module Dotize_beta_reduced_pipeline_1 =
+    Pipeline_1(Biokepi.EDSL.Transform.Beta_reduce(Biokepi.EDSL.Compile.To_dot))
+  in
+  let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
+  write_file pipeline_1_dot
+    ~content:(Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let pipeline_1_beta_png = test_dir // "pipeline-1-beta.png" in
+  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
+
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct
       let processors = 42
@@ -115,12 +124,14 @@ let () =
          \  Dot: %s\n\
          \  SVG: %s\n\
          \  PNG: %s\n\
+         \  Beta-reduced PNG: %s\n\
          \  ketrew-display: %s\n%!"
     pipeline_1_display
     pipeline_1_json
     pipeline_1_dot
     pipeline_1_svg
     pipeline_1_png
+    pipeline_1_beta_png
     pipeline_1_workflow_display
 
 
