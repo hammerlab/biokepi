@@ -1,12 +1,12 @@
 
 (**
-QueL-like Compiler Optimization Framework
-  
+   QueL-like Compiler Optimization Framework
 
-This is “stolen” from ["quel_o.ml"] …
-i.e. the “Query optimization framework in tagless-final.”
 
-The code is reusable for any optimization pass.
+   This is “stolen” from ["quel_o.ml"] …
+   i.e. the “Query optimization framework in tagless-final.”
+
+   The code is reusable for any optimization pass.
 
 *)
 
@@ -31,9 +31,12 @@ module Define_transformation(X : Trans_base) = struct
   let fmap2 f term1 term2 = fwd (f (bwd term1) (bwd term2))
 end
 
-(** The default, generic optimizer
-   Concrete optimizers are built by overriding the interpretations
-   of some DSL forms.
+(** The default, generic optimizer.
+
+    Concrete optimizers are built by overriding the interpretations
+    of some DSL forms.
+
+    See the module {!Transform_applications} for an example of use.
 *)
 module Generic_optimizer
     (X: Transformation)
