@@ -92,7 +92,7 @@ let () =
   cmdf "dot -v -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
 
   let module Dotize_beta_reduced_pipeline_1 =
-    Pipeline_1(Biokepi.EDSL.Transform.Beta_reduce(Biokepi.EDSL.Compile.To_dot))
+    Pipeline_1(Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot))
   in
   let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
   write_file pipeline_1_dot

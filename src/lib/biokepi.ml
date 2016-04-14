@@ -25,7 +25,7 @@ module EDSL = struct
 
   module Transform = struct
 
-    module Beta_reduce = Biokepi_pipeline_edsl.Transform_applications.Make
+    module Apply_functions = Biokepi_pipeline_edsl.Transform_applications.Make
 
   end
 
