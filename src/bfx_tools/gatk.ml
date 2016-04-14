@@ -6,42 +6,82 @@ module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
 
-  module Indel_realigner = struct
-    include Tool_parameters
+  module Gatk_config = struct
+    type t = {
+      (** The name of the configuration, specific to Biokepi. *)
+      name: string;
 
-    let default = {
-      name = "default";
-      parameters = [];
+      (** MalformedReadFilter options.
+
+         This filter is applied automatically by all GATK tools in order to protect them
+         from crashing on reads that are grossly malformed. There are a few
+         issues (such as the absence of sequence bases) that will cause the run
+         to fail with an error, but these cases can be preempted by setting
+         flags that cause the problem reads to also be filtered. *)
+      (** Ignore reads with CIGAR containing the N operator, instead of failing
+         with an error *)
+      filter_reads_with_n_cigar: bool;
+      (** Ignore reads with mismatching numbers of bases and base qualities,
+         instead of failing with an error.*)
+      filter_mismatching_base_and_quals: bool;
+      (** Ignore reads with no stored bases (i.e. '*' where the sequence should
+         be), instead of failing with an error *)
+      filter_bases_not_stored: bool;
+
+      (** Other parameters: *)
+      parameters: (string * string) list;
     }
+
+    let to_json t: Yojson.Basic.json =
+      let {name;
+           filter_reads_with_n_cigar;
+           filter_mismatching_base_and_quals;
+           filter_bases_not_stored;
+           parameters} = t in
+      `Assoc [
+        "name", `String name;
+        "filter_reads_with_N_cigar", `Bool filter_reads_with_n_cigar;
+        "filter_mismatching_base_and_quals", `Bool filter_mismatching_base_and_quals;
+        "filter_bases_not_stored", `Bool filter_bases_not_stored;
+        "parameters",
+        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
+      ]
+
+    let render {name;
+                filter_reads_with_n_cigar;
+                filter_mismatching_base_and_quals;
+                filter_bases_not_stored;
+                parameters} =
+      (if filter_reads_with_n_cigar
+       then "--filter_reads_with_N_cigar" else "") ::
+      (if filter_mismatching_base_and_quals
+       then "--filter_mismatching_base_and_quals" else "") ::
+      (if filter_bases_not_stored
+       then "--filter_bases_not_stored" else "") ::
+      List.concat_map parameters ~f:(fun (a, b) -> [a; b])
+
+    let default =
+      {name = "default";
+       filter_reads_with_n_cigar = false;
+       filter_mismatching_base_and_quals = false;
+       filter_bases_not_stored = false;
+       parameters = []}
+  end
+
+  module Indel_realigner = struct
+    include Gatk_config
   end
 
   module Realigner_target_creator = struct
-    include Tool_parameters
-
-    let default = {
-      name = "default";
-      parameters = [];
-    }
+    include Gatk_config
   end
 
   module Bqsr = struct
-    include Tool_parameters
-
-    let default = {
-      name = "default";
-      parameters = [];
-    }
-
+    include Gatk_config
   end
 
   module Print_reads = struct
-    include Tool_parameters
-
-    let default = {
-      name = "default";
-      parameters = [];
-    }
-
+    include Gatk_config
   end
 
   type indel_realigner = (Indel_realigner.t * Realigner_target_creator.t)
@@ -104,7 +144,7 @@ end
      cannot use the usual `~result_prefix` argument:
      See the documentation for the `--nWayOut` option:
      https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php#--nWayOut
-     See also 
+     See also
      http://gatkforums.broadinstitute.org/gatk/discussion/5588/best-practice-for-multi-sample-non-human-indel-realignment
 
      Also, the documentation is incomplete (or buggy), the option `--nWayOut`
@@ -121,12 +161,12 @@ end
   *)
 open Configuration
 
-let indel_realinger_output_filenaame_tag
+let indel_realigner_output_filename_tag
     ~configuration:(ir_config, target_config)
     ?region input_bams =
   let digest_of_input () =
     List.map input_bams ~f:(fun o -> o#product#path)
-    |> String.concat ~sep:"" 
+    |> String.concat ~sep:""
     (* we make this file “unique” with an MD5 sum of the input paths *)
     |> Digest.string |> Digest.to_hex in
   let bam_number = List.length input_bams in
@@ -159,7 +199,7 @@ let indel_realigner :
     let input_bam_1, more_input_bams = (* this an at-least-length-1 list :)  *)
       match input_bam_or_bams with
       | Single_bam bam -> bam, []
-      | Bam_workflow_list [] -> 
+      | Bam_workflow_list [] ->
         failwithf "Empty bam-list in Gatk.indel_realigner`"
       | Bam_workflow_list (one :: more) -> (one, more)
     in
@@ -191,8 +231,8 @@ let indel_realigner :
     let more_input_bams = `Use_the_sorted_ones_please in
     let input_bam_1 = `Use_the_sorted_ones_please in
     ignore (more_input_bams, input_bam_1);
-    let name = 
-      sprintf "gatk-indelrealign-%s-%dx-%s" 
+    let name =
+      sprintf "gatk-indelrealign-%s-%dx-%s"
         (Region.to_filename on_region)
         (List.length more_input_sorted_bams + 1)
         (Filename.basename input_sorted_bam_1#product#path)
@@ -206,12 +246,12 @@ let indel_realigner :
     let digest_of_input =
       List.map (input_sorted_bam_1 :: more_input_sorted_bams)
         ~f:(fun o -> o#product#path)
-      |> String.concat ~sep:"" 
+      |> String.concat ~sep:""
       (* we make this file “unique” with an MD5 sum of the input paths *)
       |> Digest.string |> Digest.to_hex in
        *)
     let output_suffix =
-      indel_realinger_output_filenaame_tag
+      indel_realigner_output_filename_tag
         ~configuration ~region:on_region
         (input_sorted_bam_1 :: more_input_sorted_bams)
         (* ~bam_number:(List.length more_input_sorted_bams + 1) *)
@@ -225,7 +265,7 @@ let indel_realigner :
            *)
     in
     let intervals_file =
-      Filename.chop_suffix input_sorted_bam_1#product#path ".bam" 
+      Filename.chop_suffix input_sorted_bam_1#product#path ".bam"
       ^ output_suffix ^ ".intervals" in
     let output_bam_path input =
       run_directory // (
@@ -299,7 +339,7 @@ let indel_realigner :
              (output_bam_path input_sorted_bam_1))
       | Bam_workflow_list _ ->
         workflow_node  ~name ~make ~edges
-          (bam_list 
+          (bam_list
              (List.map (input_sorted_bam_1 :: more_input_sorted_bams)
                 ~f:(fun b ->
                     (* This is what the documentation says it will to
@@ -337,8 +377,8 @@ let indel_realigner_map_reduce :
         List.map ~f (Reference_genome.major_contigs reference)
       in
       let result_path =
-        Filename.chop_extension bam_node#product#path 
-        ^ indel_realinger_output_filenaame_tag
+        Filename.chop_extension bam_node#product#path
+        ^ indel_realigner_output_filename_tag
           ~configuration [bam_node]
         ^ "-merged.bam"
       in
@@ -376,9 +416,9 @@ let indel_realigner_map_reduce :
                   Option.value_exn ~msg:"bug in Gatk.indel_realigner_map_reduce")
             in
             let result_path =
-              Filename.chop_extension bam#product#path 
+              Filename.chop_extension bam#product#path
               ^ sprintf "-%d-" index (* the index is there as debug/witness *)
-              ^ indel_realinger_output_filenaame_tag
+              ^ indel_realigner_output_filename_tag
                 ~configuration bams
               ^ "-merged.bam"
             in
@@ -518,8 +558,8 @@ let haplotype_caller
     Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges
 
 (** Call somatic variants with Mutect2.
-    
-    Mutect2 comes within the GATK (as opposed to {!Mutect}). 
+
+    Mutect2 comes within the GATK (as opposed to {!Mutect}).
 
     Cf. also
     https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_cancer_m2_MuTect2.php
@@ -595,4 +635,3 @@ let mutect2
     in
     let final_vcf = result_prefix ^ "-merged.vcf" in
     Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges
-
