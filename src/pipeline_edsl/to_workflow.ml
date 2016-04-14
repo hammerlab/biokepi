@@ -66,14 +66,12 @@ module Make (Config : Compiler_configuration)
     | Lambda f -> f x
     | _ -> assert false
 
-  module List_repr = struct
-    let make : 'a repr list -> 'a list repr = fun l -> List l
-    let map : 'a list repr -> f:('a -> 'b) repr -> 'b list repr = fun l ~f ->
-      match l with
-      | List l ->
-        List (List.map ~f:(fun v -> apply f v) l)
-      | _ -> assert false
-  end
+  let list : 'a repr list -> 'a list repr = fun l -> List l
+  let list_map : 'a list repr -> f:('a -> 'b) repr -> 'b list repr = fun l ~f ->
+    match l with
+    | List l ->
+      List (List.map ~f:(fun v -> apply f v) l)
+    | _ -> assert false
 
   let host = Machine.as_host Config.machine
   let run_with = Config.machine

@@ -110,19 +110,17 @@ let apply f v =
 
 let observe f = f () ~var_count:0 |> Tree.to_dot
 
-module List_repr = struct
-  let make l =
+  let list l =
     fun ~var_count ->
       Tree.node "List.make"
         (List.mapi ~f:(fun i a -> Tree.arrow (sprintf "L%d" i) (a ~var_count)) l)
 
-  let map l ~f =
-    fun ~var_count ->
-      Tree.node "List.map" [
-        Tree.arrow "list" (l ~var_count);
-        Tree.arrow "function" (f ~var_count);
-      ]
-end
+let list_map l ~f =
+  fun ~var_count ->
+    Tree.node "List.map" [
+      Tree.arrow "list" (l ~var_count);
+      Tree.arrow "function" (f ~var_count);
+    ]
 
 include To_json.Make_serializer (struct
     type t = Tree.t

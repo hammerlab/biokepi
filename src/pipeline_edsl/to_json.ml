@@ -29,18 +29,16 @@ let apply f v =
 let observe f = f () ~var_count:0
 
 
-module List_repr = struct
-  let make l =
-    fun ~var_count ->
-      `List (List.map ~f:(fun a -> a ~var_count) l)
+let list l =
+  fun ~var_count ->
+    `List (List.map ~f:(fun a -> a ~var_count) l)
 
-  let map l ~f =
-    fun ~var_count ->
-      `Assoc [
-        "list-map", f ~var_count;
-        "argument", l ~var_count;
-      ]
-end
+let list_map l ~f =
+  fun ~var_count ->
+    `Assoc [
+      "list-map", f ~var_count;
+      "argument", l ~var_count;
+    ]
 
 module Make_serializer (How : sig
     type t

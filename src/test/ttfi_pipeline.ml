@@ -14,14 +14,14 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
       else
         Bfx.(fastq ~sample_name:dataset ~r1 ~r2 ())
     end
-    |> Bfx.List_repr.make
+    |> Bfx.list
 
 
   let mutect_on_fastqs ~reference_build ~normal ~tumor =
     let aligner =
       Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build fq) in
     let align_list list_of_fastqs =
-      Bfx.List_repr.map list_of_fastqs ~f:aligner |> Bfx.merge_bams
+      Bfx.list_map list_of_fastqs ~f:aligner |> Bfx.merge_bams
     in
     Bfx.mutect
       ~configuration:Biokepi.Tools.Mutect.Configuration.default

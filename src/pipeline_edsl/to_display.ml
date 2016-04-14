@@ -24,20 +24,18 @@ let apply f v =
 
 let observe f = f () ~var_count:0
 
-module List_repr = struct
-  let make l =
-    fun ~var_count ->
-      SP.nest (OCaml.list (fun a -> a ~var_count) l)
+let list l =
+  fun ~var_count ->
+    SP.nest (OCaml.list (fun a -> a ~var_count) l)
 
-  let map l ~f =
-    let open SP in
-    fun ~var_count ->
-      entity (
-        string "List.map"
-        ^^ nest (string "~f:" ^^ f ~var_count)
-        ^^ l ~var_count
-      )
-end
+let list_map l ~f =
+  let open SP in
+  fun ~var_count ->
+    entity (
+      string "List.map"
+      ^^ nest (string "~f:" ^^ f ~var_count)
+      ^^ l ~var_count
+    )
 
 include To_json.Make_serializer (struct
     type t = SP.t

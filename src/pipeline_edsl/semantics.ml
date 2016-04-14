@@ -13,10 +13,8 @@ end
 
 module type Lambda_with_list_operations = sig
   include Lambda_calculus
-  module List_repr: sig
-    val make: ('a repr) list -> 'a list repr
-    val map: ('a list repr) -> f:('a -> 'b) repr -> ('b list repr)
-  end
+  val list: ('a repr) list -> 'a list repr
+  val list_map: ('a list repr) -> f:('a -> 'b) repr -> ('b list repr)
 end
 
 module type Bioinformatics_base = sig

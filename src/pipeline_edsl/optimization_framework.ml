@@ -52,12 +52,10 @@ module Generic_optimizer
   let observe f =
     Input.observe (fun () -> bwd (f ()))
 
-  module List_repr = struct
-    let make l =
-      fwd (Input.List_repr.make (List.map bwd l))
-    let map l ~f =
-      fwd (Input.List_repr.map (bwd l) (bwd f))
-  end
+  let list l =
+    fwd (Input.list (List.map bwd l))
+  let list_map l ~f =
+    fwd (Input.list_map (bwd l) (bwd f))
 
   let fastq ~sample_name ?fragment_id ~r1 ?r2 () =
     fwd (Input.fastq ~sample_name ?fragment_id ~r1 ?r2 ())
