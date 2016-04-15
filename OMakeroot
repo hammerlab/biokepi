@@ -109,7 +109,7 @@ build-all: lib-biokepi_run_environment \
 
 DOC_PACKAGES[] = $(LIB_PACKAGES)
 doc:
-    sh ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
+    ./tools/build-doc.sh $(concat \,, $(LIB_PACKAGES))
 
 
 DIRS[] = src/run_environment/ src/environment_setup/ src/bfx_tools/ src/pipeline_edsl/ src/lib
