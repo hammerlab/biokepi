@@ -29,6 +29,7 @@ module Tool = struct
       type t = [
         | `Bwa of [ `V_0_7_10 ]
         | `Hisat of [`V_0_1_6_beta | `V_2_0_2_beta]
+        | `Fusioncatcher of [`Homo_sapiens | `Mus_musculus]
         (* A tool that is installed by retrieving source or binary.*)
         | `Custom of string * string
         (* A tool that is installed via Biopam. *)
@@ -56,6 +57,7 @@ module Tool = struct
     let stringtie = custom "stringtie" ~version:"1.2.2"
     let cufflinks = custom "cufflinks" ~version:"2.2.1"
     let hisat = `Hisat `V_0_1_6_beta
+    let fusioncatcher = `Fusioncatcher `Homo_sapiens
     let mosaik = custom "mosaik" ~version:"2.2.3"
     let kallisto = custom "kallisto" ~version:"0.42.3"
   end

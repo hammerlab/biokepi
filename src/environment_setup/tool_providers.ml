@@ -481,6 +481,44 @@ let muse_tool ~host ~meta_playground =
   let init = Program.(shf "export muse_bin=%s" binary_path) in
   Machine.Tool.create Machine.Tool.Default.muse ~ensure ~init
 
+let fusioncatcher_tool ~host ~meta_playground ~species = 
+  let open KEDSL in
+  let url = "http://sf.net/projects/fusioncatcher/files/bootstrap.py" in
+  let bootstrap_script = "bootstrap.py" in 
+  let build_organism = 
+    match species with 
+      | `Homo_sapiens -> "homo_sapiens"
+      | `Mus_musculus -> "mus_musculus"
+  in
+  let tool_name = sprintf "fusioncatcher-%s" build_organism in
+  let install_path = meta_playground // tool_name in
+  let build_directory = install_path // sprintf "%s_data" build_organism in 
+  let ensure =
+    workflow_node (single_file ~host (install_path // "bin/fusioncatcher"))
+      ~name:(sprintf "Install %s" tool_name)
+      ~edges:[
+        on_failure_activate (rm_path ~host install_path);
+      ]
+      ~make:(
+        daemonize ~using:`Python_daemon ~host
+          Program.(
+            shf "mkdir -p %s" install_path
+            && shf "cd %s" install_path
+            && Workflow_utilities.Download.wget_program ~output_filename:bootstrap_script url 
+            && shf "python %s -t --download -y" bootstrap_script
+            && sh "cp -r fusioncatcher/* ."
+            && shf "mkdir -p %s" build_directory 
+            && shf "bin/fusioncatcher-build -g %s -o %s" build_organism build_directory 
+            && sh "echo Done"
+          ))
+  in
+  Machine.Tool.create (`Fusioncatcher species) ~ensure 
+    ~init:(
+      Program.(
+        shf "export PATH=%s:$PATH" install_path
+        && shf "alias fusioncatcher-data=\"fusioncatcher -d %s\"" build_directory
+      ))
+
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
 
