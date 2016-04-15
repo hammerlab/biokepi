@@ -548,6 +548,7 @@ let default_toolkit
       cufflinks_tools ~host ~meta_playground;
       hisat_tool ~host ~meta_playground ~version:`V_0_1_6_beta;
       hisat_tool ~host ~meta_playground ~version:`V_2_0_2_beta;
+      fusioncatcher_tool ~host ~meta_playground ~species:`Homo_sapiens;
       mosaik_tool ~host ~meta_playground;
       kallisto_tool ~host ~meta_playground;
     ];
