@@ -1,13 +1,44 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 LIB_PACKAGES=$1
 
 OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread "
+
+mkdir -p _build/doc_src/
+
 for dir in run_environment environment_setup bfx_tools pipeline_edsl lib ; do
   OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS -I _build/src/$dir "
 done
-OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS src/lib/biokepi.ml"
+
+OCAML_FILES=""
+for dir in run_environment environment_setup bfx_tools pipeline_edsl ; do
+
+  lib_mls=$(ocamldep -one-line -modules src/$dir/*.ml  | cut -d : -f 1)
+  out_lib=_build/doc_src/biokepi_${dir}.ml
+  echo "(* code generated with [$0 $*] *)" > $out_lib
+  for i in $lib_mls ; do
+    base=`basename $i`
+    basebase=${base%.ml}
+    echo "base: $base, basebase: $basebase "
+    echo "module ${basebase^}"
+    echo "module ${basebase^} : sig" >> $out_lib
+    mli=${i}i
+    if [ -f $mli ]; then
+      cat $mli >> $out_lib
+    else
+      ocamlfind ocamlc -i $OCAMLDOC_OPTIONS $i >> $out_lib
+    fi
+    echo "end = struct" >> $out_lib
+      cat $i >> $out_lib
+    echo "end" >> $out_lib
+  done
+  OCAML_FILES="$OCAML_FILES $out_lib"
+done
+
+OCAMLDOC_OPTIONS="$OCAMLDOC_OPTIONS $OCAML_FILES src/lib/biokepi.ml"
+
+
 echo "OCAMLDOC_OPTIONS: $OCAMLDOC_OPTIONS"
 OCAMLDOC_DOT_OPTIONS="-dot $OCAMLDOC_OPTIONS -dot-reduce"
 
@@ -64,4 +95,5 @@ INPUT=src,$generated_dot_md  \
   OUTPUT_DIR=_build/doc \
   API=_build/apidoc/ \
   TITLE_SUBSTITUTIONS="main.ml:Literate Tests" \
+  CATCH_MODULE_PATHS='^Biokepi.*:,' \
   oredoc

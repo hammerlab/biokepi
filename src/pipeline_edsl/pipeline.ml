@@ -754,9 +754,13 @@ module Compiler = struct
     in
     compiler.wrap_bam_node pipeline bam_node
 
-  let rec compile_bam_pair ~compiler =
+  let rec compile_bam_pair ~compiler (pipeline : bam_pair pipeline) :
+      [ `Normal of KEDSL.bam_file KEDSL.workflow_node ] *
+      [ `Tumor of KEDSL.bam_file KEDSL.workflow_node ] *
+      [ `Pipeline of bam_pair pipeline ]
+    =
     let {processors ; reference_build; work_dir; machine; _} = compiler in
-    begin function
+    begin match pipeline with
     | Bam_pair (
         (Gatk_bqsr (n_bqsr_config, Gatk_indel_realigner (n_gir_conf, n_bam)))
         ,
