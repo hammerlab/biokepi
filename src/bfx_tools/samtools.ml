@@ -235,12 +235,15 @@ let mpileup ~run_with ?adjust_mapq ~region input_bam =
   workflow_node ~name (single_file pileup ~host) ~make ~edges
 
 (**
-Merge a list of BAM files.
+   Merge a list of BAM files.
 
-The BAMs will be sorted, by coordinate, if they are not already.
+   The BAMs will be sorted, by coordinate, if they are not already.
 
-By default, duplicate @PG and @RG IDs will be automatically uniquified with a
-random suffix.
+   ["samtools merge"] fails if the list of bams has only one (or zero) bams, so
+   this functions raises an exception if [input_bam_list] has lenth [<] 2.
+
+   By default, duplicate @PG and @RG IDs will be automatically uniquified with a
+   random suffix.
 
    - [?delete_input_on_success]: Delete the list of input BAMs when this node
    succeeds. (default: true)
@@ -266,6 +269,14 @@ let merge_bams
     (output_bam_path : string) =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Machine.Tool.Default.samtools in
+  let () =
+    let lgth = List.length input_bam_list in
+    if lgth < 2 then
+      failwithf "Samtools.merge_bams: %d input-bam%s provided and \
+                 `samtools merge` will fail with less than 2 Bam files"
+        lgth
+        (match lgth with 1 -> " was" | _ -> "s were")
+  in
   let sorted_bams =
     List.map input_bam_list ~f:(sort_bam_if_necessary ~run_with ~by:`Coordinate) in
   let options =
