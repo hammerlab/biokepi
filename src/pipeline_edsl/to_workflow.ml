@@ -175,6 +175,7 @@ module Make (Config : Compiler_configuration)
 
   let merge_bams: [ `Bam ] list t -> [ `Bam ] t =
     function
+    | List [ one_bam ] -> one_bam
     | List bam_files ->
       let bams = List.map bam_files ~f:get_bam in
       let output_path =
