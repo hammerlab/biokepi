@@ -1,6 +1,8 @@
+
 open Nonstd
 let (//) = Filename.concat
 
+(** The link between {!Biokepi.KEDSL} values and EDSL expression types. *)
 module File_type_specification = struct
   open Biokepi_run_environment.Common.KEDSL
 
