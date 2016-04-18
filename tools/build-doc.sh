@@ -78,11 +78,19 @@ dependency graph.
 
 ## Biokepi Modules
 
-![biokepi](api/biokepi.dot.svg)
+<div>
+<a href="api/biokepi.dot.svg">
+<img src="api/biokepi.dot.svg" width="100%">
+</a>
+</div>
 
 ## Biokepi Types
 
-![biokepi types](api/biokepi-types.dot.svg)
+<div>
+<a href="api/biokepi-types.dot.svg">
+<img src="api/biokepi-types.dot.svg" width="100%">
+</a>
+</div>
 
 
 ## Including External
@@ -90,7 +98,11 @@ dependency graph.
 This also shows modules from other libraries (like \`Ketrew\`,
 or \`ppx_deriving\`).
 
-![all](api/biokepi-all.dot.svg)
+<div>
+<a href="api/biokepi-all.dot.svg">
+<img src="api/biokepi-all.dot.svg" width="100%">
+</a>
+</div>
 
 
 EOBLOB
