@@ -82,7 +82,7 @@ type _ t =
   | Single_end_sample: fastq_sample_info * fastq t -> fastq_sample t
   | Gunzip_concat: fastq_gz t list -> fastq t
   | Concat_text: fastq t list -> fastq t
-  | Star: fastq_sample t -> bam t
+  | Star: Star.Configuration.Align.t * fastq_sample t -> bam t
   | Hisat: Hisat.Configuration.t * fastq_sample t -> bam t
   | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
   | Bwa: Bwa.Configuration.Aln.t * fastq_sample t -> bam t
@@ -148,9 +148,11 @@ module Construct = struct
 
   let mosaik fastq = Mosaik fastq
 
-  let star fastq = Star fastq
+  let star ?(configuration = Star.Configuration.Align.default) fastq =
+    Star (configuration, fastq)
 
-  let hisat ?(configuration = Hisat.Configuration.default_v1) fastq = Hisat(configuration, fastq)
+  let hisat ?(configuration = Hisat.Configuration.default_v1) fastq =
+    Hisat (configuration, fastq)
 
   let stringtie ?(configuration = Stringtie.Configuration.default) bam =
     Stringtie (configuration, bam)
@@ -361,8 +363,10 @@ let rec to_file_prefix:
     | Bwa_mem (configuration, sample) ->
       sprintf "%s-bwa-mem-%s"
         (to_file_prefix sample) (Bwa.Configuration.Mem.name configuration)
-    | Star (sample) ->
-      sprintf "%s-star-aligned" (to_file_prefix sample)
+    | Star (configuration, sample) ->
+      sprintf "%s-%s-star-aligned"
+        (to_file_prefix sample)
+        (Star.Configuration.Align.name configuration)
     | Hisat (conf, sample) ->
       sprintf "%s-hisat-%s-aligned" (to_file_prefix sample) (conf.Hisat.Configuration.name)
     | Stringtie (conf, sample) ->
@@ -435,9 +439,12 @@ let rec to_json: type a. a t -> json =
         `Assoc ["configuration", Bwa.Configuration.Mem.to_json params];
         input_json
       ]
-    | Star (input) ->
+    | Star (conf, input) ->
       let input_json = to_json input in
-      call "STAR" [input_json]
+      call "STAR" [
+        `Assoc ["configuration", Star.Configuration.Align.to_json conf];
+        input_json;
+      ]
     | Hisat (conf, input) ->
       let input_json = to_json input in
       call "HISAT" [
@@ -734,11 +741,11 @@ module Compiler = struct
           ~make_workflow:(fun fastq ->
               Mosaik.align ~reference_build ~processors
                 ~fastq ~result_prefix ~run_with:machine ())
-      | Star (what) ->
+      | Star (configuration, what) ->
         perform_aligner_parallelization
-          `Star ~make_aligner:(fun pe -> Star (pe)) what
+          `Star ~make_aligner:(fun pe -> Star (configuration, pe)) what
           ~make_workflow:(fun fastq ->
-              Star.align ~reference_build ~processors
+              Star.align ~configuration ~reference_build ~processors
                 ~fastq ~result_prefix ~run_with:machine ())
       | Hisat (configuration, what) ->
         perform_aligner_parallelization

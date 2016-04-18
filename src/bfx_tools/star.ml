@@ -3,6 +3,58 @@ open Common
 
 module Remove = Workflow_utilities.Remove
 
+
+module Configuration = struct
+
+  module Align = struct
+    type t = {
+      name: string;
+
+      (* The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads,
+         and int(-10*log10(1- 1/Nmap)) for multi-mapping reads. This scheme is
+         same as the one used by TopHat and is compatible with Cufflinks. The
+         default MAPQ=255 for the unique mappers maybe changed with to an
+         integer between 0 and 255 to ensure compatibility with downstream tools
+         such as GATK. *)
+      sam_mapq_unique: int option;
+      parameters: (string * string) list;
+    }
+    let name t = t.name
+
+    let default = {
+      name = "default";
+      sam_mapq_unique = None;
+      parameters = [];
+    }
+
+    let to_json t: Yojson.Basic.json =
+      let {name;
+           sam_mapq_unique;
+           parameters} = t in
+      `Assoc [
+        "name", `String name;
+        "sam_mapq_unique",
+        (match sam_mapq_unique with
+        | None -> `Null
+        | Some x -> `Int x);
+        "parameters",
+        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
+      ]
+
+    let render {name;
+                sam_mapq_unique;
+                parameters} =
+      (match sam_mapq_unique with
+      | None -> ""
+      | Some x ->
+        if 0 > x || x > 255
+        then failwith "STAR Align sam_mapq_unique must be between 0 and 255"
+        else ();
+        sprintf "--outSAMmapqUnique %d" x) ::
+      List.concat_map parameters ~f:(fun (a, b) -> [a; b])
+  end
+end
+
 let index
     ~reference_build
     ~processors
@@ -31,7 +83,7 @@ let index
              ~self_ids:["star"; "index"]
              Program.(
                Machine.Tool.(init star_tool)
-               && shf "mkdir %s" result_dir 
+               && shf "mkdir %s" result_dir
                && shf "STAR --runMode genomeGenerate \
                        --genomeDir %s \
                        --genomeFastaFiles %s \
@@ -39,16 +91,17 @@ let index
                        --runThreadN %d"
                  result_dir
                  (Filename.quote reference_fasta#product#path)
-                 (Filename.quote reference_annotations#product#path) 
+                 (Filename.quote reference_annotations#product#path)
                  processors
              ))
 
-let align 
+let align
     ~reference_build
     ~processors
     ~fastq
     ~(result_prefix:string)
     ~(run_with : Machine.t)
+    ?(configuration=Configuration.Align.default)
     () =
   let open KEDSL in
   let reference_fasta =
@@ -64,7 +117,7 @@ let align
   let result = sprintf "%sAligned.sortedByCoord.out.bam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "star-rna-align-%s" (Filename.basename r1_path) in
-  let star_base_command = sprintf 
+  let star_base_command = sprintf
       "STAR --outSAMtype BAM SortedByCoordinate \
        --outSAMstrandField intronMotif \
        --outSAMattributes NH HI NM MD \
@@ -73,6 +126,7 @@ let align
        --runThreadN %d \
        --outFileNamePrefix %s \
        --outSAMattrRGline %s \
+       %s \
        --readFilesIn %s"
       (Filename.quote star_index_dir)
       processors
@@ -80,13 +134,15 @@ let align
       (sprintf "ID:%s SM:\"%s\""
          (Filename.basename r1_path)
          fastq#product#sample_name)
+      (Configuration.Align.render configuration
+       |> String.concat ~sep:" ")
       (Filename.quote r1_path)
   in
-  let base_star_target ~star_command = 
+  let base_star_target ~star_command =
     workflow_node ~name
-      (bam_file 
+      (bam_file
          ~sorting:`Coordinate
-         ~host:(Machine.(as_host run_with)) 
+         ~host:(Machine.(as_host run_with))
          ~reference_build
          result)
       ~edges:[
@@ -102,17 +158,17 @@ let align
                Program.(
                  Machine.Tool.(init star_tool)
                  && in_work_dir
-                 && sh star_command 
+                 && sh star_command
                ))
   in
   match r2_path_opt with
-  | Some read2 -> 
+  | Some read2 ->
     let star_command =
       String.concat ~sep:" " [
         star_base_command;
         (Filename.quote read2);
       ] in
     base_star_target ~star_command
-  | None -> 
+  | None ->
     let star_command = star_base_command in
     base_star_target ~star_command
