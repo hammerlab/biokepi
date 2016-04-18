@@ -5,11 +5,11 @@ For Developpers
 Libraries
 ---------
 
-Biokepi is made of 5 libraries: 4 building blocs and wrapping module
+Biokepi is made of 5 libraries: 4 building blocs and 1 wrapping module
 (`Biokepi`).
 
 `Biokepi` contains a single module `./src/lib/biokepi.ml` that wraps modules
-form the other 4 libraries under a cleaner API.
+from the other 4 libraries under a cleaner API.
 
 
 `Biokepi_run_environment` (`src/run_environment`): is the common API used all

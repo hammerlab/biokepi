@@ -7,9 +7,9 @@
 
    - {!Biokepi.EDSL}: very high-level embedded domain specific language that
    encode very consise complex pipelines and uses OCaml type-system to verify
-   properties on them. The EDSL expressions can be “compiled” to JSON, to
-   Graphviz ["dot"] graphs, … {!Biokepi.Pipeline} is an earlier, soon to be
-   deprecated, implementation of the same idea.
+   properties on them. The EDSL expressions can be “compiled” to Ketrew
+   worfklows, to JSON, to Graphviz ["dot"] graphs, … {!Biokepi.Pipeline} is an
+   earlier, soon to be deprecated, implementation of the same idea.
    - {!Biokepi.Tools}: is a lower-level library of functions producing
    Ketrew-workflow-nodes.
 
@@ -27,45 +27,47 @@
 
 *)
 
-(** The Embedded Bioinformatics Domain Specific Language
+(**
+   The Embedded Bioinformatics Domain Specific Language
 
-     This Embedded DSL is implemented following the “Typed Tagless Final
-     Interpreter” method.
+   This Embedded DSL is implemented following the “Typed Tagless Final
+   Interpreter” method.
 
-    It's usage is as follows:
+   It's usage is as follows:
 
-    - Write EDSL expressions inside a functor taking {!Biokepi.EDSL.Semantics}
-    as argument. Export some of them with the {!observe} function.
-    - Apply the functor the desired “compilers/interpreters.” The interpreter
-    can themselves be functors.
+   - Write EDSL expressions inside a functor taking the module type
+   {!Biokepi.EDSL.Semantics} (i.e. the definition of the EDSL) as argument.
+   Export some of them with the {!observe} function.
+   - Apply the functor the desired “compilers/interpreters.” The interpreter
+   can themselves be functors.
 
-    Example: {[
-      module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
+   Example: {[
+     module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
 
-        (* Reusable function withing the EDSL: *)
-        let align_list_of_single_end_fastqs (l : string list) : [ `Bam ] Bfx.repr =
-          let list_expression : [ `Fastq ] list Bfx.repr =
-            List.map l ~f:(fun path ->
-                (* create [ `Fastq ] repr term: *)
-                Bfx.fastq ~sample_name:"Test" ~r1:path ())
-            |> Bfx.list (* Assmble OCaml list into an EDSL list *)
-          in
-          let aligner : ([ `Fastq ] -> [ `Bam ]) Bfx.repr =
-            (* create an EDSL-level function with `lambda`: *)
-            Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build:"hg19" fq)
-          in
-          (* Call the aligner on all fastq-terms and then merge the result
-             into a single bam: *)
-          Bfx.list_map list_expression ~f:aligner |> Bfx.merge_bams
+       (* Reusable function withing the EDSL: *)
+       let align_list_of_single_end_fastqs (l : string list) : [ `Bam ] Bfx.repr =
+         let list_expression : [ `Fastq ] list Bfx.repr =
+           List.map l ~f:(fun path ->
+               (* create [ `Fastq ] repr term: *)
+               Bfx.fastq ~sample_name:"Test" ~r1:path ())
+           |> Bfx.list (* Assmble OCaml list into an EDSL list *)
+         in
+         let aligner : ([ `Fastq ] -> [ `Bam ]) Bfx.repr =
+           (* create an EDSL-level function with `lambda`: *)
+           Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build:"hg19" fq)
+         in
+         (* Call the aligner on all fastq-terms and then merge the result
+            into a single bam: *)
+         Bfx.list_map list_expression ~f:aligner |> Bfx.merge_bams
 
-        (* Function “exported” (to be used after compilation): *)
-        let align_list l : [ `Bam ] Bfx.observation =
-          Bfx.observe (fun () ->
-              align_list_of_single_end_fastqs l
-            )
+       (* Function “exported” (to be used after compilation): *)
+       let align_list l : [ `Bam ] Bfx.observation =
+         Bfx.observe (fun () ->
+             align_list_of_single_end_fastqs l
+           )
 
-      end
-    ]}
+     end
+   ]}
 
     You can then compile this pipeline,
     (you can apply any sub-module of {!Biokepi.Compile}, with potential
