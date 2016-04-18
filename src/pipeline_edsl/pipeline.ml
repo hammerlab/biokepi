@@ -34,15 +34,16 @@ type bam_pair = Bam_pair
 type vcf = Vcf
 type gtf = Gtf
 
-(** Seq2HLA has a custom/unique return file format *)
+(** Seq2HLA & Optitype have unique return file formats *)
 type seq2hla_hla_types = Seq2HLA_hla_types
+type optitype_hla_types = Optitype_hla_types
 
 
 type somatic = { normal : bam; tumor : bam }
 type germline = bam
 
 type fastq_sample_info = {
-  sample_name: string; 
+  sample_name: string;
   fragment_id: string;
 }
 
@@ -95,6 +96,7 @@ type _ t =
   | Somatic_variant_caller: somatic Variant_caller.t * bam_pair t -> vcf t
   | Germline_variant_caller: germline Variant_caller.t * bam t -> vcf t
   | Seq2HLA: fastq_sample t -> seq2hla_hla_types t
+  | Optitype: ([`DNA | `RNA] * fastq_sample t) -> optitype_hla_types t
   | With_metadata: metadata_spec * 'a t -> 'a t
 
 module Construct = struct
@@ -327,6 +329,8 @@ module Construct = struct
 
   let seq2hla fastq_sample = Seq2HLA fastq_sample
 
+  let optitype kind fastq_sample = Optitype (kind, fastq_sample)
+
   let add_tags ?(recursively = false) tags pipeline =
     With_metadata ((if recursively then `Add_tags_rec tags else `Add_tags tags),
                    pipeline)
@@ -402,7 +406,11 @@ let rec to_file_prefix:
         vc.Variant_caller.name
         vc.Variant_caller.configuration_name
     | Seq2HLA s ->
-      sprintf "seq@hla-%s" (to_file_prefix ?read s)
+      sprintf "seq2hla-%s" (to_file_prefix ?read s)
+    | Optitype (kind, s) ->
+      sprintf "optitype-%s-%s"
+        (match kind with `DNA -> "DNA" | `RNA -> "RNA")
+        (to_file_prefix ?read s)
     end
 
 
@@ -500,6 +508,11 @@ let rec to_json: type a. a t -> json =
     | Seq2HLA input ->
       call "Seq2HLA" [`Assoc [
           "Input", to_json input
+        ]]
+    | Optitype (kind, input) ->
+      call "Optitype" [`Assoc [
+          "Input", to_json input;
+          "Kind", `String (match kind with `DNA -> "DNA" | `RNA -> "RNA")
         ]]
     | With_metadata (_, p) -> to_json p
 
@@ -883,13 +896,30 @@ module Compiler = struct
            need a unique type for that. *)
         let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
         let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
-        let work_dir = work_dir // ("seq2HLA_wd_" ^ info.fragment_id) in
+        let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
         Seq2HLA.hla_type
           ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
       | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
       end
     | With_metadata (metadata_spec, p) ->
       seq2hla_hla_types_step ~compiler p
+      |> apply_with_metadata ~metadata_spec
+
+  let rec optitype_hla_types_step ~compiler (pipeline : optitype_hla_types pipeline) =
+    let { machine ; work_dir; _ } = compiler in
+    match pipeline with
+    | Optitype (kind, sample) ->
+      begin match sample with
+      | Paired_end_sample (info, l1, l2) ->
+        let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
+        let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
+        let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
+        Optitype.hla_type
+          ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2 kind
+      | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
+      end
+    | With_metadata (metadata_spec, p) ->
+      optitype_hla_types_step ~compiler p
       |> apply_with_metadata ~metadata_spec
 
 end (* Compiler *)
