@@ -95,7 +95,7 @@ or \`ppx_deriving\`).
 
 EOBLOB
 
-INPUT=src,$generated_dot_md  \
+INPUT=src,$generated_dot_md,src/doc  \
   INDEX=README.md \
   TITLE_PREFIX="Biokepi: " \
   OUTPUT_DIR=_build/doc \
