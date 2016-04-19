@@ -167,8 +167,8 @@ module Default = struct
 
   let mm10 =
     let mm10_url =
-      "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA_000001635.6_GRCm38.p4/\
-       GCA_000001635.6_GRCm38.p4_genomic.fna.gz" in
+      "ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/dna/\
+       Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz" in
     let dbsnp_mm10_snps_url =
       "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/\
        mgp.v3.snps.rsIDdbSNPv137.vcf.gz" in
