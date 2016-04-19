@@ -175,6 +175,9 @@ module Default = struct
     let dbsnp_mm10_indels_url =
       "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/\
        mgp.v3.indels.rsIDdbSNPv137.vcf.gz" in
+    let gene_annotations_gtf =
+      "ftp://ftp.ensembl.org/pub/release-79/gtf/mus_musculus/\
+       Mus_musculus.GRCm38.79.gtf.gz" in
     create Name.mm10
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
@@ -183,6 +186,7 @@ module Default = struct
           vcf_concat ["db_snps.vcf", url dbsnp_mm10_snps_url |> gunzip;
                       "db_indels.vcf", url dbsnp_mm10_indels_url |> gunzip]
         )
+      ~exome_gtf:Location.(url gene_annotations_gtf |> gunzip)
 
 end
 
