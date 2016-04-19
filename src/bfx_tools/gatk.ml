@@ -59,6 +59,7 @@ module Configuration = struct
       (if filter_bases_not_stored
        then "--filter_bases_not_stored" else "") ::
       List.concat_map parameters ~f:(fun (a, b) -> [a; b])
+      |> List.filter ~f:(fun s -> not (String.is_empty s))
 
     let default =
       {name = "default";
