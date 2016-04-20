@@ -234,27 +234,18 @@ module Construct = struct
       bam_pair
 
   let somaticsniper
-      ?(prior_probability=Somaticsniper.default_prior_probability)
-      ?(theta=Somaticsniper.default_theta)
+      ?(configuration = Somaticsniper.Configuration.default)
       bam_pair =
-    let configuration_name =
-      sprintf "S%F-T%F" prior_probability theta in
-    let configuration_json =
-      `Assoc [
-        "Name", `String configuration_name;
-        "Prior-probability", `Float prior_probability;
-        "Theta", `Float theta;
-      ] in
     let make_target
         ~run_with ~input ~result_prefix ~processors ?more_edges () =
-      match input with | Variant_caller.Somatic {normal; tumor} ->
-      Somaticsniper.run
-        ~run_with ~minus_s:prior_probability ~minus_T:theta
-        ~normal ~tumor ~result_prefix () in
+      match input with
+      | Variant_caller.Somatic {normal; tumor} ->
+        Somaticsniper.run
+          ~configuration ~run_with ~normal ~tumor ~result_prefix () in
     somatic_variant_caller
       {Variant_caller.name = "Somaticsniper";
-       configuration_json;
-       configuration_name;
+       configuration_json = Somaticsniper.Configuration.to_json configuration;
+       configuration_name = Somaticsniper.Configuration.name configuration;
        make_target;}
       bam_pair
 

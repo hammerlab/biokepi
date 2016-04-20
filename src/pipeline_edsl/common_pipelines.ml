@@ -61,7 +61,12 @@ module Somatic = struct
           [
             mutect bam_pair;
             somaticsniper bam_pair;
-            somaticsniper ~prior_probability:0.001 ~theta:0.95 bam_pair;
+            somaticsniper
+              ~configuration:Somaticsniper.Configuration.{
+                  name = "example0001-095";
+                  prior_probability = 0.001;
+                  theta = 0.95;
+                } bam_pair;
             varscan_somatic bam_pair;
             strelka ~configuration:Strelka.Configuration.exome_default bam_pair;
           ])
