@@ -927,7 +927,7 @@ module Compiler = struct
         let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
         Optitype.hla_type
           ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2 kind
-      | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
+      | _ -> failwithf "Optitype doesn't support Single_end_sample(s)."
       end
     | With_metadata (metadata_spec, p) ->
       optitype_hla_types_step ~compiler p
