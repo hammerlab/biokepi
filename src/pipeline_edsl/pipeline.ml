@@ -878,7 +878,7 @@ module Compiler = struct
     compiler.wrap_gtf_node pipeline gtf_node
 
   let rec seq2hla_hla_types_step ~compiler (pipeline : seq2hla_hla_types pipeline) =
-    let { machine ; work_dir; _ } = compiler in
+    let { processors; machine ; work_dir; _ } = compiler in
     match pipeline with
     | Seq2HLA sample ->
       let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
@@ -892,7 +892,7 @@ module Compiler = struct
         | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
       in 
       Seq2HLA.hla_type
-        ~work_dir ~run_with:machine ~run_name:sample_name ~r1 ~r2
+        ~work_dir ~processors ~run_with:machine ~run_name:sample_name ~r1 ~r2
     | With_metadata (metadata_spec, p) ->
       seq2hla_hla_types_step ~compiler p
       |> apply_with_metadata ~metadata_spec

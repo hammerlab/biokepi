@@ -2,7 +2,7 @@
 open Biokepi_run_environment
 open Common
 
-let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
+let hla_type ~work_dir ~run_with ~processors ~r1 ~r2 ~run_name =
   let tool = Machine.get_tool run_with (`Biopamed "seq2HLA") in
   (* Why quote this here? Seems like it easy to create a bug,
      why not enforce this at node construction ?*)
@@ -15,7 +15,7 @@ let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
       KEDSL.Program.(Machine.Tool.init tool
                      && exec ["mkdir"; "-p"; work_dir]
                      && exec ["cd"; work_dir]
-                     && shf "seq2HLA -1 %s -2 %s -r %s" r1pt r2pt run_name)
+                     && shf "seq2HLA -1 %s -2 %s -r %s -p %d" r1pt r2pt run_name processors)
   in
   let class1 = work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in
   let class2 = work_dir // (sprintf "%s-ClassII.HLAgenotype4digits" run_name) in
