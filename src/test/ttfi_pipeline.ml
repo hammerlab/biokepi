@@ -18,15 +18,19 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
 
 
   let mutect_on_fastqs ~reference_build ~normal ~tumor =
-    let aligner =
-      Bfx.lambda (fun fq -> Bfx.bwa_aln ~reference_build fq) in
-    let align_list list_of_fastqs =
-      Bfx.list_map list_of_fastqs ~f:aligner |> Bfx.merge_bams
+    let aligner which_one =
+      Bfx.lambda (fun fq ->
+          (match which_one with
+          | `Bwa_aln -> Bfx.bwa_aln
+          | `Bwa_mem -> Bfx.bwa_mem)
+            ~reference_build fq) in
+    let align_list how list_of_fastqs =
+      Bfx.list_map list_of_fastqs ~f:(aligner how) |> Bfx.merge_bams
     in
     Bfx.mutect
       ~configuration:Biokepi.Tools.Mutect.Configuration.default
-      ~normal:(align_list normal)
-      ~tumor:(align_list tumor)
+      ~normal:(align_list `Bwa_aln normal)
+      ~tumor:(align_list `Bwa_mem tumor)
 
   let run ~normal ~tumor =
     Bfx.observe (fun () ->
@@ -95,7 +99,7 @@ let () =
     Pipeline_1(Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot))
   in
   let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
-  write_file pipeline_1_dot
+  write_file pipeline_1_beta_dot
     ~content:(Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
   let pipeline_1_beta_png = test_dir // "pipeline-1-beta.png" in
   cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
