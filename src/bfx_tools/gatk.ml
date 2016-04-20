@@ -6,7 +6,7 @@ module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
 
-  module Gatk_config = struct
+  module Gatk_config () = struct
     type t = {
       (** The name of the configuration, specific to Biokepi. *)
       name: string;
@@ -70,19 +70,19 @@ module Configuration = struct
   end
 
   module Indel_realigner = struct
-    include Gatk_config
+    include Gatk_config ()
   end
 
   module Realigner_target_creator = struct
-    include Gatk_config
+    include Gatk_config ()
   end
 
   module Bqsr = struct
-    include Gatk_config
+    include Gatk_config ()
   end
 
   module Print_reads = struct
-    include Gatk_config
+    include Gatk_config ()
   end
 
   type indel_realigner = (Indel_realigner.t * Realigner_target_creator.t)
@@ -175,7 +175,7 @@ let indel_realigner_output_filename_tag
     "_indelreal-";
     ir_config.Configuration.Indel_realigner.name;
     "-";
-    target_config.Configuration.Indel_realigner.name;
+    target_config.Configuration.Realigner_target_creator.name;
     "-";
     sprintf "-%dx" bam_number;
     (if bam_number = 1 then "" else "-" ^ digest_of_input ());

@@ -390,7 +390,7 @@ let rec to_file_prefix:
       sprintf "%s-bqsr-%s-%s"
         (to_file_prefix ?read bam)
         bqsr_cfg.Bqsr.name
-        bqsr_cfg.Print_reads.name
+        print_reads_cfg.Print_reads.name
     | Picard_mark_duplicates (_, bam) ->
       (* The settings, for now, do not impact the result *)
       sprintf "%s-dedup" (to_file_prefix ?read bam)
