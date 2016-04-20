@@ -899,6 +899,17 @@ module Compiler = struct
         let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
         Seq2HLA.hla_type
           ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
+      | Bam_to_fastq(info_opt, how, what) -> 
+        let fastq_pair = fastq_sample_step ~compiler sample in
+        let bam_name = to_file_prefix what in 
+        let sample_name = Option.value_map  ~default:bam_name info_opt ~f:(fun x -> x.sample_name) in
+        let r1 = fastq_pair#product#r1 in
+        let r2 = match fastq_pair#product#r2 with
+          | Some r2 -> r2
+          | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
+        in 
+        Seq2HLA.hla_type
+          ~work_dir ~run_with:machine ~run_name:sample_name ~r1 ~r2
       | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
       end
     | With_metadata (metadata_spec, p) ->
