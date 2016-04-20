@@ -77,6 +77,7 @@ module KEDSL = struct
     sample_name: string;
     escaped_sample_name: string;
     fragment_id: string option;
+    fragment_id_forced: string;
   >
   let fastq_reads ?host ?name ?fragment_id r1 r2_opt : fastq_reads =
     object (self)
@@ -98,6 +99,8 @@ module KEDSL = struct
       method sample_name =
         Option.value name ~default:(Filename.basename r1)
       method fragment_id = fragment_id
+      method fragment_id_forced =
+        Option.value fragment_id ~default:(Filename.basename r1)
       method escaped_sample_name =
         String.map self#sample_name ~f:(function
           | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
