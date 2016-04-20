@@ -72,6 +72,7 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
 
 module Mark_duplicates_settings = struct
   type t = {
+    name: string;
     tmpdir: string;
     max_sequences_for_disk_read_ends_map: int;
     max_file_handles_for_read_ends_map: int;
@@ -79,6 +80,7 @@ module Mark_duplicates_settings = struct
     mem_param: string option;
   }
   let factory = {
+    name = "factory";
     tmpdir = "/tmp";
     max_sequences_for_disk_read_ends_map = 50000;
     max_file_handles_for_read_ends_map = 8000;
@@ -88,6 +90,7 @@ module Mark_duplicates_settings = struct
 
   let default = {
     factory with
+    name = "default";
     max_file_handles_for_read_ends_map = 20_000;
   }
 

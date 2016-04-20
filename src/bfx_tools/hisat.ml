@@ -19,6 +19,7 @@ module Configuration = struct
     ]
   let default_v1 = {name = "default_v1"; version = `V_0_1_6_beta}
   let default_v2 = {name = "default_v2"; version = `V_2_0_2_beta}
+  let name t = t.name
 end
 
 let index
