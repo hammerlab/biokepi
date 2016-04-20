@@ -46,6 +46,12 @@ module type Bioinformatics_base = sig
     [ `Fastq ] repr ->
     [ `Bam ] repr
 
+  val bwa_mem:
+    ?configuration: Biokepi_bfx_tools.Bwa.Configuration.Mem.t ->
+    reference_build: Biokepi_run_environment.Reference_genome.name ->
+    [ `Fastq ] repr ->
+    [ `Bam ] repr
+
   val gunzip: [ `Gz of 'a] repr -> 'a repr
 
   val gunzip_concat: ([ `Gz of 'a] list) repr -> 'a repr

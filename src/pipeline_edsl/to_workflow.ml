@@ -109,13 +109,32 @@ module Make (Config : Compiler_configuration)
     let freads = get_fastq fq in
     let result_prefix =
       Config.work_dir // 
-      sprintf "%s-%s_bwa-%s"
+      sprintf "%s-%s_bwaaln-%s"
         freads#product#escaped_sample_name
         (Option.value freads#product#fragment_id ~default:"")
         (Tools.Bwa.Configuration.Aln.name configuration)
     in
     Bam (
       Tools.Bwa.align_to_sam ~reference_build ~processors:Config.processors
+        ~configuration
+        ~fastq:freads
+        ~result_prefix ~run_with ()
+      |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
+    )
+
+  let bwa_mem
+      ?(configuration = Tools.Bwa.Configuration.Mem.default)
+      ~reference_build fq =
+    let freads = get_fastq fq in
+    let result_prefix =
+      Config.work_dir // 
+      sprintf "%s-%s_bwamem-%s"
+        freads#product#escaped_sample_name
+        (Option.value freads#product#fragment_id ~default:"")
+        (Tools.Bwa.Configuration.Mem.name configuration)
+    in
+    Bam (
+      Tools.Bwa.mem_align_to_sam ~reference_build ~processors:Config.processors
         ~configuration
         ~fastq:freads
         ~result_prefix ~run_with ()

@@ -71,6 +71,10 @@ module Generic_optimizer
 
   let bwa_aln ?configuration ~reference_build fq =
     fwd (Input.bwa_aln ?configuration ~reference_build (bwd fq))
+
+  let bwa_mem ?configuration ~reference_build fq =
+    fwd (Input.bwa_mem ?configuration ~reference_build (bwd fq))
+
   let gunzip gz =
     fwd (Input.gunzip (bwd gz))
 

@@ -88,6 +88,16 @@ module Make_serializer (How : sig
       "reference_build", string reference_build;
       "input", fq_compiled;
     ]
+  let bwa_mem
+      ?(configuration = Tools.Bwa.Configuration.Mem.default)
+      ~reference_build fq ~var_count =
+    let fq_compiled = fq ~var_count in
+    function_call "bwa-mem" [
+      "configuration",
+      Tools.Bwa.Configuration.Mem.name configuration |> string;
+      "reference_build", string reference_build;
+      "input", fq_compiled;
+    ]
 
   let gunzip gz ~var_count =
     function_call "gunzip" ["input", gz ~var_count]
