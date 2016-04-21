@@ -285,11 +285,74 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
 
 end
 
-let () =
-  let module Go1 = Run_test(Pipeline_insane) in
-  let res_1 =  Go1.main "pipeline-insane" in
-  printf "### Test results:\n\n";
-  printf "- `%s`:\n%s\n%!"
-    "Pipeline_insane"
-    (List.map res_1 ~f:(sprintf "    * %s\n") |> String.concat "")
+module Somatic_simplish(Bfx: Biokepi.EDSL.Semantics) = struct
 
+  module Insane_library = Pipeline_insane(Bfx)
+
+  let vc =
+    let normal =
+      Insane_library.(fastq_list  ~dataset:(fst normal) (snd normal))
+    in
+    let tumor =
+      Insane_library.(fastq_list  ~dataset:(fst tumor) (snd tumor))
+    in
+    let ot_hla =
+      normal |> Bfx.concat |> Bfx.optitype `DNA |> Bfx.to_unit
+    in
+    let align fastq =
+      Bfx.list_map fastq ~f:(Bfx.lambda (fun fq ->
+          Bfx.bwa_mem fq
+            ~reference_build:"b37"
+          |> Bfx.picard_mark_duplicates
+            ~configuration:Biokepi.Tools.Picard.Mark_duplicates_settings.default
+        )) in
+    let normal_bam = align normal |> Bfx.merge_bams in
+    let tumor_bam = align tumor |> Bfx.merge_bams in
+    let bam_pair = Bfx.pair normal_bam tumor_bam in
+    let indel_realigned_pair =
+      Bfx.gatk_indel_realigner_joint bam_pair
+        ~configuration: Biokepi.Tools.Gatk.Configuration.default_indel_realigner
+    in
+    let final_normal_bam =
+      Bfx.pair_first indel_realigned_pair
+      |> Bfx.gatk_bqsr
+        ~configuration: Biokepi.Tools.Gatk.Configuration.default_bqsr
+    in
+    let final_tumor_bam =
+      Bfx.pair_second indel_realigned_pair
+      |> Bfx.gatk_bqsr
+        ~configuration: Biokepi.Tools.Gatk.Configuration.default_bqsr
+    in
+    let vcfs =
+      let normal, tumor = final_normal_bam, final_tumor_bam in
+      Bfx.list [
+        Bfx.mutect ~normal ~tumor
+          ~configuration:Biokepi.Tools.Mutect.Configuration.default;
+        Bfx.somaticsniper ~normal ~tumor
+          ~configuration:Biokepi.Tools.Somaticsniper.Configuration.default;
+        Bfx.strelka ~normal ~tumor
+          ~configuration:Biokepi.Tools.Strelka.Configuration.default;
+      ] in
+    Bfx.list [
+      Bfx.to_unit vcfs;
+      ot_hla;
+    ] |> Bfx.to_unit
+
+  let run () =
+    Bfx.observe (fun () -> vc)
+end
+
+let () =
+  let module Go_insane = Run_test(Pipeline_insane) in
+  let insane_result =  Go_insane.main "pipeline-insane" in
+  let module Go_simple_somatic = Run_test(Somatic_simplish) in
+  let simple_somatic_result =  Go_simple_somatic.main "pipeline-simple-somatic" in
+  let display_result mod_name results =
+    printf "- `%s`:\n%s\n%!"
+      mod_name
+      (List.map results ~f:(sprintf "    * %s\n") |> String.concat "");
+  in
+  printf "### Test results:\n\n";
+  display_result "Pipeline_insane" insane_result;
+  display_result "Somatic_simplish" simple_somatic_result;
+  ()
