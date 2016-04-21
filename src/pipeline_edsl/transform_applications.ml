@@ -36,6 +36,9 @@ module Apply_optimization_framework
       | Lambda : ('a term -> 'b term) -> ('a -> 'b) term
       | List_make: ('a term) list -> 'a list term
       | List_map: ('a list term * ('a -> 'b) term) -> 'b list term
+      | Pair: 'a term * 'b term -> ('a * 'b) term
+      | Fst:  ('a * 'b) term -> 'a term
+      | Snd:  ('a * 'b) term -> 'b term
     let fwd x = Unknown x
     let rec bwd : type a. a term -> a from =
       function
@@ -48,6 +51,11 @@ module Apply_optimization_framework
       | Lambda f ->
         Input.lambda (fun x -> (bwd (f (fwd x))))
       | List_make l -> Input.list (List.map ~f:bwd l)
+      | Fst (Pair (a, b)) -> bwd a
+      | Snd (Pair (a, b)) -> bwd b
+      | Pair (a, b) -> Input.pair (bwd a) (bwd b)
+      | Fst b -> Input.pair_first (bwd b)
+      | Snd b -> Input.pair_second (bwd b)
       | Unknown x -> x
   end
 
@@ -70,6 +78,9 @@ module Apply_optimization_framework
     let lambda f = Lambda f
     let list l = List_make l
     let list_map l ~f = List_map (l, f)
+    let pair a b = Pair (a, b)
+    let pair_first p = Fst p
+    let pair_second p = Snd p
   end
 
 end
