@@ -140,7 +140,7 @@ module EDSL = struct
         graph descriptions.  *)
     module To_dot : Semantics.Bioinformatics_base
       with 
-       type 'a observation = string =
+       type 'a observation = SmartPrint.t =
       Biokepi_pipeline_edsl.To_dot
   end
 

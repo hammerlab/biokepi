@@ -88,8 +88,13 @@ let () =
 
   let module Dotize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_dot) in
   let pipeline_1_dot = test_dir // "pipeline-1.dot" in
-  write_file pipeline_1_dot
-    ~content:(Dotize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let sm1_dot =
+    Dotize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1 in
+  let out = open_out pipeline_1_dot in
+  SmartPrint.to_out_channel  80 2 out sm1_dot;
+  close_out out;
+  (* write_file pipeline_1_dot *)
+  (*   ~content:(); *)
   let pipeline_1_svg = test_dir // "pipeline-1.svg" in
   cmdf "dot -x -Grotate=180 -v -Tsvg  %s -o %s" pipeline_1_dot pipeline_1_svg;
   let pipeline_1_png = test_dir // "pipeline-1.png" in
@@ -99,10 +104,17 @@ let () =
     Pipeline_1(Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot))
   in
   let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
-  write_file pipeline_1_beta_dot
-    ~content:(Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1);
+  let sm1_beta_dot =
+    Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1 in
   let pipeline_1_beta_png = test_dir // "pipeline-1-beta.png" in
-  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
+  begin try
+    let out = open_out pipeline_1_beta_dot in
+    SmartPrint.to_out_channel  80 2 out sm1_beta_dot;
+    close_out out;
+    cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
+  with e ->
+    printf "BETA-DOT NOT PRODUCED !!!\n%!";
+  end;
 
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct

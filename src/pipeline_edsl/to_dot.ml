@@ -3,7 +3,6 @@ open Nonstd
 
 module Tree = struct
   type box = { id: string; name : string; attributes: (string * string) list}
-  (* type action = string *)
   type arrow = {
     label: string;
     points_to: t
@@ -87,13 +86,13 @@ module Tree = struct
           ^-^ go t
         ))
     in
-    SmartPrint.to_string 80 2 dot
+    dot
 end
 
 
 type 'a repr = var_count: int -> Tree.t
 
-type 'a observation = string
+type 'a observation = SmartPrint.t
 
 let lambda f =
   fun ~var_count ->
