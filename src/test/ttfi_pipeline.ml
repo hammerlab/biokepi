@@ -1,5 +1,9 @@
 (** This test uses the high-level EDSL and tries different compilation targets,
-    but does not produce runnable workflows. *)
+    but does not produce runnable workflows.
+
+
+    The workflow itself is voluntarily too big and abuses lambda expressions.
+*)
 open Nonstd
 
 module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
@@ -17,24 +21,117 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
     |> Bfx.list
 
 
-  let mutect_on_fastqs ~reference_build ~normal ~tumor =
+  let every_vc_on_fastqs ~reference_build ~normal ~tumor =
     let aligner which_one =
-      Bfx.lambda (fun fq ->
-          (match which_one with
-          | `Bwa_aln -> Bfx.bwa_aln
-          | `Bwa_mem -> Bfx.bwa_mem)
-            ~reference_build fq) in
-    let align_list how list_of_fastqs =
-      Bfx.list_map list_of_fastqs ~f:(aligner how) |> Bfx.merge_bams
+      Bfx.lambda (fun fq -> which_one ~reference_build fq) in
+    let align_list how (list_of_fastqs : [ `Fastq ] list Bfx.repr) =
+      Bfx.list_map list_of_fastqs ~f:how |> Bfx.merge_bams
     in
-    Bfx.mutect
-      ~configuration:Biokepi.Tools.Mutect.Configuration.default
-      ~normal:(align_list `Bwa_aln normal)
-      ~tumor:(align_list `Bwa_mem tumor)
+    let aligners = Bfx.list [
+        aligner @@ Bfx.bwa_aln ?configuration: None;
+        aligner @@ Bfx.bwa_mem ?configuration: None;
+        aligner @@ Bfx.hisat ~configuration:Biokepi.Tools.Hisat.Configuration.default_v1;
+        aligner @@ Bfx.hisat ~configuration:Biokepi.Tools.Hisat.Configuration.default_v2;
+        aligner @@ Bfx.star ~configuration:Biokepi.Tools.Star.Configuration.Align.default;
+        aligner @@ Bfx.mosaik;
+      ] in
+    let somatic_of_pair how =
+      Bfx.lambda (fun pair ->
+          let normal = Bfx.pair_first pair in
+          let tumor = Bfx.pair_second pair in
+          how ~normal ~tumor)
+    in
+    let somatic_vcs =
+      List.map ~f:somatic_of_pair [
+        Bfx.mutect
+          ~configuration:Biokepi.Tools.Mutect.Configuration.default;
+        Bfx.mutect2
+          ~configuration:Biokepi.Tools.Gatk.Configuration.Mutect2.default;
+        Bfx.somaticsniper
+          ~configuration:Biokepi.Tools.Somaticsniper.Configuration.default;
+        Bfx.strelka
+          ~configuration:Biokepi.Tools.Strelka.Configuration.default;
+        Bfx.varscan_somatic ?adjust_mapq:None;
+        Bfx.muse
+          ~configuration:Biokepi.Tools.Muse.Configuration.wes;
+        Bfx.virmid
+          ~configuration:Biokepi.Tools.Virmid.Configuration.default;
+      ]
+    in
+    let aligned_pairs
+      : (([ `Fastq ] list * [ `Fastq ] list) -> ([ `Bam ] * [ `Bam ]) list) Bfx.repr =
+      Bfx.lambda (fun pair ->
+          Bfx.list_map aligners ~f:(
+            Bfx.lambda (fun (al : ([ `Fastq ] -> [ `Bam ]) Bfx.repr) ->
+                Bfx.pair
+                  (align_list al (Bfx.pair_first pair : [ `Fastq ] list Bfx.repr))
+                  (align_list al (Bfx.pair_second pair))
+              )
+          )
+        )
+    in
+    let vcfs =
+      Bfx.lambda (fun pair ->
+          List.map somatic_vcs ~f:(fun vc ->
+              Bfx.list_map (Bfx.apply aligned_pairs pair) ~f:(
+                Bfx.lambda (fun bam_pair ->
+                    let (||>) x f = Bfx.apply f x in
+                    let indelreal =
+                      Bfx.lambda (fun pair ->
+                          Bfx.gatk_indel_realigner_joint
+                            ~configuration: Biokepi.Tools.Gatk.Configuration.default_indel_realigner
+                            pair)
+                    in
+                    let map_pair f =
+                      Bfx.lambda (fun pair ->
+                          let b1 = Bfx.pair_first pair in
+                          let b2 = Bfx.pair_second pair in
+                          Bfx.pair (f b1) (f b2)
+                        )
+                    in
+                    let bqsr_pair =
+                      Bfx.gatk_bqsr
+                        ~configuration: Biokepi.Tools.Gatk.Configuration.default_bqsr
+                      |> map_pair in
+                    let markdups_pair =
+                      Bfx.picard_mark_duplicates
+                        ~configuration:Biokepi.Tools.Picard.Mark_duplicates_settings.default
+                      |> map_pair in
+                    bam_pair ||> markdups_pair ||> indelreal ||> bqsr_pair ||> vc
+                  )
+              )
+            )
+          |> Bfx.list
+        )
+    in
+    let workflow_of_pair =
+      Bfx.lambda (fun pair ->
+          let ( ** ) = Bfx.pair in
+          (Bfx.apply aligned_pairs pair
+           |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
+               Bfx.pair_first p
+               |> Bfx.stringtie
+                 ~configuration:Biokepi.Tools.Stringtie.Configuration.default)
+             ))
+          ** (Bfx.apply vcfs pair)
+          ** (Bfx.apply (Bfx.lambda (fun p -> Bfx.pair_first p |> Bfx.concat |> Bfx.seq2hla)) pair)
+          ** (Bfx.apply
+                (Bfx.lambda (fun p -> Bfx.pair_second p |> Bfx.concat |> Bfx.optitype `RNA))
+                pair)
+          ** (
+            Bfx.apply aligned_pairs pair
+            |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
+                Bfx.pair_first p
+                |> Bfx.gatk_haplotype_caller
+              ))
+          )
+        )
+    in
+    Bfx.apply workflow_of_pair (Bfx.pair normal tumor)
 
   let run ~normal ~tumor =
     Bfx.observe (fun () ->
-        mutect_on_fastqs
+        every_vc_on_fastqs
           ~reference_build:"b37"
           ~normal:(fastq_list ~dataset:(fst normal) (snd normal))
           ~tumor:(fastq_list ~dataset:(fst tumor) (snd tumor))
@@ -65,6 +162,7 @@ let write_file file ~content =
 
 let cmdf fmt =
   ksprintf (fun s ->
+      printf "CMD: %s\n%!" s;
       match Sys.command s with
       | 0 -> ()
       | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
@@ -118,6 +216,7 @@ let () =
 
   let module Workflow_compiler =
     Biokepi.EDSL.Compile.To_workflow.Make(struct
+      include Biokepi.EDSL.Compile.To_workflow.Defaults
       let processors = 42
       let work_dir = "/work/dir/"
       let machine =
@@ -127,13 +226,47 @@ let () =
   in
   let module Ketrew_pipeline_1 = Pipeline_1(Workflow_compiler) in
   let workflow_1 =
-    Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-    |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_vcf
+    let open Biokepi.EDSL.Compile.To_workflow.File_type_specification in
+    let open Ketrew.EDSL in
+    let edges =
+      let full_run =
+        Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+      in
+      let gtfs =
+        full_run |> pair_first
+        |> get_list
+        |> List.map ~f:(fun x -> get_gtf x |> depends_on) in
+      let vcfs =
+        let somat = full_run |> pair_second |> pair_first |> get_list in
+        let haplos =
+          full_run |> pair_second |> pair_second |> pair_second |> pair_second in
+        somat @ [haplos]
+        |> List.map ~f:(fun l -> 
+            l |> get_list
+            |> List.map ~f:(fun v -> get_vcf v |> depends_on)
+          )
+        |> List.concat
+      in
+      let seq2hla =
+        full_run |> pair_second |> pair_second |> pair_first
+        |> get_seq2hla_result
+        |> depends_on in
+      let optitype =
+        full_run |> pair_second |> pair_second |> pair_second |> pair_first
+        |> get_optitype_result
+        |> depends_on in
+      optitype :: seq2hla :: gtfs @ vcfs
+    in
+    workflow_node without_product
+      ~name:"Biokepi test top-level node" ~edges
   in
   let pipeline_1_workflow_display =
     test_dir // "pipeline-1-workflow-display.txt" in
+  ignore workflow_1;
+  (*
   write_file pipeline_1_workflow_display
     ~content:(workflow_1 |> Ketrew.EDSL.workflow_to_string);
+     *)
   printf "Pipeline_1:\n\
          \  display: %s\n\
          \  JSON: %s\n\
