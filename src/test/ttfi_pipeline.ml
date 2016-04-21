@@ -6,7 +6,123 @@
 *)
 open Nonstd
 
-module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
+module type TEST_PIPELINE = 
+  functor (Bfx : Biokepi.EDSL.Semantics) ->
+  sig
+    val run : unit -> unit Bfx.observation
+  end
+
+
+module Run_test(Test_pipeline : TEST_PIPELINE) = struct
+
+  let write_file file ~content =
+    let out_file = open_out file in
+    try
+      output_string out_file content;
+      close_out out_file
+    with _ ->
+      close_out out_file
+
+  let cmdf fmt =
+    ksprintf (fun s ->
+        printf "CMD: %s\n%!" s;
+        match Sys.command s with
+        | 0 -> ()
+        | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
+
+  let (//) = Filename.concat
+  let test_dir = "_build/ttfi-test-results/"
+
+  let main prefix =
+    cmdf "mkdir -p %s" test_dir;
+    let results = ref [] in
+    let add_result fmt = ksprintf (fun s -> results := s :: !results) fmt in
+    let add_result_file name path =
+      let size =
+        let s = Unix.stat path  in
+        match s.Unix.st_size with
+        | 0 -> "EMPTY"
+        | small when small < 1024 -> sprintf "%d B" small
+        | avg when avg < (1024 * 1024) ->
+          sprintf "%.2f KB" (float avg /. 1024.)
+        | big ->
+          sprintf "%.2f MB" (float big /. (1024. *. 1024.))
+      in
+      add_result "%s: `%s` (%s)" name path size;
+    in
+    let output_path suffix = test_dir // prefix ^ suffix in
+    begin
+      let module Display_pipeline = Test_pipeline(Biokepi.EDSL.Compile.To_display) in
+      let pseudocode = output_path "-pseudocode.txt" in
+      write_file pseudocode
+        ~content:(Display_pipeline.run () |> SmartPrint.to_string 80 2);
+      add_result_file "Pseudo-code" pseudocode;
+    end;
+    begin
+      let module Jsonize_pipeline =
+        Test_pipeline(Biokepi.EDSL.Compile.To_json) in
+      let json = output_path ".json" in
+      write_file json
+        ~content:(Jsonize_pipeline.run ()
+                  |> Yojson.Basic.pretty_to_string ~std:true);
+      add_result_file "JSON" json;
+    end;
+    let output_dot sm dot png =
+      try
+        let out = open_out dot in
+        SmartPrint.to_out_channel  80 2 out sm;
+        close_out out;
+        add_result_file "DOT" dot;
+        cmdf "dot -v -x -Tpng  %s -o %s" dot png;
+        add_result_file "PNG" png;
+      with _ -> add_result "FAILED TO OUTPUT: %s" dot;
+    in
+    begin
+      let module Dotize_pipeline = Test_pipeline(Biokepi.EDSL.Compile.To_dot) in
+      let sm_dot = Dotize_pipeline.run () in
+      let dot = output_path "-1.dot" in
+      let png = output_path "-1.png" in
+      output_dot sm_dot dot png
+    end;
+    begin
+      let module Dotize_twice_beta_reduced_pipeline =
+        Test_pipeline(
+          Biokepi.EDSL.Transform.Apply_functions(
+            Biokepi.EDSL.Transform.Apply_functions(
+              Biokepi.EDSL.Compile.To_dot
+            )
+          )
+        )
+      in
+      let dot = output_path "-double-beta.dot" in
+      let sm_dot = Dotize_twice_beta_reduced_pipeline.run () in
+      let png = output_path "-double-beta.png" in
+      output_dot sm_dot dot png
+    end;
+    begin
+      let module Workflow_compiler =
+        Biokepi.EDSL.Compile.To_workflow.Make(struct
+          include Biokepi.EDSL.Compile.To_workflow.Defaults
+          let processors = 42
+          let work_dir = "/work/dir/"
+          let machine =
+            Biokepi.Setup.Build_machine.create
+              "ssh://example.com/tmp/KT/"
+        end)
+      in
+      let module Ketrew_pipeline = Test_pipeline(Workflow_compiler) in
+      let workflow =
+        Ketrew_pipeline.run ()
+        |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_unit_workflow
+          ~name:"Biokepi TTFI test top-level node"
+      in
+      ignore workflow
+    end;
+    List.rev !results
+
+end
+
+module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
 
   let fastq_list ~dataset files =
     List.map files ~f:begin function
@@ -146,7 +262,20 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
     in
     Bfx.apply workflow_of_pair (Bfx.pair normal tumor)
 
-  let run ~normal ~tumor =
+  let normal =
+    ("normal-1", [
+        `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq");
+        `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq");
+        `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz");
+      ])
+
+  let tumor =
+    ("tumor-1", [
+        `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz");
+        `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz");
+      ])
+
+  let run () =
     Bfx.observe (fun () ->
         every_vc_on_fastqs
           ~reference_build:"b37"
@@ -156,120 +285,11 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
 
 end
 
-let normal_1 =
-  ("normal-1", [
-      `Pair ("/input/normal-1-001-r1.fastq", "/input/normal-1-001-r2.fastq");
-      `Pair ("/input/normal-1-002-r1.fastq", "/input/normal-1-002-r2.fastq");
-      `Pair ("/input/normal-1-003-r1.fqz",   "/input/normal-1-003-r2.fqz");
-    ])
-
-let tumor_1 =
-  ("tumor-1", [
-      `Pair ("/input/tumor-1-001-r1.fastq.gz", "/input/tumor-1-001-r2.fastq.gz");
-      `Pair ("/input/tumor-1-002-r1.fastq.gz", "/input/tumor-1-002-r2.fastq.gz");
-    ])
-
-let write_file file ~content =
-  let out_file = open_out file in
-  try
-    output_string out_file content;
-    close_out out_file
-  with _ ->
-    close_out out_file
-
-let cmdf fmt =
-  ksprintf (fun s ->
-      printf "CMD: %s\n%!" s;
-      match Sys.command s with
-      | 0 -> ()
-      | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
-
-let (//) = Filename.concat
-
 let () =
-  let module Display_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_display) in
-  let test_dir = "_build/ttfi-test-results/" in
-  cmdf "mkdir -p %s" test_dir;
-  let pipeline_1_display = test_dir // "pipeline-1-display.txt" in
-  write_file pipeline_1_display
-    ~content:(Display_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-              |> SmartPrint.to_string 80 2);
-
-  let module Jsonize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_json) in
-  let pipeline_1_json = test_dir // "pipeline-1.json" in
-  write_file pipeline_1_json
-    ~content:(Jsonize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-              |> Yojson.Basic.pretty_to_string ~std:true);
-
-  let module Dotize_pipeline_1 = Pipeline_1(Biokepi.EDSL.Compile.To_dot) in
-  let pipeline_1_dot = test_dir // "pipeline-1.dot" in
-  let sm1_dot =
-    Dotize_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1 in
-  let out = open_out pipeline_1_dot in
-  SmartPrint.to_out_channel  80 2 out sm1_dot;
-  close_out out;
-  let pipeline_1_svg = test_dir // "pipeline-1.svg" in
-  cmdf "dot -x -Grotate=180 -v -Tsvg  %s -o %s" pipeline_1_dot pipeline_1_svg;
-  let pipeline_1_png = test_dir // "pipeline-1.png" in
-  cmdf "dot -v -x -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
-
-  let module Dotize_beta_reduced_pipeline_1 =
-    Pipeline_1(
-      Biokepi.EDSL.Transform.Apply_functions(
-        Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot)
-      )
-    )
-  in
-  let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
-  let sm1_beta_dot =
-    Dotize_beta_reduced_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1 in
-  let pipeline_1_beta_png = test_dir // "pipeline-1-beta.png" in
-  begin try
-    let out = open_out pipeline_1_beta_dot in
-    SmartPrint.to_out_channel  80 2 out sm1_beta_dot;
-    close_out out;
-    cmdf "dot -v -x -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
-  with e ->
-    printf "BETA-DOT NOT PRODUCED !!!\n%!";
-  end;
-
-  let module Workflow_compiler =
-    Biokepi.EDSL.Compile.To_workflow.Make(struct
-      include Biokepi.EDSL.Compile.To_workflow.Defaults
-      let processors = 42
-      let work_dir = "/work/dir/"
-      let machine =
-        Biokepi.Setup.Build_machine.create
-          "ssh://example.com/tmp/KT/"
-    end)
-  in
-  let module Ketrew_pipeline_1 = Pipeline_1(Workflow_compiler) in
-  let workflow_1 =
-    Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-    |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_unit_workflow
-      ~name:"Biokepi TTFI test top-level node"
-  in
-  let pipeline_1_workflow_display =
-    test_dir // "pipeline-1-workflow-display.txt" in
-  ignore workflow_1;
-  (*
-  write_file pipeline_1_workflow_display
-    ~content:(workflow_1 |> Ketrew.EDSL.workflow_to_string);
-     *)
-  printf "Pipeline_1:\n\
-         \  display: %s\n\
-         \  JSON: %s\n\
-         \  Dot: %s\n\
-         \  SVG: %s\n\
-         \  PNG: %s\n\
-         \  Beta-reduced PNG: %s\n\
-         \  ketrew-display: %s\n%!"
-    pipeline_1_display
-    pipeline_1_json
-    pipeline_1_dot
-    pipeline_1_svg
-    pipeline_1_png
-    pipeline_1_beta_png
-    pipeline_1_workflow_display
-
+  let module Go1 = Run_test(Pipeline_insane) in
+  let res_1 =  Go1.main "pipeline-insane" in
+  printf "### Test results:\n\n";
+  printf "- `%s`:\n%s\n%!"
+    "Pipeline_insane"
+    (List.map res_1 ~f:(sprintf "    * %s\n") |> String.concat "")
 
