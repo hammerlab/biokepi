@@ -34,6 +34,11 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
         aligner @@ Bfx.hisat ~configuration:Biokepi.Tools.Hisat.Configuration.default_v2;
         aligner @@ Bfx.star ~configuration:Biokepi.Tools.Star.Configuration.Align.default;
         aligner @@ Bfx.mosaik;
+        aligner @@ (fun ~reference_build fastq ->
+            Bfx.bwa_aln ~reference_build fastq
+            |> Bfx.bam_to_fastq ~sample_name:"realigned" `PE
+            |> Bfx.bwa_mem ?configuration: None ~reference_build
+          );
       ] in
     let somatic_of_pair how =
       Bfx.lambda (fun pair ->
