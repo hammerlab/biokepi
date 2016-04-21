@@ -77,46 +77,151 @@ module Make_serializer (How : sig
       "reference_build", reference_build;
     ]
 
+  let pair a b ~(var_count : int) =
+    function_call "make-pair" [
+      "first", a ~var_count;
+      "second", b ~var_count;
+    ]
+  let pair_first p ~(var_count : int) =
+    function_call "pair-first" [
+      "pair", p ~var_count;
+    ]
+  let pair_second p ~(var_count : int) =
+    function_call "pair-second" [
+      "pair", p ~var_count;
+    ]
+
+  let aligner name conf_name ~reference_build fq : var_count: int -> How.t =
+    fun ~var_count ->
+      let fq_compiled = fq ~var_count in
+      function_call name [
+        "configuration", string conf_name;
+        "reference_build", string reference_build;
+        "input", fq_compiled;
+      ]
+  let one_to_one name conf_name bam =
+    fun ~(var_count : int) ->
+      let bamc = bam ~var_count in
+      function_call name [
+        "configuration", string conf_name;
+        "input", bamc;
+      ]
 
   let bwa_aln
-      ?(configuration = Tools.Bwa.Configuration.Aln.default)
-      ~reference_build fq ~var_count =
-    let fq_compiled = fq ~var_count in
-    function_call "bwa-aln" [
-      "configuration",
-      Tools.Bwa.Configuration.Aln.name configuration |> string;
-      "reference_build", string reference_build;
-      "input", fq_compiled;
-    ]
-  let bwa_mem
-      ?(configuration = Tools.Bwa.Configuration.Mem.default)
-      ~reference_build fq ~var_count =
-    let fq_compiled = fq ~var_count in
-    function_call "bwa-mem" [
-      "configuration",
-      Tools.Bwa.Configuration.Mem.name configuration |> string;
-      "reference_build", string reference_build;
-      "input", fq_compiled;
-    ]
+      ?(configuration = Tools.Bwa.Configuration.Aln.default) =
+    aligner "bwa-aln" (Tools.Bwa.Configuration.Aln.name configuration)
 
-  let gunzip gz ~var_count =
+  let bwa_mem
+      ?(configuration = Tools.Bwa.Configuration.Mem.default) =
+    aligner "bwa-mem" (Tools.Bwa.Configuration.Mem.name configuration)
+
+  let gunzip gz ~(var_count : int) =
     function_call "gunzip" ["input", gz ~var_count]
 
-  let gunzip_concat gzl ~var_count =
+  let gunzip_concat gzl ~(var_count : int) =
     function_call "gunzip-concat" ["input-list", gzl ~var_count]
 
-  let concat l ~var_count =
+  let concat l ~(var_count : int) =
     function_call "concat" ["input-list", l ~var_count]
 
-  let merge_bams bl ~var_count =
+  let merge_bams bl ~(var_count : int) =
     function_call "merge-bams" ["input-list", bl ~var_count]
 
-  let mutect ~configuration ~normal ~tumor ~var_count =
-    function_call "mutect" [
-      "configuration", string configuration.Tools.Mutect.Configuration.name;
+  let star ~configuration =
+    aligner "star" (Tools.Star.Configuration.Align.name configuration)
+
+  let hisat ~configuration =
+    aligner "hisat" (configuration.Tools.Hisat.Configuration.name)
+
+  let mosaik =
+    aligner "mosaik" "default"
+
+  let stringtie ~configuration =
+    one_to_one "stringtie" configuration.Tools.Stringtie.Configuration.name
+
+
+  let indel_real_config (indel, target) =
+    (sprintf "I%s-TC%s"
+       indel.Tools.Gatk.Configuration.Indel_realigner.name
+       target.Tools.Gatk.Configuration.Realigner_target_creator.name)
+
+  let gatk_indel_realigner ~(configuration : Tools.Gatk.Configuration.indel_realigner) =
+    one_to_one "gatk_indel_realigner" (indel_real_config configuration)
+      
+
+  let gatk_indel_realigner_joint ~configuration =
+    one_to_one "gatk_indel_realigner_joint" (indel_real_config configuration)
+
+  let picard_mark_duplicates ~configuration =
+    one_to_one
+      "picard_mark_duplicates"
+      configuration.Tools.Picard.Mark_duplicates_settings.name
+
+  let gatk_bqsr ~configuration:(bqsr, preads) =
+    one_to_one "gatk_bqsr"
+      (sprintf "B%s-PR%s"
+         bqsr.Tools.Gatk.Configuration.Bqsr.name
+         preads.Tools.Gatk.Configuration.Print_reads.name)
+
+  let seq2hla =
+    one_to_one "seq2hla" "default"
+
+  let optitype how =
+    one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
+
+  let gatk_haplotype_caller =
+    one_to_one "gatk_haplotype_caller" "default"
+
+  let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
+    fun ~(var_count : int) ->
+      let bamc = bam ~var_count in
+      function_call "bam_to_fastq" [
+        "sample_name", string sample_name;
+        "fragment_id",
+        Option.value_map ~f:string ~default:(string "N/A") fragment_id;
+        "endness", string (
+          match se_or_pe with
+          | `SE -> "SE"
+          | `PE -> "PE"
+        );
+        "input", bamc;
+      ]
+
+  let variant_caller name conf_name ~normal ~tumor ~(var_count : int) =
+    function_call name [
+      "configuration", string conf_name;
       "normal", normal ~var_count;
       "tumor", tumor ~var_count;
     ]
+
+  let mutect ~configuration =
+    variant_caller "mutect"
+      configuration.Tools.Mutect.Configuration.name
+
+  let mutect2 ~configuration =
+    variant_caller "mutect2"
+      configuration.Tools.Gatk.Configuration.Mutect2.name
+
+  let somaticsniper ~configuration =
+    variant_caller "somaticsniper"
+      configuration.Tools.Somaticsniper.Configuration.name
+
+  let strelka ~configuration =
+    variant_caller "strelka"
+      configuration.Tools.Strelka.Configuration.name
+
+  let varscan_somatic ?adjust_mapq =
+    variant_caller "varscan_somatic"
+      (Option.value_map ~f:(sprintf "amap%d") ~default:"default" adjust_mapq)
+
+  let muse ~configuration =
+    variant_caller "muse"
+      configuration.Tools.Muse.Configuration.name
+
+  let virmid ~configuration =
+    variant_caller "virmid"
+      configuration.Tools.Virmid.Configuration.name
+
 end
 
 include Make_serializer (struct
