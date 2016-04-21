@@ -8,6 +8,7 @@ module File_type_specification = struct
 
   type 'a t = ..
   type 'a t +=
+    | To_unit: 'a t -> unit t
     | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
     | Bam: bam_file workflow_node -> [ `Bam ] t
     | Vcf: single_file workflow_node -> [ `Vcf ] t
@@ -70,6 +71,30 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get "Pair"
 
+  let get_unit_workflow : 
+    name: string ->
+    unit t ->
+    unknown_product workflow_node =
+    fun ~name f ->
+      match f with
+      | To_unit v ->
+        let rec as_edges : type a. a t -> workflow_edge list = 
+          let one_depends_on wf = [depends_on wf] in
+          function
+          | Fastq wf -> one_depends_on wf
+          | Bam wf ->   one_depends_on wf
+          | Vcf wf ->   one_depends_on wf
+          | Gtf wf ->   one_depends_on wf
+          | Seq2hla_result wf -> one_depends_on wf
+          | Optitype_result wf -> one_depends_on wf
+          | List l -> List.concat_map l ~f:as_edges
+          | Pair (a, b) -> as_edges a @ as_edges b
+          | other -> fail_get "as_edges"
+        in
+        workflow_node without_product
+          ~name ~edges:(as_edges v)
+      | other -> fail_get "get_unit_workflow"
+
 end
 
 open Biokepi_run_environment
@@ -117,6 +142,7 @@ module Make (Config : Compiler_configuration)
       List (List.map ~f:(fun v -> apply f v) l)
     | _ -> assert false
 
+  let to_unit x = To_unit x
 
   let host = Machine.as_host Config.machine
   let run_with = Config.machine

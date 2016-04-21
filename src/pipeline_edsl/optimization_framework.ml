@@ -60,6 +60,8 @@ module Generic_optimizer
   let list_map l ~f =
     fwd (Input.list_map (bwd l) (bwd f))
 
+  let to_unit x = fwd (Input.to_unit (bwd x))
+
   let pair a b = fwd (Input.pair (bwd a) (bwd b))
   let pair_first x = fwd (Input.pair_first (bwd x))
   let pair_second x = fwd (Input.pair_second (bwd x))

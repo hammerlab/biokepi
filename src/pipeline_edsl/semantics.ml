@@ -27,6 +27,9 @@ module type Bioinformatics_base = sig
   val pair_first: ('a * 'b) repr -> 'a repr
   val pair_second: ('a * 'b) repr -> 'b repr
 
+  (** This is used to opacify the type of the expression. *)
+  val to_unit: 'a repr -> unit repr
+
   val fastq :
     sample_name : string ->
     ?fragment_id : string ->

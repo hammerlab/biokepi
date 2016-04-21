@@ -28,6 +28,8 @@ let apply f v =
 
 let observe f = f () ~var_count:0
 
+let to_unit j = j
+
 
 let list l =
   fun ~var_count ->
