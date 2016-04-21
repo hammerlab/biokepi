@@ -428,8 +428,20 @@ module Make (Config : Compiler_configuration)
         ~input_bam ~result_prefix `Map_reduce
     )
 
-  let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
-    assert false
+  let bam_to_fastq ~sample_name ?fragment_id how bam =
+    let input_bam = get_bam bam in
+    let sample_type = match how with `SE -> `Single_end | `PE -> `Paired_end in
+    let output_prefix =
+      Config.work_dir
+      // sprintf "%s-b2fq-%s"
+        (Filename.chop_extension input_bam#product#path)
+        (match how with `PE -> "PE" | `SE -> "SE")
+    in
+    Fastq (
+      Tools.Picard.bam_to_fastq
+        ~run_with ~processors:Config.processors ~sample_type
+        ~sample_name ~output_prefix input_bam
+    )
 
   let somatic_vc name confname runfun ~configuration ~normal ~tumor =
     let normal_bam = get_bam normal in
