@@ -196,15 +196,17 @@ let () =
   let out = open_out pipeline_1_dot in
   SmartPrint.to_out_channel  80 2 out sm1_dot;
   close_out out;
-  (* write_file pipeline_1_dot *)
-  (*   ~content:(); *)
   let pipeline_1_svg = test_dir // "pipeline-1.svg" in
   cmdf "dot -x -Grotate=180 -v -Tsvg  %s -o %s" pipeline_1_dot pipeline_1_svg;
   let pipeline_1_png = test_dir // "pipeline-1.png" in
-  cmdf "dot -v -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
+  cmdf "dot -v -x -Tpng  %s -o %s" pipeline_1_dot pipeline_1_png;
 
   let module Dotize_beta_reduced_pipeline_1 =
-    Pipeline_1(Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot))
+    Pipeline_1(
+      Biokepi.EDSL.Transform.Apply_functions(
+        Biokepi.EDSL.Transform.Apply_functions(Biokepi.EDSL.Compile.To_dot)
+      )
+    )
   in
   let pipeline_1_beta_dot = test_dir // "pipeline-1-beta.dot" in
   let sm1_beta_dot =
@@ -214,7 +216,7 @@ let () =
     let out = open_out pipeline_1_beta_dot in
     SmartPrint.to_out_channel  80 2 out sm1_beta_dot;
     close_out out;
-    cmdf "dot -v -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
+    cmdf "dot -v -x -Tpng  %s -o %s" pipeline_1_beta_dot pipeline_1_beta_png;
   with e ->
     printf "BETA-DOT NOT PRODUCED !!!\n%!";
   end;
