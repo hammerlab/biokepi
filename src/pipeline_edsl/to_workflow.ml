@@ -81,6 +81,7 @@ module File_type_specification = struct
         let rec as_edges : type a. a t -> workflow_edge list = 
           let one_depends_on wf = [depends_on wf] in
           function
+          | To_unit v -> as_edges v
           | Fastq wf -> one_depends_on wf
           | Bam wf ->   one_depends_on wf
           | Vcf wf ->   one_depends_on wf

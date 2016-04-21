@@ -103,6 +103,7 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
                         ~configuration:Biokepi.Tools.Picard.Mark_duplicates_settings.default
                       |> map_pair in
                     bam_pair ||> markdups_pair ||> indelreal ||> bqsr_pair ||> vc
+                    ||> Bfx.lambda Bfx.to_unit
                   )
               )
             )
@@ -111,25 +112,36 @@ module Pipeline_1 (Bfx : Biokepi.EDSL.Semantics) = struct
     in
     let workflow_of_pair =
       Bfx.lambda (fun pair ->
-          let ( ** ) = Bfx.pair in
-          (Bfx.apply aligned_pairs pair
-           |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
-               Bfx.pair_first p
-               |> Bfx.stringtie
-                 ~configuration:Biokepi.Tools.Stringtie.Configuration.default)
-             ))
-          ** (Bfx.apply vcfs pair)
-          ** (Bfx.apply (Bfx.lambda (fun p -> Bfx.pair_first p |> Bfx.concat |> Bfx.seq2hla)) pair)
-          ** (Bfx.apply
+          Bfx.list [
+            (Bfx.apply aligned_pairs pair
+             |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
+                 Bfx.pair_first p
+                 |> Bfx.stringtie
+                   ~configuration:Biokepi.Tools.Stringtie.Configuration.default)
+               )) |> Bfx.to_unit;
+            Bfx.apply vcfs pair |> Bfx.to_unit;
+            begin
+              Bfx.apply
+                (Bfx.lambda (fun p -> Bfx.pair_first p |> Bfx.concat |> Bfx.seq2hla))
+                pair
+              |> Bfx.to_unit
+            end;
+            begin 
+              Bfx.apply
                 (Bfx.lambda (fun p -> Bfx.pair_second p |> Bfx.concat |> Bfx.optitype `RNA))
-                pair)
-          ** (
-            Bfx.apply aligned_pairs pair
-            |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
-                Bfx.pair_first p
-                |> Bfx.gatk_haplotype_caller
-              ))
-          )
+                pair
+              |> Bfx.to_unit
+            end;
+            begin
+              Bfx.apply aligned_pairs pair
+              |> Bfx.list_map ~f:(Bfx.lambda (fun p ->
+                  Bfx.pair_first p
+                  |> Bfx.gatk_haplotype_caller
+                ))
+              |> Bfx.to_unit
+            end;
+          ]
+        |> Bfx.to_unit
         )
     in
     Bfx.apply workflow_of_pair (Bfx.pair normal tumor)
@@ -233,39 +245,9 @@ let () =
   in
   let module Ketrew_pipeline_1 = Pipeline_1(Workflow_compiler) in
   let workflow_1 =
-    let open Biokepi.EDSL.Compile.To_workflow.File_type_specification in
-    let open Ketrew.EDSL in
-    let edges =
-      let full_run =
-        Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
-      in
-      let gtfs =
-        full_run |> pair_first
-        |> get_list
-        |> List.map ~f:(fun x -> get_gtf x |> depends_on) in
-      let vcfs =
-        let somat = full_run |> pair_second |> pair_first |> get_list in
-        let haplos =
-          full_run |> pair_second |> pair_second |> pair_second |> pair_second in
-        somat @ [haplos]
-        |> List.map ~f:(fun l -> 
-            l |> get_list
-            |> List.map ~f:(fun v -> get_vcf v |> depends_on)
-          )
-        |> List.concat
-      in
-      let seq2hla =
-        full_run |> pair_second |> pair_second |> pair_first
-        |> get_seq2hla_result
-        |> depends_on in
-      let optitype =
-        full_run |> pair_second |> pair_second |> pair_second |> pair_first
-        |> get_optitype_result
-        |> depends_on in
-      optitype :: seq2hla :: gtfs @ vcfs
-    in
-    workflow_node without_product
-      ~name:"Biokepi test top-level node" ~edges
+    Ketrew_pipeline_1.run ~normal:normal_1 ~tumor:tumor_1
+    |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_unit_workflow
+      ~name:"Biokepi TTFI test top-level node"
   in
   let pipeline_1_workflow_display =
     test_dir // "pipeline-1-workflow-display.txt" in
