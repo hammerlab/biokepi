@@ -32,6 +32,8 @@ module Configuration = struct
       parameters: (string * string) list;
     }
 
+    let name t = t.name
+
     let to_json t: Yojson.Basic.json =
       let {name;
            filter_reads_with_n_cigar;
@@ -131,6 +133,8 @@ module Configuration = struct
       in
       (`Arguments (List.concat args @ additional_arguments),
        `Edges (List.concat edges))
+
+    let name t = t.name
   end
 
 
