@@ -27,9 +27,9 @@ module Tree = struct
 
   let arrow label points_to = {label; points_to}
 
-  let variable name = `Variable (make_id `Unique, name)
-  let lambda varname expr = `Lambda (make_id `Unique, varname, expr)
-  let apply f v = `Apply (make_id `Unique, f, v)
+  let variable id name = `Variable (make_id (`Of id), name)
+  let lambda varname expr = `Lambda (make_id (`Of (varname, expr)), varname, expr)
+  let apply f v = `Apply (make_id (`Of (f,v)), f, v)
   let string s = `String s
 
 
@@ -37,7 +37,7 @@ module Tree = struct
     let id =
       match id with
       | Some i -> i
-      | None -> make_id `Unique
+      | None -> make_id (`Of (name, a, l))
     in
     `Node ({id; name; attributes = a}, l)
 
@@ -80,9 +80,11 @@ module Tree = struct
           (List.map attributes ~f:(fun (k,v) -> sprintf "%s: %s" k v)
            |> String.concat "\\l")
     in
+    let one o = [o] in
     let rec go =
       function
-      | `Variable (id, s) ->
+      | `Variable (_, s) as v ->
+        let id = id_of v in
         sentence (
           string id ^^ dot_attributes [
             label_attribute (label s []);
@@ -90,6 +92,7 @@ module Tree = struct
             "shape", in_quotes "hexagon";
           ]
         )
+        |> one
       | `Lambda (id, v, expr) ->
         go (node ~id (sprintf "Lambda %s" v) [arrow "Expr" expr])
       | `Apply (id, f, v) ->
@@ -104,6 +107,7 @@ module Tree = struct
             "shape", in_quotes "Mrecord";
           ]
         )
+        |> one
       | `Node ({id; name; attributes}, trees) ->
         sentence (
           string id ^^ dot_attributes [
@@ -112,16 +116,15 @@ module Tree = struct
             "shape", in_quotes "Mrecord";
           ]
         )
-        ^-^ separate empty (
-          List.map trees ~f:(fun {label; points_to} ->
-              sentence (
-                dot_arrow (id_of points_to) id ^^ dot_attributes [
-                  label_attribute label;
-                  font_size `Small;
-                ]
-              )
-              ^-^ go points_to)
-        )
+        :: List.concat_map trees ~f:(fun {label; points_to} ->
+            sentence (
+              dot_arrow (id_of points_to) id ^^ dot_attributes [
+                label_attribute label;
+                font_size `Small;
+              ]
+            )
+            :: go points_to
+          )
     in
     let dot =
       string "digraph target_graph" ^^ braces (nest (
@@ -131,7 +134,7 @@ module Tree = struct
               font_size `Default;
             ]
           )
-          ^-^ go t
+          ^-^ (go t |> List.dedup |> separate empty)
         ))
     in
     dot
@@ -144,10 +147,17 @@ type 'a observation = SmartPrint.t
 
 let lambda f =
   fun ~var_count ->
-    let var_name = sprintf "Var%d" var_count in
-    let var_repr = fun ~var_count -> Tree.variable var_name in
+    let var_name = sprintf "Var_%d" var_count in
+    (* let r = ref None in *)
+    (* let get_subtree () = *)
+    (*   Option.value_exn !r ~msg:"Bug in To_dot.lambda" in *)
+    let var_repr_fake = fun ~var_count -> Tree.string var_name in
+    let applied_once = f var_repr_fake ~var_count:(var_count + 1) in
+    let var_repr = fun ~var_count -> Tree.variable applied_once var_name in
     let applied = f var_repr ~var_count:(var_count + 1) in
-    Tree.lambda var_name applied
+    let subtree = Tree.lambda var_name applied in
+    (* r := Some subtree; *)
+    subtree
 
 let apply f v =
   fun ~var_count ->
