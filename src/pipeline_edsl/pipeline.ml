@@ -881,17 +881,18 @@ module Compiler = struct
     let { machine ; work_dir; _ } = compiler in
     match pipeline with
     | Seq2HLA sample ->
-      begin match sample with
-      | Paired_end_sample (info, l1, l2) ->
-        (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
+      let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
+      (* TODO: Seq2HLA can actually take the gzipped version too, so we'd
            need a unique type for that. *)
-        let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
-        let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
-        let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
-        Seq2HLA.hla_type
-          ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2
-      | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
-      end
+      let fastq_pair = fastq_sample_step ~compiler sample in
+      let sample_name = fastq_pair#product#sample_name in
+      let r1 = fastq_pair#product#r1 in
+      let r2 = match fastq_pair#product#r2 with
+        | Some r2 -> r2
+        | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
+      in 
+      Seq2HLA.hla_type
+        ~work_dir ~run_with:machine ~run_name:sample_name ~r1 ~r2
     | With_metadata (metadata_spec, p) ->
       seq2hla_hla_types_step ~compiler p
       |> apply_with_metadata ~metadata_spec
@@ -900,15 +901,16 @@ module Compiler = struct
     let { machine ; work_dir; _ } = compiler in
     match pipeline with
     | Optitype (kind, sample) ->
-      begin match sample with
-      | Paired_end_sample (info, l1, l2) ->
-        let r1 = fastq_step ~read:(`R1 info.fragment_id) ~compiler l1 in
-        let r2 = fastq_step ~read:(`R2 info.fragment_id) ~compiler l2 in
-        let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
-        Optitype.hla_type
-          ~work_dir ~run_with:machine ~run_name:info.fragment_id ~r1 ~r2 kind
-      | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
-      end
+      let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
+      let fastq_pair = fastq_sample_step ~compiler sample in
+      let sample_name = fastq_pair#product#sample_name in
+      let r1 = fastq_pair#product#r1 in
+      let r2 = match fastq_pair#product#r2 with
+        | Some r2 -> r2
+        | _ -> failwithf "Optitype doesn't support Single_end_sample(s)."
+      in 
+      Optitype.hla_type
+        ~work_dir ~run_with:machine ~run_name:sample_name ~r1 ~r2 kind
     | With_metadata (metadata_spec, p) ->
       optitype_hla_types_step ~compiler p
       |> apply_with_metadata ~metadata_spec
