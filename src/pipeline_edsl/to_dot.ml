@@ -1,5 +1,6 @@
 
 open Nonstd
+let failwithf fmt = ksprintf failwith fmt
 
 module Tree = struct
   type box = { id: string; name : string; attributes: (string * string) list}
@@ -7,14 +8,42 @@ module Tree = struct
     label: string;
     points_to: t
   } and t = [
-    | `Leaf of box
+    | `Variable of string * string
+    | `Lambda of string * string * t
+    | `Apply of string * t * t
+    | `String of string
+    | `Input_value of box
     | `Node of box * arrow list
   ]
   let node_count = ref 0
-  let make_id () = incr node_count; sprintf "node%03d" !node_count
+  let id_style = `Hash
+  let make_id a =
+    match a, id_style with
+    | _, `Unique
+    | `Unique, _ ->
+      incr node_count; sprintf "node%03d" !node_count
+    | `Of v, `Hash ->
+      Hashtbl.hash v |> sprintf "id%d"
+
   let arrow label points_to = {label; points_to}
-  let node name l : t = `Node ({id = make_id (); name; attributes = []}, l)
-  let leaf ?(a = []) name : t = `Leaf {id = make_id (); name; attributes = a}
+
+  let variable name = `Variable (make_id `Unique, name)
+  let lambda varname expr = `Lambda (make_id `Unique, varname, expr)
+  let apply f v = `Apply (make_id `Unique, f, v)
+  let string s = `String s
+
+
+  let node ?id ?(a = []) name l : t =
+    let id =
+      match id with
+      | Some i -> i
+      | None -> make_id `Unique
+    in
+    `Node ({id; name; attributes = a}, l)
+
+  let input_value ?(a = []) name : t =
+    let id = make_id (`Of (name, a)) in
+    `Input_value {id; name; attributes = a}
 
   let to_dot t =
     let open SmartPrint in
@@ -37,22 +66,40 @@ module Tree = struct
     let dot_arrow src dest = string src ^^ string "->" ^^ string dest in
     let id_of =
       function
-      | `Leaf {id; _} -> id
+      | `Lambda (id, _, _) -> id
+      | `Apply (id, _, _) -> id
+      | `Variable (id, _) -> id
+      | `String s -> assert false
+      | `Input_value {id; _} -> id
       | `Node ({id; _}, _) -> id in
+    let label name attributes =
+      match attributes with
+      | [] -> name
+      | _ ->
+        sprintf "{<f0>%s |<f1> %s\\l }" name
+          (List.map attributes ~f:(fun (k,v) -> sprintf "%s: %s" k v)
+           |> String.concat "\\l")
+    in
     let rec go =
       function
-      | `Leaf {id; name; attributes} ->
-        let label =
-          match attributes with
-          | [] -> name
-          | _ ->
-            sprintf "{<f0>%s |<f1> %s\\l }" name
-              (List.map attributes ~f:(fun (k,v) -> sprintf "%s: %s" k v)
-               |> String.concat "\\l")
-        in
+      | `Variable (id, s) ->
         sentence (
           string id ^^ dot_attributes [
-            label_attribute label;
+            label_attribute (label s []);
+            font_name `Mono;
+            "shape", in_quotes "hexagon";
+          ]
+        )
+      | `Lambda (id, v, expr) ->
+        go (node ~id (sprintf "Lambda %s" v) [arrow "Expr" expr])
+      | `Apply (id, f, v) ->
+        go (node ~id "Apply F(X)" [arrow "F" f; arrow "X" v])
+      | `String s ->
+        failwithf "`String %S -> should have been eliminated" s
+      | `Input_value {id; name; attributes} ->
+        sentence (
+          string id ^^ dot_attributes [
+            label_attribute (label name attributes);
             font_name `Mono;
             "shape", in_quotes "Mrecord";
           ]
@@ -60,8 +107,9 @@ module Tree = struct
       | `Node ({id; name; attributes}, trees) ->
         sentence (
           string id ^^ dot_attributes [
-            label_attribute name;
+            label_attribute (label name attributes);
             font_name `Mono;
+            "shape", in_quotes "Mrecord";
           ]
         )
         ^-^ separate empty (
@@ -97,15 +145,15 @@ type 'a observation = SmartPrint.t
 let lambda f =
   fun ~var_count ->
     let var_name = sprintf "Var%d" var_count in
-    let var_repr = fun ~var_count -> Tree.leaf var_name in
+    let var_repr = fun ~var_count -> Tree.variable var_name in
     let applied = f var_repr ~var_count:(var_count + 1) in
-    Tree.node "Lambda" [Tree.arrow var_name applied]
+    Tree.lambda var_name applied
 
 let apply f v =
   fun ~var_count ->
     let func = f ~var_count in
     let arg = v ~var_count in
-    Tree.node "Apply" [Tree.arrow "f" func; Tree.arrow "arg" arg]
+    Tree.apply func arg
 
 let observe f = f () ~var_count:0 |> Tree.to_dot
 
@@ -123,9 +171,18 @@ let list_map l ~f =
 
 include To_json.Make_serializer (struct
     type t = Tree.t
+
     let input_value name a ~var_count =
-      Tree.leaf name ~a
+      Tree.input_value name ~a
+
     let function_call name params =
-      Tree.node name (List.map ~f:(fun (k,v) -> Tree.arrow k v) params)
-    let string s = Tree.leaf s
+      let a, arrows =
+        List.partition_map params ~f:(fun (k, v) ->
+            match v with
+            | `String s -> `Fst (k, s)
+            | _ -> `Snd (k, v)
+          ) in
+      Tree.node ~a name (List.map ~f:(fun (k,v) -> Tree.arrow k v) arrows)
+
+    let string s = Tree.string s
   end)
