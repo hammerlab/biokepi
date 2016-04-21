@@ -476,7 +476,7 @@ module Make (Config : Compiler_configuration)
     let output_prefix =
       Config.work_dir
       // sprintf "%s-b2fq-%s"
-        (Filename.chop_extension input_bam#product#path)
+        Filename.(chop_extension (basename input_bam#product#path))
         (match how with `PE -> "PE" | `SE -> "SE")
     in
     Fastq (
