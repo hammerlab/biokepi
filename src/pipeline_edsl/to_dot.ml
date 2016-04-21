@@ -27,6 +27,7 @@ module Tree = struct
 
   let arrow label points_to = {label; points_to}
 
+  (* [id] is just an argument used for hashing an identifier *)
   let variable id name = `Variable (make_id (`Of id), name)
   let lambda varname expr = `Lambda (make_id (`Of (varname, expr)), varname, expr)
   let apply f v = `Apply (make_id (`Of (f,v)), f, v)
@@ -148,16 +149,22 @@ type 'a observation = SmartPrint.t
 let lambda f =
   fun ~var_count ->
     let var_name = sprintf "Var_%d" var_count in
-    (* let r = ref None in *)
-    (* let get_subtree () = *)
-    (*   Option.value_exn !r ~msg:"Bug in To_dot.lambda" in *)
+    (*
+       Here is the hack that makes nodes containing variables “semi-unique.”
+
+       [var_repr_fake] is a first version of the variable representation,
+       that we feed to the the function [f] a first time.
+       This resulting tree is used to create the real variable representation,
+       the first argument [applied_once] will be hashed to create a
+       unique-for-this-subtree identifier.
+
+       Finally get the normal [applied] subtree and feed it to [Tree.lambda].
+    *)
     let var_repr_fake = fun ~var_count -> Tree.string var_name in
     let applied_once = f var_repr_fake ~var_count:(var_count + 1) in
     let var_repr = fun ~var_count -> Tree.variable applied_once var_name in
     let applied = f var_repr ~var_count:(var_count + 1) in
-    let subtree = Tree.lambda var_name applied in
-    (* r := Some subtree; *)
-    subtree
+    Tree.lambda var_name applied
 
 let apply f v =
   fun ~var_count ->
