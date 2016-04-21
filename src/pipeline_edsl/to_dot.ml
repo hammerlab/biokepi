@@ -95,7 +95,18 @@ module Tree = struct
         )
         |> one
       | `Lambda (id, v, expr) ->
-        go (node ~id (sprintf "Lambda %s" v) [arrow "Expr" expr])
+        [
+          (* To be displayed subgraphs need to be called “clusterSomething” *)
+          string "subgraph" ^^ ksprintf string "cluster_%s" id ^^ braces (
+            (
+              sentence (string "color=grey")
+              :: sentence (string "style=rounded")
+              :: sentence (string "penwidth=4")
+              :: go (node ~id (sprintf "Lambda %s" v) [arrow "Expr" expr])
+            )
+            |> List.dedup |> separate empty
+          ) ^-^ newline
+        ]
       | `Apply (id, f, v) ->
         go (node ~id "Apply F(X)" [arrow "F" f; arrow "X" v])
       | `String s ->
