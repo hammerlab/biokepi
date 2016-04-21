@@ -20,56 +20,71 @@ module File_type_specification = struct
     | Pair: 'a t * 'b t -> ('a * 'b) t
     | Lambda: ('a t -> 'b t) -> ('a -> 'b) t
 
-  let fail_get name =
+  let rec to_string : type a. a  t -> string =
+    function
+    | To_unit a -> sprintf "(to_unit %s)" (to_string a)
+    | Fastq _ -> "Fastq"
+    | Bam _ -> "Bam"
+    | Vcf _ -> "Vcf"
+    | Gtf _ -> "Gtf"
+    | Seq2hla_result _ -> "Seq2hla_result"
+    | Optitype_result _ -> "Optitype_result"
+    | Gz a -> sprintf "(gz %s)" (to_string a)
+    | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
+    | Pair (a, b) -> sprintf "(%s, %s)" (to_string a) (to_string b)
+    | Lambda _ -> "--LAMBDA--"
+    | _ -> "##UNKNOWN##"
+
+  let fail_get other name =
     ksprintf failwith "Error while extracting File_type_specification.t \
-                       (%s case), this usually means that the type has been \
-                       wrongly extended, and provides more than one \
-                       [ `%s ] t case" name name
+                       (%s case, in %s), this usually means that the type \
+                       has been wrongly extended, and provides more than one \
+                       [ `%s ] t case" name (to_string other) name
 
   let get_fastq : [ `Fastq ] t -> fastq_reads workflow_node = function
   | Fastq b -> b
-  | _ -> fail_get "Fastq"
+  | o -> fail_get o "Fastq"
 
   let get_bam : [ `Bam ] t -> bam_file workflow_node = function
   | Bam b -> b
-  | _ -> fail_get "Bam"
+  | o -> fail_get o "Bam"
 
   let get_vcf : [ `Vcf ] t -> single_file workflow_node = function
   | Vcf v -> v
-  | _ -> fail_get "Vcf"
+  | o -> fail_get o "Vcf"
 
   let get_gtf : [ `Gtf ] t -> single_file workflow_node = function
   | Gtf v -> v
-  | _ -> fail_get "Gtf"
+  | o -> fail_get o "Gtf"
 
   let get_seq2hla_result : [ `Seq2hla_result ] t -> list_of_files workflow_node =
     function
     | Seq2hla_result v -> v
-    | _ -> fail_get "Seq2hla_result"
+    | o -> fail_get o "Seq2hla_result"
 
   let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
-    | _ -> fail_get "Optitype_result"
+    | o -> fail_get o "Optitype_result"
 
   let get_gz : [ `Gz of 'a ] t -> 'a t = function
   | Gz v -> v
-  | _ -> fail_get "Gz"
+  | o -> fail_get o "Gz"
 
   let get_list :  'a list  t -> 'a t list = function
   | List v -> v
-  | _ -> fail_get "List"
+  | o -> fail_get o "List"
 
 
   let pair a b = Pair (a, b)
   let pair_first =
     function
     | Pair (a, _) -> a
-    | other -> fail_get "Pair"
+    | other -> fail_get other "Pair"
   let pair_second =
     function
     | Pair (_, b) -> b
-    | other -> fail_get "Pair"
+    | other -> fail_get other "Pair"
 
   let get_unit_workflow : 
     name: string ->
@@ -90,11 +105,11 @@ module File_type_specification = struct
           | Optitype_result wf -> one_depends_on wf
           | List l -> List.concat_map l ~f:as_edges
           | Pair (a, b) -> as_edges a @ as_edges b
-          | other -> fail_get "as_edges"
+          | other -> fail_get other "as_edges"
         in
         workflow_node without_product
           ~name ~edges:(as_edges v)
-      | other -> fail_get "get_unit_workflow"
+      | other -> fail_get other "get_unit_workflow"
 
 end
 
@@ -337,7 +352,7 @@ module Make (Config : Compiler_configuration)
       in
       Bam (Tools.Samtools.merge_bams ~run_with bams output_path)
     | other ->
-      fail_get "To_workflow.merge_bams: not a list of bams?"
+      fail_get other "To_workflow.merge_bams: not a list of bams?"
 
   let stringtie ~configuration bamt =
     let bam = get_bam bamt in
