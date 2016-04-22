@@ -28,12 +28,13 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
         printf "CMD: %s\n%!" s;
         match Sys.command s with
         | 0 -> ()
-        | other -> ksprintf failwith "non-zero-exit: %s → %d" s other) fmt
+        | other -> ksprintf failwith "non-zero-exit: %s -> %d" s other) fmt
 
   let (//) = Filename.concat
   let test_dir = "_build/ttfi-test-results/"
 
   let main prefix =
+    let start_time = Unix.gettimeofday () in
     cmdf "mkdir -p %s" test_dir;
     let results = ref [] in
     let add_result fmt = ksprintf (fun s -> results := s :: !results) fmt in
@@ -73,9 +74,11 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
         SmartPrint.to_out_channel  80 2 out sm;
         close_out out;
         add_result_file "DOT" dot;
-        cmdf "dot -v -x -Tpng  %s -o %s" dot png;
+        let dotlog = png ^ ".log" in
+        cmdf "dot -v -x -Tpng  %s -o %s > %s 2>&1" dot png dotlog;
         add_result_file "PNG" png;
-      with _ -> add_result "FAILED TO OUTPUT: %s" dot;
+      with e ->
+        add_result "FAILED TO OUTPUT: %s (%s)" dot (Printexc.to_string e);
     in
     begin
       let module Dotize_pipeline = Test_pipeline(Biokepi.EDSL.Compile.To_dot) in
@@ -118,6 +121,8 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
       in
       ignore workflow
     end;
+    let end_time = Unix.gettimeofday () in
+    add_result "Total-time: %.2f s" (end_time -. start_time);
     List.rev !results
 
 end
@@ -352,7 +357,7 @@ let () =
       mod_name
       (List.map results ~f:(sprintf "    * %s\n") |> String.concat "");
   in
-  printf "### Test results:\n\n";
+  printf "\n### Test results:\n\n";
   display_result "Pipeline_insane" insane_result;
   display_result "Somatic_simplish" simple_somatic_result;
   ()
