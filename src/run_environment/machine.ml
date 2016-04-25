@@ -92,6 +92,9 @@ module Tool = struct
       |> Option.value_exn ~msg:(sprintf "Can't find tool %s"
                                   Definition.(show def))
 
+    let concat kits =
+      { tools = List.concat_map kits ~f:(fun k -> k.tools) }
+
   end
 end
 

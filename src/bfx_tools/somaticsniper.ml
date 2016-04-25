@@ -7,15 +7,40 @@ module Remove = Workflow_utilities.Remove
 let default_prior_probability = 0.01
 let default_theta = 0.85
 
+module Configuration = struct
+
+  type t = {
+    name: string;
+    prior_probability: float;
+    theta: float
+  }
+
+  let to_json {name; prior_probability; theta}: Yojson.Basic.json =
+    `Assoc [
+      "name", `String name;
+      "prior_probability", `Float prior_probability;
+      "theta", `Float theta;
+    ]
+  let name {name; _} = name
+
+  let render {name; prior_probability; theta}  =
+    ["-s"; Float.to_string prior_probability;
+     "-T"; Float.to_string theta]
+
+  let default = {
+    name = "default";
+    prior_probability = default_prior_probability;
+    theta = default_theta;
+  }
+
+end
+
 let run
-    ~run_with ?minus_T ?minus_s ~normal ~tumor ~result_prefix () =
+    ~run_with
+     ?(configuration = Configuration.default) ~normal ~tumor ~result_prefix () =
   let open KEDSL in
-  let name =
-    "somaticsniper"
-    ^ Option.(value_map minus_s ~default:"" ~f:(sprintf "-s%F"))
-    ^ Option.(value_map minus_T ~default:"" ~f:(sprintf "-T%F"))
-  in
-  let result_file suffix = sprintf "%s-%s%s" result_prefix name suffix in
+  let result_file suffix = sprintf "%s-%s" result_prefix suffix in
+  let name = sprintf "somaticsniper: %s" (result_file "") in
   let sniper = Machine.get_tool run_with Machine.Tool.Default.somaticsniper in
   let reference_fasta =
     Machine.get_reference_genome run_with normal#product#reference_build
@@ -35,14 +60,7 @@ let run
           && shf "cd %s" run_path
           && exec (
             ["somaticsniper"; "-F"; "vcf"]
-            @ Option.(
-                value_map minus_s ~default:[]
-                  ~f:(fun f -> ["-s"; Float.to_string f])
-              )
-            @ Option.(
-                value_map minus_T ~default:[]
-                  ~f:(fun f -> ["-T"; Float.to_string f])
-              )
+            @ (Configuration.render configuration)
             @ ["-f";  reference_fasta#product#path;
                sorted_normal#product#path;
                sorted_tumor#product#path;

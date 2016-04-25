@@ -77,6 +77,7 @@ module KEDSL = struct
     sample_name: string;
     escaped_sample_name: string;
     fragment_id: string option;
+    fragment_id_forced: string;
   >
   let fastq_reads ?host ?name ?fragment_id r1 r2_opt : fastq_reads =
     object (self)
@@ -98,11 +99,34 @@ module KEDSL = struct
       method sample_name =
         Option.value name ~default:(Filename.basename r1)
       method fragment_id = fragment_id
+      method fragment_id_forced =
+        Option.value fragment_id ~default:(Filename.basename r1)
       method escaped_sample_name =
         String.map self#sample_name ~f:(function
           | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
           | other -> '_')
     end
+
+  (** Create a [fastq_reads workflow_node] from one or two
+      [single_file workflow_node](s).
+  *)
+  let fastq_node_of_single_file_nodes
+      ~host ~name ?fragment_id fastq_r1 fastq_r2 =
+    let product =
+      let r2 = Option.map fastq_r2 ~f:(fun r -> r#product#path) in
+      fastq_reads ~host ~name ?fragment_id fastq_r1#product#path r2
+    in
+    let edges =
+      match fastq_r2 with
+      | Some r2 -> [depends_on fastq_r1; depends_on r2]
+      | None -> [depends_on fastq_r1]
+    in
+    workflow_node product
+      ~equivalence:`None
+      ~name:(sprintf "Assembled-fastq: %s (%s)" 
+               name (Option.value fragment_id
+                       ~default:(Filename.basename fastq_r1#product#path)))
+      ~edges
 
   type bam_file = <
     is_done: Ketrew_pure.Target.Condition.t option;

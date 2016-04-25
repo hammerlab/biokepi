@@ -33,6 +33,7 @@ module Configuration = struct
        "-C2", "100";
      ]}
 
+  let name t = t.name
 end
 
 let run

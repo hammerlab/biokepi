@@ -32,6 +32,7 @@ module Configuration = struct
      with_cosmic = false; with_dbsnp = true;
      parameters = []}
 
+  let name t = t.name
 
 end
 

@@ -489,27 +489,30 @@ let default_toolkit
     ?(mutect_jar_location = default_jar_location "Mutect")
     ?(gatk_jar_location = default_jar_location "GATK")
     () =
-  Machine.Tool.Kit.create [
-    bwa_tool ~host ~meta_playground;
-    samtools ~host ~meta_playground;
-    bedtools ~host ~meta_playground;
-    vcftools ~host ~meta_playground;
-    strelka_tool ~host ~meta_playground;
-    mutect_tool
-      ~host ~meta_playground (mutect_jar_location ());
-    gatk_tool
-      ~host ~meta_playground (gatk_jar_location ());
-    picard_tool ~host ~meta_playground;
-    somaticsniper_tool ~host ~meta_playground;
-    varscan_tool ~host ~meta_playground;
-    muse_tool ~host ~meta_playground;
-    virmid_tool ~host ~meta_playground;
-    star_tool ~host ~meta_playground;
-    stringtie_tool ~host ~meta_playground;
-    cufflinks_tools ~host ~meta_playground;
-    hisat_tool ~host ~meta_playground ~version:`V_0_1_6_beta;
-    hisat_tool ~host ~meta_playground ~version:`V_2_0_2_beta;
-    mosaik_tool ~host ~meta_playground;
-    kallisto_tool ~host ~meta_playground;
+  Machine.Tool.Kit.concat [
+    Machine.Tool.Kit.create [
+      bwa_tool ~host ~meta_playground;
+      samtools ~host ~meta_playground;
+      bedtools ~host ~meta_playground;
+      vcftools ~host ~meta_playground;
+      strelka_tool ~host ~meta_playground;
+      mutect_tool
+        ~host ~meta_playground (mutect_jar_location ());
+      gatk_tool
+        ~host ~meta_playground (gatk_jar_location ());
+      picard_tool ~host ~meta_playground;
+      somaticsniper_tool ~host ~meta_playground;
+      varscan_tool ~host ~meta_playground;
+      muse_tool ~host ~meta_playground;
+      virmid_tool ~host ~meta_playground;
+      star_tool ~host ~meta_playground;
+      stringtie_tool ~host ~meta_playground;
+      cufflinks_tools ~host ~meta_playground;
+      hisat_tool ~host ~meta_playground ~version:`V_0_1_6_beta;
+      hisat_tool ~host ~meta_playground ~version:`V_2_0_2_beta;
+      mosaik_tool ~host ~meta_playground;
+      kallisto_tool ~host ~meta_playground;
+    ];
+    Biopam.default ~host ~install_path:(meta_playground // "biopam-kit") ();
   ]
 

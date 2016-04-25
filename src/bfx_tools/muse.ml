@@ -12,6 +12,8 @@ module Configuration = struct
     input_type: [ `WGS | `WES ];
   }
 
+  let name t = t.name
+
   let input_type_to_string input_type =
     match input_type with
     | `WGS -> "WGS"

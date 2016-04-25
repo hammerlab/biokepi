@@ -24,6 +24,8 @@ let apply f v =
 
 let observe f = f () ~var_count:0
 
+let to_unit x = fun ~var_count -> entity SP.(x ~var_count ^^ string ":> unit")
+
 let list l =
   fun ~var_count ->
     SP.nest (OCaml.list (fun a -> a ~var_count) l)

@@ -20,6 +20,7 @@ module Configuration = struct
     name: string;
     parameters: (string * string) list
   }
+  let name t = t.name
   let to_json {name; parameters}: Yojson.Basic.json =
     `Assoc [
       "name", `String name;
