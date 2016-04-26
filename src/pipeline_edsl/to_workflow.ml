@@ -441,7 +441,7 @@ module Make (Config : Compiler_configuration)
     in
     Seq2hla_result (
       Tools.Seq2HLA.hla_type
-        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
+        ~work_dir ~processors:Config.processors ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
 
   let optitype how fq =
