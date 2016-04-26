@@ -107,11 +107,11 @@ or \`ppx_deriving\`).
 
 EOBLOB
 
-INPUT=src,$generated_dot_md,src/doc  \
+INPUT=src,$generated_dot_md,src/doc,src/examples  \
   INDEX=README.md \
   TITLE_PREFIX="Biokepi: " \
   OUTPUT_DIR=_build/doc \
   API=_build/apidoc/ \
-  TITLE_SUBSTITUTIONS="main.ml:Literate Tests" \
+  TITLE_SUBSTITUTIONS="main.ml:Literate Tests,edsl_extension_register_result.ml:EDSL Extension “Register Results”" \
   CATCH_MODULE_PATHS='^Biokepi.*:,' \
   oredoc
