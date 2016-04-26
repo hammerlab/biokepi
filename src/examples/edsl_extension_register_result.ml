@@ -347,20 +347,25 @@ let tumor =
     ]
   )
 (*M
+
 We submit the workflow to the Ketrew server (here using the `default`
 configuration):
 M*)
 let () =
-  run ~machine:My_cluster.machine
-    ~work_dir:My_cluster.work_dir
-    ~sqlite_db:(My_cluster.work_dir // "test-biokepi.sqlite") ()
-    ~processors:My_cluster.max_processors
-    ~normal ~tumor
-  |> Ketrew.Client.submit_workflow
+  match Sys.argv.(1) with
+  | "run" ->
+    run ~machine:My_cluster.machine
+      ~work_dir:My_cluster.work_dir
+      ~sqlite_db:(My_cluster.work_dir // "test-biokepi.sqlite") ()
+      ~processors:My_cluster.max_processors
+      ~normal ~tumor
+    |> Ketrew.Client.submit_workflow
+  | other -> printf "usage: <script> run\n%!"; exit 1
+  | exception _ ->  printf "usage: <script> run\n%!"; exit 0
 (*M
 We just run the script:
 
-    $ ocaml src/examples/edsl_extension_register_result.ml
+    $ ocaml src/examples/edsl_extension_register_result.ml run
 
 Here is the resulting `example.png`:
 
