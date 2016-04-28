@@ -79,13 +79,13 @@ module type Bioinformatics_base = sig
     [ `Bam ] repr
 
   val star:
-    configuration: Star.Configuration.Align.t ->
+    ?configuration: Star.Configuration.Align.t ->
     reference_build: Biokepi_run_environment.Reference_genome.name ->
     [ `Fastq ] repr ->
     [ `Bam ] repr
 
   val hisat:
-    configuration: Hisat.Configuration.t ->
+    ?configuration: Hisat.Configuration.t ->
     reference_build: Biokepi_run_environment.Reference_genome.name ->
     [ `Fastq ] repr ->
     [ `Bam ] repr
@@ -96,27 +96,27 @@ module type Bioinformatics_base = sig
     [ `Bam ] repr
 
   val stringtie:
-    configuration: Stringtie.Configuration.t ->
+    ?configuration: Stringtie.Configuration.t ->
     [ `Bam ] repr ->
     [ `Gtf ] repr
 
   val gatk_indel_realigner:
-    configuration : Gatk.Configuration.indel_realigner ->
+    ?configuration : Gatk.Configuration.indel_realigner ->
     [ `Bam ] repr ->
     [ `Bam ] repr
 
   val gatk_indel_realigner_joint:
-    configuration : Gatk.Configuration.indel_realigner ->
+    ?configuration : Gatk.Configuration.indel_realigner ->
     ([ `Bam ] * [ `Bam ]) repr ->
     ([ `Bam ] * [ `Bam ]) repr
 
   val picard_mark_duplicates:
-    configuration : Picard.Mark_duplicates_settings.t ->
+    ?configuration : Picard.Mark_duplicates_settings.t ->
     [ `Bam ] repr ->
     [ `Bam ] repr
 
   val gatk_bqsr:
-    configuration : Gatk.Configuration.bqsr ->
+    ?configuration : Gatk.Configuration.bqsr ->
     [ `Bam ] repr ->
     [ `Bam ] repr
 
@@ -134,19 +134,19 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr
 
   val mutect:
-    configuration: Biokepi_bfx_tools.Mutect.Configuration.t ->
+    ?configuration: Biokepi_bfx_tools.Mutect.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
 
   val mutect2:
-    configuration: Gatk.Configuration.Mutect2.t ->
+    ?configuration: Gatk.Configuration.Mutect2.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
 
   val somaticsniper:
-    configuration: Somaticsniper.Configuration.t ->
+    ?configuration: Somaticsniper.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
@@ -158,19 +158,19 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr
 
   val strelka: 
-    configuration: Strelka.Configuration.t ->
+    ?configuration: Strelka.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
 
   val virmid:
-    configuration: Virmid.Configuration.t ->
+    ?configuration: Virmid.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
 
   val muse:
-    configuration: Muse.Configuration.t ->
+    ?configuration: Muse.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
     [ `Vcf ] repr
