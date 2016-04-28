@@ -453,8 +453,6 @@ module Make (Config : Compiler_configuration)
 
   let optitype how fq =
     let fastq = get_fastq fq in
-    let r1 = fastq#product#r1 in
-    let r2 = fastq#product#r2 in
     let work_dir =
       Config.work_dir //
       sprintf "%s-%s_optitype-%s-workdir"
@@ -464,7 +462,7 @@ module Make (Config : Compiler_configuration)
     in
     Optitype_result (
       Tools.Optitype.hla_type
-        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ?r2
+        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
     )
 

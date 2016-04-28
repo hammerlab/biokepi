@@ -890,7 +890,7 @@ module Compiler = struct
       let r2 = match fastq_pair#product#r2 with
         | Some r2 -> r2
         | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
-      in 
+      in
       Seq2HLA.hla_type
         ~work_dir ~processors ~run_with:machine ~run_name:sample_name ~r1 ~r2
     | With_metadata (metadata_spec, p) ->
@@ -902,15 +902,10 @@ module Compiler = struct
     match pipeline with
     | Optitype (kind, sample) ->
       let work_dir = work_dir // (to_file_prefix pipeline) ^ "_work_dir" in
-      let fastq_pair = fastq_sample_step ~compiler sample in
-      let sample_name = fastq_pair#product#sample_name in
-      let r1 = fastq_pair#product#r1 in
-      let r2 = match fastq_pair#product#r2 with
-        | Some r2 -> r2
-        | _ -> failwithf "Optitype doesn't support Single_end_sample(s)."
-      in 
+      let fastq = fastq_sample_step ~compiler sample in
+      let sample_name = fastq#product#sample_name in
       Optitype.hla_type
-        ~work_dir ~run_with:machine ~run_name:sample_name ~r1 ~r2 kind
+        ~work_dir ~run_with:machine ~run_name:sample_name ~fastq kind
     | With_metadata (metadata_spec, p) ->
       optitype_hla_types_step ~compiler p
       |> apply_with_metadata ~metadata_spec
