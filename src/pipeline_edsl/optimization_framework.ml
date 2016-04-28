@@ -81,29 +81,29 @@ module Generic_optimizer
   let bwa_mem ?configuration ~reference_build fq =
     fwd (Input.bwa_mem ?configuration ~reference_build (bwd fq))
 
-  let star ~configuration ~reference_build fq =
-    fwd (Input.star ~configuration ~reference_build (bwd fq))
+  let star ?configuration ~reference_build fq =
+    fwd (Input.star ?configuration ~reference_build (bwd fq))
 
-  let hisat ~configuration ~reference_build fq =
-    fwd (Input.hisat ~configuration ~reference_build (bwd fq))
+  let hisat ?configuration ~reference_build fq =
+    fwd (Input.hisat ?configuration ~reference_build (bwd fq))
 
   let mosaik ~reference_build fq =
     fwd (Input.mosaik ~reference_build (bwd fq))
 
-  let stringtie ~configuration fq =
-    fwd (Input.stringtie ~configuration (bwd fq))
+  let stringtie ?configuration fq =
+    fwd (Input.stringtie ?configuration (bwd fq))
 
-  let gatk_indel_realigner ~configuration bam =
-    fwd (Input.gatk_indel_realigner ~configuration (bwd bam))
+  let gatk_indel_realigner ?configuration bam =
+    fwd (Input.gatk_indel_realigner ?configuration (bwd bam))
 
-  let gatk_indel_realigner_joint ~configuration pair =
-    fwd (Input.gatk_indel_realigner_joint ~configuration (bwd pair))
+  let gatk_indel_realigner_joint ?configuration pair =
+    fwd (Input.gatk_indel_realigner_joint ?configuration (bwd pair))
 
-  let picard_mark_duplicates ~configuration bam =
-    fwd (Input.picard_mark_duplicates ~configuration (bwd bam))
+  let picard_mark_duplicates ?configuration bam =
+    fwd (Input.picard_mark_duplicates ?configuration (bwd bam))
 
-  let gatk_bqsr ~configuration bam =
-    fwd (Input.gatk_bqsr ~configuration (bwd bam))
+  let gatk_bqsr ?configuration bam =
+    fwd (Input.gatk_bqsr ?configuration (bwd bam))
 
   let seq2hla fq =
     fwd (Input.seq2hla (bwd fq))
@@ -130,20 +130,20 @@ module Generic_optimizer
   let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
     fwd (Input.bam_to_fastq ~sample_name ?fragment_id se_or_pe (bwd bam))
 
-  let mutect ~configuration ~normal ~tumor =
-    fwd (Input.mutect ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let mutect2 ~configuration ~normal ~tumor =
-    fwd (Input.mutect2 ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let somaticsniper ~configuration ~normal ~tumor =
-    fwd (Input.somaticsniper ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let strelka ~configuration ~normal ~tumor =
-    fwd (Input.strelka ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let mutect ?configuration ~normal ~tumor =
+    fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let mutect2 ?configuration ~normal ~tumor =
+    fwd (Input.mutect2 ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let somaticsniper ?configuration ~normal ~tumor =
+    fwd (Input.somaticsniper ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let strelka ?configuration ~normal ~tumor =
+    fwd (Input.strelka ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
   let varscan_somatic ?adjust_mapq ~normal ~tumor =
     fwd (Input.varscan_somatic
            ?adjust_mapq ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let muse ~configuration ~normal ~tumor =
-    fwd (Input.muse ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let virmid ~configuration ~normal ~tumor =
-    fwd (Input.virmid ~configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let muse ?configuration ~normal ~tumor =
+    fwd (Input.muse ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+  let virmid ?configuration ~normal ~tumor =
+    fwd (Input.virmid ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
 
 end

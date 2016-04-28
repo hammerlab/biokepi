@@ -77,29 +77,22 @@ module Example_pipeline (Registrable_bfx: Semantics_with_registration) = struct
       list_map fastq ~f:(lambda (fun fq ->
           bwa_mem fq ~reference_build:"b37"
           |> picard_mark_duplicates
-            ~configuration:Biokepi.Tools.Picard.Mark_duplicates_settings.default
         )) in
     let normal_bam = align normal |> merge_bams in
     let tumor_bam = align tumor |> merge_bams in
     let bam_pair = pair normal_bam tumor_bam in
-    let indel_realigned_pair =
-      gatk_indel_realigner_joint bam_pair
-        ~configuration: Biokepi.Tools.Gatk.Configuration.default_indel_realigner
-    in
+    let indel_realigned_pair = gatk_indel_realigner_joint bam_pair in
     let final_normal_bam =
       pair_first indel_realigned_pair
       |> gatk_bqsr
-        ~configuration: Biokepi.Tools.Gatk.Configuration.default_bqsr
       |> register "final-normal-bam"
     in
     let final_tumor_bam =
       pair_second indel_realigned_pair
       |> gatk_bqsr
-        ~configuration: Biokepi.Tools.Gatk.Configuration.default_bqsr
       |> register "final-normal-bam"
     in
     mutect ~normal:final_normal_bam ~tumor:final_tumor_bam
-      ~configuration:Biokepi.Tools.Mutect.Configuration.default
     |> register "mutect-vcf"
 
   let run ~normal ~tumor =
@@ -169,8 +162,8 @@ The function `register` creates an intermediary Ketrew workflow-node.
   (child node).
 - It has the parameter ``~equivalence:`None`` to make sure Ketrew does not
   merge it with the child node.
-- We force the condition of the node to be “never already done:”
-  ``~done_when:`Never``.
+- We force the condition of the node to be “not already done:”
+  ``~done_when:`Dependencies_are``.
 - It has two dependencies: the child node and the actual registration in the
   database (from above `FDB.register`).ster`).
 
@@ -199,7 +192,7 @@ module To_workflow_with_register
       let new_node =
         let open Ketrew.EDSL in
         workflow_node any_node#product ~equivalence:`None
-          ~done_when:`Never
+          ~done_when:`Dependencies_are
           ~name:(Printf.sprintf "Parent-of-registration: %s -> %s"
                    metadata
                    (Filename.basename any_node#product#path))
@@ -349,7 +342,7 @@ let tumor =
 (*M
 
 We submit the workflow to the Ketrew server (here using the `default`
-configuration):
+configuration profile):
 M*)
 let () =
   match Sys.argv.(1) with

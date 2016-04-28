@@ -237,8 +237,10 @@ module Make (Config : Compiler_configuration)
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )
 
-  let star =
+  let star
+      ?(configuration = Tools.Star.Configuration.Align.default) =
     make_aligner "star"
+      ~configuration
       ~config_name:Tools.Star.Configuration.Align.name
       ~make_workflow:(
         fun
@@ -248,8 +250,10 @@ module Make (Config : Compiler_configuration)
             ~fastq ~result_prefix ~run_with ()
       )
 
-  let hisat =
+  let hisat
+      ?(configuration = Tools.Hisat.Configuration.default_v1) =
     make_aligner "hisat"
+      ~configuration
       ~config_name:Tools.Hisat.Configuration.name
       ~make_workflow:(
         fun
@@ -354,7 +358,7 @@ module Make (Config : Compiler_configuration)
     | other ->
       fail_get other "To_workflow.merge_bams: not a list of bams?"
 
-  let stringtie ~configuration bamt =
+  let stringtie ?(configuration = Tools.Stringtie.Configuration.default) bamt =
     let bam = get_bam bamt in
     let result_prefix =
       Filename.chop_extension bam#product#path
@@ -368,8 +372,10 @@ module Make (Config : Compiler_configuration)
     )
 
   let indel_realigner_function:
-    type a. configuration: _ -> a KEDSL.bam_or_bams -> a =
-    fun ~configuration on_what ->
+    type a. ?configuration: _ -> a KEDSL.bam_or_bams -> a =
+    fun
+      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner)
+      on_what ->
       match Config.map_reduce_gatk_indel_realigner with
       | true -> 
         Tools.Gatk.indel_realigner_map_reduce 
@@ -380,16 +386,16 @@ module Make (Config : Compiler_configuration)
           ~processors:Config.processors ~run_with ~compress:false
           ~configuration on_what
 
-  let gatk_indel_realigner ~configuration bam =
+  let gatk_indel_realigner ?configuration bam =
     let input_bam = get_bam bam in
-    Bam (indel_realigner_function ~configuration (KEDSL.Single_bam input_bam))
+    Bam (indel_realigner_function ?configuration (KEDSL.Single_bam input_bam))
 
-  let gatk_indel_realigner_joint ~configuration bam_pair =
+  let gatk_indel_realigner_joint ?configuration bam_pair =
     let bam1 = bam_pair |> pair_first |> get_bam in
     let bam2 = bam_pair |> pair_second |> get_bam in
     let bam_list_node =
       indel_realigner_function (KEDSL.Bam_workflow_list [bam1; bam2])
-        ~configuration
+        ?configuration
     in
     begin match KEDSL.explode_bam_list_node bam_list_node with
     | [realigned_normal; realigned_tumor] ->
@@ -400,7 +406,8 @@ module Make (Config : Compiler_configuration)
         (List.length other)
     end
 
-  let picard_mark_duplicates ~configuration bam =
+  let picard_mark_duplicates
+      ?(configuration = Tools.Picard.Mark_duplicates_settings.default) bam =
     let input_bam = get_bam bam in
     let output_bam = 
       (* We assume that the settings do not impact the actual result. *)
@@ -410,7 +417,7 @@ module Make (Config : Compiler_configuration)
         ~run_with ~input_bam output_bam
     )
 
-  let gatk_bqsr ~configuration bam =
+  let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) bam =
     let input_bam = get_bam bam in
     let output_bam = 
       let (bqsr, preads) = configuration in
@@ -485,9 +492,12 @@ module Make (Config : Compiler_configuration)
         ~sample_name ~output_prefix input_bam
     )
 
-  let somatic_vc name confname runfun ~configuration ~normal ~tumor =
+  let somatic_vc
+      name confname default_conf runfun
+      ?configuration ~normal ~tumor =
     let normal_bam = get_bam normal in
     let tumor_bam = get_bam tumor in
+    let configuration = Option.value configuration ~default:default_conf in
     let result_prefix =
       Filename.chop_extension tumor_bam#product#path
       ^ sprintf "_%s-%s" name (confname configuration)
@@ -499,7 +509,9 @@ module Make (Config : Compiler_configuration)
     )
 
   let mutect =
-    somatic_vc "mutect" Tools.Mutect.Configuration.name
+    somatic_vc "mutect" 
+      Tools.Mutect.Configuration.name
+      Tools.Mutect.Configuration.default
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -507,7 +519,9 @@ module Make (Config : Compiler_configuration)
           ~normal ~tumor ~result_prefix `Map_reduce)
 
   let mutect2 =
-    somatic_vc "mutect2" Tools.Gatk.Configuration.Mutect2.name
+    somatic_vc "mutect2" 
+      Tools.Gatk.Configuration.Mutect2.name
+      Tools.Gatk.Configuration.Mutect2.default
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -517,7 +531,9 @@ module Make (Config : Compiler_configuration)
           ~result_prefix `Map_reduce)
 
   let somaticsniper =
-    somatic_vc "somaticsniper" Tools.Somaticsniper.Configuration.name
+    somatic_vc "somaticsniper" 
+      Tools.Somaticsniper.Configuration.name
+      Tools.Somaticsniper.Configuration.default
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -525,7 +541,9 @@ module Make (Config : Compiler_configuration)
           ~configuration ~run_with ~normal ~tumor ~result_prefix ())
 
   let strelka =
-    somatic_vc "strelka" Tools.Strelka.Configuration.name
+    somatic_vc "strelka" 
+      Tools.Strelka.Configuration.name
+      Tools.Strelka.Configuration.default
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -537,6 +555,7 @@ module Make (Config : Compiler_configuration)
     somatic_vc "varscan_somatic" (fun () ->
         sprintf "Amq%s"
           (Option.value_map adjust_mapq ~default:"N" ~f:Int.to_string))
+      ()
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -545,7 +564,9 @@ module Make (Config : Compiler_configuration)
       ~configuration:()
 
   let muse =
-    somatic_vc "muse" Tools.Muse.Configuration.name
+    somatic_vc "muse" 
+      Tools.Muse.Configuration.name
+      (Tools.Muse.Configuration.default `WGS)
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
@@ -554,7 +575,9 @@ module Make (Config : Compiler_configuration)
           ~run_with ~normal ~tumor ~result_prefix `Map_reduce)
 
   let virmid =
-    somatic_vc "virmid" Tools.Virmid.Configuration.name
+    somatic_vc "virmid" 
+      Tools.Virmid.Configuration.name
+      Tools.Virmid.Configuration.default
       (fun
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
