@@ -92,7 +92,7 @@ module Example_pipeline (Registrable_bfx: Semantics_with_registration) = struct
       |> gatk_bqsr
       |> register "final-normal-bam"
     in
-    mutect ~normal:final_normal_bam ~tumor:final_tumor_bam
+    mutect ~normal:final_normal_bam ~tumor:final_tumor_bam ()
     |> register "mutect-vcf"
 
   let run ~normal ~tumor =
