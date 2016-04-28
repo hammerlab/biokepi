@@ -8,6 +8,7 @@ let default_run_program : host:KEDSL.Host.t -> Machine.Make_fun.t =
     daemonize ~using:`Python_daemon ~host program
 
 let create
+    ?(max_processors = 1)
     ?gatk_jar_location
     ?mutect_jar_location
     ?run_program ?toolkit ?b37 uri =
@@ -26,6 +27,7 @@ let create
                   ?gatk_jar_location ?mutect_jar_location)
   in
   Machine.create (sprintf "ssh-box-%s" uri)
+    ~max_processors
     ~get_reference_genome:(fun name ->
         match name, b37 with
         | name, Some some37 when name = Reference_genome.name some37 -> some37

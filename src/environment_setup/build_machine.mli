@@ -20,6 +20,7 @@ open Common
     use {!Run_environment.Machine.create} directly.
 *)
 val create :
+  ?max_processors : int ->
   ?gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?run_program:Machine.Make_fun.t ->

@@ -167,12 +167,13 @@ type t = {
   toolkit: Tool.Kit.t;
   run_program: Make_fun.t;
   work_dir: string;
+  max_processors: int;
 }
 let create
     ~host ~get_reference_genome ~toolkit
-    ~run_program ~work_dir  name =
+    ~run_program ~work_dir ~max_processors  name =
   {name; toolkit; get_reference_genome; host;
-   run_program; work_dir}
+   run_program; work_dir; max_processors}
 
 let name t = t.name
 let as_host t = t.host
@@ -180,6 +181,11 @@ let get_reference_genome t = t.get_reference_genome
 let get_tool t =
   Tool.Kit.get_exn t.toolkit
 let run_program t = t.run_program
+
+let max_processors t = t.max_processors
+(** Get the maximum number of processors that a since job can use in the
+    [Machine.t] (i.e. usually the “number-of-threads” paramters of most tools)
+*)
 
 let quick_run_program t : Make_fun.t =
   Make_fun.with_requirements t.run_program (Make_fun.quick [])
