@@ -218,7 +218,7 @@ server.
   M*)
 open Nonstd
 let run
-    ~machine ~work_dir ?(processors = 2)
+    ~machine ~work_dir
     ?(sqlite_db = "/tmp/biokepi-test.sqlite") ~normal ~tumor () =
 (*M
 We output a PNG graph of the pipeline:
@@ -266,7 +266,6 @@ M*)
       (Mem)
       (struct
         include Biokepi.EDSL.Compile.To_workflow.Defaults
-        let processors = processors
         let work_dir = work_dir
         let machine = machine
         let results_db_uri = sqlite_db
@@ -288,7 +287,6 @@ the input data:
 val run:
   machine:Biokepi.Machine.t ->
   work_dir:string ->
-  ?processors:int ->
   ?sqlite_db:string ->
   normal:Biokepi.EDSL.Library.Input.t ->
   tumor:Biokepi.EDSL.Library.Input.t ->
@@ -350,7 +348,6 @@ let () =
     run ~machine:My_cluster.machine
       ~work_dir:My_cluster.work_dir
       ~sqlite_db:(My_cluster.work_dir // "test-biokepi.sqlite") ()
-      ~processors:My_cluster.max_processors
       ~normal ~tumor
     |> Ketrew.Client.submit_workflow
   | other -> printf "usage: <script> run\n%!"; exit 1

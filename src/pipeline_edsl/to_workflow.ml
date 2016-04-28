@@ -116,7 +116,6 @@ end
 open Biokepi_run_environment
 
 module type Compiler_configuration = sig
-  val processors : int
   val work_dir: string
   val machine : Machine.t
   val map_reduce_gatk_indel_realigner : bool
@@ -202,9 +201,7 @@ module Make (Config : Compiler_configuration)
     in
     Bam (
       make_workflow
-        ~reference_build ~processors:Config.processors
-        ~configuration
-        ~result_prefix ~run_with freads
+        ~reference_build ~configuration ~result_prefix ~run_with freads
     )
 
   let bwa_aln
@@ -213,11 +210,10 @@ module Make (Config : Compiler_configuration)
       ~config_name:Tools.Bwa.Configuration.Aln.name
       ~make_workflow:(
         fun
-          ~reference_build ~processors
+          ~reference_build
           ~configuration ~result_prefix ~run_with freads ->
           Tools.Bwa.align_to_sam
-            ~reference_build ~processors
-            ~configuration ~fastq:freads
+            ~reference_build ~configuration ~fastq:freads
             ~result_prefix ~run_with ()
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )
@@ -228,11 +224,10 @@ module Make (Config : Compiler_configuration)
       ~config_name:Tools.Bwa.Configuration.Mem.name
       ~make_workflow:(
         fun
-          ~reference_build ~processors
+          ~reference_build
           ~configuration ~result_prefix ~run_with freads ->
           Tools.Bwa.mem_align_to_sam
-            ~reference_build ~processors
-            ~configuration ~fastq:freads
+            ~reference_build ~configuration ~fastq:freads
             ~result_prefix ~run_with ()
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )
@@ -243,10 +238,8 @@ module Make (Config : Compiler_configuration)
       ~configuration
       ~config_name:Tools.Star.Configuration.Align.name
       ~make_workflow:(
-        fun
-          ~reference_build ~processors
-          ~configuration ~result_prefix ~run_with fastq ->
-          Tools.Star.align ~configuration ~reference_build ~processors
+        fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
+          Tools.Star.align ~configuration ~reference_build
             ~fastq ~result_prefix ~run_with ()
       )
 
@@ -256,10 +249,8 @@ module Make (Config : Compiler_configuration)
       ~configuration
       ~config_name:Tools.Hisat.Configuration.name
       ~make_workflow:(
-        fun
-          ~reference_build ~processors
-          ~configuration ~result_prefix ~run_with fastq ->
-          Tools.Hisat.align ~configuration ~reference_build ~processors
+        fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
+          Tools.Hisat.align ~configuration ~reference_build
             ~fastq ~result_prefix ~run_with ()
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )
@@ -269,10 +260,8 @@ module Make (Config : Compiler_configuration)
       ~configuration:()
       ~config_name:(fun _ -> "default")
       ~make_workflow:(
-        fun
-          ~reference_build ~processors
-          ~configuration ~result_prefix ~run_with fastq ->
-          Tools.Mosaik.align ~reference_build ~processors
+        fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
+          Tools.Mosaik.align ~reference_build
             ~fastq ~result_prefix ~run_with ())
 
   let gunzip: type a. [ `Gz of a ] t -> a t = fun gz ->
@@ -365,11 +354,7 @@ module Make (Config : Compiler_configuration)
       ^ sprintf "_stringtie-%s"
         (configuration.Tools.Stringtie.Configuration.name)
     in
-    Gtf (
-      Tools.Stringtie.run
-        ~processors:Config.processors ~configuration
-        ~bam ~result_prefix ~run_with ()
-    )
+    Gtf (Tools.Stringtie.run ~configuration ~bam ~result_prefix ~run_with ())
 
   let indel_realigner_function:
     type a. ?configuration: _ -> a KEDSL.bam_or_bams -> a =
@@ -378,12 +363,10 @@ module Make (Config : Compiler_configuration)
       on_what ->
       match Config.map_reduce_gatk_indel_realigner with
       | true -> 
-        Tools.Gatk.indel_realigner_map_reduce 
-          ~processors:Config.processors ~run_with ~compress:false
+        Tools.Gatk.indel_realigner_map_reduce ~run_with ~compress:false
           ~configuration on_what
       | false ->
-        Tools.Gatk.indel_realigner
-          ~processors:Config.processors ~run_with ~compress:false
+        Tools.Gatk.indel_realigner ~run_with ~compress:false
           ~configuration on_what
 
   let gatk_indel_realigner ?configuration bam =
@@ -428,7 +411,7 @@ module Make (Config : Compiler_configuration)
     in
     Bam (
       Tools.Gatk.base_quality_score_recalibrator ~configuration
-        ~run_with ~processors:Config.processors ~input_bam ~output_bam
+        ~run_with ~input_bam ~output_bam
     )
 
   let seq2hla fq =
@@ -448,7 +431,7 @@ module Make (Config : Compiler_configuration)
     in
     Seq2hla_result (
       Tools.Seq2HLA.hla_type
-        ~work_dir ~processors:Config.processors ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
+        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
 
   let optitype how fq =
@@ -485,8 +468,7 @@ module Make (Config : Compiler_configuration)
         (match how with `PE -> "PE" | `SE -> "SE")
     in
     Fastq (
-      Tools.Picard.bam_to_fastq
-        ~run_with ~processors:Config.processors ~sample_type
+      Tools.Picard.bam_to_fastq ~run_with ~sample_type
         ~sample_name ~output_prefix input_bam
     )
 
@@ -546,8 +528,7 @@ module Make (Config : Compiler_configuration)
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
         Tools.Strelka.run
-          ~configuration ~normal ~tumor
-          ~run_with ~result_prefix ~processors:Config.processors ())
+          ~configuration ~normal ~tumor ~run_with ~result_prefix ())
 
   let varscan_somatic ?adjust_mapq =
     somatic_vc "varscan_somatic" (fun () ->
@@ -580,9 +561,7 @@ module Make (Config : Compiler_configuration)
         ~configuration ~run_with
         ~normal ~tumor ~result_prefix ->
         Tools.Virmid.run
-          ~configuration ~normal ~tumor
-          ~run_with ~result_prefix ~processors:Config.processors
-          ())
+          ~configuration ~normal ~tumor ~run_with ~result_prefix ())
 
 
 end

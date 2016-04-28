@@ -117,7 +117,7 @@ let pipeline_example_target ~push_result ~pipeline_name pipeline_example =
   let compiler = 
     Biokepi.Pipeline.Compiler.create
       ~reference_build:"b37"
-      ~work_dir ~machine ~processors:2 () in
+      ~work_dir ~machine () in
   let compiled =
     List.map pipelines
       ~f:(fun pl ->

@@ -21,7 +21,8 @@ let run ~reference_build
   let cufflinks_tool =
     Machine.get_tool run_with Machine.Tool.Default.cufflinks in
   let sorted_bam =
-    Samtools.sort_bam_if_necessary ~run_with ~processors ~by:`Coordinate bam in
+    Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
+  let processors = Machine.max_processors run_with in
   let make =
     Machine.run_big_program run_with ~name ~processors
       ~self_ids:["cufflinks"]

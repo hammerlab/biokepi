@@ -55,7 +55,7 @@ let index
       depends_on Machine.Tool.(ensure bwa_tool);
     ]
     ~tags:[Target_tags.aligner]
-    ~make:(Machine.run_big_program run_with ~processors:1 ~name
+    ~make:(Machine.run_big_program run_with ~name
              ~self_ids:["bwa"; "index"]
              Program.(
                Machine.Tool.(init bwa_tool)
@@ -78,7 +78,6 @@ let read_group_header_option algorithm ~sample_name ~read_group_id =
 
 let mem_align_to_sam
     ~reference_build
-    ~processors
     ?(configuration = Configuration.Mem.default)
     ~fastq
     (* ~(r1: KEDSL.single_file KEDSL.workflow_node) *)
@@ -100,6 +99,7 @@ let mem_align_to_sam
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "bwa-mem-%s" (Filename.basename r1_path) in
+  let processors = Machine.max_processors run_with in
   let bwa_base_command =
     String.concat ~sep:" " [
       "bwa mem";
@@ -151,7 +151,6 @@ let mem_align_to_sam
 
 let align_to_sam
     ~reference_build
-    ~processors
     ?(configuration = Configuration.Aln.default)
     ~fastq
     ~(result_prefix:string)
@@ -168,6 +167,7 @@ let align_to_sam
      `.bwt` one. *)
   let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
   let bwa_index = index ~reference_build ~run_with in
+  let processors = Machine.max_processors run_with in
   let bwa_aln read_number read =
     let name = sprintf "bwa-aln-%s" (Filename.basename read) in
     let result = sprintf "%s-R%d.sai" result_prefix read_number in

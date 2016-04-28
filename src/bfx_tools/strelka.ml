@@ -121,7 +121,7 @@ end
 
 
 let run
-    ~run_with ~normal ~tumor ~result_prefix ~processors ?(more_edges = [])
+    ~run_with ~normal ~tumor ~result_prefix ?(more_edges = [])
     ?(configuration = Configuration.default) () =
   let open KEDSL in
   let open Configuration in
@@ -137,11 +137,12 @@ let run
   let gatk_tool = Machine.get_tool run_with Machine.Tool.Default.gatk in
   let sorted_normal =
     Samtools.sort_bam_if_necessary
-      ~run_with ~processors ~by:`Coordinate normal in
+      ~run_with ~by:`Coordinate normal in
   let sorted_tumor =
     Samtools.sort_bam_if_necessary
-      ~run_with ~processors ~by:`Coordinate tumor in
+      ~run_with ~by:`Coordinate tumor in
   let working_dir = Filename.(dirname result_prefix) in
+  let processors = Machine.max_processors run_with in
   let make =
     Machine.run_big_program run_with ~name ~processors
       ~self_ids:["strelka"]
