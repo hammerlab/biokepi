@@ -153,6 +153,9 @@ module EDSL = struct
 
   end
 
+  (** Library of reusable pieces of pipeline. *)
+  module Library = Biokepi_pipeline_edsl.Pipeline_library
+
 end
 
 (** The description of the computing infrastructure used in Biokepi.

@@ -71,3 +71,16 @@ export OCAMLPARAM="warn-error=A,_"
 
 opam pin add biokepi --yes .
 opam install --yes biokepi
+
+
+# We try the example
+cat > my_cluster.ml <<EOCAML
+module My_cluster = struct
+  let max_processors = 42
+  let work_dir = "/work/dir/"
+  let datasets_home = "/datasets/"
+  let machine =
+    Biokepi.Setup.Build_machine.create "ssh://example.com/tmp/KT/"
+end 
+EOCAML
+ocaml src/examples/edsl_extension_register_result.ml

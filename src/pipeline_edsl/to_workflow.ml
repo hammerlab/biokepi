@@ -86,6 +86,20 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get other "Pair"
 
+  let rec as_dependency_edges : type a. a t -> workflow_edge list = 
+    let one_depends_on wf = [depends_on wf] in
+    function
+    | To_unit v -> as_dependency_edges v
+    | Fastq wf -> one_depends_on wf
+    | Bam wf ->   one_depends_on wf
+    | Vcf wf ->   one_depends_on wf
+    | Gtf wf ->   one_depends_on wf
+    | Seq2hla_result wf -> one_depends_on wf
+    | Optitype_result wf -> one_depends_on wf
+    | List l -> List.concat_map l ~f:as_dependency_edges
+    | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
+    | other -> fail_get other "as_dependency_edges"
+
   let get_unit_workflow : 
     name: string ->
     unit t ->
@@ -93,22 +107,8 @@ module File_type_specification = struct
     fun ~name f ->
       match f with
       | To_unit v ->
-        let rec as_edges : type a. a t -> workflow_edge list = 
-          let one_depends_on wf = [depends_on wf] in
-          function
-          | To_unit v -> as_edges v
-          | Fastq wf -> one_depends_on wf
-          | Bam wf ->   one_depends_on wf
-          | Vcf wf ->   one_depends_on wf
-          | Gtf wf ->   one_depends_on wf
-          | Seq2hla_result wf -> one_depends_on wf
-          | Optitype_result wf -> one_depends_on wf
-          | List l -> List.concat_map l ~f:as_edges
-          | Pair (a, b) -> as_edges a @ as_edges b
-          | other -> fail_get other "as_edges"
-        in
         workflow_node without_product
-          ~name ~edges:(as_edges v)
+          ~name ~edges:(as_dependency_edges v)
       | other -> fail_get other "get_unit_workflow"
 
 end
