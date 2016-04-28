@@ -8,10 +8,9 @@ open Common
    Please provide a fresh [work_dir] directory, it will be deleted in case of
    failure.
 *)
-let hla_type ~work_dir ~run_with ~r1 ?r2 ~run_name nt =
+let hla_type ~work_dir ~run_with ~fastq ~run_name nt =
   let tool = Machine.get_tool run_with (`Biopamed "optitype") in
-  let r1pt = Filename.quote r1#product#path in
-  let r2pt_opt = Option.map ~f:(fun o -> Filename.quote o#product#path) r2 in
+  let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "optitype-%s" run_name in
   let make =
     Machine.run_big_program run_with ~name
@@ -27,8 +26,8 @@ let hla_type ~work_dir ~run_with ~r1 ?r2 ~run_name nt =
         sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
         &&
         shf "OptiTypePipeline --verbose --input %s %s %s -o %s "
-          (Filename.quote r1pt)
-          (Option.value_map ~default:"" r2pt_opt ~f:Filename.quote)
+          (Filename.quote r1_path)
+          (Option.value_map ~default:"" r2_path_opt ~f:Filename.quote)
           (match nt with | `DNA -> "--dna" | `RNA -> "--rna")
           run_name)
   in
@@ -45,10 +44,9 @@ let hla_type ~work_dir ~run_with ~r1 ?r2 ~run_name nt =
   in
   KEDSL.workflow_node product ~name ~make
     ~edges:(
-      Option.value_map ~default:[] r2 ~f:(fun w -> [KEDSL.depends_on w])
-      @ [
+      [
         KEDSL.depends_on (Machine.Tool.ensure tool);
-        KEDSL.depends_on r1;
+        KEDSL.depends_on fastq;
         KEDSL.on_failure_activate
           (Workflow_utilities.Remove.directory ~run_with work_dir);
       ]
