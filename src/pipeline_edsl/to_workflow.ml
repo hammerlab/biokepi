@@ -492,7 +492,7 @@ module Make (Config : Compiler_configuration)
 
   let somatic_vc
       name confname default_conf runfun
-      ?configuration ~normal ~tumor =
+      ?configuration ~normal ~tumor () =
     let normal_bam = get_bam normal in
     let tumor_bam = get_bam tumor in
     let configuration = Option.value configuration ~default:default_conf in

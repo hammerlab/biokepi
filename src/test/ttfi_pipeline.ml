@@ -165,7 +165,7 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
       Bfx.lambda (fun pair ->
           let normal = Bfx.pair_first pair in
           let tumor = Bfx.pair_second pair in
-          how ~normal ~tumor)
+          how ~normal ~tumor ())
     in
     let somatic_vcs =
       List.map ~f:somatic_of_pair [
@@ -331,12 +331,9 @@ module Somatic_simplish(Bfx: Biokepi.EDSL.Semantics) = struct
     let vcfs =
       let normal, tumor = final_normal_bam, final_tumor_bam in
       Bfx.list [
-        Bfx.mutect ~normal ~tumor
-          ~configuration:Biokepi.Tools.Mutect.Configuration.default;
-        Bfx.somaticsniper ~normal ~tumor
-          ~configuration:Biokepi.Tools.Somaticsniper.Configuration.default;
-        Bfx.strelka ~normal ~tumor
-          ~configuration:Biokepi.Tools.Strelka.Configuration.default;
+        Bfx.mutect ~normal ~tumor ();
+        Bfx.somaticsniper ~normal ~tumor ();
+        Bfx.strelka ~normal ~tumor ();
       ] in
     Bfx.list [
       Bfx.to_unit vcfs;

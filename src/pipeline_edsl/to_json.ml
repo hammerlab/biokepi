@@ -193,7 +193,7 @@ module Make_serializer (How : sig
         "input", bamc;
       ]
 
-  let variant_caller name conf_name ~normal ~tumor ~(var_count : int) =
+  let variant_caller name conf_name ~normal ~tumor () ~(var_count : int) =
     function_call name [
       "configuration", string conf_name;
       "normal", normal ~var_count;

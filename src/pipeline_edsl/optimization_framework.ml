@@ -130,20 +130,20 @@ module Generic_optimizer
   let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
     fwd (Input.bam_to_fastq ~sample_name ?fragment_id se_or_pe (bwd bam))
 
-  let mutect ?configuration ~normal ~tumor =
-    fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let mutect2 ?configuration ~normal ~tumor =
-    fwd (Input.mutect2 ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let somaticsniper ?configuration ~normal ~tumor =
-    fwd (Input.somaticsniper ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let strelka ?configuration ~normal ~tumor =
-    fwd (Input.strelka ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let varscan_somatic ?adjust_mapq ~normal ~tumor =
+  let mutect ?configuration ~normal ~tumor () =
+    fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let mutect2 ?configuration ~normal ~tumor () =
+    fwd (Input.mutect2 ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let somaticsniper ?configuration ~normal ~tumor () =
+    fwd (Input.somaticsniper ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let strelka ?configuration ~normal ~tumor () =
+    fwd (Input.strelka ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let varscan_somatic ?adjust_mapq ~normal ~tumor () =
     fwd (Input.varscan_somatic
-           ?adjust_mapq ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let muse ?configuration ~normal ~tumor =
-    fwd (Input.muse ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
-  let virmid ?configuration ~normal ~tumor =
-    fwd (Input.virmid ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor))
+           ?adjust_mapq ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let muse ?configuration ~normal ~tumor () =
+    fwd (Input.muse ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+  let virmid ?configuration ~normal ~tumor () =
+    fwd (Input.virmid ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
 
 end

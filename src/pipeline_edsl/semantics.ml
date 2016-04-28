@@ -137,42 +137,49 @@ module type Bioinformatics_base = sig
     ?configuration: Biokepi_bfx_tools.Mutect.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val mutect2:
     ?configuration: Gatk.Configuration.Mutect2.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val somaticsniper:
     ?configuration: Somaticsniper.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val varscan_somatic:
     ?adjust_mapq : int ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val strelka: 
     ?configuration: Strelka.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val virmid:
     ?configuration: Virmid.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
   val muse:
     ?configuration: Muse.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
+    unit ->
     [ `Vcf ] repr
 
 end
