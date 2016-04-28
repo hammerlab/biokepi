@@ -447,6 +447,7 @@ module Make (Config : Compiler_configuration)
       Tools.Optitype.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
+      :> KEDSL.unknown_product KEDSL.workflow_node
     )
 
   let gatk_haplotype_caller bam =

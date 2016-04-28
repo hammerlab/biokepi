@@ -21,7 +21,7 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt =
         && exec ["cd"; work_dir]
         && sh "cp -r ${OPTITYPE_DATA}/data ." (* HLA reference data *)
         && (* config example *)
-        sh "cp -r ${OPTITYPE_DATA}/config.ini.example config.ini" 
+        sh "cp -r ${OPTITYPE_DATA}/config.ini.example config.ini"
         && (* adjust config razers3 path *)
         sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
         &&
@@ -40,6 +40,7 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt =
     in
     object
       method is_done = Some (`Volume_exists vol)
+      method path = work_dir
     end
   in
   KEDSL.workflow_node product ~name ~make
@@ -51,4 +52,3 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt =
           (Workflow_utilities.Remove.directory ~run_with work_dir);
       ]
     )
-
