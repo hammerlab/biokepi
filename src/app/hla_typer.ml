@@ -22,7 +22,7 @@ let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
     Setup.Build_machine.create ~toolkit uri
   in
   let compiler =
-    create ~processors:1
+    create
       ~reference_build:"should not need this" (*Reference_genome.Specification.Default.Name.b37*)
       ~work_dir:(work_dir // "compiler")
       ~machine ()

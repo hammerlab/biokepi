@@ -67,7 +67,6 @@ let index
 
 let align
     ~reference_build
-    ~processors
     ~configuration
     ~fastq
     ~(result_prefix:string)
@@ -93,6 +92,7 @@ let align
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "%s-rna-align-%s" hisat_binary (Filename.basename r1_path) in
+  let processors = Machine.max_processors run_with in
   let hisat_base_command = sprintf
       "%s \
        -p %d \

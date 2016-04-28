@@ -75,7 +75,6 @@ end
 
 let index
     ~reference_build
-    ~processors
     ~(run_with : Machine.t) =
   let open KEDSL in
   let reference_fasta =
@@ -89,6 +88,7 @@ let index
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let result_dir = sprintf "%s/star-index/" reference_dir in
   let suffix_array_result = result_dir // "SA" in
+  let processors = Machine.max_processors run_with in
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) suffix_array_result)
     ~edges:[
@@ -115,7 +115,6 @@ let index
 
 let align
     ~reference_build
-    ~processors
     ~fastq
     ~(result_prefix:string)
     ~(run_with : Machine.t)
@@ -128,13 +127,14 @@ let align
   let in_work_dir =
     Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
   let star_tool = Machine.get_tool run_with Machine.Tool.Default.star in
-  let star_index = index ~reference_build ~run_with ~processors in
+  let star_index = index ~reference_build ~run_with in
   let reference_dir = (Filename.dirname reference_fasta#product#path) in
   let star_index_dir = sprintf "%s/star-index/" reference_dir in
   (* STAR appends Aligned.sortedByCoord.out.bam to the filename *)
   let result = sprintf "%sAligned.sortedByCoord.out.bam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "star-rna-align-%s" (Filename.basename r1_path) in
+  let processors = Machine.max_processors run_with in
   let star_base_command = sprintf
       "STAR --outSAMtype BAM SortedByCoordinate \
        --outSAMstrandField intronMotif \

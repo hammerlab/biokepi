@@ -134,7 +134,7 @@ let do_on_bam
       :: on_failure_activate (Remove.file ~run_with product#path)
       :: more_depends_on)
 
-let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
+let sort_bam_no_check ~(run_with:Machine.t) ~by input_bam =
   let source = input_bam#product#path in
   let dest_suffix =
     match by with
@@ -146,6 +146,7 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
   let dest = sprintf "%s.%s" dest_prefix "bam" in
   let product =
     KEDSL.transform_bam ~change_sorting:by input_bam#product ~path:dest in
+  let processors = Machine.max_processors run_with in
   let make_command src des =
     let command = ["-@"; Int.to_string processors; src;
                    "-T"; dest_prefix; "-o"; dest] in
@@ -154,7 +155,7 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     | `Read_name -> "sort" :: "-n" :: command
   in
   do_on_bam ~run_with input_bam ~product ~make_command
-    ~more_requirements:[`Memory `Big]
+    ~more_requirements:[`Memory `Big; `Processors processors]
     ~name:(sprintf "Samtools-sort %s"
              Filename.(basename input_bam#product#path))
 (**
@@ -163,14 +164,13 @@ let sort_bam_no_check ~(run_with:Machine.t) ?(processors=1) ~by input_bam =
     If it is indeed already sorted the function returns the [input_bam] node as
     is.
  *)
-let sort_bam_if_necessary
-    ~(run_with:Machine.t) ?(processors=1) ~by
+let sort_bam_if_necessary ~(run_with:Machine.t) ~by
     input_bam : KEDSL.bam_file KEDSL.workflow_node =
   match input_bam#product#sorting with
   | Some some when some = by -> (* Already sorted “the same way” *)
     input_bam
   | other ->
-    sort_bam_no_check ~run_with input_bam ~processors ~by
+    sort_bam_no_check ~run_with input_bam ~by
 
 (* Produce an index for the given BAM file.
 

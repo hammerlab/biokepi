@@ -53,11 +53,9 @@ let run
     let fasta_dot_fai = Samtools.faidx ~run_with fasta in
     (* let sequence_dict = Picard.create_dict ~run_with fasta in *)
     let sorted_normal =
-      Samtools.sort_bam_if_necessary
-        ~processors:2 ~run_with ~by:`Coordinate normal in
+      Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate normal in
     let sorted_tumor =
-      Samtools.sort_bam_if_necessary
-        ~processors:2 ~run_with ~by:`Coordinate tumor in
+      Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate tumor in
     let run_muse_call =
       let name = sprintf "muse-call-%s" (Filename.basename output_file) in
       let make =

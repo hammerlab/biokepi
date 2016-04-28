@@ -183,7 +183,7 @@ let get_tool t =
 let run_program t = t.run_program
 
 let max_processors t = t.max_processors
-(** Get the maximum number of processors that a since job can use in the
+(** Get the maximum number of processors that a single job can use in the
     [Machine.t] (i.e. usually the “number-of-threads” paramters of most tools)
 *)
 

@@ -20,7 +20,6 @@ end
 let run
     ~configuration
     ~(run_with:Machine.t)
-    ~processors
     ~bam
     ~result_prefix () =
   let open KEDSL in
@@ -47,6 +46,7 @@ let run
   in
   let stringtie_tool =
     Machine.get_tool run_with Machine.Tool.Default.stringtie in
+  let processors = Machine.max_processors run_with in
   let make =
     let reference_annotations_option =
       Option.value_map ~default:"" reference_annotations

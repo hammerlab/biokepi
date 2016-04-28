@@ -191,14 +191,13 @@ let indel_realigner :
   ?compress:bool ->
   ?on_region: Region.t ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
-  processors:int ->
   run_with:Machine.t ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
   fun ?(compress=false)
     ?(on_region = `Full)
-    ~configuration ~processors ~run_with ?run_directory
+    ~configuration ~run_with ?run_directory
     input_bam_or_bams ->
     let open KEDSL in
     let input_bam_1, more_input_bams = (* this an at-least-length-1 list :)  *)
@@ -228,11 +227,11 @@ let indel_realigner :
     let indel_config, target_config = configuration in
     let input_sorted_bam_1 =
       Samtools.sort_bam_if_necessary
-        ~run_with ~processors ~by:`Coordinate input_bam_1 in
+        ~run_with ~by:`Coordinate input_bam_1 in
     let more_input_sorted_bams =
       List.map more_input_bams
         ~f:(Samtools.sort_bam_if_necessary
-              ~run_with ~processors ~by:`Coordinate) in
+              ~run_with ~by:`Coordinate) in
     let more_input_bams = `Use_the_sorted_ones_please in
     let input_bam_1 = `Use_the_sorted_ones_please in
     ignore (more_input_bams, input_bam_1);
@@ -277,6 +276,7 @@ let indel_realigner :
         Filename.chop_extension input#product#path ^ output_suffix ^ ".bam"
         |> Filename.basename)
     in
+    let processors = Machine.max_processors run_with in
     let make =
       let target_creation_args =
         [
@@ -357,13 +357,12 @@ let indel_realigner_map_reduce :
   type a.
   ?compress:bool ->
   configuration:(Indel_realigner.t * Realigner_target_creator.t) ->
-  processors:int ->
   run_with:Machine.t ->
   ?run_directory: string ->
   a KEDSL.bam_or_bams ->
   a =
   fun ?compress
-    ~configuration ~processors ~run_with
+    ~configuration ~run_with
     ?run_directory
     input_bam_or_bams ->
     let open KEDSL in
@@ -373,7 +372,7 @@ let indel_realigner_map_reduce :
         let f on_region =
           indel_realigner ?compress
             ~on_region
-            ~configuration ~processors ~run_with ?run_directory
+            ~configuration ~run_with ?run_directory
             input_bam_or_bams
         in
         let reference =
@@ -402,7 +401,7 @@ let indel_realigner_map_reduce :
           let bam_list_node =
             indel_realigner ?compress
               ~on_region
-              ~configuration ~processors ~run_with ?run_directory
+              ~configuration ~run_with ?run_directory
               input_bam_or_bams
           in
           let exploded = KEDSL.explode_bam_list_node bam_list_node in
@@ -451,7 +450,6 @@ let call_gatk ~analysis ?(region=`Full) args =
 let base_quality_score_recalibrator
     ~configuration:(bqsr_configuration, print_reads_configuration)
     ~run_with
-    ~processors
     ~input_bam ~output_bam =
   let open KEDSL in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
@@ -462,11 +460,12 @@ let base_quality_score_recalibrator
   let db_snp = Reference_genome.dbsnp_exn reference_genome in
   let sorted_bam =
     Samtools.sort_bam_if_necessary
-      ~run_with ~processors ~by:`Coordinate input_bam in
+      ~run_with ~by:`Coordinate input_bam in
   let input_bam = `Please_use_the_sorted_one in ignore input_bam;
   let recal_data_table =
     Filename.chop_suffix sorted_bam#product#path ".bam" ^ "-recal_data.table"
   in
+  let processors = Machine.max_processors run_with in
   let make =
     Machine.run_big_program run_with ~name ~processors
       ~self_ids:["gatk"; "bqsr"]

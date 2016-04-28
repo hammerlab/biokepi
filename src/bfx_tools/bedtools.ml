@@ -23,11 +23,11 @@ end
 
 
 let bamtofastq
-    ~(run_with:Machine.t) ~sample_type ~processors ~output_prefix input_bam =
+    ~(run_with:Machine.t) ~sample_type ~output_prefix input_bam =
   let open KEDSL in
   let sorted_bam =
     Samtools.sort_bam_if_necessary
-      ~run_with ~processors ~by:`Read_name input_bam in
+      ~run_with ~by:`Read_name input_bam in
   let fastq_output_options, r1, r2opt =
     match sample_type with
     | `Paired_end ->

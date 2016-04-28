@@ -64,11 +64,9 @@ let run
     let fasta_dot_fai = Samtools.faidx ~run_with fasta in
     let sequence_dict = Picard.create_dict ~run_with fasta in
     let sorted_normal =
-      Samtools.sort_bam_if_necessary
-        ~processors:2 ~run_with ~by:`Coordinate normal in
+      Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate normal in
     let sorted_tumor =
-      Samtools.sort_bam_if_necessary
-        ~processors:2 ~run_with ~by:`Coordinate tumor in
+      Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate tumor in
     let run_mutect =
       let name = sprintf "%s" (Filename.basename output_file) in
       let cosmic_option =
@@ -78,7 +76,7 @@ let run
         Option.value_map ~default:"" dbsnp ~f:(fun node ->
             sprintf "--dbsnp %s" (Filename.quote node#product#path)) in
       let make =
-        Machine.run_big_program run_with ~name ~processors:2
+        Machine.run_big_program run_with ~name
           ~self_ids:["mutect"]
           Program.(
             Machine.Tool.(init mutect)

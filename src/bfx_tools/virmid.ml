@@ -37,7 +37,7 @@ module Configuration = struct
 end
 
 let run
-    ~run_with ~normal ~tumor ~result_prefix ~processors
+    ~run_with ~normal ~tumor ~result_prefix
     ?(more_edges = []) ~configuration () =
   let open KEDSL in
   let open Configuration in 
@@ -54,6 +54,7 @@ let run
     (* maybe it's actually not broken, but later tools can be
        annoyed by the a space in the header. *)
     work_dir // Filename.basename tumor#product#path ^ ".virmid.som.passed.vcf" in
+  let processors = Machine.max_processors run_with in
   let make =
     Machine.run_big_program run_with ~name ~processors
       ~self_ids:["virmid"]
