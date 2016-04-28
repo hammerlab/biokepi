@@ -10,13 +10,19 @@ module Configuration = struct
     type t = {
       name: string;
 
-      (* The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads,
-         and int(-10*log10(1- 1/Nmap)) for multi-mapping reads. This scheme is
-         same as the one used by TopHat and is compatible with Cufflinks. The
-         default MAPQ=255 for the unique mappers maybe changed with to an
-         integer between 0 and 255 to ensure compatibility with downstream tools
-         such as GATK. *)
+      (** The mapping quality MAPQ (column 5) is 255 for uniquely mapping reads,
+          and int(-10*log10(1- 1/Nmap)) for multi-mapping reads. This scheme is
+          same as the one used by TopHat and is compatible with Cufflinks. The
+          default MAPQ=255 for the unique mappers maybe changed with to an
+          integer between 0 and 255 to ensure compatibility with downstream tools
+          such as GATK. *)
       sam_mapq_unique: int option;
+
+      (** Specifies the length of the genomic sequence around the annotated
+          junction to be used in constructing the splice junctions
+          database. Ideally, this length should be equal to the ReadLength-1,
+          where ReadLength is the length of the reads. *)
+      overhang_length: int option;
       parameters: (string * string) list;
     }
     let name t = t.name
@@ -24,17 +30,23 @@ module Configuration = struct
     let default = {
       name = "default";
       sam_mapq_unique = None;
+      overhang_length = None;
       parameters = [];
     }
 
     let to_json t: Yojson.Basic.json =
       let {name;
            sam_mapq_unique;
+           overhang_length;
            parameters} = t in
       `Assoc [
         "name", `String name;
         "sam_mapq_unique",
         (match sam_mapq_unique with
+        | None -> `Null
+        | Some x -> `Int x);
+        "overhang_length",
+        (match overhang_length with
         | None -> `Null
         | Some x -> `Int x);
         "parameters",
@@ -43,7 +55,13 @@ module Configuration = struct
 
     let render {name;
                 sam_mapq_unique;
+                overhang_length;
                 parameters} =
+      (match overhang_length with
+      | None -> ""
+      | Some x ->
+        sprintf "--sjdbOverhang %d" x
+      ) ::
       (match sam_mapq_unique with
       | None -> ""
       | Some x ->
