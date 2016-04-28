@@ -129,16 +129,16 @@ module Make_serializer (How : sig
   let merge_bams bl ~(var_count : int) =
     function_call "merge-bams" ["input-list", bl ~var_count]
 
-  let star ~configuration =
+  let star ?(configuration = Tools.Star.Configuration.Align.default) =
     aligner "star" (Tools.Star.Configuration.Align.name configuration)
 
-  let hisat ~configuration =
+  let hisat ?(configuration = Tools.Hisat.Configuration.default_v1) =
     aligner "hisat" (configuration.Tools.Hisat.Configuration.name)
 
   let mosaik =
     aligner "mosaik" "default"
 
-  let stringtie ~configuration =
+  let stringtie ?(configuration = Tools.Stringtie.Configuration.default) =
     one_to_one "stringtie" configuration.Tools.Stringtie.Configuration.name
 
 
@@ -147,19 +147,23 @@ module Make_serializer (How : sig
        indel.Tools.Gatk.Configuration.Indel_realigner.name
        target.Tools.Gatk.Configuration.Realigner_target_creator.name)
 
-  let gatk_indel_realigner ~(configuration : Tools.Gatk.Configuration.indel_realigner) =
+  let gatk_indel_realigner
+      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner) =
     one_to_one "gatk_indel_realigner" (indel_real_config configuration)
-      
 
-  let gatk_indel_realigner_joint ~configuration =
+
+  let gatk_indel_realigner_joint
+      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner) =
     one_to_one "gatk_indel_realigner_joint" (indel_real_config configuration)
 
-  let picard_mark_duplicates ~configuration =
+  let picard_mark_duplicates
+      ?(configuration = Tools.Picard.Mark_duplicates_settings.default) =
     one_to_one
       "picard_mark_duplicates"
       configuration.Tools.Picard.Mark_duplicates_settings.name
 
-  let gatk_bqsr ~configuration:(bqsr, preads) =
+  let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) =
+    let (bqsr, preads) = configuration in
     one_to_one "gatk_bqsr"
       (sprintf "B%s-PR%s"
          bqsr.Tools.Gatk.Configuration.Bqsr.name
@@ -196,19 +200,19 @@ module Make_serializer (How : sig
       "tumor", tumor ~var_count;
     ]
 
-  let mutect ~configuration =
+  let mutect ?(configuration = Tools.Mutect.Configuration.default) =
     variant_caller "mutect"
       configuration.Tools.Mutect.Configuration.name
 
-  let mutect2 ~configuration =
+  let mutect2 ?(configuration = Tools.Gatk.Configuration.Mutect2.default) =
     variant_caller "mutect2"
       configuration.Tools.Gatk.Configuration.Mutect2.name
 
-  let somaticsniper ~configuration =
+  let somaticsniper ?(configuration = Tools.Somaticsniper.Configuration.default) =
     variant_caller "somaticsniper"
       configuration.Tools.Somaticsniper.Configuration.name
 
-  let strelka ~configuration =
+  let strelka ?(configuration = Tools.Strelka.Configuration.default) =
     variant_caller "strelka"
       configuration.Tools.Strelka.Configuration.name
 
@@ -216,11 +220,11 @@ module Make_serializer (How : sig
     variant_caller "varscan_somatic"
       (Option.value_map ~f:(sprintf "amap%d") ~default:"default" adjust_mapq)
 
-  let muse ~configuration =
+  let muse ?(configuration = Tools.Muse.Configuration.default `WGS) =
     variant_caller "muse"
       configuration.Tools.Muse.Configuration.name
 
-  let virmid ~configuration =
+  let virmid ?(configuration = Tools.Virmid.Configuration.default) =
     variant_caller "virmid"
       configuration.Tools.Virmid.Configuration.name
 
