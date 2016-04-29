@@ -158,7 +158,7 @@ let default ?host ~install_path () =
   let need_conda =
     [ K.depends_on (Conda.configured ?host ~install_path ())]
   in
-  Machine.Tool.Kit.create [
+  Machine.Tool.Kit.of_list [
     mk (Library "PICARD_JAR") ~package:"picard" ~witness:"picard.jar";
     mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
     mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version

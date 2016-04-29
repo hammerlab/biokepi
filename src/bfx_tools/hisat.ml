@@ -12,13 +12,17 @@ module Configuration = struct
     `Assoc [
       "name", `String name;
       "version",
-        match version with
-        |`V_0_1_6_beta -> `String "V_0_1_6_beta"
-        |`V_2_0_2_beta -> `String "V_2_0_2_beta"
-      ;
+      (match version with
+      |`V_0_1_6_beta -> `String "V_0_1_6_beta"
+      |`V_2_0_2_beta -> `String "V_2_0_2_beta");
     ]
   let default_v1 = {name = "default_v1"; version = `V_0_1_6_beta}
   let default_v2 = {name = "default_v2"; version = `V_2_0_2_beta}
+  let get_tool t =
+    let open Machine.Tool.Default in
+    match t.version with
+    |`V_0_1_6_beta -> hisat
+    |`V_2_0_2_beta -> hisat2
   let name t = t.name
 end
 
@@ -33,7 +37,8 @@ let index
     |> Reference_genome.fasta in
   let result_dir = Filename.dirname index_prefix in
   let version = configuration.Configuration.version in
-  let hisat_tool = Machine.get_tool run_with (`Hisat version) in
+  let hisat_tool =
+    Machine.get_tool run_with (Configuration.get_tool configuration) in
   let build_binary =
     match version with
     | `V_0_1_6_beta -> "hisat-build"
@@ -87,7 +92,8 @@ let align
   let index_prefix = index_dir // (sprintf  "%s-index" hisat_binary) in
   let in_work_dir =
     Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
-  let hisat_tool = Machine.get_tool run_with (`Hisat version) in
+  let hisat_tool =
+    Machine.get_tool run_with (Configuration.get_tool configuration) in
   let hisat_index = index ~index_prefix ~reference_build ~run_with ~configuration in
   let result = sprintf "%s.sam" result_prefix in
   let r1_path, r2_path_opt = fastq#product#paths in

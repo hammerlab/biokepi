@@ -22,42 +22,36 @@ open KEDSL
 
 module Tool = struct
   module Definition = struct
-    include struct
-      (* hack to remove warning from generated code, cf.
-         https://github.com/whitequark/ppx_deriving/issues/41 *)
-      [@@@ocaml.warning "-11"]
-      type t = [
-        | `Bwa of [ `V_0_7_10 ]
-        | `Hisat of [`V_0_1_6_beta | `V_2_0_2_beta]
-        (* A tool that is installed by retrieving source or binary.*)
-        | `Custom of string * string
-        (* A tool that is installed via Biopam. *)
-        | `Biopamed of string
-      ] [@@deriving yojson, show, eq]
-    end
-    let custom name ~version = `Custom (name, version)
-    let biopam name = `Biopamed name
+    type t = {name: string; version: string option}
+    let create ?version name  = {name; version}
+    let to_string {name; version} =
+      sprintf "%s.%s" name (Option.value ~default:"NOVERSION" version)
+    let to_directory_name = to_string
+    let biopam (* TODO : TMP *) p = create p ~version:"biopam"
   end
   module Default = struct
     open Definition
-    let bwa = `Bwa `V_0_7_10
-    let samtools = custom "samtools" ~version:"1.3"
-    let vcftools = custom "vcftools" ~version:"0.1.12b"
-    let bedtools = custom "bedtools" ~version:"2.23.0"
-    let somaticsniper = custom "somaticsniper" ~version:"1.0.3"
-    let varscan = custom "varscan" ~version:"2.3.5"
-    let picard = custom "picard" ~version:"1.127"
-    let mutect = custom "mutect" ~version:"unknown"
-    let gatk = custom "gatk" ~version:"unknown"
-    let strelka = custom "strelka" ~version:"1.0.14"
-    let virmid = custom "virmid" ~version:"1.1.1"
-    let muse = custom "muse" ~version:"1.0b"
-    let star = custom "star" ~version:"2.4.1d"
-    let stringtie = custom "stringtie" ~version:"1.2.2"
-    let cufflinks = custom "cufflinks" ~version:"2.2.1"
-    let hisat = `Hisat `V_0_1_6_beta
-    let mosaik = custom "mosaik" ~version:"2.2.3"
-    let kallisto = custom "kallisto" ~version:"0.42.3"
+    let bwa = create "bwa" ~version:"0.7.10"
+    let samtools = create "samtools" ~version:"1.3"
+    let vcftools = create "vcftools" ~version:"0.1.12b"
+    let bedtools = create "bedtools" ~version:"2.23.0"
+    let somaticsniper = create "somaticsniper" ~version:"1.0.3"
+    let varscan = create "varscan" ~version:"2.3.5"
+    let picard = create "picard" ~version:"1.127"
+    let mutect = create "mutect" (* We don't know the versions of the users' GATKs *)
+    let gatk = create "gatk" (* idem, because of their non-open-source licenses *)
+    let strelka = create "strelka" ~version:"1.0.14"
+    let virmid = create "virmid" ~version:"1.1.1"
+    let muse = create "muse" ~version:"1.0b"
+    let star = create "star" ~version:"2.4.1d"
+    let stringtie = create "stringtie" ~version:"1.2.2"
+    let cufflinks = create "cufflinks" ~version:"2.2.1"
+    let hisat = create "hisat" ~version:"0.1.6-beta"
+    let hisat2 = create "hisat" ~version:"2.0.2-beta"
+    let mosaik = create "mosaik" ~version:"2.2.3"
+    let kallisto = create "kallisto" ~version:"0.42.3"
+    let optitype = biopam "optitype"
+    let seq2hla = biopam "seq2HLA"
   end
   type t = {
     definition: Definition.t;
@@ -68,33 +62,38 @@ module Tool = struct
     definition;
     init =
       Option.value init
-        ~default:(Program.shf "echo '%s: default init'"
-                    (Definition.show definition));
+        ~default:(Program.shf "echo 'Tool %s: default init'"
+                    (Definition.to_string definition));
     ensure =
       Option.value_map
         ensure
         ~f:KEDSL.forget_product
         ~default:(workflow_node nothing
-                    ~name:(sprintf "%s-ensured" (Definition.show definition)));
+                    ~name:(sprintf "%s-ensured"
+                             (Definition.to_string definition)));
   }
   let init t = t.init
   let ensure t = t.ensure
 
   module Kit = struct
     type tool = t
-    type t = {
-      tools: tool list;
-    }
-    let create tools = {tools}
-    let get_exn t def =
-      List.find t.tools
-        ~f:(fun {definition; _ } -> Definition.equal definition def)
-      |> Option.value_exn ~msg:(sprintf "Can't find tool %s"
-                                  Definition.(show def))
+    type t = Definition.t -> tool option
 
-    let concat kits =
-      { tools = List.concat_map kits ~f:(fun k -> k.tools) }
+    let concat : t list -> t =
+      fun l ->
+      fun def ->
+        List.find_map l ~f:(fun kit -> kit def)
 
+    let of_list l : t =
+      fun def ->
+        List.find l ~f:(fun {definition; _} -> definition = def)
+
+    let get_exn t tool =
+      match t tool with
+      | Some s -> s
+      | None ->
+        failwithf "Toolkit cannot provide the tool %s"
+          (Definition.to_string tool)
   end
 end
 
@@ -178,8 +177,13 @@ let create
 let name t = t.name
 let as_host t = t.host
 let get_reference_genome t = t.get_reference_genome
-let get_tool t =
-  Tool.Kit.get_exn t.toolkit
+let get_tool t tool =
+  match t.toolkit tool with
+  | Some s -> s
+  | None ->
+    failwithf "Machine %S cannot provide the tool %s"
+      t.name (Tool.Definition.to_string tool)
+
 let run_program t = t.run_program
 
 let max_processors t = t.max_processors
