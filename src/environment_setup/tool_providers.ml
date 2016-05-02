@@ -428,6 +428,7 @@ let default_toolkit
       install mosaik;
       install kallisto;
     ];
-    Biopam.default ~host ~install_path:(install_tools_path // "biopam-kit") ();
+    Biopam.default ~run_program ~host
+      ~install_path:(install_tools_path // "biopam-kit") ();
   ]
 

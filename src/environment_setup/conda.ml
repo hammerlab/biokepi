@@ -21,22 +21,25 @@ let com ~install_path fmt =
   Printf.sprintf ("%s " ^^ fmt) (bin ~install_path)
 
 (* A workflow to ensure that conda is installed. *)
-let installed ?host ~install_path =
+let installed ~(run_program : Machine.Make_fun.t) ~host ~install_path =
   let open KEDSL in
   let url =
-    "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-  in
-  let conda_exec  = single_file ?host (bin ~install_path) in
+    "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" in
+  let conda_exec  = single_file ~host (bin ~install_path) in
   let install_dir = dir ~install_path in
   workflow_node conda_exec
     ~name:"Install conda"
-    ~make:(daemonize ?host
-             Program.(exec ["mkdir"; "-p"; install_path]
-                      && exec ["cd"; install_path]
-                      && Workflow_utilities.Download.wget_program url
-                                            (* -b : batch be silent -p prefix *)
-                      && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s"
-                                install_dir))
+    ~make:(
+      run_program
+        ~requirements:[
+          `Internet_access; `Self_identification ["conda"; "installation"]
+        ]
+        Program.(
+          exec ["mkdir"; "-p"; install_path]
+          && exec ["cd"; install_path]
+          && Workflow_utilities.Download.wget_program url
+          && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir))
+
 
 let config = "biokepi_conda_env"
 let env_name = "biokepi"
@@ -97,37 +100,40 @@ https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda}
    We'll ignore it from the configuration and hope that the computer has a sane
    readline lib installed by default.  *)
 
-(* Ensure that a file exists describing the default linux conda enviroment.
-   TODO: figure out a better solution to distribute this configuration.  *)
-let cfg_exists ?host ~install_path =
+let cfg_exists ~(run_program : Machine.Make_fun.t) ~host ~install_path =
   let open KEDSL in
   let file = install_path // config in
-  let make = daemonize ?host
+  let make =
+    run_program
+      ~requirements:[`Quick_run; `Self_identification ["conda"; "config-file"]]
       Program.(exec ["mkdir"; "-p"; install_path]
                && shf "echo %s >> %s" (Filename.quote biokepi_conda_config) file)
   in
-  workflow_node (single_file ?host file)
+  workflow_node (single_file ~host file)
     ~name:("Make sure we have a biokepi conda config file: " ^ config)
     ~make
 
-let configured ?host ~install_path () =
+let configured ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
   let open KEDSL in
   let conf =
-    com ~install_path "create --name %s --file %s/%s" env_name
-      install_path config
-  in
+    com ~install_path "create --name %s --file %s/%s"
+      env_name install_path config in
   let make =
-    daemonize ?host
+    run_program
+      ~requirements:[
+        `Internet_access;
+        `Self_identification ["conda"; "configuration"];
+      ]
       Program.(sh conf
                && shf "source %s %s" (activate ~install_path) env_name
                && sh "pip install -U pyomo")
   in
   let edges = [
-      depends_on (installed ?host ~install_path);
-      depends_on (cfg_exists ?host ~install_path);
+    depends_on (installed ~run_program ~host ~install_path);
+    depends_on (cfg_exists ~run_program ~host ~install_path);
   ] in
   let biokepi_env =
-    Command.shell ?host (com ~install_path "env list | grep %s" env_name) in
+    Command.shell ~host (com ~install_path "env list | grep %s" env_name) in
   let product =
     object method is_done = Some (`Command_returns (biokepi_env, 0)) end in
   workflow_node product ~make ~name:"Conda is configured." ~edges

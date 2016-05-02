@@ -9,7 +9,9 @@ val default_opam_url : string
 val default_biopam_url : string
 
 (** A workflow to make sure that Biopam is configured.*)
-val configured : ?biopam_home:string -> ?host:KEDSL.Host.t ->
+val configured : ?biopam_home:string ->
+  run_program: Machine.Make_fun.t ->
+  host: Common.KEDSL.Host.t ->
   install_path:string -> unit ->
   < is_done : KEDSL.Condition.t option > KEDSL.workflow_node
 
@@ -37,7 +39,7 @@ type install_target = {
   (** Test to determine success of the install.
       Defaults to `test -e witness`. *)
   test :
-    (?host:KEDSL.Host.t -> string -> KEDSL.Command.t) option;
+    (host:KEDSL.Host.t -> string -> KEDSL.Command.t) option;
 
   (* Install dependencies. *)
   edges : KEDSL.workflow_edge list;
@@ -48,9 +50,14 @@ type install_target = {
 }
 
 (** Provde the specified (via install_target) tool.*)
-val provide : ?host:KEDSL.Host.t ->
+val provide :
+  run_program: Machine.Make_fun.t ->
+  host: Common.KEDSL.Host.t ->
   install_path:string -> install_target -> Machine.Tool.t
 
 (** A set of default tools that have been specified in this module.*)
-val default : ?host:KEDSL.Host.t -> install_path:string -> unit ->
+val default : 
+  run_program: Machine.Make_fun.t ->
+  host: Common.KEDSL.Host.t ->
+  install_path:string -> unit ->
   Machine.Tool.Kit.t

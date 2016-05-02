@@ -4,7 +4,6 @@ Provide tools via Biopam: https://github.com/solvuu/biopam
 
 open Biokepi_run_environment
 open Common
-module K = KEDSL
 
 (* What are we installing via opam. This determines where we look for the
    witness; in [opam_install_path]/package or [opam_install_path]/bin. *)
@@ -18,13 +17,13 @@ type install_target = {
   witness : string; (** File that must exist after install, ex:
                                   - bowtie exec
                                   - picard.jar *)
-  test : (?host:K.Host.t -> string -> K.Command.t) option;
-  edges : K.workflow_edge list;
+  test : (host:KEDSL.Host.t -> string -> KEDSL.Command.t) option;
+  edges : KEDSL.workflow_edge list;
 
-  init_environment : K.Program.t option;
+  init_environment : KEDSL.Program.t option;
 }
 
-let default_test ?host path = K.Command.shell ?host (sprintf "test -e %s" path)
+let default_test ~host path = KEDSL.Command.shell ~host (sprintf "test -e %s" path)
 
 let default_opam_url = "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
 
@@ -40,25 +39,32 @@ module Opam = struct
      Instead of just making sure that this file exists? Wouldn't it be better
      to make sure that a command from this program gives the right output?
      ie. $ opam --version = 1.2.2 *)
-  let target ?host ~install_path =
-    K.single_file ?host (bin ~install_path)
+  let target ~host ~install_path =
+    KEDSL.single_file ~host (bin ~install_path)
 
   (* A workflow to ensure that opam is installed. *)
-  let installed ?host ~install_path =
+  let installed ~(run_program : Machine.Make_fun.t) ~host ~install_path =
     let url = default_opam_url in
-    let opam_exec   = target ?host ~install_path in
+    let opam_exec   = target ~host ~install_path in
     let install_dir = dir ~install_path in
-    K.workflow_node opam_exec
+    let open KEDSL in
+    workflow_node opam_exec
       ~name:"Install opam"
-      ~make:(K.daemonize ?host
-        K.Program.(
-          exec ["mkdir"; "-p"; install_dir]
-          && exec ["cd"; install_dir]
-          && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
-          && shf "chmod +x %s" opam_exec#path))
-      ~edges:[K.on_failure_activate
-                (Workflow_utilities.Remove.path_on_host
-                   ~host:K.Host.tmp_on_localhost install_dir)]
+      ~make:(
+        run_program
+          ~requirements:[
+            `Internet_access;
+            `Self_identification ["opam"; "ini"];
+          ]
+          Program.(
+            exec ["mkdir"; "-p"; install_dir]
+            && exec ["cd"; install_dir]
+            && Workflow_utilities.Download.wget_program ~output_filename:"opam" url
+            && shf "chmod +x %s" opam_exec#path))
+      ~edges:[
+        on_failure_activate
+          (Workflow_utilities.Remove.path_on_host ~host install_dir);
+      ]
 
   let kcom ?(switch=true) ~install_path k fmt =
     let bin = bin ~install_path in
@@ -73,10 +79,10 @@ module Opam = struct
       ksprintf k ("OPAMROOT=%s %s " ^^ fmt) root bin
 
   let program_sh ?switch ~install_path fmt =
-    kcom ?switch ~install_path K.Program.sh fmt
+    kcom ?switch ~install_path KEDSL.Program.sh fmt
 
-  let command_shell ?switch ?host ~install_path fmt =
-    kcom ?switch ~install_path (K.Command.shell ?host) fmt
+  let command_shell ?switch ~host ~install_path fmt =
+    kcom ?switch ~install_path (KEDSL.Command.shell ~host) fmt
 
   let tool_type_to_variable = function
     | Library _   -> "lib"
@@ -93,35 +99,48 @@ end
 let default_biopam_url = "https://github.com/solvuu/biopam.git"
 
 (* A workflow to ensure that biopam is configured. *)
-let configured ?(biopam_home=default_biopam_url) ?host ~install_path () =
+let configured
+    ?(biopam_home = default_biopam_url)
+    ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
   let name  = sprintf "Configure biopam to %s" biopam_home in
   let make  =
-    K.daemonize ?host
+    run_program
+      ~requirements:[
+        `Internet_access;
+        `Self_identification ["opam"; "ini"];
+      ]
       (Opam.program_sh ~install_path ~switch:false
-          "init -n --compiler=0.0.0 biopam %s" biopam_home)
+         "init -n --compiler=0.0.0 biopam %s" biopam_home)
   in
-  let edges = [ K.depends_on (Opam.installed ?host ~install_path)] in
+  let edges =
+    [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
   let biopam_is_repo =
-    Opam.command_shell ~install_path ?host "repo list | grep biopam"
+    Opam.command_shell ~install_path ~host "repo list | grep biopam"
   in
   let cond  =
     object method is_done = Some (`Command_returns (biopam_is_repo, 0)) end
   in
-  K.workflow_node cond ~name ~make ~edges
+  KEDSL.workflow_node cond ~name ~make ~edges
 
-let install_tool ?host ~install_path
+let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ({package; test; edges; init_environment; _ } as it) =
   let open KEDSL in
-  let edges = depends_on (configured ?host ~install_path ()) :: edges in
+  let edges =
+    depends_on (configured ~run_program ~host ~install_path ()) :: edges in
   let name = "Installing " ^ package in
   let make =
-    daemonize ?host Program.(
+    run_program
+      ~requirements:[
+        `Internet_access;
+        `Self_identification ["opam"; "install"; package];
+      ]
+      Program.(
         Option.value init_environment ~default:(sh "echo 'Default init'")
         && Opam.program_sh ~install_path "install %s" package
       )
   in
   let path = Opam.which ~install_path it in
-  let test = (Option.value test ~default:default_test) ?host path in
+  let test = (Option.value test ~default:default_test) ~host path in
   let cond =
     object
       method is_done = Some (`Command_returns (test, 0))
@@ -130,8 +149,9 @@ let install_tool ?host ~install_path
   in
   workflow_node cond ~name ~make ~edges
 
-let provide ?host ~install_path it =
-  let install_workflow = install_tool ?host ~install_path it in
+let provide ~run_program ~host ~install_path it =
+  let install_workflow =
+    install_tool ~run_program ~host ~install_path it in
   let export_var, path =
     match it.tool_type with
     | Application -> "PATH", (Filename.dirname install_workflow#product#path)
@@ -146,17 +166,22 @@ let provide ?host ~install_path it =
           export_var path export_var export_var
       )
 
-let default ?host ~install_path () =
+let default :
+  run_program: Machine.Make_fun.t ->
+  host: Common.KEDSL.Host.t ->
+  install_path: string ->
+  unit ->
+  _ = fun ~run_program ~host ~install_path () ->
   let mk ~package ~witness ?test ?(edges=[])
       ?export_var ?init_environment tt =
-    provide ?host ~install_path
+    provide ~run_program ~host ~install_path
       { tool_type = tt ; package ;
         witness ; test ; edges ; init_environment }
   in
-  let version ?host path =
-    K.Command.shell ?host (sprintf "%s --version" path) in
+  let version ~host path =
+    KEDSL.Command.shell ~host (sprintf "%s --version" path) in
   let need_conda =
-    [ K.depends_on (Conda.configured ?host ~install_path ())]
+    [ KEDSL.depends_on (Conda.configured ~run_program ~host ~install_path ())]
   in
   Machine.Tool.Kit.of_list [
     mk (Library "PICARD_JAR") ~package:"picard" ~witness:"picard.jar";
