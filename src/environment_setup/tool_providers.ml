@@ -488,11 +488,15 @@ let fusioncatcher_tool ~host ~meta_playground ~species =
   let build_organism = 
     match species with 
       | `Homo_sapiens -> "homo_sapiens"
-      | `Mus_musculus -> "mus_musculus"
+      | `Mus_musculus -> failwithf "Build organism Mus_musculus not supported"
   in
   let tool_name = sprintf "fusioncatcher-%s" build_organism in
   let install_path = meta_playground // tool_name in
-  let build_directory = install_path // sprintf "%s_data" build_organism in 
+  let build_directory = 
+    match species with
+    | `Homo_sapiens -> install_path // "data/current" 
+    | `Mus_musculus -> install_path // sprintf "%s_data" build_organism 
+  in 
   let ensure =
     workflow_node (single_file ~host (install_path // "bin/fusioncatcher"))
       ~name:(sprintf "Install %s" tool_name)
@@ -507,8 +511,8 @@ let fusioncatcher_tool ~host ~meta_playground ~species =
             && Workflow_utilities.Download.wget_program ~output_filename:bootstrap_script url 
             && shf "python %s -t --download -y" bootstrap_script
             && sh "cp -r fusioncatcher/* ."
-            && shf "mkdir -p %s" build_directory 
-            && shf "bin/fusioncatcher-build -g %s -o %s" build_organism build_directory 
+            (* && shf "mkdir -p %s" build_directory 
+            && shf "bin/fusioncatcher-build -g %s -o %s" build_organism build_directory  *)
             && sh "echo Done"
           ))
   in
@@ -516,7 +520,7 @@ let fusioncatcher_tool ~host ~meta_playground ~species =
     ~init:(
       Program.(
         shf "export PATH=%s:$PATH" install_path
-        && shf "alias fusioncatcher-data=\"fusioncatcher -d %s\"" build_directory
+        && shf "export FUSION_CATCHER_BUILD_DIR=%s" build_directory
       ))
 
 let default_jar_location msg (): broad_jar_location =

@@ -43,5 +43,5 @@ let run
     ~make:(Machine.run_big_program run_with ~name
             Program.(
               Machine.Tool.(init fusioncatcher_tool)
-              && shf "fusioncatcher-data -i %s -o %s -p %d" input result_dir processors
+              && shf "fusioncatcher -d ${FUSION_CATCHER_BUILD_DIR} -i %s -o %s -p %d" input result_dir processors
           ))
