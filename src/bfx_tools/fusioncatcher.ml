@@ -33,7 +33,7 @@ let run
     | _ -> r1_path
   in
   let name = sprintf "fusioncatcher-%s-%s" build_organism (Filename.basename r1_path) in
-  let result_file = result_dir // "final-list_candidate_fusion_genes.txt" in 
+  let result_file = result_dir // "final-list_candidate-fusion-genes.txt" in 
   workflow_node ~name
     (single_file ~host:(Machine.(as_host run_with)) result_file)
     ~edges:[
