@@ -519,7 +519,7 @@ let fusioncatcher_tool ~host ~meta_playground ~species =
   Machine.Tool.create (`Fusioncatcher species) ~ensure 
     ~init:(
       Program.(
-        shf "export PATH=%s:$PATH" install_path
+        shf "export PATH=%s/bin:$PATH" install_path
         && shf "export FUSION_CATCHER_BUILD_DIR=%s" build_directory
       ))
 
