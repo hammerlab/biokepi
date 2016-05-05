@@ -29,7 +29,7 @@ let run
   let r1_path, r2_path_opt = fastq#product#paths in
   let input = 
     match r2_path_opt with 
-    | Some r2_path -> (sprintf "%s, %s" r1_path r2_path)
+    | Some r2_path -> (sprintf "%s,%s" r1_path r2_path)
     | _ -> r1_path
   in
   let name = sprintf "fusioncatcher-%s-%s" build_organism (Filename.basename r1_path) in
