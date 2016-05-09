@@ -15,18 +15,19 @@ val configured : ?biopam_home:string ->
   install_path:string -> unit ->
   < is_done : KEDSL.Condition.t option > KEDSL.workflow_node
 
+type tool_type = [
+  | `Library of string   (** The export variable that points to witness. *)
+  | `Application
+]
 (** The type of tool that we are installing via opam.
 
    This guides installation and determines:
     1. where we look for the {{!recfield:witness}witness} in
        [opam_install_path]/[package] or [opam_install_path]/bin.
     2. Whether we export $PATH (Application) or $LIBVAR (Library).*)
-type tool_type =
-  | Library of string   (** The export variable that points to witness. *)
-  | Application
 
 (** A description of what we'd like Biopam to install.*)
-type install_target = {
+type install_target = private {
   (** What are we installing? See {{type:tool_type}tool_type}. *)
   tool_type : tool_type;
 
@@ -49,15 +50,40 @@ type install_target = {
   init_environment : KEDSL.Program.t option;
 }
 
-(** Provde the specified (via install_target) tool.*)
+val install_target:
+  ?tool_type: tool_type ->
+  ?test:(host: KEDSL.Host.t -> string -> KEDSL.Command.t) ->
+  ?edges: KEDSL.workflow_edge list ->
+  ?init_environment: KEDSL.Program.t ->
+  witness:string ->
+  string ->
+  install_target
+(** Create {!install_target} values.
+
+    - [tool_type]: the kind of tool being installed.
+    See {{type:tool_type}tool_type}.
+    Default: [`Application].
+    - [witness]: filename (basename)
+    that is passed to test determine success and what is exported (usually the
+    binary for [`Application]s, or the JAR for Java libraries).
+    - [test]: test to determine success of the install.
+    Default: ["test -e <witness>"].
+    - [edges]: dependencies to install first.
+    - [init_environment]: transform the install and init programs, e.g. it
+    needs to be run in a specific environment. Defaults to a “no-op”.
+    - anonymous argument: name of the Opam package:
+    ["opam install <package-name>"].
+*)
+
 val provide :
   run_program: Machine.Make_fun.t ->
   host: Common.KEDSL.Host.t ->
   install_path:string -> install_target -> Machine.Tool.t
+(** Provde the specified (via install_target) tool.*)
 
-(** A set of default tools that have been specified in this module.*)
 val default : 
   run_program: Machine.Make_fun.t ->
   host: Common.KEDSL.Host.t ->
   install_path:string -> unit ->
   Machine.Tool.Kit.t
+(** A set of default tools that have been specified in this module.*)

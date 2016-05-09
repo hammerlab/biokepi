@@ -7,9 +7,10 @@ open Common
 
 (* What are we installing via opam. This determines where we look for the
    witness; in [opam_install_path]/package or [opam_install_path]/bin. *)
-type tool_type =
-  | Library of string
-  | Application
+type tool_type = [
+  | `Library of string
+  | `Application
+]
 
 type install_target = {
   tool_type : tool_type;
@@ -22,6 +23,14 @@ type install_target = {
 
   init_environment : KEDSL.Program.t option;
 }
+let install_target
+    ?(tool_type = `Application)
+    ?test
+    ?(edges = [])
+    ?init_environment
+    ~witness
+    package = 
+  {tool_type; package; witness; test; edges; init_environment}
 
 let default_test ~host path = KEDSL.Command.shell ~host (sprintf "test -e %s" path)
 
@@ -85,8 +94,8 @@ module Opam = struct
     kcom ?switch ~install_path (KEDSL.Command.shell ~host) fmt
 
   let tool_type_to_variable = function
-    | Library _   -> "lib"
-    | Application -> "bin"
+    | `Library _   -> "lib"
+    | `Application -> "bin"
 
   (* Answer Opam 'which' questions *)
   let which ~install_path {package; witness; tool_type; _} =
@@ -154,8 +163,8 @@ let provide ~run_program ~host ~install_path it =
     install_tool ~run_program ~host ~install_path it in
   let export_var, path =
     match it.tool_type with
-    | Application -> "PATH", (Filename.dirname install_workflow#product#path)
-    | Library v   -> v, install_workflow#product#path
+    | `Application -> "PATH", (Filename.dirname install_workflow#product#path)
+    | `Library v   -> v, install_workflow#product#path
   in
   Machine.Tool.create Machine.Tool.Definition.(biopam it.package)
     ~ensure:install_workflow
@@ -166,35 +175,48 @@ let provide ~run_program ~host ~install_path it =
           export_var path export_var export_var
       )
 
+let test_version ~host path =
+  KEDSL.Command.shell ~host (sprintf "%s --version" path)
+
+let picard =
+  install_target
+    ~tool_type:(`Library "PICARD_JAR")
+    ~witness:"picard.jar"
+    "picard"
+
+let bowtie =
+  install_target "bowtie" ~witness:"bowtie" ~test:test_version
+
+let seq2hla need_conda init_conda =
+  install_target "seq2HLA" ~witness:"seq2HLA" ~test:test_version
+      ~edges:need_conda (* opam handles bowtie dep. *)
+      ~init_environment:init_conda
+
+let optitype need_conda init_conda ~install_path =
+  install_target "optitype" ~witness:"OptiTypePipeline"
+    ~edges:need_conda (* opam handles razers3 via seqn. *)
+    ~init_environment:KEDSL.Program.(
+        init_conda
+        && shf "export OPAMROOT=%s" (Opam.root ~install_path)
+        && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
+          (Opam.bin ~install_path)
+      )
+
 let default :
   run_program: Machine.Make_fun.t ->
   host: Common.KEDSL.Host.t ->
   install_path: string ->
   unit ->
   _ = fun ~run_program ~host ~install_path () ->
-  let mk ~package ~witness ?test ?(edges=[])
-      ?export_var ?init_environment tt =
-    provide ~run_program ~host ~install_path
-      { tool_type = tt ; package ;
-        witness ; test ; edges ; init_environment }
-  in
-  let version ~host path =
-    KEDSL.Command.shell ~host (sprintf "%s --version" path) in
   let need_conda =
     [ KEDSL.depends_on (Conda.configured ~run_program ~host ~install_path ())]
   in
-  Machine.Tool.Kit.of_list [
-    mk (Library "PICARD_JAR") ~package:"picard" ~witness:"picard.jar";
-    mk Application ~package:"bowtie" ~witness:"bowtie" ~test:version;
-    mk Application ~package:"seq2HLA" ~witness:"seq2HLA" ~test:version
-      ~edges:need_conda (* opam handles bowtie dep. *)
-      ~init_environment:(Conda.init_biokepi_env ~install_path);
-    mk Application ~package:"optitype" ~witness:"OptiTypePipeline"
-      ~edges:need_conda (* opam handles razers3 via seqn. *)
-      ~init_environment:KEDSL.Program.(
-          Conda.init_biokepi_env ~install_path
-          && shf "export OPAMROOT=%s" (Opam.root ~install_path)
-          && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
-            (Opam.bin ~install_path)
-        );
-  ]
+  let init_conda = Conda.init_biokepi_env ~install_path in
+  Machine.Tool.Kit.of_list
+    (List.map ~f:(provide ~run_program ~host ~install_path) [
+    picard;
+    bowtie;
+    seq2hla need_conda init_conda;
+    optitype need_conda init_conda ~install_path;
+  ])
+
