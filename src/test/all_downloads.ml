@@ -95,6 +95,8 @@ let tools_workflow =
       muse, which_size_and "$muse_bin" ["$muse_bin call -h"];
       (* muse call -h displays an error but still returns 0 *)
       somaticsniper, which_size_and "somaticsniper" ["somaticsniper -v"];
+      seq2hla, which_size_and "seq2HLA" ["seq2HLA --version"];
+      optitype, which_size_and "optitype" ["optitype --version"];
      ]
   in
   let open Ketrew.EDSL in
