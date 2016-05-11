@@ -28,6 +28,9 @@ type tool_type = [
 
 (** A description of what we'd like Biopam to install.*)
 type install_target = private {
+  (** The package handle the Biopam package provides. *)
+  definition: Machine.Tool.Definition.t;
+
   (** What are we installing? See {{type:tool_type}tool_type}. *)
   tool_type : tool_type;
 
@@ -47,32 +50,41 @@ type install_target = private {
 
   (* Transform the install and init programs, e.g. it needs to be run in a
      specific environment. Defaults to a “no-op”. *)
-  init_environment : KEDSL.Program.t option;
+  init_environment : install_path: string -> KEDSL.Program.t;
+
+  (** Whether this package requires Conda packages. *)
+  requires_conda: bool;
 }
 
 val install_target:
-  ?tool_type: tool_type ->
+  ?tool_type:tool_type ->
   ?test:(host: KEDSL.Host.t -> string -> KEDSL.Command.t) ->
   ?edges: KEDSL.workflow_edge list ->
-  ?init_environment: KEDSL.Program.t ->
+  ?init_environment:(install_path:string -> KEDSL.Program.t) ->
+  ?requires_conda:bool ->
   witness:string ->
-  string ->
+  ?package:string ->
+  Machine.Tool.Definition.t ->
   install_target
 (** Create {!install_target} values.
 
     - [tool_type]: the kind of tool being installed.
     See {{type:tool_type}tool_type}.
     Default: [`Application].
-    - [witness]: filename (basename)
-    that is passed to test determine success and what is exported (usually the
-    binary for [`Application]s, or the JAR for Java libraries).
     - [test]: test to determine success of the install.
     Default: ["test -e <witness>"].
     - [edges]: dependencies to install first.
     - [init_environment]: transform the install and init programs, e.g. it
     needs to be run in a specific environment. Defaults to a “no-op”.
-    - anonymous argument: name of the Opam package:
-    ["opam install <package-name>"].
+    - [witness]: filename (basename)
+    that is passed to test determine success and what is exported (usually the
+    binary for [`Application]s, or the JAR for Java libraries).
+    - [requires_conda]: whther this package requires Python packages installed
+    with {!Conda}.
+    - [package]: the package name in the opam sense i.e.
+    ["opam install <package-name>"] (the default is to
+    construct the package name from the {!Machine.Tool.Definition.t}).
+    - anonymous argument: the tool that the installation-target provides.
 *)
 
 val provide :

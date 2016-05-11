@@ -13,6 +13,7 @@ type tool_type = [
 ]
 
 type install_target = {
+  definition: Machine.Tool.Definition.t;
   tool_type : tool_type;
   package : string; (** What do we call 'install opam ' with *)
   witness : string; (** File that must exist after install, ex:
@@ -21,16 +22,25 @@ type install_target = {
   test : (host:KEDSL.Host.t -> string -> KEDSL.Command.t) option;
   edges : KEDSL.workflow_edge list;
 
-  init_environment : KEDSL.Program.t option;
+  init_environment : install_path: string -> KEDSL.Program.t;
+  requires_conda: bool;
 }
 let install_target
     ?(tool_type = `Application)
     ?test
     ?(edges = [])
-    ?init_environment
+    ?(init_environment =
+      fun ~install_path -> KEDSL.Program.(sh "echo 'Default Init'"))
+    ?(requires_conda = false)
     ~witness
-    package = 
-  {tool_type; package; witness; test; edges; init_environment}
+    ?package
+    definition = 
+  let package =
+    match package with
+    | Some p -> p
+    | None -> Machine.Tool.Definition.to_opam_name definition in
+  {definition; tool_type; package; witness; test; edges;
+   init_environment; requires_conda}
 
 let default_test ~host path = KEDSL.Command.shell ~host (sprintf "test -e %s" path)
 
@@ -135,7 +145,12 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ({package; test; edges; init_environment; _ } as it) =
   let open KEDSL in
   let edges =
-    depends_on (configured ~run_program ~host ~install_path ()) :: edges in
+    let base =
+      depends_on (configured ~run_program ~host ~install_path ()) :: edges in
+    if it.requires_conda
+    then
+      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: base
+    else base in
   let name = "Installing " ^ package in
   let make =
     run_program
@@ -144,7 +159,10 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
         `Self_identification ["opam"; "install"; package];
       ]
       Program.(
-        Option.value init_environment ~default:(sh "echo 'Default init'")
+        (if it.requires_conda
+         then Conda.init_biokepi_env ~install_path
+         else sh "echo 'Does not need Conda'")
+        && init_environment ~install_path
         && Opam.program_sh ~install_path "install %s" package
       )
   in
@@ -166,11 +184,14 @@ let provide ~run_program ~host ~install_path it =
     | `Application -> "PATH", (Filename.dirname install_workflow#product#path)
     | `Library v   -> v, install_workflow#product#path
   in
-  Machine.Tool.create Machine.Tool.Definition.(biopam it.package)
+  Machine.Tool.create it.definition
     ~ensure:install_workflow
     (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
     ~init:KEDSL.Program.(
-        Option.value it.init_environment ~default:(sh "echo 'Default init'")
+        (if it.requires_conda
+         then Conda.init_biokepi_env ~install_path
+         else sh "echo 'Does not need Conda'")
+        && it.init_environment ~install_path
         && shf "export %s=\"%s${%s:+:}${%s}\""
           export_var path export_var export_var
       )
@@ -182,24 +203,28 @@ let picard =
   install_target
     ~tool_type:(`Library "PICARD_JAR")
     ~witness:"picard.jar"
-    "picard"
+    (Machine.Tool.Definition.create "picard" ~version:"1.128")
 
 let bowtie =
-  install_target "bowtie" ~witness:"bowtie" ~test:test_version
+  install_target
+    ~witness:"bowtie" ~test:test_version
+    Machine.Tool.Default.bowtie
 
-let seq2hla need_conda init_conda =
-  install_target "seq2HLA" ~witness:"seq2HLA" ~test:test_version
-      ~edges:need_conda (* opam handles bowtie dep. *)
-      ~init_environment:init_conda
+let seq2hla =
+  install_target
+    ~witness:"seq2HLA" ~test:test_version ~requires_conda:true
+    ~package:"seq2HLA.2.2" (* we need to uppercase HLA for opam *)
+    Machine.Tool.Default.seq2hla
 
-let optitype need_conda init_conda ~install_path =
-  install_target "optitype" ~witness:"OptiTypePipeline"
-    ~edges:need_conda (* opam handles razers3 via seqn. *)
+let optitype =
+  install_target ~witness:"OptiTypePipeline"
+    Machine.Tool.Default.optitype
+    ~requires_conda:true
     ~init_environment:KEDSL.Program.(
-        init_conda
-        && shf "export OPAMROOT=%s" (Opam.root ~install_path)
-        && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
-          (Opam.bin ~install_path)
+        fun ~install_path ->
+          shf "export OPAMROOT=%s" (Opam.root ~install_path)
+          && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
+            (Opam.bin ~install_path)
       )
 
 let default :
@@ -208,15 +233,11 @@ let default :
   install_path: string ->
   unit ->
   _ = fun ~run_program ~host ~install_path () ->
-  let need_conda =
-    [ KEDSL.depends_on (Conda.configured ~run_program ~host ~install_path ())]
-  in
-  let init_conda = Conda.init_biokepi_env ~install_path in
   Machine.Tool.Kit.of_list
     (List.map ~f:(provide ~run_program ~host ~install_path) [
     picard;
     bowtie;
-    seq2hla need_conda init_conda;
-    optitype need_conda init_conda ~install_path;
+    seq2hla;
+    optitype;
   ])
 
