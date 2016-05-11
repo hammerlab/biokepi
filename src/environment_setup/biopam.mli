@@ -54,6 +54,13 @@ type install_target = private {
 
   (** Whether this package requires Conda packages. *)
   requires_conda: bool;
+
+  (** Which opam-repository the tool should come from. *)
+  repository: [ `Biopam | `Opam | `Custom of string ];
+
+  (** Which compiler should be used to create the tool's own installation
+      opam-switch.  *)
+  compiler: string option;
 }
 
 val install_target:
@@ -64,6 +71,8 @@ val install_target:
   ?requires_conda:bool ->
   witness:string ->
   ?package:string ->
+  ?repository:[ `Biopam | `Custom of string | `Opam ] ->
+  ?compiler:string ->
   Machine.Tool.Definition.t ->
   install_target
 (** Create {!install_target} values.
@@ -84,6 +93,15 @@ val install_target:
     - [package]: the package name in the opam sense i.e.
     ["opam install <package-name>"] (the default is to
     construct the package name from the {!Machine.Tool.Definition.t}).
+    - [repository]:  Which opam-repository the tool should come from:
+    {ul
+       - [`Biopam]: the Biopam project's repository ({b default}).
+       - [`Opam]: the default Opam repository.
+       - [`Custom url]: use custom URL.
+    }
+    - [compiler]: Which compiler should be used to create the tool's own
+    installation opam-switch (the default is [None] corresponding to ["0.0.0"]
+    which is expected for the [`Biopam] repository).
     - anonymous argument: the tool that the installation-target provides.
 *)
 

@@ -24,6 +24,8 @@ type install_target = {
 
   init_environment : install_path: string -> KEDSL.Program.t;
   requires_conda: bool;
+  repository: [ `Biopam | `Opam | `Custom of string ];
+  compiler: string option;
 }
 let install_target
     ?(tool_type = `Application)
@@ -34,17 +36,22 @@ let install_target
     ?(requires_conda = false)
     ~witness
     ?package
+    ?(repository = `Biopam)
+    ?compiler
     definition = 
   let package =
     match package with
     | Some p -> p
     | None -> Machine.Tool.Definition.to_opam_name definition in
   {definition; tool_type; package; witness; test; edges;
-   init_environment; requires_conda}
+   init_environment; requires_conda; repository; compiler}
 
-let default_test ~host path = KEDSL.Command.shell ~host (sprintf "test -e %s" path)
+let default_test ~host path =
+  KEDSL.Command.shell ~host (sprintf "test -e %s" path)
 
-let default_opam_url = "https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"
+let default_opam_url =
+  "https://github.com/ocaml/opam/releases/download/\
+   1.2.2/opam-1.2.2-x86_64-Linux"
 
 (* Hide the messy logic of calling opam in here. This should not be exported
    and use the Biopam functions directly.*)
@@ -52,7 +59,7 @@ module Opam = struct
 
   let dir ~install_path = install_path // "opam_dir"
   let bin ~install_path = dir ~install_path // "opam"
-  let root ~install_path = dir ~install_path // ".opam"
+  let root ~install_path = dir ~install_path // "opam-root"
 
   (* TODO:
      Instead of just making sure that this file exists? Wouldn't it be better
@@ -85,20 +92,26 @@ module Opam = struct
           (Workflow_utilities.Remove.path_on_host ~host install_dir);
       ]
 
-  let kcom ?(switch=true) ~install_path k fmt =
+  let kcom ?switch ~install_path k fmt =
     let bin = bin ~install_path in
     let root = root ~install_path in
     (* Pass the ROOT and SWITCH args as environments to not disrupt the flow of
        the rest of the arguments:
         ie opam --root [root] init -n
        doesn't parse correctly. *)
-    if switch then
-      ksprintf k ("OPAMROOT=%s OPAMSWITCH=0.0.0 %s " ^^ fmt) root bin
-    else
-      ksprintf k ("OPAMROOT=%s %s " ^^ fmt) root bin
+    ksprintf k
+      ("OPAMBASEPACKAGES= OPAMYES=true OPAMROOT=%s %s %s " ^^ fmt)
+      root 
+      (Option.value_map ~default:"" switch ~f:(sprintf "OPAMSWITCH=%s"))
+      bin
 
-  let program_sh ?switch ~install_path fmt =
-    kcom ?switch ~install_path KEDSL.Program.sh fmt
+  let program_sh ?(never_fail = false) ?switch ~install_path fmt =
+    kcom ?switch ~install_path (fun s ->
+        KEDSL.Program.sh
+          (if never_fail
+           then s ^ " | echo 'Never fails'"
+           else s))
+      fmt
 
   let command_shell ?switch ~host ~install_path fmt =
     kcom ?switch ~install_path (KEDSL.Command.shell ~host) fmt
@@ -107,11 +120,15 @@ module Opam = struct
     | `Library _   -> "lib"
     | `Application -> "bin"
 
+  let switch_of_package p = "switch-" ^ p
+
   (* Answer Opam 'which' questions *)
   let which ~install_path {package; witness; tool_type; _} =
     let v = tool_type_to_variable tool_type in
-    let s = kcom ~install_path (fun x -> x) "config var %s:%s" package v in
-    (Printf.sprintf "$(%s)" s) // witness
+    let s =
+      kcom ~switch:(switch_of_package package) ~install_path
+        (fun x -> x) "config var %s:%s" package v in
+    (sprintf "$(%s)" s) // witness
 
 end
 
@@ -128,7 +145,7 @@ let configured
         `Internet_access;
         `Self_identification ["opam"; "ini"];
       ]
-      (Opam.program_sh ~install_path ~switch:false
+      (Opam.program_sh ~install_path
          "init -n --compiler=0.0.0 biopam %s" biopam_home)
   in
   let edges =
@@ -142,8 +159,11 @@ let configured
   KEDSL.workflow_node cond ~name ~make ~edges
 
 let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
-    ({package; test; edges; init_environment; _ } as it) =
+    ({package; test; edges; init_environment; repository; _ } as it) =
   let open KEDSL in
+  let switch = Opam.switch_of_package package in
+  let alias_of =
+    Option.value it.compiler ~default:"0.0.0" in
   let edges =
     let base =
       depends_on (configured ~run_program ~host ~install_path ()) :: edges in
@@ -152,6 +172,12 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
       depends_on (Conda.configured ~run_program ~host ~install_path ()) :: base
     else base in
   let name = "Installing " ^ package in
+  let repo_name, repo_url =
+    match repository with
+    | `Biopam -> "biopam", default_biopam_url
+    | `Opam -> "opam", "https://opam.ocaml.org"
+    | `Custom c -> Digest.(string c |> to_hex), c
+  in
   let make =
     run_program
       ~requirements:[
@@ -162,8 +188,12 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
         (if it.requires_conda
          then Conda.init_biokepi_env ~install_path
          else sh "echo 'Does not need Conda'")
-        && init_environment ~install_path
-        && Opam.program_sh ~install_path "install %s" package
+        (* && init_environment ~install_path *)
+        && Opam.program_sh ~never_fail:true ~install_path
+          "repo add %s %s" repo_name repo_url
+        && Opam.program_sh ~install_path
+          "switch %s --alias-of %s" switch alias_of
+        && Opam.program_sh ~switch ~install_path "install %s" package
       )
   in
   let path = Opam.which ~install_path it in
@@ -222,7 +252,10 @@ let optitype =
     ~requires_conda:true
     ~init_environment:KEDSL.Program.(
         fun ~install_path ->
-          shf "export OPAMROOT=%s" (Opam.root ~install_path)
+          shf "export OPAMSWITCH=%s" (
+            Machine.Tool.Definition.to_opam_name 
+              Machine.Tool.Default.optitype |> Opam.switch_of_package)
+          && shf "export OPAMROOT=%s" (Opam.root ~install_path)
           && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
             (Opam.bin ~install_path)
       )
