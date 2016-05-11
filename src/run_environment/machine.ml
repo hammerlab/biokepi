@@ -24,10 +24,10 @@ module Tool = struct
   module Definition = struct
     type t = {name: string; version: string option}
     let create ?version name  = {name; version}
-    let to_string {name; version} =
+    let to_opam_name {name; version} =
       sprintf "%s.%s" name (Option.value ~default:"NOVERSION" version)
-    let to_directory_name = to_string
-    let biopam (* TODO : TMP *) p = create p ~version:"biopam"
+    let to_string = to_opam_name
+    let to_directory_name = to_opam_name
   end
   module Default = struct
     open Definition
@@ -50,8 +50,9 @@ module Tool = struct
     let hisat2 = create "hisat" ~version:"2.0.2-beta"
     let mosaik = create "mosaik" ~version:"2.2.3"
     let kallisto = create "kallisto" ~version:"0.42.3"
-    let optitype = biopam "optitype"
-    let seq2hla = biopam "seq2HLA"
+    let bowtie = create "bowtie" ~version:"1.1.2"
+    let optitype = create "optitype" ~version:"1.0.0"
+    let seq2hla = create "seq2hla" ~version:"2.2"
   end
   type t = {
     definition: Definition.t;
