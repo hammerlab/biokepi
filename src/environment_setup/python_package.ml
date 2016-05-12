@@ -43,6 +43,6 @@ let create_python_tool ?host ~meta_playground
 
 let default ?host ~meta_playground () =
    Machine.Tool.Kit.create [
-    (* create_python_tool ?host ~meta_playground "vcf-annotate-tool" Pip Package_PyPI; *)
+     create_python_tool ?host ~meta_playground "vcf-annotate-tool" Pip Package_PyPI;
    ]
 
