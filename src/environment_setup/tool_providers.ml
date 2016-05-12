@@ -514,5 +514,6 @@ let default_toolkit
       kallisto_tool ~host ~meta_playground;
     ];
     Biopam.default ~host ~install_path:(meta_playground // "biopam-kit") ();
+    Python_package.default ~host ~meta_playground ();
   ]
 

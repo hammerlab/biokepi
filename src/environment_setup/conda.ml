@@ -40,6 +40,7 @@ let installed ?host ~install_path =
 
 let config = "biokepi_conda_env"
 let env_name = "biokepi"
+let environment_path ~install_path = dir ~install_path // env_name
 let biokepi_conda_config =
 {conda|# This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>

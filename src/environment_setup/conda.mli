@@ -9,3 +9,6 @@ val configured : ?host:Common.KEDSL.Host.t -> install_path:string -> unit ->
 
 (** A transform to run Programs with the Conda enviroment activated. *)
 val init_biokepi_env : install_path:string -> Common.KEDSL.Program.t
+
+(** This is the absolute path to the environment folder **)
+val environment_path : install_path:string -> string
