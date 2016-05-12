@@ -148,7 +148,7 @@ module Make_fun = struct
   let quick requirements = `Quick_run :: requirements
 
   let downloading requirements =
-    `Internet_access :: stream_processor requirements 
+    `Internet_access :: stream_processor requirements
 
   let with_self_ids ?self_ids l =
     match self_ids with
@@ -213,5 +213,3 @@ let run_big_program t :
       (Make_fun.with_self_ids ?self_ids [`Memory `Big; `Processors processors])
 
 let work_dir t = t.work_dir
-
-
