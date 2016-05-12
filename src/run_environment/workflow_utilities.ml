@@ -187,6 +187,31 @@ module Download = struct
       wget ~host ~run_program url destination
     )
 
+  let wget_bunzip2
+      ~host ~(run_program : Machine.Make_fun.t)
+      ~destination url =
+    let open KEDSL in
+    let is_bz2 = Filename.check_suffix url ".bz2" in
+    if is_bz2 then (
+      let name = "bunzip2-" ^ Filename.basename (destination ^ ".bz2") in
+      let wgot = wget ~host ~run_program url (destination ^ ".bz2") in
+      workflow_node
+        (single_file destination ~host)
+        ~edges:[
+          depends_on (wgot);
+          on_failure_activate (Remove.path_on_host ~host destination);
+        ]
+        ~name
+        ~make:(
+          run_program ~name
+            ~requirements:(Machine.Make_fun.stream_processor [])
+            Program.(shf "bunzip2 -c %s > %s"
+                       (Filename.quote wgot#product#path)
+                       (Filename.quote destination)))
+    ) else (
+      wget ~host ~run_program url destination
+    )
+
   let wget_untar
       ~host ~(run_program : Machine.Make_fun.t)
       ~destination_folder ~tar_contains url =
