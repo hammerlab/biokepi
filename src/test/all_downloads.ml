@@ -135,7 +135,9 @@ let () =
   match Sys.argv |> Array.to_list |> List.tl_exn with
   | "go" :: more ->
     Ketrew.Client.submit_workflow (workflow (how more))
-      ~add_tags:["biokepi"; "test"; "all-downloads"]
+      ~add_tags:[
+        "biokepi"; "test"; "all-downloads";
+        Ketrew_pure.Internal_pervasives.Time.(now () |> to_filename) ]
   | "view" :: more ->
     Ketrew.EDSL.workflow_to_string (workflow (how more))
     |> printf "Workflow:\n%s\n%!"
