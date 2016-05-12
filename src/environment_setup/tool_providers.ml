@@ -448,5 +448,6 @@ let default_toolkit
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
+    Python_package.default ~host ~meta_playground ();
   ]
 
