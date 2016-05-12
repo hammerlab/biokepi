@@ -521,6 +521,14 @@ module Make (Config : Compiler_configuration)
     in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
 
+  let vcf_annotate_polyphen reference_build vcf =
+    let v = get_vcf vcf in
+    let out_filename = Filename.chop_extension v#product#path ^ "_polyphen.vcf" in
+    let output_vcf = Config.work_dir // out_filename in 
+    Vcf (
+      Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
+    )
+
   let optitype how fq =
     let fastq = get_fastq fq in
     let work_dir =

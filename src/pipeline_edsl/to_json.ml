@@ -175,6 +175,8 @@ module Make_serializer (How : sig
   let fastqc =
     one_to_one "fastqc" "default"
 
+  let vcf_annotate_polyphen reference_build =
+    one_to_one "vcf_annotate_polyphen" "default"
 
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
