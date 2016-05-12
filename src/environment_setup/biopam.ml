@@ -100,7 +100,9 @@ module Opam = struct
         ie opam --root [root] init -n
        doesn't parse correctly. *)
     ksprintf k
-      ("OPAMBASEPACKAGES= OPAMYES=true OPAMROOT=%s %s %s " ^^ fmt)
+      ("OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
+        OPAMROOT=%s %s %s "
+       ^^ fmt)
       root 
       (Option.value_map ~default:"" switch ~f:(sprintf "OPAMSWITCH=%s"))
       bin
