@@ -186,5 +186,10 @@ module type Bioinformatics_base = sig
   (** Call the FASTQC tool (the result is an output directory custom to the
       tool). *)
 
+  val vcf_annotate_polyphen:
+    Biokepi_run_environment.Reference_genome.name ->
+    [ `Vcf ] repr ->
+    [ `Vcf ] repr
+
 end
 
