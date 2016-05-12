@@ -153,11 +153,9 @@ let configured
   in
   let edges =
     [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
-  let biopam_is_repo =
-    Opam.command_shell ~install_path ~host "repo list | grep biopam"
-  in
+  let opam_has_repo = Opam.command_shell ~install_path ~host "repo list" in
   let cond  =
-    object method is_done = Some (`Command_returns (biopam_is_repo, 0)) end
+    object method is_done = Some (`Command_returns (opam_has_repo, 0)) end
   in
   KEDSL.workflow_node cond ~name ~make ~edges
 
