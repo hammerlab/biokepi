@@ -128,8 +128,9 @@ module Opam = struct
   let which ~install_path {package; witness; tool_type; _} =
     let v = tool_type_to_variable tool_type in
     let s =
+      let package_name = String.take_while package ~f:((<>) '.') in
       kcom ~switch:(switch_of_package package) ~install_path
-        (fun x -> x) "config var %s:%s" package v in
+        (fun x -> x) "config var %s:%s" package_name v in
     (sprintf "$(%s)" s) // witness
 
 end
