@@ -124,9 +124,15 @@ let configured ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
         `Internet_access;
         `Self_identification ["conda"; "configuration"];
       ]
-      Program.(sh conf
-               && shf "source %s %s" (activate ~install_path) env_name
-               && sh "pip install -U pyomo")
+      Program.(
+        sh conf
+        && shf "source %s %s" (activate ~install_path) env_name
+        && chain (List.map ~f:(shf "pip install %s") [
+            "pyomo";
+            "six";
+            "packaging";
+          ])
+      )
   in
   let edges = [
     depends_on (installed ~run_program ~host ~install_path);
