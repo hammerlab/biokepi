@@ -148,8 +148,12 @@ let configured
         `Internet_access;
         `Self_identification ["opam"; "ini"];
       ]
-      (Opam.program_sh ~install_path
-         "init -n --compiler=0.0.0 biopam %s" biopam_home)
+      KEDSL.Program.(
+        Opam.program_sh ~install_path
+          "init -n --compiler=0.0.0 biopam %s" biopam_home
+        && Opam.program_sh ~install_path
+          "repo remove biopam"
+      )
   in
   let edges =
     [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
@@ -162,47 +166,65 @@ let configured
 let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ({package; test; edges; init_environment; repository; _ } as it) =
   let open KEDSL in
+  let run_prog name =
+    run_program
+      ~requirements:[
+        `Internet_access;
+        `Self_identification ["opam"; name; package];
+      ]
+  in
   let switch = Opam.switch_of_package package in
   let alias_of =
     Option.value it.compiler ~default:"0.0.0" in
-  let edges =
-    let base =
-      depends_on (configured ~run_program ~host ~install_path ()) :: edges in
-    if it.requires_conda
-    then
-      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: base
-    else base in
-  let name = "Installing " ^ package in
   let repo_name, repo_url =
     match repository with
     | `Biopam -> "biopam", default_biopam_url
     | `Opam -> "opam", "https://opam.ocaml.org"
     | `Custom c -> Digest.(string c |> to_hex), c
   in
+  let edges =
+    let clean_repo =
+      workflow_node without_product
+        ~name:(sprintf "Remove repo: %s %s" repo_name repo_url)
+        ~make:(run_prog "repo-remove"
+                 Program.(
+                   Opam.program_sh ~never_fail:true ~install_path
+                     "repo remove %s" repo_name))
+    in
+    let base =
+      on_failure_activate clean_repo
+      :: depends_on (configured ~run_program ~host ~install_path ())
+      :: edges in
+    if it.requires_conda
+    then
+      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: base
+    else base in
+  let name = "Installing " ^ package in
   let make =
-    run_program
-      ~requirements:[
-        `Internet_access;
-        `Self_identification ["opam"; "install"; package];
-      ]
+    run_prog "install"
       Program.(
         (if it.requires_conda
          then Conda.init_biokepi_env ~install_path
          else sh "echo 'Does not need Conda'")
         (* && init_environment ~install_path *)
-        && Opam.program_sh ~never_fail:true ~install_path
-          "repo add %s %s" repo_name repo_url
+        && Opam.program_sh ~install_path ~never_fail:true
+          "repo remove %s" repo_name
+        && Opam.program_sh ~install_path
+          "repo add %s %s" repo_name (Filename.quote repo_url)
+        && Opam.program_sh ~install_path "update"
         && Opam.program_sh ~install_path
           "switch %s --alias-of %s" switch alias_of
         && Opam.program_sh ~switch ~install_path "install %s" package
+        && Opam.program_sh ~install_path
+          "repo remove %s" repo_name
       )
   in
-  let path = Opam.which ~install_path it in
-  let test = (Option.value test ~default:default_test) ~host path in
+  let shell_which = Opam.which ~install_path it in
+  let test = (Option.value test ~default:default_test) ~host shell_which in
   let cond =
     object
       method is_done = Some (`Command_returns (test, 0))
-      method path = path
+      method shell_which = shell_which
     end
   in
   workflow_node cond ~name ~make ~edges
@@ -210,10 +232,12 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
 let provide ~run_program ~host ~install_path it =
   let install_workflow =
     install_tool ~run_program ~host ~install_path it in
-  let export_var, path =
+  let export_var =
     match it.tool_type with
-    | `Application -> "PATH", (Filename.dirname install_workflow#product#path)
-    | `Library v   -> v, install_workflow#product#path
+    | `Application -> None
+    | `Library v   ->
+      let path = install_workflow#product#shell_which in
+      Some KEDSL.Program.(shf "export %s=\"%s${%s:+:}${%s}\"" v path v v)
   in
   Machine.Tool.create it.definition
     ~ensure:install_workflow
@@ -223,8 +247,9 @@ let provide ~run_program ~host ~install_path it =
          then Conda.init_biokepi_env ~install_path
          else sh "echo 'Does not need Conda'")
         && it.init_environment ~install_path
-        && shf "export %s=\"%s${%s:+:}${%s}\""
-          export_var path export_var export_var
+        && Opam.kcom ~switch:(Opam.switch_of_package it.package) ~install_path
+          (shf "eval $(%s)") "config env"
+        && Option.value export_var ~default:(sh "echo 'No export var'")
       )
 
 let test_version ~host path =
