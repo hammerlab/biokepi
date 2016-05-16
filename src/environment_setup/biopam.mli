@@ -8,13 +8,6 @@ val default_opam_url : string
 (** The default location from where we download biopam. *)
 val default_biopam_url : string
 
-(** A workflow to make sure that Biopam is configured.*)
-val configured : ?biopam_home:string ->
-  run_program: Machine.Make_fun.t ->
-  host: Common.KEDSL.Host.t ->
-  install_path:string -> unit ->
-  < is_done : KEDSL.Condition.t option > KEDSL.workflow_node
-
 type tool_type = [
   | `Library of string   (** The export variable that points to witness. *)
   | `Application
@@ -101,7 +94,7 @@ val install_target:
     }
     - [compiler]: Which compiler should be used to create the tool's own
     installation opam-switch (the default is [None] corresponding to ["0.0.0"]
-    which is expected for the [`Biopam] repository).
+    for [`Biopam] and ["4.02.3"] for [`Opam] or [`Custom _])
     - anonymous argument: the tool that the installation-target provides.
 *)
 

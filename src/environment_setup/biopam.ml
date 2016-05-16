@@ -59,7 +59,7 @@ module Opam = struct
 
   let dir ~install_path = install_path // "opam_dir"
   let bin ~install_path = dir ~install_path // "opam"
-  let root ~install_path = dir ~install_path // "opam-root"
+  let root ~install_path name = dir ~install_path // "opam-root-" ^ name
 
   (* TODO:
      Instead of just making sure that this file exists? Wouldn't it be better
@@ -92,76 +92,50 @@ module Opam = struct
           (Workflow_utilities.Remove.path_on_host ~host install_dir);
       ]
 
-  let kcom ?switch ~install_path k fmt =
+  let kcom ~root_name ~install_path k fmt =
     let bin = bin ~install_path in
-    let root = root ~install_path in
+    let root = root ~install_path root_name in
     (* Pass the ROOT and SWITCH args as environments to not disrupt the flow of
        the rest of the arguments:
         ie opam --root [root] init -n
        doesn't parse correctly. *)
     ksprintf k
       ("OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
-        OPAMROOT=%s %s %s "
+        OPAMROOT=%s %s "
        ^^ fmt)
       root 
-      (Option.value_map ~default:"" switch ~f:(sprintf "OPAMSWITCH=%s"))
+      (* (Option.value_map ~default:"" switch ~f:(sprintf "OPAMSWITCH=%s")) *)
       bin
 
-  let program_sh ?(never_fail = false) ?switch ~install_path fmt =
-    kcom ?switch ~install_path (fun s ->
+  let program_sh ?(never_fail = false) ~root_name ~install_path fmt =
+    kcom ~root_name ~install_path (fun s ->
         KEDSL.Program.sh
           (if never_fail
            then s ^ " | echo 'Never fails'"
            else s))
       fmt
 
-  let command_shell ?switch ~host ~install_path fmt =
-    kcom ?switch ~install_path (KEDSL.Command.shell ~host) fmt
+  let command_shell ~root_name ~host ~install_path fmt =
+    kcom ~root_name ~install_path (KEDSL.Command.shell ~host) fmt
 
   let tool_type_to_variable = function
     | `Library _   -> "lib"
     | `Application -> "bin"
 
-  let switch_of_package p = "switch-" ^ p
+  let root_of_package p = "root-" ^ p
 
   (* Answer Opam 'which' questions *)
   let which ~install_path {package; witness; tool_type; _} =
     let v = tool_type_to_variable tool_type in
     let s =
       let package_name = String.take_while package ~f:((<>) '.') in
-      kcom ~switch:(switch_of_package package) ~install_path
+      kcom ~root_name:(root_of_package package) ~install_path
         (fun x -> x) "config var %s:%s" package_name v in
     (sprintf "$(%s)" s) // witness
 
 end
 
 let default_biopam_url = "https://github.com/solvuu/biopam.git"
-
-(* A workflow to ensure that biopam is configured. *)
-let configured
-    ?(biopam_home = default_biopam_url)
-    ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
-  let name  = sprintf "Configure biopam to %s" biopam_home in
-  let make  =
-    run_program
-      ~requirements:[
-        `Internet_access;
-        `Self_identification ["opam"; "ini"];
-      ]
-      KEDSL.Program.(
-        Opam.program_sh ~install_path
-          "init -n --compiler=0.0.0 biopam %s" biopam_home
-        && Opam.program_sh ~install_path
-          "repo remove biopam"
-      )
-  in
-  let edges =
-    [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
-  let opam_has_repo = Opam.command_shell ~install_path ~host "repo list" in
-  let cond  =
-    object method is_done = Some (`Command_returns (opam_has_repo, 0)) end
-  in
-  KEDSL.workflow_node cond ~name ~make ~edges
 
 let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ({package; test; edges; init_environment; repository; _ } as it) =
@@ -173,32 +147,21 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
         `Self_identification ["opam"; name; package];
       ]
   in
-  let switch = Opam.switch_of_package package in
-  let alias_of =
-    Option.value it.compiler ~default:"0.0.0" in
-  let repo_name, repo_url =
+  let root_name = Opam.root_of_package package in
+  let default_compiler, repo_url =
     match repository with
-    | `Biopam -> "biopam", default_biopam_url
-    | `Opam -> "opam", "https://opam.ocaml.org"
-    | `Custom c -> Digest.(string c |> to_hex), c
+    | `Biopam -> "0.0.0", default_biopam_url
+    | `Opam -> "4.02.3", "https://opam.ocaml.org"
+    | `Custom c -> "4.02.3", c
   in
+  let compiler = Option.value it.compiler ~default:default_compiler in
   let edges =
-    let clean_repo =
-      workflow_node without_product
-        ~name:(sprintf "Remove repo: %s %s" repo_name repo_url)
-        ~make:(run_prog "repo-remove"
-                 Program.(
-                   Opam.program_sh ~never_fail:true ~install_path
-                     "repo remove %s" repo_name))
-    in
-    let base =
-      on_failure_activate clean_repo
-      :: depends_on (configured ~run_program ~host ~install_path ())
-      :: edges in
+    let edges =
+      [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
     if it.requires_conda
     then
-      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: base
-    else base in
+      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: edges
+    else edges in
   let name = "Installing " ^ package in
   let make =
     run_prog "install"
@@ -206,17 +169,11 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
         (if it.requires_conda
          then Conda.init_biokepi_env ~install_path
          else sh "echo 'Does not need Conda'")
-        (* && init_environment ~install_path *)
-        && Opam.program_sh ~install_path ~never_fail:true
-          "repo remove %s" repo_name
-        && Opam.program_sh ~install_path
-          "repo add %s %s" repo_name (Filename.quote repo_url)
-        && Opam.program_sh ~install_path "update"
-        && Opam.program_sh ~install_path
-          "switch %s --alias-of %s" switch alias_of
-        && Opam.program_sh ~switch ~install_path "install %s" package
-        && Opam.program_sh ~install_path
-          "repo remove %s" repo_name
+        && shf "rm -fr %s" (Filename.quote root_name)
+        && Opam.program_sh
+          ~install_path ~root_name "init --comp=%s %s"
+          compiler (Filename.quote repo_url)
+        && Opam.program_sh ~root_name ~install_path "install %s" package
       )
   in
   let shell_which = Opam.which ~install_path it in
@@ -241,13 +198,12 @@ let provide ~run_program ~host ~install_path it =
   in
   Machine.Tool.create it.definition
     ~ensure:install_workflow
-    (* The 'FOO:+:' outputs ':' only if ${FOO} is defined. *)
     ~init:KEDSL.Program.(
         (if it.requires_conda
          then Conda.init_biokepi_env ~install_path
          else sh "echo 'Does not need Conda'")
         && it.init_environment ~install_path
-        && Opam.kcom ~switch:(Opam.switch_of_package it.package) ~install_path
+        && Opam.kcom ~root_name:(Opam.root_of_package it.package) ~install_path
           (shf "eval $(%s)") "config env"
         && Option.value export_var ~default:(sh "echo 'No export var'")
       )
