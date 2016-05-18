@@ -38,7 +38,7 @@ let install_target
     ?package
     ?(repository = `Biopam)
     ?compiler
-    definition = 
+    definition =
   let package =
     match package with
     | Some p -> p
@@ -95,16 +95,13 @@ module Opam = struct
   let kcom ~root_name ~install_path k fmt =
     let bin = bin ~install_path in
     let root = root ~install_path root_name in
-    (* Pass the ROOT and SWITCH args as environments to not disrupt the flow of
-       the rest of the arguments:
-        ie opam --root [root] init -n
+    (* Pass the ROOT args as environments to not disrupt the flow of the rest
+       of the arguments: ie `opam --root [root] init -n`
        doesn't parse correctly. *)
     ksprintf k
       ("OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
-        OPAMROOT=%s %s "
-       ^^ fmt)
-      root 
-      (* (Option.value_map ~default:"" switch ~f:(sprintf "OPAMSWITCH=%s")) *)
+        OPAMROOT=%s %s " ^^ fmt)
+      root
       bin
 
   let program_sh ?(never_fail = false) ~root_name ~install_path fmt =
