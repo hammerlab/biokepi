@@ -224,20 +224,17 @@ let bowtie =
 
 let seq2hla =
   install_target
-    ~witness:"seq2HLA" ~test:test_version ~requires_conda:true
+    ~witness:"seq2HLA" ~requires_conda:true
     ~package:"seq2HLA.2.2" (* we need to uppercase HLA for opam *)
     Machine.Tool.Default.seq2hla
 
 let optitype =
-  install_target ~witness:"OptiTypePipeline"
-    Machine.Tool.Default.optitype
+  install_target ~witness:"OptiTypePipeline" Machine.Tool.Default.optitype
     ~requires_conda:true
     ~init_environment:KEDSL.Program.(
         fun ~install_path ->
-          shf "export OPAMSWITCH=%s" (
-            Machine.Tool.Definition.to_opam_name 
-              Machine.Tool.Default.optitype |> Opam.switch_of_package)
-          && shf "export OPAMROOT=%s" (Opam.root ~install_path)
+          let name = Machine.Tool.(Default.optitype.Definition.name) in
+          shf "export OPAMROOT=%s" (Opam.root_of_package name |> Opam.root ~install_path)
           && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
             (Opam.bin ~install_path)
       )
