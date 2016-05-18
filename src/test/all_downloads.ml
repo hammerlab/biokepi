@@ -25,10 +25,39 @@ let run_program ?name ?requirements prog =
   let open Ketrew.EDSL in
   daemonize ~using:`Python_daemon ~host prog
 
+
+let biocaml_def = Biokepi.Machine.Tool.Definition.create "biocaml" ~version:"0.4.0"
+let biocaml =
+  Biokepi.Setup.Biopam.install_target biocaml_def
+    ~tool_type:(`Library "biocaml")
+    ~witness:"META"
+    ~repository:`Opam
+    ~compiler:"4.02.3"
+
+let ledit_def = Biokepi.Machine.Tool.Definition.create "ledit" ~version:"2.03"
+let ledit =
+  Biokepi.Setup.Biopam.install_target ledit_def
+    ~tool_type:`Application
+    ~witness:"ledit"
+    ~repository:`Opam
+    ~compiler:"4.02.3"
+
+
 let toolkit =
-  Biokepi_environment_setup.Tool_providers.default_toolkit () ~host
-    ~run_program
-    ~install_tools_path:(destination_path // "tools")
+  let install_tools_path = destination_path // "tools" in
+  Biokepi.Machine.Tool.Kit.concat [
+    Biokepi.Machine.Tool.Kit.of_list [
+      Biokepi.Setup.Biopam.provide ~host ~run_program
+        (* We need to reproduce the same path there, this is wrong TODO *)
+        ~install_path:(install_tools_path // "biopam-kit")
+        biocaml;
+      Biokepi.Setup.Biopam.provide ~host ~run_program
+        ~install_path:(install_tools_path // "biopam-kit")
+        ledit;
+    ];
+    Biokepi_environment_setup.Tool_providers.default_toolkit () ~host
+      ~run_program ~install_tools_path;
+  ]
 
 let ref_genomes_workflow =
   let edges_of_genome g =
@@ -96,7 +125,9 @@ let tools_workflow =
       (* muse call -h displays an error but still returns 0 *)
       somaticsniper, which_size_and "somaticsniper" ["somaticsniper -v"];
       seq2hla, which_size_and "seq2HLA" ["seq2HLA --version"];
-      optitype, which_size_and "optitype" ["optitype --version"];
+      optitype, which_size_and "OptiTypePipeline" ["OptiTypePipeline -h"];
+      ledit_def,  which_size_and "ledit" ["ledit -v"];
+      biocaml_def, ["ocamlfind list | grep biocaml"];
      ]
   in
   let open Ketrew.EDSL in
