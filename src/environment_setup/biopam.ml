@@ -99,8 +99,9 @@ module Opam = struct
        of the arguments: ie `opam --root [root] init -n`
        doesn't parse correctly. *)
     ksprintf k
-      ("OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
+      ("PATH=%s:$PATH OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
         OPAMROOT=%s %s " ^^ fmt)
+      (Filename.dirname bin)
       root
       bin
 
