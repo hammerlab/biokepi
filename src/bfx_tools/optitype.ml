@@ -9,7 +9,7 @@ open Common
    failure.
 *)
 let hla_type ~work_dir ~run_with ~fastq ~run_name nt =
-  let tool = Machine.get_tool run_with (`Biopamed "optitype") in
+  let tool = Machine.get_tool run_with Machine.Tool.Default.optitype in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "optitype-%s" run_name in
   let make =

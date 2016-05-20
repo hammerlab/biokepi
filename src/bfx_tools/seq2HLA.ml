@@ -3,7 +3,7 @@ open Biokepi_run_environment
 open Common
 
 let hla_type ~work_dir ~run_with ~r1 ~r2 ~run_name =
-  let tool = Machine.get_tool run_with (`Biopamed "seq2HLA") in
+  let tool = Machine.get_tool run_with Machine.Tool.Default.seq2hla in
   (* Why quote this here? Seems like it easy to create a bug,
      why not enforce this at node construction ?*)
   let r1pt = Filename.quote r1#product#path in

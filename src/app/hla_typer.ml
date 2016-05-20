@@ -18,7 +18,12 @@ let pipeline_to_json ppln =
 let pipeline_to_workflow ~work_dir ?(uri="/tmp/ht") ppln =
   let open Pipeline.Compiler in
   let machine =
-    let toolkit = Setup.Biopam.default ~install_path:(work_dir // "biopam") () in
+    let run_program ?name ?requirements p =
+      KEDSL.daemonize ~using:`Python_daemon p in
+    let host = KEDSL.Host.tmp_on_localhost in
+    let toolkit =
+      Setup.Biopam.default ~run_program ~host
+        ~install_path:(work_dir // "biopam") () in
     Setup.Build_machine.create ~toolkit uri
   in
   let compiler =

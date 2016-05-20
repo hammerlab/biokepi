@@ -23,7 +23,8 @@ let create
   let toolkit =
     Option.value toolkit
       ~default:(Tool_providers.default_toolkit ()
-                  ~host ~meta_playground
+                  ~run_program
+                  ~host ~install_tools_path:(meta_playground // "install-tools")
                   ?gatk_jar_location ?mutect_jar_location)
   in
   Machine.create (sprintf "ssh-box-%s" uri)
