@@ -80,7 +80,7 @@ module Opam = struct
         run_program
           ~requirements:[
             `Internet_access;
-            `Self_identification ["opam"; "ini"];
+            `Self_identification ["opam-installation"];
           ]
           Program.(
             exec ["mkdir"; "-p"; install_dir]
@@ -95,12 +95,19 @@ module Opam = struct
   let kcom ~root_name ~install_path k fmt =
     let bin = bin ~install_path in
     let root = root ~install_path root_name in
-    (* Pass the ROOT args as environments to not disrupt the flow of the rest
-       of the arguments: ie `opam --root [root] init -n`
-       doesn't parse correctly. *)
+    (* 
+       - PATH: we add `opam` so that installation scripts can use the tool
+       - OCAMLRUNPARAM: we want OCaml backtraces
+       - OPAMLOCKRETRIES: installations should concurrently but in case of we
+         bump the lock to wait instead of fail
+       - OPAMBASEPACKAGES: we make sure opam does not install any package by
+         default
+       - OPAMYES: answer `y` to all questions (i.e. batch mode)
+       - OPAMROOT: our per-package replacement for `~/.opam/`
+    *) 
     ksprintf k
-      ("PATH=%s:$PATH OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= OPAMYES=true \
-        OPAMROOT=%s %s " ^^ fmt)
+      ("PATH=%s:$PATH OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= \
+        OPAMYES=true OPAMROOT=%s %s " ^^ fmt)
       (Filename.dirname bin)
       root
       bin

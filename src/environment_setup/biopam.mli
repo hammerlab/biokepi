@@ -78,10 +78,10 @@ val install_target:
     - [edges]: dependencies to install first.
     - [init_environment]: transform the install and init programs, e.g. it
     needs to be run in a specific environment. Defaults to a “no-op”.
-    - [witness]: filename (basename)
-    that is passed to test determine success and what is exported (usually the
-    binary for [`Application]s, or the JAR for Java libraries).
-    - [requires_conda]: whther this package requires Python packages installed
+    - [witness]: name of the file (base-name) that is tested
+    to determine the success of an installation (usually the
+    binary for [`Application]s, or the JAR for Java libraries, etc.).
+    - [requires_conda]: whether this package requires Python packages installed
     with {!Conda}.
     - [package]: the package name in the opam sense i.e.
     ["opam install <package-name>"] (the default is to
@@ -102,7 +102,7 @@ val provide :
   run_program: Machine.Make_fun.t ->
   host: Common.KEDSL.Host.t ->
   install_path:string -> install_target -> Machine.Tool.t
-(** Provde the specified (via install_target) tool.*)
+(** Provide the specified (via install_target) tool.*)
 
 val default : 
   run_program: Machine.Make_fun.t ->
