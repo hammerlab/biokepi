@@ -53,6 +53,7 @@ module Tool = struct
     let bowtie = create "bowtie" ~version:"1.1.2"
     let optitype = create "optitype" ~version:"1.0.0"
     let seq2hla = create "seq2hla" ~version:"2.2"
+    let fastqc = create "fastqc" ~version:"0.11.5"
   end
   type t = {
     definition: Definition.t;

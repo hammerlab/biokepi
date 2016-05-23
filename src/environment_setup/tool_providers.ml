@@ -394,6 +394,23 @@ let muse =
     ~install_program ~init_program
     ~witness:(witness_file binary)
 
+let fastqc =
+  let url =
+    "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip" 
+  in
+  let binary = "fastqc" in
+  let binary_path path = path // binary in
+  let init_program ~path = 
+    KEDSL.Program.(shf "export FASTQC_BIN=%s" (binary_path path))
+  in
+  installable_tool Machine.Tool.Default.fastqc ~url
+    ~witness:(witness_file binary)
+    ~install_program:KEDSL.Program.(fun ~path ->
+        shf "cp -r * %s" path
+        && shf "chmod +x %s" (binary_path path)
+      )
+  ~init_program
+
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
 
