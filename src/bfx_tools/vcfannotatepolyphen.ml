@@ -25,7 +25,7 @@ let download_whess ~(run_with: Machine.t) destination  =
 let annotate ~(run_with: Machine.t) ~whessdb ~vcf ~output_vcf =
   let open KEDSL in
   let vap_tool =
-    Machine.get_tool run_with Machine.Tool.Definition.(python_package "vcf-annotate-polyphen")
+    Machine.get_tool run_with Machine.Tool.Definition.(create "vcf-annotate-polyphen")
   in
   let name = sprintf "vcf-annotate-polyphen_%s" (Filename.basename vcf) in
   workflow_node
