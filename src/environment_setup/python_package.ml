@@ -51,4 +51,7 @@ let default ~host ~run_program ~install_tools_path () =
       (Pip, Package_PyPI "pyensembl");
     create_python_tool ~host ~run_program ~install_tools_path 
       (Pip, Package_PyPI "vcf-annotate-polyphen");
+    create_python_tool ~host ~run_program ~install_tools_path 
+      ~check_bin:"isovar-protein-sequences"
+      (Pip, Package_Source ("isovar", "git+https://github.com/hammerlab/isovar"));
    ]

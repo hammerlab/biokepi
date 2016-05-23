@@ -178,6 +178,9 @@ module Make_serializer (How : sig
   let vcf_annotate_polyphen reference_build =
     one_to_one "vcf_annotate_polyphen" "default"
 
+  let isovar ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
+    one_to_one "isovar" "default"
+
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
 
