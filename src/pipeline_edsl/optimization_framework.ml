@@ -151,5 +151,7 @@ module Generic_optimizer
 
   let vcf_annotate_polyphen reference_build vcf =
     fwd (Input.vcf_annotate_polyphen reference_build (bwd vcf))
+  let isovar ?configuration reference_build vcf bam =
+    fwd (Input.isovar ?configuration reference_build (bwd vcf) (bwd bam))
 
 end

@@ -191,5 +191,12 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr ->
     [ `Vcf ] repr
 
+  val isovar:
+    ?configuration: Isovar.Configuration.t ->
+    Biokepi_run_environment.Reference_genome.name ->
+    [ `Vcf ] repr ->
+    [ `Bam ] repr ->
+    [ `Isovar ] repr 
+
 end
 
