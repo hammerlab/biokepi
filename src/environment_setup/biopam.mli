@@ -24,7 +24,7 @@ type install_target = private {
   (** The package handle the Biopam package provides. *)
   definition: Machine.Tool.Definition.t;
 
-  (** What are we installing? See {{type:tool_type}tool_type}. *)
+  (** What are we installing? See {!tool_type}. *)
   tool_type : tool_type;
 
   (** Name of the package: `opam install [package]` *)
@@ -71,7 +71,7 @@ val install_target:
 (** Create {!install_target} values.
 
     - [tool_type]: the kind of tool being installed.
-    See {{type:tool_type}tool_type}.
+    See {!tool_type}.
     Default: [`Application].
     - [test]: test to determine success of the install.
     Default: ["test -e <witness>"].
@@ -88,9 +88,9 @@ val install_target:
     construct the package name from the {!Machine.Tool.Definition.t}).
     - [repository]:  Which opam-repository the tool should come from:
     {ul
-       - [`Biopam]: the Biopam project's repository ({b default}).
-       - [`Opam]: the default Opam repository.
-       - [`Custom url]: use custom URL.
+       {li [`Biopam]: the Biopam project's repository ({b default}).}
+       {li [`Opam]: the default Opam repository.}
+       {li [`Custom url]: use custom URL.}
     }
     - [compiler]: Which compiler should be used to create the tool's own
     installation opam-switch (the default is [None] corresponding to ["0.0.0"]
