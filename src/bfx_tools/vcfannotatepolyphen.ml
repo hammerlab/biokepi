@@ -35,7 +35,7 @@ let annotate ~(run_with: Machine.t) ~whessdb ~vcf ~output_vcf =
       depends_on (download_whess ~run_with whessdb);
     ]
     ~make:(
-      Machine.quick_run_program run_with ~name
+      Machine.run_program run_with ~name
         Program.(
           Machine.Tool.(init vap_tool)
           && shf "vcf-annotate-polyphen %s %s %s" whessdb vcf output_vcf
