@@ -1,0 +1,64 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Biopam</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;default_opam_url&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;default_biopam_url&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;tool_type&nbsp;=&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;install_target&nbsp;=&nbsp;<span class="keyword">private</span>&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tool_type&nbsp;:&nbsp;<span class="constructor">Biokepi_environment_setup</span>.<span class="keywordsign">??.</span>tool_type;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;package&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;witness&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;test&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(host:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;edges&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;init_environment&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requires_conda&nbsp;:&nbsp;bool;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;repository&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;compiler&nbsp;:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;install_target&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?tool_type:<span class="constructor">Biokepi_environment_setup</span>.<span class="keywordsign">??.</span>tool_type&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?test:(host:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?edges:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?init_environment:(install_path:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?requires_conda:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;witness:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?package:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?repository:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?compiler:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_environment_setup</span>.<span class="keywordsign">??.</span>install_target<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;provide&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_program:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_environment_setup</span>.<span class="keywordsign">??.</span>install_target&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;default&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_program:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t<br>
+<span class="keyword">end</span></code></body></html>

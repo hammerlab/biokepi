@@ -1,0 +1,37 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Biopam.install_target</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;install_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(tool_type&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(init_environment&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~install_path&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(sh&nbsp;<span class="string">"echo&nbsp;'Default&nbsp;Init'"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(requires_conda&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~witness<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?package<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(repository&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?compiler<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;package&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;package&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;p<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.to_opam_name&nbsp;definition&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;{definition;&nbsp;tool_type;&nbsp;package;&nbsp;witness;&nbsp;test;&nbsp;edges;<br>
+&nbsp;&nbsp;&nbsp;init_environment;&nbsp;requires_conda;&nbsp;repository;&nbsp;compiler}</code></body></html>

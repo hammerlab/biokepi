@@ -1,0 +1,152 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Samtools</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Remove</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sam_to_bam&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;faidx&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;flagstat&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bgzip&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;tabix&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabular_format:[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Bed</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Gff</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Psltab</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Sam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;do_on_bam&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?more_depends_on:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?more_requirements:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.<span class="constructor">Requirement</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;<span class="keywordsign">'</span>a;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;product:(&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">as</span>&nbsp;<span class="keywordsign">'</span>b)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.product&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;make_command:(<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;list)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">'</span>b&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sort_bam_no_check&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;by:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;sort_bam_if_necessary&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;by:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;index_to_bai&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?check_sorted:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;sorting&nbsp;:&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mpileup&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?adjust_mapq:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;region:[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Chromosome</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Chromosome_interval</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;int&nbsp;*&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Full</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;merge_bams&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_with:<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?delete_input_on_success:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?attach_rg_tag:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?uncompressed_bam_output:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?compress_level_one:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?combine_rg_headers:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?combine_pg_headers:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+<span class="keyword">end</span></code></body></html>

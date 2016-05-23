@@ -1,0 +1,384 @@
+ <!DOCTYPE html> <html> <head><link rel="stylesheet" href="https://cdn.rawgit.com/hammerlab/ketrew/2d1c430cca52caa71e363a765ff8775a6ae14ba9/src/doc/code_style.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap-theme.min.css" type="text/css"><meta charset="utf-8"><title>Biokepi: EDSL Extension “Register Results”</title></head><body><div class="container"><h1>Biokepi: EDSL Extension “Register Results”</h1><div class="row">
+<div class="col-md-3">
+<h2>Contents</h2><ul><li><a href='#ExampleExtensionRegisterProduct'>Example Extension: “Register Product”</a>
+<ul><li><a href='#PrerequisiteKetrewNodetoInsertinDatabase'>Prerequisite: Ketrew Node to Insert in Database</a>
+</li><li><a href='#DefinitionOfTheExtension'>Definition Of The Extension</a>
+</li><li><a href='#ExampleofUse'>Example of Use</a>
+</li><li><a href='#CompilertoGraphviz'>Compiler to Graphviz</a>
+</li><li><a href='#CompilerToJson'>Compiler To Json</a>
+</li><li><a href='#CompilerToKetrewWorkflow'>Compiler To Ketrew Workflow</a>
+</li><li><a href='#DisplayingandRunningTheExamplePipeline'>Displaying and Running The Example-Pipeline</a>
+</li><li><a href='#SubmittingTheWorkflow'>Submitting The Workflow</a>
+</li></ul>
+</li></ul><h2>Menu</h2><ul><li><a href='index.html'>Home</a></li><li><a href='Module_Hierarchy.html'>Module Hierarchy</a></li><li><a href='Guide_to_the_code.html'>Guide to the code</a></li><li><a href='Use_the_demo.html'>Use the demo</a></li><li><a href='edsl_extension_register_result.html'>EDSL Extension “Register Results”</a></li><li><a href='./api/index.html'>API Documentation</a></li></ul></div><div class="col-md-9">
+<h2 id="ExampleExtensionRegisterProduct">Example Extension: “Register Product”</h2>
+
+<p>This example is an extension to the language in <a href='api/Biokepi.EDSL.Semantics.html' title='Biokepi.EDSL.Semantics'><code>Biokepi.EDSL.Semantics</code></a>,
+that registers some files in a database.</p>
+<p>The author of the pipeline registers the results that they consider
+“interesting” thanks to new function that we will add to the EDSL.</p>
+<p>The only requirement is the <code>biokepi</code> library:</p>
+
+<pre><span class="directive">
+#use</span><span class="text"> </span><span class="string">"topfind"</span><span class="text">;;</span><span class="directive">
+#thread</span><span class="text">;;</span><span class="directive">
+#require</span><span class="text"> </span><span class="string">"biokepi"</span><span class="text">;;
+</span></pre>
+
+
+<h3 id="PrerequisiteKetrewNodetoInsertinDatabase">Prerequisite: Ketrew Node to Insert in Database</h3>
+
+<p>This module provides a function that creates a Ketrew workflow-node that
+writes some pipeline information into a Sqlite3 database.</p>
+
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw2">FDB</span><span class="text"> = </span><span class="kw1">struct</span><span class="text">
+  </span><span class="kw">open</span><span class="text"> </span><span class="kw2">Printf</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">register_in_db</span><span class="text"> </span><span class="kw4">~results_db_uri</span><span class="text"> </span><span class="kw4">~machine</span><span class="text"> </span><span class="kw4">~path</span><span class="text"> </span><span class="kw4">~json</span><span class="text"> </span><span class="kw4">~ketrew_id</span><span class="text"> </span><span class="kw4">~edges</span><span class="text"> =
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">sql</span><span class="text"> = </span><span class="id">sprintf</span><span class="text"> </span><span class="string">"\
+      CREATE TABLE IF NOT EXISTS my_results (
+        path text, ketrew_node_id text, pipeline_json text
+      );
+      INSERT INTO my_results (path, ketrew_node_id, pipeline_json)
+                      VALUES (%s, %s, %s);
+      "</span><span class="text">
+        (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text"> </span><span class="id">path</span><span class="text">)
+        (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text"> </span><span class="id">ketrew_id</span><span class="text">)
+        (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text"> </span><span class="id">json</span><span class="text">)
+    </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">name</span><span class="text"> = </span><span class="id">sprintf</span><span class="text"> </span><span class="string">"Register %s"</span><span class="text"> (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">basename</span><span class="text"> </span><span class="id">path</span><span class="text">) </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="kw">open</span><span class="text"> </span><span class="kw2">Ketrew</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">make</span><span class="text"> =
+      </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">Machine</span><span class="text">.</span><span class="id">quick_run_program</span><span class="text"> </span><span class="id">machine</span><span class="text"> </span><span class="kw2">Program</span><span class="text">.(
+          </span><span class="id">shf</span><span class="text"> </span><span class="string">"echo %s | sqlite3 %s"</span><span class="text">
+            (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text"> </span><span class="id">sql</span><span class="text">)
+            (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text"> </span><span class="id">results_db_uri</span><span class="text">)
+        ) </span><span class="kw">in</span><span class="text">
+    </span><span class="id">workflow_node</span><span class="text"> </span><span class="id">without_product</span><span class="text"> </span><span class="kw4">~name</span><span class="text"> </span><span class="kw4">~make</span><span class="text"> </span><span class="kw4">~edges</span><span class="text">
+</span><span class="kw1">end</span><span class="text">
+</span></pre>
+<h3 id="DefinitionOfTheExtension">Definition Of The Extension</h3>
+
+<p>The definition of the “typing” part of the extension is as easy as including
+the parent module type and adding a new function type.</p>
+
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw">type</span><span class="text"> </span><span class="kw2">Semantics_with_registration</span><span class="text"> = </span><span class="kw1">sig</span><span class="text">
+  </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Semantics</span><span class="text">
+  </span><span class="kw">val</span><span class="text"> </span><span class="id">register</span><span class="text">: </span><span class="kw3">string</span><span class="text"> -&gt; '</span><span class="id">a</span><span class="text"> </span><span class="id">repr</span><span class="text"> -&gt; '</span><span class="id">a</span><span class="text"> </span><span class="id">repr</span><span class="text">
+  </span><span class="comment">(** [register name p] registers the result of the pipeline [p] in the
+      database (using [name] to distinguish pipelines) and returns an
+      equivalent pipeline.  *)</span><span class="text">
+</span><span class="kw1">end</span><span class="text">
+</span></pre>
+
+
+<h3 id="ExampleofUse">Example of Use</h3>
+
+<p>Before even thinking of compiling, we can write pipelines using the new function.</p>
+
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw2">Example_pipeline</span><span class="text"> (</span><span class="kw2">Registrable_bfx</span><span class="text">: </span><span class="kw2">Semantics_with_registration</span><span class="text">) = </span><span class="kw1">struct</span><span class="text">
+  </span><span class="comment">(* We can reuse pipelines writen with the non-extended EDSL. *)</span><span class="text">
+  </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Library</span><span class="text"> = </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Library</span><span class="text">.</span><span class="kw2">Make</span><span class="text">(</span><span class="kw2">Registrable_bfx</span><span class="text">)
+
+  </span><span class="kw">open</span><span class="text"> </span><span class="kw2">Registrable_bfx</span><span class="text">
+
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">example</span><span class="text"> </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text"> =
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">align</span><span class="text"> </span><span class="id">fastq</span><span class="text"> =
+      </span><span class="id">list_map</span><span class="text"> </span><span class="id">fastq</span><span class="text"> </span><span class="kw4">~f</span><span class="text">:(</span><span class="id">lambda</span><span class="text"> (</span><span class="kw">fun</span><span class="text"> </span><span class="id">fq</span><span class="text"> -&gt;
+          </span><span class="id">bwa_mem</span><span class="text"> </span><span class="id">fq</span><span class="text"> </span><span class="kw4">~reference_build</span><span class="text">:</span><span class="string">"b37"</span><span class="text">
+          |&gt; </span><span class="id">picard_mark_duplicates</span><span class="text">
+        )) </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">normal_bam</span><span class="text"> = </span><span class="id">align</span><span class="text"> </span><span class="id">normal</span><span class="text"> |&gt; </span><span class="id">merge_bams</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">tumor_bam</span><span class="text"> = </span><span class="id">align</span><span class="text"> </span><span class="id">tumor</span><span class="text"> |&gt; </span><span class="id">merge_bams</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">bam_pair</span><span class="text"> = </span><span class="id">pair</span><span class="text"> </span><span class="id">normal_bam</span><span class="text"> </span><span class="id">tumor_bam</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">indel_realigned_pair</span><span class="text"> = </span><span class="id">gatk_indel_realigner_joint</span><span class="text"> </span><span class="id">bam_pair</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">final_normal_bam</span><span class="text"> =
+      </span><span class="id">pair_first</span><span class="text"> </span><span class="id">indel_realigned_pair</span><span class="text">
+      |&gt; </span><span class="id">gatk_bqsr</span><span class="text">
+      |&gt; </span><span class="id">register</span><span class="text"> </span><span class="string">"final-normal-bam"</span><span class="text">
+    </span><span class="kw">in</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">final_tumor_bam</span><span class="text"> =
+      </span><span class="id">pair_second</span><span class="text"> </span><span class="id">indel_realigned_pair</span><span class="text">
+      |&gt; </span><span class="id">gatk_bqsr</span><span class="text">
+      |&gt; </span><span class="id">register</span><span class="text"> </span><span class="string">"final-normal-bam"</span><span class="text">
+    </span><span class="kw">in</span><span class="text">
+    </span><span class="id">mutect</span><span class="text"> </span><span class="kw4">~normal</span><span class="text">:</span><span class="id">final_normal_bam</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text">:</span><span class="id">final_tumor_bam</span><span class="text"> ()
+    |&gt; </span><span class="id">register</span><span class="text"> </span><span class="string">"mutect-vcf"</span><span class="text">
+
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">run</span><span class="text"> </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text"> =
+    </span><span class="id">observe</span><span class="text"> (</span><span class="kw">fun</span><span class="text"> () -&gt;
+        </span><span class="id">example</span><span class="text">
+          </span><span class="kw4">~normal</span><span class="text">:(</span><span class="kw2">Library</span><span class="text">.</span><span class="id">fastq_of_input</span><span class="text"> </span><span class="id">normal</span><span class="text">)
+          </span><span class="kw4">~tumor</span><span class="text">:(</span><span class="kw2">Library</span><span class="text">.</span><span class="id">fastq_of_input</span><span class="text"> </span><span class="id">tumor</span><span class="text">)
+      )
+</span><span class="kw1">end</span><span class="text">
+</span></pre>
+
+
+<p>The value <code>example</code> gets the expected type:</p>
+<pre><span class="kw">val</span><span class="text"> </span><span class="id">example</span><span class="text">:
+   </span><span class="id">normal</span><span class="text">:[ `</span><span class="kw2">Fastq</span><span class="text"> ] </span><span class="kw3">list</span><span class="text"> </span><span class="kw2">Registrable_bfx</span><span class="text">.</span><span class="id">repr</span><span class="text"> -&gt;
+   </span><span class="id">tumor</span><span class="text">:[ `</span><span class="kw2">Fastq</span><span class="text"> ] </span><span class="kw3">list</span><span class="text"> </span><span class="kw2">Registrable_bfx</span><span class="text">.</span><span class="id">repr</span><span class="text"> -&gt;
+   [ `</span><span class="kw2">Vcf</span><span class="text"> ] </span><span class="kw2">Registrable_bfx</span><span class="text">.</span><span class="id">repr</span></pre>
+
+<h3 id="CompilertoGraphviz">Compiler to Graphviz</h3>
+
+<p>We “inherit” the implementation of the parent EDSL (through <code>include</code>), and
+then we implement the extension.</p>
+<p>We decide to hide the <code>register</code> step from the displayed graph.</p>
+
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw2">To_dot_with_register</span><span class="text"> = </span><span class="kw1">struct</span><span class="text">
+  </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_dot</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">register</span><span class="text"> </span><span class="numeric">_</span><span class="text"> </span><span class="id">x</span><span class="text"> = </span><span class="id">x</span><span class="text">
+</span><span class="kw1">end</span><span class="text">
+</span></pre>
+<h3 id="CompilerToJson">Compiler To Json</h3>
+
+<p>This interpreter is slightly more complex; in order to save it the database, we
+want to save the intermediate JSON structure for later insertion in the
+database.</p>
+<p>We functorize the module to provide such an infrastructure (assuming the
+<code>Mem.add</code> registers the tuple <code>(metadata, json)</code> as a side-effect).</p>
+<p>Again we <code>include</code> the <code>To_json</code> compiler from Biokepi, and add the function
+<code>register</code>.</p>
+
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw2">To_json_with_register</span><span class="text"> (</span><span class="kw2">Memory</span><span class="text">: </span><span class="kw1">sig</span><span class="text"> 
+    </span><span class="kw">val</span><span class="text"> </span><span class="id">add</span><span class="text"> : </span><span class="kw3">string</span><span class="text"> -&gt; </span><span class="kw2">Yojson</span><span class="text">.</span><span class="kw2">Basic</span><span class="text">.</span><span class="id">json</span><span class="text"> -&gt; </span><span class="kw3">unit</span><span class="text">
+  </span><span class="kw1">end</span><span class="text">) = </span><span class="kw1">struct</span><span class="text">
+  </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_json</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">register</span><span class="text"> </span><span class="id">metadata</span><span class="text"> </span><span class="id">x</span><span class="text"> </span><span class="kw4">~var_count</span><span class="text"> =
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">compiled</span><span class="text"> = </span><span class="id">x</span><span class="text"> </span><span class="kw4">~var_count</span><span class="text"> </span><span class="kw">in</span><span class="text">
+    </span><span class="kw2">Memory</span><span class="text">.</span><span class="id">add</span><span class="text"> </span><span class="id">metadata</span><span class="text"> </span><span class="id">compiled</span><span class="text">;
+    </span><span class="id">compiled</span><span class="text">
+</span><span class="kw1">end</span><span class="text">
+
+</span></pre>
+<h3 id="CompilerToKetrewWorkflow">Compiler To Ketrew Workflow</h3>
+
+<p>Here is where the magic happens. As above, we <code>include</code> the compiler from the
+library to get the previously defined implementations.</p>
+<p>This time we expect an interface providing <code>Mem.look_up</code> to find a previously
+saved JSON datastructure.</p>
+<p>The function <code>register</code> creates an intermediary Ketrew workflow-node.</p>
+<ul><li>It provides the same product as the argument of the <code>register</code> function
+ (child node).</li><li>It has the parameter <code>~equivalence:`None</code> to make sure Ketrew does not
+ merge it with the child node.</li><li>We force the condition of the node to be “not already done:”
+ <code>~done_when:`Dependencies_are</code>.</li><li>It has two dependencies: the child node and the actual registration in the
+ database (from above <code>FDB.register</code>).ster`).</li></ul>
+<pre><span class="text">
+</span><span class="kw">module</span><span class="text"> </span><span class="kw2">To_workflow_with_register</span><span class="text"> 
+    (</span><span class="kw2">Mem</span><span class="text"> : </span><span class="kw1">sig</span><span class="text"> </span><span class="kw">val</span><span class="text"> </span><span class="id">look_up</span><span class="text">: </span><span class="kw3">string</span><span class="text"> -&gt; </span><span class="kw2">Yojson</span><span class="text">.</span><span class="kw2">Basic</span><span class="text">.</span><span class="id">json</span><span class="text"> </span><span class="kw1">end</span><span class="text">)
+    (</span><span class="kw2">Config</span><span class="text"> : </span><span class="kw1">sig</span><span class="text">
+       </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_workflow</span><span class="text">.</span><span class="kw2">Compiler_configuration</span><span class="text">
+       </span><span class="kw">val</span><span class="text"> </span><span class="id">results_db_uri</span><span class="text"> : </span><span class="kw3">string</span><span class="text">
+     </span><span class="kw1">end</span><span class="text">)
+= </span><span class="kw1">struct</span><span class="text">
+  </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_workflow</span><span class="text">.</span><span class="kw2">Make</span><span class="text">(</span><span class="kw2">Config</span><span class="text">)
+  </span><span class="kw">open</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_workflow</span><span class="text">.</span><span class="kw2">File_type_specification</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">register</span><span class="text"> : </span><span class="kw">type</span><span class="text"> </span><span class="id">a</span><span class="text"> . </span><span class="kw3">string</span><span class="text"> -&gt; </span><span class="id">a</span><span class="text"> </span><span class="id">t</span><span class="text"> -&gt; </span><span class="id">a</span><span class="text"> </span><span class="id">t</span><span class="text"> = </span><span class="kw">fun</span><span class="text"> </span><span class="id">metadata</span><span class="text"> </span><span class="id">x</span><span class="text"> -&gt;
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">make_node</span><span class="text"> </span><span class="id">any_node</span><span class="text"> =
+      </span><span class="kw">let</span><span class="text"> </span><span class="id">registration</span><span class="text"> =
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">path</span><span class="text"> = </span><span class="id">any_node</span><span class="kw1">#</span><span class="id">product</span><span class="kw1">#</span><span class="id">path</span><span class="text"> </span><span class="kw">in</span><span class="text">
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">ketrew_id</span><span class="text"> = </span><span class="kw2">Ketrew</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="id">node_id</span><span class="text"> </span><span class="id">any_node</span><span class="text"> </span><span class="kw">in</span><span class="text">
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">json</span><span class="text"> = </span><span class="kw2">Mem</span><span class="text">.</span><span class="id">look_up</span><span class="text"> </span><span class="id">metadata</span><span class="text"> </span><span class="kw">in</span><span class="text">
+        </span><span class="kw2">FDB</span><span class="text">.</span><span class="id">register_in_db</span><span class="text"> </span><span class="kw4">~machine</span><span class="text">:</span><span class="kw2">Config</span><span class="text">.</span><span class="id">machine</span><span class="text"> </span><span class="kw4">~path</span><span class="text">
+          </span><span class="kw4">~results_db_uri</span><span class="text">:</span><span class="kw2">Config</span><span class="text">.</span><span class="id">results_db_uri</span><span class="text">
+          </span><span class="kw4">~ketrew_id</span><span class="text"> </span><span class="kw4">~json</span><span class="text">:(</span><span class="kw2">Yojson</span><span class="text">.</span><span class="kw2">Basic</span><span class="text">.</span><span class="id">pretty_to_string</span><span class="text"> </span><span class="id">json</span><span class="text">)
+          </span><span class="kw4">~edges</span><span class="text">:[</span><span class="kw2">Ketrew</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="id">depends_on</span><span class="text"> </span><span class="id">any_node</span><span class="text">]
+      </span><span class="kw">in</span><span class="text">
+      </span><span class="kw">let</span><span class="text"> </span><span class="id">new_node</span><span class="text"> =
+        </span><span class="kw">let</span><span class="text"> </span><span class="kw">open</span><span class="text"> </span><span class="kw2">Ketrew</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text"> </span><span class="kw">in</span><span class="text">
+        </span><span class="id">workflow_node</span><span class="text"> </span><span class="id">any_node</span><span class="kw1">#</span><span class="id">product</span><span class="text"> </span><span class="kw4">~equivalence</span><span class="text">:`</span><span class="kw2">None</span><span class="text">
+          </span><span class="kw4">~done_when</span><span class="text">:`</span><span class="kw2">Dependencies_are</span><span class="text">
+          </span><span class="kw4">~name</span><span class="text">:(</span><span class="kw2">Printf</span><span class="text">.</span><span class="id">sprintf</span><span class="text"> </span><span class="string">"Parent-of-registration: %s -&gt; %s"</span><span class="text">
+                   </span><span class="id">metadata</span><span class="text">
+                   (</span><span class="kw2">Filename</span><span class="text">.</span><span class="id">basename</span><span class="text"> </span><span class="id">any_node</span><span class="kw1">#</span><span class="id">product</span><span class="kw1">#</span><span class="id">path</span><span class="text">))
+          </span><span class="kw4">~edges</span><span class="text">:[
+            </span><span class="id">depends_on</span><span class="text"> </span><span class="id">registration</span><span class="text">;
+            </span><span class="id">depends_on</span><span class="text"> </span><span class="id">any_node</span><span class="text">;
+          ]
+      </span><span class="kw">in</span><span class="text">
+      </span><span class="id">new_node</span><span class="text">
+    </span><span class="kw">in</span><span class="text">
+    </span><span class="kw1">match</span><span class="text"> </span><span class="id">x</span><span class="text"> </span><span class="kw1">with</span><span class="text">
+    | </span><span class="kw2">Bam</span><span class="text"> </span><span class="id">wf</span><span class="text"> -&gt; </span><span class="kw2">Bam</span><span class="text"> (</span><span class="id">make_node</span><span class="text"> </span><span class="id">wf</span><span class="text">)
+    | </span><span class="kw2">Vcf</span><span class="text"> </span><span class="id">wf</span><span class="text"> -&gt; </span><span class="kw2">Vcf</span><span class="text"> (</span><span class="id">make_node</span><span class="text"> </span><span class="id">wf</span><span class="text">)
+    | </span><span class="id">other</span><span class="text"> -&gt; </span><span class="id">failwith</span><span class="text"> </span><span class="string">"To_workflow.register non-{Bam or Vcf}: not implemented"</span><span class="text">
+</span><span class="kw1">end</span><span class="text">
+</span></pre>
+
+
+<h3 id="DisplayingandRunningTheExamplePipeline">Displaying and Running The Example-Pipeline</h3>
+
+<p>Here prepare the above pipeline for display and submission to the Ketrew
+server.</p>
+
+<pre><span class="text">
+</span><span class="kw">open</span><span class="text"> </span><span class="kw2">Nonstd</span><span class="text">
+</span><span class="kw">let</span><span class="text"> </span><span class="id">run</span><span class="text">
+    </span><span class="kw4">~machine</span><span class="text"> </span><span class="kw4">~work_dir</span><span class="text">
+    ?(</span><span class="id">sqlite_db</span><span class="text"> = </span><span class="string">"/tmp/biokepi-test.sqlite"</span><span class="text">) </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text"> () =
+</span></pre>
+<p>We output a PNG graph of the pipeline:</p>
+
+<pre><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Dotize_pipeline</span><span class="text"> =
+    </span><span class="kw2">Example_pipeline</span><span class="text">(</span><span class="kw2">To_dot_with_register</span><span class="text">) </span><span class="kw">in</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">sm_dot</span><span class="text"> = </span><span class="kw2">Dotize_pipeline</span><span class="text">.</span><span class="id">run</span><span class="text"> </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text"> </span><span class="kw">in</span><span class="text">
+  </span><span class="id">ignore</span><span class="text"> (
+    </span><span class="id">sprintf</span><span class="text"> </span><span class="string">"echo %s &gt; /tmp/example.dot ; \
+             dot -v -x /tmp/example.dot -Tpng -o example.png"</span><span class="text">
+      (</span><span class="id">sm_dot</span><span class="text"> |&gt; </span><span class="kw2">SmartPrint</span><span class="text">.</span><span class="id">to_string</span><span class="text"> </span><span class="numeric">72</span><span class="text"> </span><span class="numeric">2</span><span class="text"> |&gt; </span><span class="kw2">Filename</span><span class="text">.</span><span class="id">quote</span><span class="text">)
+    |&gt; </span><span class="kw2">Sys</span><span class="text">.</span><span class="id">command</span><span class="text">
+  );
+</span></pre>
+<p>This is the module that we pass to both <code>To_json_with_register</code> and
+to <code>To_workflow_with_register</code> to record the transformations to JSON.
+It is just an association list:</p>
+
+<pre><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Mem</span><span class="text"> = </span><span class="kw1">struct</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">json_metadata</span><span class="text"> = </span><span class="kw1">ref</span><span class="text"> []
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">add</span><span class="text"> </span><span class="id">m</span><span class="text"> </span><span class="id">x</span><span class="text"> = </span><span class="id">json_metadata</span><span class="text"> := (</span><span class="id">m</span><span class="text">, </span><span class="id">x</span><span class="text">) :: !</span><span class="id">json_metadata</span><span class="text">
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">display</span><span class="text"> () =
+      </span><span class="kw2">List</span><span class="text">.</span><span class="id">iter</span><span class="text"> !</span><span class="id">json_metadata</span><span class="text"> </span><span class="kw4">~f</span><span class="text">:(</span><span class="kw">fun</span><span class="text"> (</span><span class="id">m</span><span class="text">, </span><span class="id">x</span><span class="text">) -&gt;
+          </span><span class="id">printf</span><span class="text"> </span><span class="string">"%s:\n%s\n%!"</span><span class="text"> </span><span class="id">m</span><span class="text"> (</span><span class="kw2">Yojson</span><span class="text">.</span><span class="kw2">Basic</span><span class="text">.</span><span class="id">pretty_to_string</span><span class="text"> </span><span class="id">x</span><span class="text">)
+        );
+      ()
+    </span><span class="kw">let</span><span class="text"> </span><span class="id">look_up</span><span class="text"> </span><span class="id">s</span><span class="text"> =
+      </span><span class="kw2">List</span><span class="text">.</span><span class="id">find_map</span><span class="text"> !</span><span class="id">json_metadata</span><span class="text"> </span><span class="kw4">~f</span><span class="text">:(</span><span class="kw">fun</span><span class="text"> (</span><span class="id">x</span><span class="text">, </span><span class="id">j</span><span class="text">) -&gt;
+          </span><span class="kw1">if</span><span class="text"> </span><span class="id">x</span><span class="text"> = </span><span class="id">s</span><span class="text"> </span><span class="kw1">then</span><span class="text"> </span><span class="kw2">Some</span><span class="text"> </span><span class="id">j</span><span class="text"> </span><span class="kw1">else</span><span class="text"> </span><span class="kw2">None</span><span class="text">)
+      |&gt; </span><span class="kw2">Option</span><span class="text">.</span><span class="id">value_exn</span><span class="text"> </span><span class="kw4">~msg</span><span class="text">:(</span><span class="id">sprintf</span><span class="text"> </span><span class="string">"Can't find metadata: %S"</span><span class="text"> </span><span class="id">s</span><span class="text">)
+  </span><span class="kw1">end</span><span class="text"> </span><span class="kw">in</span><span class="text">
+</span></pre>
+<p>Here is the compilation to JSON:<br />
+We discard the actual result since we are interested only in the JSON
+values saved by the <code>Mem</code> module:</p>
+
+<pre><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Jsonize_pipeline</span><span class="text"> =
+    </span><span class="kw2">Example_pipeline</span><span class="text">(</span><span class="kw2">To_json_with_register</span><span class="text">(</span><span class="kw2">Mem</span><span class="text">)) </span><span class="kw">in</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="numeric">_</span><span class="text"> = </span><span class="kw2">Jsonize_pipeline</span><span class="text">.</span><span class="id">run</span><span class="text"> </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text"> </span><span class="kw">in</span><span class="text">
+</span></pre>
+<p>And finaly we compile the pipeline to a Ketrew workflow, and return it:</p>
+
+<pre><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Workflow_compiler</span><span class="text"> =
+    </span><span class="kw2">To_workflow_with_register</span><span class="text"> 
+      (</span><span class="kw2">Mem</span><span class="text">)
+      (</span><span class="kw1">struct</span><span class="text">
+        </span><span class="kw">include</span><span class="text"> </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_workflow</span><span class="text">.</span><span class="kw2">Defaults</span><span class="text">
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">work_dir</span><span class="text"> = </span><span class="id">work_dir</span><span class="text">
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">machine</span><span class="text"> = </span><span class="id">machine</span><span class="text">
+        </span><span class="kw">let</span><span class="text"> </span><span class="id">results_db_uri</span><span class="text"> = </span><span class="id">sqlite_db</span><span class="text">
+      </span><span class="kw1">end</span><span class="text">)
+  </span><span class="kw">in</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="kw">module</span><span class="text"> </span><span class="kw2">Ketrew_pipeline</span><span class="text"> = </span><span class="kw2">Example_pipeline</span><span class="text">(</span><span class="kw2">Workflow_compiler</span><span class="text">) </span><span class="kw">in</span><span class="text">
+  </span><span class="kw">let</span><span class="text"> </span><span class="id">workflow</span><span class="text"> =
+    </span><span class="kw2">Ketrew_pipeline</span><span class="text">.</span><span class="id">run</span><span class="text"> </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text">
+  </span><span class="kw">in</span><span class="text">
+  </span><span class="id">workflow</span><span class="text"> |&gt; </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Compile</span><span class="text">.</span><span class="kw2">To_workflow</span><span class="text">.</span><span class="kw2">File_type_specification</span><span class="text">.</span><span class="id">get_vcf</span><span class="text">
+
+</span></pre>
+<h3 id="SubmittingTheWorkflow">Submitting The Workflow</h3>
+
+<p>The above <code>run</code> function is parametrized over the computing infrastructure and
+the input data:</p>
+<pre><span class="kw">val</span><span class="text"> </span><span class="id">run</span><span class="text">:
+  </span><span class="id">machine</span><span class="text">:</span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">Machine</span><span class="text">.</span><span class="id">t</span><span class="text"> -&gt;
+  </span><span class="id">work_dir</span><span class="text">:</span><span class="kw3">string</span><span class="text"> -&gt;
+  ?</span><span class="id">sqlite_db</span><span class="text">:</span><span class="kw3">string</span><span class="text"> -&gt;
+  </span><span class="id">normal</span><span class="text">:</span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Library</span><span class="text">.</span><span class="kw2">Input</span><span class="text">.</span><span class="id">t</span><span class="text"> -&gt;
+  </span><span class="id">tumor</span><span class="text">:</span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Library</span><span class="text">.</span><span class="kw2">Input</span><span class="text">.</span><span class="id">t</span><span class="text"> -&gt;
+  </span><span class="kw3">unit</span><span class="text"> -&gt;
+  </span><span class="id">single_file</span><span class="text"> </span><span class="id">workflow_node</span></pre>
+
+<p>Here is an example of use, each user&#39;s infrastructure/setup will be different
+though:</p>
+
+<pre><span class="text">
+</span><span class="kw">let</span><span class="text"> () = </span><span class="id">printf</span><span class="text"> </span><span class="string">"Let's Gooo!\n%!"</span><span class="text">;;
+</span></pre>
+
+
+<p>Import my infrastructure:</p>
+
+<pre><span class="directive">
+#use</span><span class="text"> </span><span class="string">"my_cluster.ml"</span><span class="text">;;
+</span></pre>
+<p>The above script has to provide the following API:</p>
+<pre><span class="kw">module</span><span class="text"> </span><span class="kw2">My_cluster</span><span class="text">: </span><span class="kw1">sig</span><span class="text">
+  </span><span class="kw">val</span><span class="text"> </span><span class="id">machine</span><span class="text"> : </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">Machine</span><span class="text">.</span><span class="id">t</span><span class="text">
+  </span><span class="kw">val</span><span class="text"> </span><span class="id">datasets_home</span><span class="text"> : </span><span class="kw3">string</span><span class="text">
+  </span><span class="kw">val</span><span class="text"> </span><span class="id">max_processors</span><span class="text"> : </span><span class="kw3">int</span><span class="text">
+  </span><span class="kw">val</span><span class="text"> </span><span class="id">work_dir</span><span class="text"> : </span><span class="kw3">string</span><span class="text">
+</span><span class="kw1">end</span></pre>
+
+<p>We test the pipeline starting from two small bams:</p>
+
+<pre><span class="text">
+</span><span class="kw">let</span><span class="text"> (//) = </span><span class="kw2">Filename</span><span class="text">.</span><span class="id">concat</span><span class="text">
+</span><span class="kw">let</span><span class="text"> </span><span class="id">training_normal_bam</span><span class="text"> = </span><span class="kw2">My_cluster</span><span class="text">.</span><span class="id">datasets_home</span><span class="text"> // </span><span class="string">"training-dream/normal.chr20.bam"</span><span class="text">
+</span><span class="kw">let</span><span class="text"> </span><span class="id">training_tumor_bam</span><span class="text"> = </span><span class="kw2">My_cluster</span><span class="text">.</span><span class="id">datasets_home</span><span class="text"> // </span><span class="string">"training-dream/tumor.chr20.bam"</span><span class="text">
+</span></pre>
+<p>We “encode” them into the structure expected by <a href='api/Biokepi.EDSL.Library.html' title='Biokepi.EDSL.Library'><code>Biokepi.EDSL.Library</code></a> (which
+we use above).</p>
+
+<pre><span class="text">
+</span><span class="kw">let</span><span class="text"> </span><span class="id">normal</span><span class="text"> =
+  </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Library</span><span class="text">.</span><span class="kw2">Input</span><span class="text">.(
+    </span><span class="id">fastq_sample</span><span class="text"> </span><span class="string">"normal-1"</span><span class="text"> [
+      </span><span class="id">of_bam</span><span class="text"> `</span><span class="kw2">PE</span><span class="text"> </span><span class="id">training_normal_bam</span><span class="text"> </span><span class="kw4">~reference_build</span><span class="text">:</span><span class="string">"b37"</span><span class="text">;
+    ]
+  )
+</span><span class="kw">let</span><span class="text"> </span><span class="id">tumor</span><span class="text"> =
+  </span><span class="kw2">Biokepi</span><span class="text">.</span><span class="kw2">EDSL</span><span class="text">.</span><span class="kw2">Library</span><span class="text">.</span><span class="kw2">Input</span><span class="text">.(
+    </span><span class="id">fastq_sample</span><span class="text"> </span><span class="string">"tumor-1"</span><span class="text"> [
+      </span><span class="id">of_bam</span><span class="text"> `</span><span class="kw2">PE</span><span class="text"> </span><span class="id">training_tumor_bam</span><span class="text"> </span><span class="kw4">~reference_build</span><span class="text">:</span><span class="string">"b37"</span><span class="text">;
+    ]
+  )
+</span></pre>
+
+
+<p>We submit the workflow to the Ketrew server (here using the <code>default</code>
+configuration profile):</p>
+
+<pre><span class="text">
+</span><span class="kw">let</span><span class="text"> () =
+  </span><span class="kw1">match</span><span class="text"> </span><span class="kw2">Sys</span><span class="text">.</span><span class="id">argv</span><span class="text">.(</span><span class="numeric">1</span><span class="text">) </span><span class="kw1">with</span><span class="text">
+  | </span><span class="string">"run"</span><span class="text"> -&gt;
+    </span><span class="id">run</span><span class="text"> </span><span class="kw4">~machine</span><span class="text">:</span><span class="kw2">My_cluster</span><span class="text">.</span><span class="id">machine</span><span class="text">
+      </span><span class="kw4">~work_dir</span><span class="text">:</span><span class="kw2">My_cluster</span><span class="text">.</span><span class="id">work_dir</span><span class="text">
+      </span><span class="kw4">~sqlite_db</span><span class="text">:(</span><span class="kw2">My_cluster</span><span class="text">.</span><span class="id">work_dir</span><span class="text"> // </span><span class="string">"test-biokepi.sqlite"</span><span class="text">) ()
+      </span><span class="kw4">~normal</span><span class="text"> </span><span class="kw4">~tumor</span><span class="text">
+    |&gt; </span><span class="kw2">Ketrew</span><span class="text">.</span><span class="kw2">Client</span><span class="text">.</span><span class="id">submit_workflow</span><span class="text">
+  | </span><span class="id">other</span><span class="text"> -&gt; </span><span class="id">printf</span><span class="text"> </span><span class="string">"usage: &lt;script&gt; run\n%!"</span><span class="text">; </span><span class="id">exit</span><span class="text"> </span><span class="numeric">1</span><span class="text">
+  | </span><span class="kw">exception</span><span class="text"> </span><span class="numeric">_</span><span class="text"> -&gt;  </span><span class="id">printf</span><span class="text"> </span><span class="string">"usage: &lt;script&gt; run\n%!"</span><span class="text">; </span><span class="id">exit</span><span class="text"> </span><span class="numeric">0</span><span class="text">
+</span></pre>
+<p>We just run the script:</p>
+<pre><code>$ ocaml src/examples/edsl_extension_register_result.ml run</code></pre><p>Here is the resulting <code>example.png</code>:</p>
+<div>
+<a href='https://cloud.githubusercontent.com/assets/617111/14832405/21bc1394-0bc8-11e6-8bf1-c97eb5a0a224.png'>
+<img width="90%" src="https://cloud.githubusercontent.com/assets/617111/14832405/21bc1394-0bc8-11e6-8bf1-c97eb5a0a224.png">
+</a>
+</div>
+
+<p>And after a succesful run one can use:</p>
+<pre><code>$ sqlite3 $WORK_DIR/test-biokepi.sqlite
+SQLite version 3.7.17 2013-05-20 00:56:22
+Enter &quot;.help&quot; for instructions
+Enter SQL statements terminated with a &quot;;&quot;
+sqlite&gt; .schema my_results
+CREATE TABLE my_results (
+        path text, ketrew_node_id text, pipeline_json text
+        );
+sqlite&gt; SELECT path,ketrew_node_id from my_results;
+...
+...</code></pre>
+</div></div></div></body><html>

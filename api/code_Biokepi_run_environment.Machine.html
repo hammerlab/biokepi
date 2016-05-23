@@ -1,0 +1,239 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Machine</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+</code><table><tr><td></td><td><span class="comment">(**************************************************************************)</span></td></tr></table><code class="code"><br>
+<span class="comment">(*&nbsp;&nbsp;Copyright&nbsp;2014,&nbsp;Sebastien&nbsp;Mondet&nbsp;&lt;seb@mondet.org&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;Licensed&nbsp;under&nbsp;the&nbsp;Apache&nbsp;License,&nbsp;Version&nbsp;2.0&nbsp;(the&nbsp;"License");&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;you&nbsp;may&nbsp;not&nbsp;use&nbsp;this&nbsp;file&nbsp;except&nbsp;in&nbsp;compliance&nbsp;with&nbsp;the&nbsp;License.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;You&nbsp;may&nbsp;obtain&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;License&nbsp;at&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://www.apache.org/licenses/LICENSE-2.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;Unless&nbsp;required&nbsp;by&nbsp;applicable&nbsp;law&nbsp;or&nbsp;agreed&nbsp;to&nbsp;in&nbsp;writing,&nbsp;software&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;distributed&nbsp;under&nbsp;the&nbsp;License&nbsp;is&nbsp;distributed&nbsp;on&nbsp;an&nbsp;"AS&nbsp;IS"&nbsp;BASIS,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;WITHOUT&nbsp;WARRANTIES&nbsp;OR&nbsp;CONDITIONS&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;either&nbsp;express&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;implied.&nbsp;&nbsp;See&nbsp;the&nbsp;License&nbsp;for&nbsp;the&nbsp;specific&nbsp;language&nbsp;governing&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;permissions&nbsp;and&nbsp;limitations&nbsp;under&nbsp;the&nbsp;License.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+</code><table><tr><td></td><td><span class="comment">(**************************************************************************)</span></td></tr></table><code class="code"><br>
+<br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span><br>
+<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Tool</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Definition</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{name:&nbsp;string;&nbsp;version:&nbsp;string&nbsp;option}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;create&nbsp;?version&nbsp;name&nbsp;&nbsp;=&nbsp;{name;&nbsp;version}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_opam_name&nbsp;{name;&nbsp;version}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;name&nbsp;(<span class="constructor">Option</span>.value&nbsp;~default:<span class="string">"NOVERSION"</span>&nbsp;version)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_string&nbsp;=&nbsp;to_opam_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_directory_name&nbsp;=&nbsp;to_opam_name<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Default</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Definition</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa&nbsp;=&nbsp;create&nbsp;<span class="string">"bwa"</span>&nbsp;~version:<span class="string">"0.7.10"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;create&nbsp;<span class="string">"samtools"</span>&nbsp;~version:<span class="string">"1.3"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcftools&nbsp;=&nbsp;create&nbsp;<span class="string">"vcftools"</span>&nbsp;~version:<span class="string">"0.1.12b"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bedtools&nbsp;=&nbsp;create&nbsp;<span class="string">"bedtools"</span>&nbsp;~version:<span class="string">"2.23.0"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somaticsniper&nbsp;=&nbsp;create&nbsp;<span class="string">"somaticsniper"</span>&nbsp;~version:<span class="string">"1.0.3"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;varscan&nbsp;=&nbsp;create&nbsp;<span class="string">"varscan"</span>&nbsp;~version:<span class="string">"2.3.5"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;picard&nbsp;=&nbsp;create&nbsp;<span class="string">"picard"</span>&nbsp;~version:<span class="string">"1.127"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect&nbsp;=&nbsp;create&nbsp;<span class="string">"mutect"</span>&nbsp;<span class="comment">(*&nbsp;We&nbsp;don't&nbsp;know&nbsp;the&nbsp;versions&nbsp;of&nbsp;the&nbsp;users'&nbsp;GATKs&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;create&nbsp;<span class="string">"gatk"</span>&nbsp;<span class="comment">(*&nbsp;idem,&nbsp;because&nbsp;of&nbsp;their&nbsp;non-open-source&nbsp;licenses&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka&nbsp;=&nbsp;create&nbsp;<span class="string">"strelka"</span>&nbsp;~version:<span class="string">"1.0.14"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;virmid&nbsp;=&nbsp;create&nbsp;<span class="string">"virmid"</span>&nbsp;~version:<span class="string">"1.1.1"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse&nbsp;=&nbsp;create&nbsp;<span class="string">"muse"</span>&nbsp;~version:<span class="string">"1.0b"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star&nbsp;=&nbsp;create&nbsp;<span class="string">"star"</span>&nbsp;~version:<span class="string">"2.4.1d"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;stringtie&nbsp;=&nbsp;create&nbsp;<span class="string">"stringtie"</span>&nbsp;~version:<span class="string">"1.2.2"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cufflinks&nbsp;=&nbsp;create&nbsp;<span class="string">"cufflinks"</span>&nbsp;~version:<span class="string">"2.2.1"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat&nbsp;=&nbsp;create&nbsp;<span class="string">"hisat"</span>&nbsp;~version:<span class="string">"0.1.6-beta"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat2&nbsp;=&nbsp;create&nbsp;<span class="string">"hisat"</span>&nbsp;~version:<span class="string">"2.0.2-beta"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mosaik&nbsp;=&nbsp;create&nbsp;<span class="string">"mosaik"</span>&nbsp;~version:<span class="string">"2.2.3"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;kallisto&nbsp;=&nbsp;create&nbsp;<span class="string">"kallisto"</span>&nbsp;~version:<span class="string">"0.42.3"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bowtie&nbsp;=&nbsp;create&nbsp;<span class="string">"bowtie"</span>&nbsp;~version:<span class="string">"1.1.2"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;optitype&nbsp;=&nbsp;create&nbsp;<span class="string">"optitype"</span>&nbsp;~version:<span class="string">"1.0.0"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;seq2hla&nbsp;=&nbsp;create&nbsp;<span class="string">"seq2hla"</span>&nbsp;~version:<span class="string">"2.2"</span><br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition:&nbsp;<span class="constructor">Definition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;init:&nbsp;<span class="constructor">Program</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ensure:&nbsp;phony_workflow;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;create&nbsp;?init&nbsp;?ensure&nbsp;definition&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value&nbsp;init<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~default:(<span class="constructor">Program</span>.shf&nbsp;<span class="string">"echo&nbsp;'Tool&nbsp;%s:&nbsp;default&nbsp;init'"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Definition</span>.to_string&nbsp;definition));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value_map<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:<span class="constructor">KEDSL</span>.forget_product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~default:(workflow_node&nbsp;nothing<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"%s-ensured"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Definition</span>.to_string&nbsp;definition)));<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init&nbsp;t&nbsp;=&nbsp;t.init<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ensure&nbsp;t&nbsp;=&nbsp;t.ensure<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Kit</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;tool&nbsp;=&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;tool&nbsp;option<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;concat&nbsp;:&nbsp;t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;l&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;def&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.find_map&nbsp;l&nbsp;~f:(<span class="keyword">fun</span>&nbsp;kit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;kit&nbsp;def)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;of_list&nbsp;l&nbsp;:&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;def&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.find&nbsp;l&nbsp;~f:(<span class="keyword">fun</span>&nbsp;{definition;&nbsp;_}&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;definition&nbsp;=&nbsp;def)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_exn&nbsp;t&nbsp;tool&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;t&nbsp;tool&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;s<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Toolkit&nbsp;cannot&nbsp;provide&nbsp;the&nbsp;tool&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Definition</span>.to_string&nbsp;tool)<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<span class="keyword">end</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Jobs in Biokepi ask the computing environment (defined below in
+    <code class="code"><span class="constructor">Machine</span></code>) for resources.
+<p>
+
+    The implementation of the <code class="code"><span class="constructor">Make_fun</span>.t</code> function defined by the user
+    is free to interpret those requirements according to the user's
+    computing infrastructure.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Make_fun</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Requirement</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Processors</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** A number of cores on a shared-memory setting. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Able to access public HTTP(S) or FTP URLs. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Memory</span>&nbsp;<span class="keyword">of</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">GB</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Ask for a specific amount of memory. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Small</span>&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Tell that the program does not expect HPC-like memory
+                       usage (i.e. not more than 2 GB or your usual laptop). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Big</span>&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Tell that the program may ask for a lot of memory
+                     but you don't know how much precisely. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Quick_run</span>&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Programs that run fast, with little resources.  Usually,
+                       you can interpret this as "OK to run on the login node
+                       of my cluster." *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Spark</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;list&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Ask for a Spark (on-YARN) environment with
+                                  custom parameters (not in use for now,
+                                  <code class="code"><span class="string">"#WIP"</span></code>). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Pass arbitrary data (useful for temporary
+                              extensions/experiements outside of Biokepi). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Set of names or tags for a workflow-node program to identify
+            itself to the <code class="code"><span class="constructor">Machine</span>.t</code>.
+            This is useful for quickly bypassing incorrect requirements set
+            in the library (please also report an issue if you need this).  *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;[@@deriving&nbsp;yojson,&nbsp;show]<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?name:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?requirements:&nbsp;<span class="constructor">Requirement</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** The type of the “run function” used across the library. *)</span></td></tr></table><code class="code"><br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** A stream processor, for this purpose, is a program that runs on one core
+      and does not grow in memory arbitrarily. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;stream_processor&nbsp;requirements&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Processors</span>&nbsp;1&nbsp;::&nbsp;<span class="keywordsign">`</span><span class="constructor">Memory</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Small</span>&nbsp;::&nbsp;requirements<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;quick&nbsp;requirements&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Quick_run</span>&nbsp;::&nbsp;requirements<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;downloading&nbsp;requirements&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>&nbsp;::&nbsp;stream_processor&nbsp;requirements&nbsp;<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;with_self_ids&nbsp;?self_ids&nbsp;l&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;self_ids&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;tags&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;tags&nbsp;::&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;l<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;with_requirements&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Requirement</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t&nbsp;=&nbsp;<span class="keyword">fun</span>&nbsp;f&nbsp;l&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;?name&nbsp;?(requirements&nbsp;=&nbsp;[])&nbsp;prog&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f&nbsp;?name&nbsp;~requirements:(l&nbsp;@&nbsp;requirements)&nbsp;prog<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;host:&nbsp;<span class="constructor">Host</span>.t;<br>
+&nbsp;&nbsp;get_reference_genome:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Reference_genome</span>.t;<br>
+&nbsp;&nbsp;toolkit:&nbsp;<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t;<br>
+&nbsp;&nbsp;run_program:&nbsp;<span class="constructor">Make_fun</span>.t;<br>
+&nbsp;&nbsp;work_dir:&nbsp;string;<br>
+&nbsp;&nbsp;max_processors:&nbsp;int;<br>
+}<br>
+<span class="keyword">let</span>&nbsp;create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~get_reference_genome&nbsp;~toolkit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_program&nbsp;~work_dir&nbsp;~max_processors&nbsp;&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;{name;&nbsp;toolkit;&nbsp;get_reference_genome;&nbsp;host;<br>
+&nbsp;&nbsp;&nbsp;run_program;&nbsp;work_dir;&nbsp;max_processors}<br>
+<br>
+<span class="keyword">let</span>&nbsp;name&nbsp;t&nbsp;=&nbsp;t.name<br>
+<span class="keyword">let</span>&nbsp;as_host&nbsp;t&nbsp;=&nbsp;t.host<br>
+<span class="keyword">let</span>&nbsp;get_reference_genome&nbsp;t&nbsp;=&nbsp;t.get_reference_genome<br>
+<span class="keyword">let</span>&nbsp;get_tool&nbsp;t&nbsp;tool&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;t.toolkit&nbsp;tool&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;s<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Machine&nbsp;%S&nbsp;cannot&nbsp;provide&nbsp;the&nbsp;tool&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.name&nbsp;(<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.to_string&nbsp;tool)<br>
+<br>
+<span class="keyword">let</span>&nbsp;run_program&nbsp;t&nbsp;=&nbsp;t.run_program<br>
+<br>
+<span class="keyword">let</span>&nbsp;max_processors&nbsp;t&nbsp;=&nbsp;t.max_processors<br>
+</code><table><tr><td></td><td><span class="comment">(** Get the maximum number of processors that a single job can use in the
+    <code class="code"><span class="constructor">Machine</span>.t</code> (i.e. usually the “number-of-threads” paramters of most tools)
+*)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">let</span>&nbsp;quick_run_program&nbsp;t&nbsp;:&nbsp;<span class="constructor">Make_fun</span>.t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Make_fun</span>.with_requirements&nbsp;t.run_program&nbsp;(<span class="constructor">Make_fun</span>.quick&nbsp;[])<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Run a program that does not use much memory and runs on one core. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">let</span>&nbsp;run_stream_processor&nbsp;?self_ids&nbsp;t&nbsp;:&nbsp;<span class="constructor">Make_fun</span>.t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Make_fun</span>.with_requirements&nbsp;t.run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Make_fun</span>.stream_processor&nbsp;[]&nbsp;|&gt;&nbsp;<span class="constructor">Make_fun</span>.with_self_ids&nbsp;?self_ids)<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Run a program that does not use much memory, runs on one core, and needs
+    the internet. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">let</span>&nbsp;run_download_program&nbsp;t&nbsp;:&nbsp;<span class="constructor">Make_fun</span>.t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Make_fun</span>.with_requirements&nbsp;t.run_program&nbsp;(<span class="constructor">Make_fun</span>.downloading&nbsp;[])<br>
+<br>
+<span class="keyword">let</span>&nbsp;run_big_program&nbsp;t&nbsp;:<br>
+&nbsp;&nbsp;?processors:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?self_ids&nbsp;:&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Make_fun</span>.t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;?(processors&nbsp;=&nbsp;1)&nbsp;?self_ids&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Make_fun</span>.with_requirements<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Make_fun</span>.with_self_ids&nbsp;?self_ids&nbsp;[<span class="keywordsign">`</span><span class="constructor">Memory</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Big</span>;&nbsp;<span class="keywordsign">`</span><span class="constructor">Processors</span>&nbsp;processors])<br>
+<br>
+<span class="keyword">let</span>&nbsp;work_dir&nbsp;t&nbsp;=&nbsp;t.work_dir<br>
+<br>
+<br>
+<span class="keyword">end</span></code></body></html>

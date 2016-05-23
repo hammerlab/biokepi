@@ -1,0 +1,36 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome.Specification.Default.b38</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;b38&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Release&nbsp;79&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_b38&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gtf_b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/Homo_sapiens.GRCh38.79.gtf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cdna_b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.b38<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(url&nbsp;b38_url|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;dbsnp_b38&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;gtf_b38_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cdna:<span class="constructor">Location</span>.(url&nbsp;cdna_b38_url&nbsp;|&gt;&nbsp;gunzip)</code></body></html>

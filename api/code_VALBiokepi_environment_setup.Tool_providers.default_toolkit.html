@@ -1,0 +1,53 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Tool_providers.default_toolkit</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;default_toolkit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~install_tools_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(mutect_jar_location&nbsp;=&nbsp;default_jar_location&nbsp;<span class="string">"Mutect"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(gatk_jar_location&nbsp;=&nbsp;default_jar_location&nbsp;<span class="string">"GATK"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install&nbsp;installable&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;render_installable_tool&nbsp;~host&nbsp;installable&nbsp;~install_tools_path&nbsp;~run_program<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.concat&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.of_list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mutect_tool&nbsp;~run_program&nbsp;~host&nbsp;~install_tools_path&nbsp;(mutect_jar_location&nbsp;());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gatk_tool&nbsp;~run_program&nbsp;~host&nbsp;~install_tools_path&nbsp;(gatk_jar_location&nbsp;());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;bwa;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;samtools;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;bedtools;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;vcftools;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;strelka;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;picard;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;somaticsniper;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;varscan;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;muse;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;virmid;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;star;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;stringtie;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;cufflinks;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;@@&nbsp;hisat&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.hisat;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;@@&nbsp;hisat&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.hisat2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;mosaik;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;install&nbsp;kallisto;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biopam</span>.default&nbsp;~run_program&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path:(install_tools_path&nbsp;//&nbsp;<span class="string">"biopam-kit"</span>)&nbsp;();<br>
+&nbsp;&nbsp;]</code></body></html>

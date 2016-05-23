@@ -1,0 +1,660 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Gatk</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Remove</span>&nbsp;=&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span><br>
+<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Configuration</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Gatk_config</span>&nbsp;()&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** The name of the configuration, specific to Biokepi. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** MalformedReadFilter options.
+<p>
+
+         This filter is applied automatically by all GATK tools in order to protect them
+         from crashing on reads that are grossly malformed. There are a few
+         issues (such as the absence of sequence bases) that will cause the run
+         to fail with an error, but these cases can be preempted by setting
+         flags that cause the problem reads to also be filtered. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Ignore reads with CIGAR containing the N operator, instead of failing
+         with an error *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_reads_with_n_cigar:&nbsp;bool;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Ignore reads with mismatching numbers of bases and base qualities,
+         instead of failing with an error.*)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_mismatching_base_and_quals:&nbsp;bool;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Ignore reads with no stored bases (i.e. '*' where the sequence should
+         be), instead of failing with an error *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_bases_not_stored:&nbsp;bool;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Other parameters: *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters:&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;t&nbsp;=&nbsp;t.name<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_json&nbsp;t:&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.json&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;{name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_reads_with_n_cigar;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_mismatching_base_and_quals;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_bases_not_stored;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters}&nbsp;=&nbsp;t&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"name"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"filter_reads_with_N_cigar"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Bool</span>&nbsp;filter_reads_with_n_cigar;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"filter_mismatching_base_and_quals"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Bool</span>&nbsp;filter_mismatching_base_and_quals;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"filter_bases_not_stored"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Bool</span>&nbsp;filter_bases_not_stored;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"parameters"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;(<span class="constructor">List</span>.map&nbsp;parameters&nbsp;~f:(<span class="keyword">fun</span>&nbsp;(a,&nbsp;b)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;a,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;b));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;render&nbsp;{name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_reads_with_n_cigar;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_mismatching_base_and_quals;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_bases_not_stored;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;filter_reads_with_n_cigar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"--filter_reads_with_N_cigar"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">""</span>)&nbsp;::<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;filter_mismatching_base_and_quals<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"--filter_mismatching_base_and_quals"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">""</span>)&nbsp;::<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;filter_bases_not_stored<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"--filter_bases_not_stored"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">""</span>)&nbsp;::<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.concat_map&nbsp;parameters&nbsp;~f:(<span class="keyword">fun</span>&nbsp;(a,&nbsp;b)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[a;&nbsp;b])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">List</span>.filter&nbsp;~f:(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;not&nbsp;(<span class="constructor">String</span>.is_empty&nbsp;s))<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{name&nbsp;=&nbsp;<span class="string">"default"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_reads_with_n_cigar&nbsp;=&nbsp;<span class="keyword">false</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_mismatching_base_and_quals&nbsp;=&nbsp;<span class="keyword">false</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filter_bases_not_stored&nbsp;=&nbsp;<span class="keyword">false</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters&nbsp;=&nbsp;[]}<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Indel_realigner</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Gatk_config</span>&nbsp;()<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Realigner_target_creator</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Gatk_config</span>&nbsp;()<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Bqsr</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Gatk_config</span>&nbsp;()<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Print_reads</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Gatk_config</span>&nbsp;()<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;indel_realigner&nbsp;=&nbsp;(<span class="constructor">Indel_realigner</span>.t&nbsp;*&nbsp;<span class="constructor">Realigner_target_creator</span>.t)<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;bqsr&nbsp;=&nbsp;(<span class="constructor">Bqsr</span>.t&nbsp;*&nbsp;<span class="constructor">Print_reads</span>.t)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_indel_realigner&nbsp;=&nbsp;(<span class="constructor">Indel_realigner</span>.default,&nbsp;<span class="constructor">Realigner_target_creator</span>.default)<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_bqsr&nbsp;=&nbsp;(<span class="constructor">Bqsr</span>.default,&nbsp;<span class="constructor">Print_reads</span>.default)<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mutect2</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use_dbsnp:&nbsp;bool;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use_cosmic:&nbsp;bool;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;additional_arguments:&nbsp;string&nbsp;list;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(use_dbsnp&nbsp;=&nbsp;<span class="keyword">true</span>)&nbsp;?(use_cosmic&nbsp;=&nbsp;<span class="keyword">true</span>)&nbsp;name&nbsp;additional_arguments&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{name;&nbsp;use_dbsnp;&nbsp;use_cosmic;&nbsp;additional_arguments}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_json&nbsp;{name;&nbsp;use_dbsnp;&nbsp;use_cosmic;&nbsp;additional_arguments}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.json&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"name"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"use-cosmic"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Bool</span>&nbsp;use_cosmic;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"use-dbsnp"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Bool</span>&nbsp;use_dbsnp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"additional-arguments"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">List</span>&nbsp;(<span class="constructor">List</span>.map&nbsp;additional_arguments&nbsp;~f:(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;s));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;=&nbsp;create&nbsp;<span class="string">"default"</span>&nbsp;[]<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;compile&nbsp;~reference&nbsp;{name;&nbsp;use_dbsnp;&nbsp;use_cosmic;&nbsp;additional_arguments}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;with_db&nbsp;use&nbsp;opt_name&nbsp;get_exn&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;not&nbsp;use&nbsp;<span class="keyword">then</span>&nbsp;<span class="constructor">None</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;node&nbsp;=&nbsp;get_exn&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Some</span>&nbsp;(&nbsp;[opt_name;&nbsp;node<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path],&nbsp;[<span class="constructor">KEDSL</span>.depends_on&nbsp;node])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;args,&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.filter_opt&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with_db&nbsp;use_dbsnp&nbsp;&nbsp;<span class="string">"--dbsnp"</span>&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with_db&nbsp;use_cosmic&nbsp;&nbsp;<span class="string">"--cosmic"</span>&nbsp;<span class="constructor">Reference_genome</span>.cosmic_exn;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">List</span>.split<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">`</span><span class="constructor">Arguments</span>&nbsp;(<span class="constructor">List</span>.concat&nbsp;args&nbsp;@&nbsp;additional_arguments),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Edges</span>&nbsp;(<span class="constructor">List</span>.concat&nbsp;edges))<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;t&nbsp;=&nbsp;t.name<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;For&nbsp;now&nbsp;we&nbsp;have&nbsp;the&nbsp;two&nbsp;steps&nbsp;in&nbsp;the&nbsp;same&nbsp;target&nbsp;but&nbsp;this&nbsp;could<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;split&nbsp;in&nbsp;two.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c.f.&nbsp;https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We&nbsp;want&nbsp;to&nbsp;be&nbsp;able&nbsp;to&nbsp;run&nbsp;the&nbsp;indel-realigner&nbsp;on&nbsp;mutliple&nbsp;bams,&nbsp;so&nbsp;we<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cannot&nbsp;use&nbsp;the&nbsp;usual&nbsp;`~result_prefix`&nbsp;argument:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See&nbsp;the&nbsp;documentation&nbsp;for&nbsp;the&nbsp;`--nWayOut`&nbsp;option:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_indels_IndelRealigner.php#--nWayOut<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;See&nbsp;also<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://gatkforums.broadinstitute.org/gatk/discussion/5588/best-practice-for-multi-sample-non-human-indel-realignment<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Also,&nbsp;the&nbsp;documentation&nbsp;is&nbsp;incomplete&nbsp;(or&nbsp;buggy),&nbsp;the&nbsp;option&nbsp;`--nWayOut`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;output&nbsp;the&nbsp;Bam&nbsp;files&nbsp;in&nbsp;the&nbsp;current&nbsp;directory&nbsp;(i.e.&nbsp;the&nbsp;one&nbsp;GATK&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;running&nbsp;in).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;So,&nbsp;unless&nbsp;the&nbsp;user&nbsp;uses&nbsp;the&nbsp;`?run_directory`&nbsp;option,&nbsp;we&nbsp;extract&nbsp;that<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;directory&nbsp;from&nbsp;the&nbsp;input-bams;&nbsp;if&nbsp;they&nbsp;do&nbsp;not&nbsp;coincide&nbsp;we&nbsp;consider&nbsp;this&nbsp;an<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error.<br>
+<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;On&nbsp;top&nbsp;of&nbsp;that&nbsp;we&nbsp;use&nbsp;the&nbsp;GADT&nbsp;`_&nbsp;KEDSL.bam_or_bams`&nbsp;to&nbsp;return&nbsp;have&nbsp;2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;return&nbsp;types:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bam_file&nbsp;workflow_node&nbsp;or&nbsp;bam_list&nbsp;workflow_node<br>
+&nbsp;&nbsp;*)</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Configuration</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;indel_realigner_output_filename_tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration:(ir_config,&nbsp;target_config)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?region&nbsp;input_bams&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;digest_of_input&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;input_bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;o&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;o<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">""</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;we&nbsp;make&nbsp;this&nbsp;file&nbsp;“unique”&nbsp;with&nbsp;an&nbsp;MD5&nbsp;sum&nbsp;of&nbsp;the&nbsp;input&nbsp;paths&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Digest</span>.string&nbsp;|&gt;&nbsp;<span class="constructor">Digest</span>.to_hex&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_number&nbsp;=&nbsp;<span class="constructor">List</span>.length&nbsp;input_bams&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">""</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"_indelreal-"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ir_config.<span class="constructor">Configuration</span>.<span class="constructor">Indel_realigner</span>.name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;target_config.<span class="constructor">Configuration</span>.<span class="constructor">Realigner_target_creator</span>.name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"-%dx"</span>&nbsp;bam_number;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;bam_number&nbsp;=&nbsp;1&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">""</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"-"</span>&nbsp;^&nbsp;digest_of_input&nbsp;());<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value_map&nbsp;~f:(<span class="keyword">fun</span>&nbsp;r&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"-"</span>&nbsp;^&nbsp;<span class="constructor">Region</span>.to_filename&nbsp;r)&nbsp;region&nbsp;~default:<span class="string">""</span>;<br>
+&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;indel_realigner&nbsp;:<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;a.<br>
+&nbsp;&nbsp;?compress:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?on_region:&nbsp;<span class="constructor">Region</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;configuration:(<span class="constructor">Indel_realigner</span>.t&nbsp;*&nbsp;<span class="constructor">Realigner_target_creator</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;run_with:<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?run_directory:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;a&nbsp;<span class="constructor">KEDSL</span>.bam_or_bams&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;a&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;?(compress=<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(on_region&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Full</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;~run_with&nbsp;?run_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_bam_or_bams&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam_1,&nbsp;more_input_bams&nbsp;=&nbsp;<span class="comment">(*&nbsp;this&nbsp;an&nbsp;at-least-length-1&nbsp;list&nbsp;:)&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;input_bam_or_bams&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Single_bam</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bam,&nbsp;[]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_workflow_list</span>&nbsp;[]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Empty&nbsp;bam-list&nbsp;in&nbsp;Gatk.indel_realigner`"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_workflow_list</span>&nbsp;(one&nbsp;::&nbsp;more)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(one,&nbsp;more)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_directory&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;run_directory&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dir&nbsp;=&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;input_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.iter&nbsp;more_input_bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;&lt;&gt;&nbsp;dir&nbsp;<span class="keyword">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"These&nbsp;two&nbsp;BAMS&nbsp;are&nbsp;not&nbsp;in&nbsp;the&nbsp;same&nbsp;directory:\n\&nbsp;&nbsp;&nbsp;&nbsp;%s\n\&nbsp;&nbsp;&nbsp;&nbsp;%s\nGATK.indel_realigner&nbsp;when&nbsp;running&nbsp;on&nbsp;multiple&nbsp;bams&nbsp;requires&nbsp;a&nbsp;proper&nbsp;run-directory,&nbsp;clean-up&nbsp;your&nbsp;bams&nbsp;or&nbsp;provide&nbsp;the&nbsp;option&nbsp;~run_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"</span>&nbsp;input_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;rundir&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;rundir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_config,&nbsp;target_config&nbsp;=&nbsp;configuration&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_sorted_bam_1&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam_1&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;more_input_sorted_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;more_input_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;more_input_bams&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Use_the_sorted_ones_please</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam_1&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Use_the_sorted_ones_please</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;ignore&nbsp;(more_input_bams,&nbsp;input_bam_1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"gatk-indelrealign-%s-%dx-%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Region</span>.to_filename&nbsp;on_region)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.length&nbsp;more_input_sorted_bams&nbsp;+&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_genome&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_build&nbsp;=&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;digest_of_input&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;List.map&nbsp;(input_sorted_bam_1&nbsp;::&nbsp;more_input_sorted_bams)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(fun&nbsp;o&nbsp;-&gt;&nbsp;o#product#path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;String.concat&nbsp;~sep:""<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(*&nbsp;we&nbsp;make&nbsp;this&nbsp;file&nbsp;“unique”&nbsp;with&nbsp;an&nbsp;MD5&nbsp;sum&nbsp;of&nbsp;the&nbsp;input&nbsp;paths&nbsp;*)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;Digest.string&nbsp;|&gt;&nbsp;Digest.to_hex&nbsp;in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indel_realigner_output_filename_tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;~region:on_region<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(input_sorted_bam_1&nbsp;::&nbsp;more_input_sorted_bams)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;~bam_number:(List.length&nbsp;more_input_sorted_bams&nbsp;+&nbsp;1)&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;~digest_of_input&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;"_indelreal-%s-%s-%dx%s"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target_config.Configuration.Indel_realigner.name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Region.to_filename&nbsp;on_region)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(List.length&nbsp;more_input_sorted_bams&nbsp;+&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(if&nbsp;more_input_sorted_bams&nbsp;=&nbsp;[]&nbsp;then&nbsp;""&nbsp;else&nbsp;"-"&nbsp;^&nbsp;digest_of_input)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_file&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_suffix&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="string">".bam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;output_suffix&nbsp;^&nbsp;<span class="string">".intervals"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_bam_path&nbsp;input&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run_directory&nbsp;//&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_extension&nbsp;input<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;^&nbsp;output_suffix&nbsp;^&nbsp;<span class="string">".bam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Filename</span>.basename)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;target_creation_args&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;<span class="constructor">Filename</span>.quote&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;<span class="constructor">Filename</span>.quote&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;<span class="constructor">Filename</span>.quote&nbsp;intervals_file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-nt"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="constructor">Realigner_target_creator</span>.render&nbsp;target_config<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="constructor">List</span>.concat_map&nbsp;more_input_sorted_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(<span class="keyword">fun</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[<span class="string">"-I"</span>;&nbsp;<span class="constructor">Filename</span>.quote&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_real_args&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="string">"-R"</span>;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-targetIntervals"</span>;&nbsp;intervals_file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;@&nbsp;<span class="constructor">Indel_realigner</span>.render&nbsp;indel_config&nbsp;@<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">match</span>&nbsp;more_input_sorted_bams&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;[]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="string">"-o"</span>;&nbsp;output_bam_path&nbsp;input_sorted_bam_1]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;more&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.concat_map&nbsp;more<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(<span class="keyword">fun</span>&nbsp;b&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[<span class="string">"-I"</span>;&nbsp;<span class="constructor">Filename</span>.quote&nbsp;b<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;[<span class="string">"--nWayOut"</span>;&nbsp;output_suffix&nbsp;^&nbsp;<span class="string">".bam"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_option&nbsp;=&nbsp;<span class="constructor">Region</span>.to_gatk_option&nbsp;on_region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~name&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"gatk"</span>;&nbsp;<span class="string">"indel-realigner"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;run_directory)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;RealignerTargetCreator&nbsp;%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intervals_option<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;target_creation_args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;(<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;IndelRealigner&nbsp;"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;intervals_option<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;(<span class="keyword">if</span>&nbsp;compress&nbsp;<span class="keyword">then</span>&nbsp;<span class="string">"&nbsp;"</span>&nbsp;<span class="keyword">else</span>&nbsp;<span class="string">"&nbsp;-compress&nbsp;0&nbsp;"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;(<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;indel_real_args)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sequence_dict&nbsp;=&nbsp;<span class="comment">(*&nbsp;implicit&nbsp;dependency&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;RealignerTargetCreator&nbsp;wants&nbsp;the&nbsp;`.fai`:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;fasta);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sequence_dict;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;intervals_file);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="constructor">List</span>.concat_map&nbsp;(input_sorted_bam_1&nbsp;::&nbsp;more_input_sorted_bams)&nbsp;~f:(<span class="keyword">fun</span>&nbsp;b&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;b;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;b);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;(output_bam_path&nbsp;b));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;node&nbsp;:&nbsp;<span class="keyword">type</span>&nbsp;a.&nbsp;a&nbsp;bam_or_bams&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;a&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;we&nbsp;need&nbsp;a&nbsp;function&nbsp;to&nbsp;force&nbsp;`type&nbsp;a.`&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">function</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Single_bam</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;This&nbsp;is&nbsp;what&nbsp;we&nbsp;give&nbsp;to&nbsp;the&nbsp;`-o`&nbsp;option:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;&nbsp;~name&nbsp;~make&nbsp;~edges<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(transform_bam&nbsp;input_sorted_bam_1<span class="keywordsign">#</span>product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(output_bam_path&nbsp;input_sorted_bam_1))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_workflow_list</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;&nbsp;~name&nbsp;~make&nbsp;~edges<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bam_list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.map&nbsp;(input_sorted_bam_1&nbsp;::&nbsp;more_input_sorted_bams)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(<span class="keyword">fun</span>&nbsp;b&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;This&nbsp;is&nbsp;what&nbsp;the&nbsp;documentation&nbsp;says&nbsp;it&nbsp;will&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;the&nbsp;`--nWayOut`&nbsp;option&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transform_bam&nbsp;b<span class="keywordsign">#</span>product&nbsp;(output_bam_path&nbsp;b))))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;node&nbsp;input_bam_or_bams<br>
+<br>
+<span class="keyword">let</span>&nbsp;indel_realigner_map_reduce&nbsp;:<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;a.<br>
+&nbsp;&nbsp;?compress:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;configuration:(<span class="constructor">Indel_realigner</span>.t&nbsp;*&nbsp;<span class="constructor">Realigner_target_creator</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;run_with:<span class="constructor">Machine</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?run_directory:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;a&nbsp;<span class="constructor">KEDSL</span>.bam_or_bams&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;a&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;?compress<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;~run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?run_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_bam_or_bams&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">match</span>&nbsp;input_bam_or_bams&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Single_bam</span>&nbsp;bam_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;all_nodes&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;f&nbsp;on_region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indel_realigner&nbsp;?compress<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~on_region<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;~run_with&nbsp;?run_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_bam_or_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bam_node<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;~f&nbsp;(<span class="constructor">Reference_genome</span>.major_contigs&nbsp;reference)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_extension&nbsp;bam_node<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;indel_realigner_output_filename_tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;[bam_node]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;<span class="string">"-merged.bam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.merge_bams&nbsp;~run_with&nbsp;all_nodes&nbsp;result_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_workflow_list</span>&nbsp;bams&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;all_nodes&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;A&nbsp;list&nbsp;of&nbsp;lists&nbsp;that&nbsp;looks&nbsp;like:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[bam1_reg1;&nbsp;bam2_reg1;&nbsp;bam3_reg1];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[bam1_reg2;&nbsp;bam2_reg2;&nbsp;bam3_reg2];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[bam1_reg3;&nbsp;bam2_reg3;&nbsp;bam3_reg3];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[bam1_reg4;&nbsp;bam2_reg4;&nbsp;bam3_reg4];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;f&nbsp;on_region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_list_node&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indel_realigner&nbsp;?compress<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~on_region<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;~run_with&nbsp;?run_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_bam_or_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;exploded&nbsp;=&nbsp;<span class="constructor">KEDSL</span>.explode_bam_list_node&nbsp;bam_list_node&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exploded<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.hd_exn&nbsp;bams)<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;~f&nbsp;(<span class="constructor">Reference_genome</span>.major_contigs&nbsp;reference)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;merged_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.mapi&nbsp;bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;index&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;all_regions_for_this_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;all_nodes&nbsp;~f:(<span class="keyword">fun</span>&nbsp;region_n&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.nth&nbsp;region_n&nbsp;index&nbsp;|&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg:<span class="string">"bug&nbsp;in&nbsp;Gatk.indel_realigner_map_reduce"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_extension&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;sprintf&nbsp;<span class="string">"-%d-"</span>&nbsp;index&nbsp;<span class="comment">(*&nbsp;the&nbsp;index&nbsp;is&nbsp;there&nbsp;as&nbsp;debug/witness&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;indel_realigner_output_filename_tag<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration&nbsp;bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^&nbsp;<span class="string">"-merged.bam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.merge_bams&nbsp;~run_with&nbsp;all_regions_for_this_bam&nbsp;result_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name:<span class="string">"Indel-realigner-map-reduce"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(<span class="constructor">List</span>.map&nbsp;merged_bams&nbsp;~f:depends_on)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(bam_list&nbsp;(<span class="constructor">List</span>.map&nbsp;merged_bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;n&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;n<span class="keywordsign">#</span>product)))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+<br>
+<br>
+<span class="comment">(*&nbsp;Again&nbsp;doing&nbsp;two&nbsp;steps&nbsp;in&nbsp;one&nbsp;target&nbsp;for&nbsp;now:<br>
+&nbsp;&nbsp;&nbsp;http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator<br>
+&nbsp;&nbsp;&nbsp;https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php<br>
+*)</span><br>
+<span class="keyword">let</span>&nbsp;call_gatk&nbsp;~analysis&nbsp;?(region=<span class="keywordsign">`</span><span class="constructor">Full</span>)&nbsp;args&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;escaped_args&nbsp;=&nbsp;<span class="constructor">List</span>.map&nbsp;~f:<span class="constructor">Filename</span>.quote&nbsp;args&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;intervals_option&nbsp;=&nbsp;<span class="constructor">Region</span>.to_gatk_option&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;sh&nbsp;(<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"java&nbsp;-jar&nbsp;$GATK_JAR&nbsp;-T&nbsp;"</span>&nbsp;::&nbsp;analysis&nbsp;::&nbsp;intervals_option&nbsp;::&nbsp;escaped_args))<br>
+<br>
+<span class="keyword">let</span>&nbsp;base_quality_score_recalibrator<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration:(bqsr_configuration,&nbsp;print_reads_configuration)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~input_bam&nbsp;~output_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"gatk-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_bam)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_genome&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;db_snp&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_bam&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Please_use_the_sorted_one</span>&nbsp;<span class="keyword">in</span>&nbsp;ignore&nbsp;input_bam;<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;recal_data_table&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_suffix&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="string">".bam"</span>&nbsp;^&nbsp;<span class="string">"-recal_data.table"</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~name&nbsp;~processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"gatk"</span>;&nbsp;<span class="string">"bqsr"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~analysis:<span class="string">"BaseRecalibrator"</span>&nbsp;([<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-nct"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-knownSites"</span>;&nbsp;db_snp<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;recal_data_table;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;@&nbsp;<span class="constructor">Configuration</span>.<span class="constructor">Bqsr</span>.render&nbsp;bqsr_configuration)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~analysis:<span class="string">"PrintReads"</span>&nbsp;([<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-nct"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-BQSR"</span>;&nbsp;recal_data_table;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;@&nbsp;<span class="constructor">Configuration</span>.<span class="constructor">Print_reads</span>.render&nbsp;print_reads_configuration)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;(transform_bam&nbsp;sorted_bam<span class="keywordsign">#</span>product&nbsp;~path:output_bam)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;&nbsp;depends_on&nbsp;db_snp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;recal_data_table);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;haplotype_caller<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(more_edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with&nbsp;~input_bam&nbsp;~result_prefix&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_on_region&nbsp;~add_edges&nbsp;region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_file&nbsp;suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;region_name&nbsp;=&nbsp;<span class="constructor">Region</span>.to_filename&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s%s"</span>&nbsp;result_prefix&nbsp;region_name&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_vcf&nbsp;=&nbsp;result_file&nbsp;<span class="string">"-germline.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_path&nbsp;=&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;output_vcf&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_dot_fai&nbsp;=&nbsp;<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sequence_dict&nbsp;=&nbsp;<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.dbsnp_exn&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_gatk_haplotype_caller&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_vcf)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"gatk"</span>;&nbsp;<span class="string">"haplotype-caller"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~region&nbsp;~analysis:<span class="string">"HaplotypeCaller"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I"</span>;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"--dbsnp"</span>;&nbsp;dbsnp<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_vcf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"--filter_reads_with_N_cigar"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_vcf&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.variant_caller]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(add_edges&nbsp;@&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;dbsnp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_dot_fai;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sequence_dict;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_vcf);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_gatk_haplotype_caller<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Region</span>&nbsp;region&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;run_on_region&nbsp;~add_edges:more_edges&nbsp;region<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Map_reduce</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;targets&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;(<span class="constructor">Reference_genome</span>.major_contigs&nbsp;reference)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(run_on_region&nbsp;~add_edges:[])&nbsp;<span class="comment">(*&nbsp;we&nbsp;add&nbsp;edges&nbsp;only&nbsp;to&nbsp;the&nbsp;last&nbsp;step&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_vcf&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">"-merged.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Vcftools</span>.vcf_concat&nbsp;~run_with&nbsp;targets&nbsp;~final_vcf&nbsp;~more_edges<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Call somatic variants with Mutect2.
+<p>
+
+    Mutect2 comes within the GATK (as opposed to <code class="code"><span class="constructor">Mutect</span></code>).
+<p>
+
+    Cf. also
+    https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_cancer_m2_MuTect2.php
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">let</span>&nbsp;mutect2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(more_edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~configuration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~input_normal_bam&nbsp;~input_tumor_bam&nbsp;<span class="comment">(*&nbsp;The&nbsp;doc&nbsp;says&nbsp;only&nbsp;one&nbsp;of&nbsp;each&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;~result_prefix&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_normal_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_on_region&nbsp;~add_edges&nbsp;region&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result_file&nbsp;suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;region_name&nbsp;=&nbsp;<span class="constructor">Region</span>.to_filename&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s%s"</span>&nbsp;result_prefix&nbsp;region_name&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_vcf&nbsp;=&nbsp;result_file&nbsp;<span class="string">"-mutect2.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.gatk&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_path&nbsp;=&nbsp;<span class="constructor">Filename</span>.dirname&nbsp;output_vcf&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_dot_fai&nbsp;=&nbsp;<span class="constructor">Samtools</span>.faidx&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sequence_dict&nbsp;=&nbsp;<span class="constructor">Picard</span>.create_dict&nbsp;~run_with&nbsp;reference_fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_normal_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_normal_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_tumor_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Samtools</span>.sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;input_tumor_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Arguments</span>&nbsp;config_arguments,&nbsp;<span class="keywordsign">`</span><span class="constructor">Edges</span>&nbsp;confg_edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Configuration</span>.<span class="constructor">Mutect2</span>.compile&nbsp;~reference&nbsp;configuration&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_caller&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_vcf)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"gatk"</span>;&nbsp;<span class="string">"mutect2"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;gatk)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;run_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;call_gatk&nbsp;~region&nbsp;~analysis:<span class="string">"MuTect2"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;([&nbsp;<span class="string">"-I:normal"</span>;&nbsp;sorted_normal_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-I:tumor"</span>;&nbsp;sorted_tumor_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-R"</span>;&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-o"</span>;&nbsp;output_vcf;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;config_arguments)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_vcf&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.variant_caller]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(add_edges&nbsp;@&nbsp;confg_edges&nbsp;@&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;gatk);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_normal_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_tumor_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_dot_fai;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sequence_dict;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_normal_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Samtools</span>.index_to_bai&nbsp;~run_with&nbsp;sorted_tumor_bam);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_vcf);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_caller<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Region</span>&nbsp;region&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;run_on_region&nbsp;~add_edges:more_edges&nbsp;region<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Map_reduce</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;targets&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;(<span class="constructor">Reference_genome</span>.major_contigs&nbsp;reference)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(run_on_region&nbsp;~add_edges:[])&nbsp;<span class="comment">(*&nbsp;we&nbsp;add&nbsp;edges&nbsp;only&nbsp;to&nbsp;the&nbsp;last&nbsp;step&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_vcf&nbsp;=&nbsp;result_prefix&nbsp;^&nbsp;<span class="string">"-merged.vcf"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Vcftools</span>.vcf_concat&nbsp;~run_with&nbsp;targets&nbsp;~final_vcf&nbsp;~more_edges<br>
+<span class="keyword">end</span></code></body></html>

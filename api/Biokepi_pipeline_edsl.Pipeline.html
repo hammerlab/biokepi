@@ -1,0 +1,344 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_pipeline_edsl.Optimization_framework.html">
+<link rel="next" href="Biokepi_pipeline_edsl.Pipeline_library.html">
+<link rel="Up" href="Biokepi_pipeline_edsl.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.Pipeline</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_pipeline_edsl.Optimization_framework.html" title="Biokepi_pipeline_edsl.Optimization_framework">Previous</a>
+&nbsp;<a class="up" href="Biokepi_pipeline_edsl.html" title="Biokepi_pipeline_edsl">Up</a>
+&nbsp;<a class="post" href="Biokepi_pipeline_edsl.Pipeline_library.html" title="Biokepi_pipeline_edsl.Pipeline_library">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi_pipeline_edsl.Pipeline.html">Biokepi_pipeline_edsl.Pipeline</a> (<a href="code_Biokepi_pipeline_edsl.Pipeline.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Pipeline: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi_pipeline_edsl.Pipeline.File.html">File</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.File.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="TYPEjson"><span class="keyword">type</span> <code class="type"></code>json</span> = <code class="type">Yojson.Basic.json</code> </pre>
+
+
+<pre><code><span id="TYPEfastq_gz"><span class="keyword">type</span> <code class="type"></code>fastq_gz</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_gz.Fastq_gz"><span class="constructor">Fastq_gz</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEfastq"><span class="keyword">type</span> <code class="type"></code>fastq</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq.Fastq"><span class="constructor">Fastq</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEfastq_sample"><span class="keyword">type</span> <code class="type"></code>fastq_sample</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_sample.Fastq_sample"><span class="constructor">Fastq_sample</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><span id="TYPEbam"><span class="keyword">type</span> <code class="type"></code>bam</span> = <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code> </pre>
+
+
+<pre><code><span id="TYPEbam_pair"><span class="keyword">type</span> <code class="type"></code>bam_pair</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_pair.Bam_pair"><span class="constructor">Bam_pair</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEvcf"><span class="keyword">type</span> <code class="type"></code>vcf</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTvcf.Vcf"><span class="constructor">Vcf</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEgtf"><span class="keyword">type</span> <code class="type"></code>gtf</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTgtf.Gtf"><span class="constructor">Gtf</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEseq2hla_hla_types"><span class="keyword">type</span> <code class="type"></code>seq2hla_hla_types</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseq2hla_hla_types.Seq2HLA_hla_types"><span class="constructor">Seq2HLA_hla_types</span></span></code></td>
+
+</tr></table>
+
+<div class="info ">
+Seq2HLA &amp; Optitype have unique return file formats<br>
+</div>
+
+
+<pre><code><span id="TYPEoptitype_hla_types"><span class="keyword">type</span> <code class="type"></code>optitype_hla_types</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELToptitype_hla_types.Optitype_hla_types"><span class="constructor">Optitype_hla_types</span></span></code></td>
+
+</tr></table>
+
+
+
+<pre><code><span id="TYPEsomatic"><span class="keyword">type</span> <code class="type"></code>somatic</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsomatic.normal">normal</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTsomatic.tumor">tumor</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a></code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="TYPEgermline"><span class="keyword">type</span> <code class="type"></code>germline</span> = <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a></code> </pre>
+
+
+<pre><code><span id="TYPEfastq_sample_info"><span class="keyword">type</span> <code class="type"></code>fastq_sample_info</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_sample_info.sample_name">sample_name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_sample_info.fragment_id">fragment_id</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span class="keyword">module</span> <a href="Biokepi_pipeline_edsl.Pipeline.Variant_caller.html">Variant_caller</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.Variant_caller.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="TYPEmetadata_spec"><span class="keyword">type</span> <code class="type"></code>metadata_spec</span> = <code class="type">[ `Add_tags of string list | `Add_tags_rec of string list ]</code> </pre>
+
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type">'_</code> t</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Fastq_gz"><span class="constructor">Fastq_gz</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.File.html#TYPEt">File.t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_gz">fastq_gz</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Fastq"><span class="constructor">Fastq</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.File.html#TYPEt">File.t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Bam_sample"><span class="constructor">Bam_sample</span></span> <span class="keyword">:</span> <code class="type">string * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Bam_to_fastq"><span class="constructor">Bam_to_fastq</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample_info">fastq_sample_info</a> option<br>        * [ `Paired | `Single ]<br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Paired_end_sample"><span class="constructor">Paired_end_sample</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample_info">fastq_sample_info</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Single_end_sample"><span class="constructor">Single_end_sample</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample_info">fastq_sample_info</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Gunzip_concat"><span class="constructor">Gunzip_concat</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_gz">fastq_gz</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a> list</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Concat_text"><span class="constructor">Concat_text</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a> list</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">fastq</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Star"><span class="constructor">Star</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_bfx_tools.Star.Configuration.Align.html#TYPEt">Biokepi_bfx_tools.Star.Configuration.Align.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a><br>          <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Hisat"><span class="constructor">Hisat</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_bfx_tools.Hisat.Configuration.html#TYPEt">Biokepi_bfx_tools.Hisat.Configuration.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a><br>          <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Stringtie"><span class="constructor">Stringtie</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_bfx_tools.Stringtie.Configuration.html#TYPEt">Biokepi_bfx_tools.Stringtie.Configuration.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEgtf">gtf</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Bwa"><span class="constructor">Bwa</span></span> <span class="keyword">:</span> <code class="type">Biokepi_bfx_tools.Bwa.Configuration.Aln.t<br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a><br>          <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Bwa_mem"><span class="constructor">Bwa_mem</span></span> <span class="keyword">:</span> <code class="type">Biokepi_bfx_tools.Bwa.Configuration.Mem.t<br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a><br>          <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Mosaik"><span class="constructor">Mosaik</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Gatk_indel_realigner"><span class="constructor">Gatk_indel_realigner</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_bfx_tools.Gatk.Configuration.html#TYPEindel_realigner">Biokepi_bfx_tools.Gatk.Configuration.indel_realigner</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Picard_mark_duplicates"><span class="constructor">Picard_mark_duplicates</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_bfx_tools.Picard.Mark_duplicates_settings.html#TYPEt">Biokepi_bfx_tools.Picard.Mark_duplicates_settings.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Gatk_bqsr"><span class="constructor">Gatk_bqsr</span></span> <span class="keyword">:</span> <code class="type">(<a href="Biokepi_bfx_tools.Gatk.Configuration.html#TYPEbqsr">Biokepi_bfx_tools.Gatk.Configuration.bqsr</a> *<br>      <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a>)</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Bam_pair"><span class="constructor">Bam_pair</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam_pair">bam_pair</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Somatic_variant_caller"><span class="constructor">Somatic_variant_caller</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEsomatic">somatic</a><br>     <a href="Biokepi_pipeline_edsl.Pipeline.Variant_caller.html#TYPEt">Variant_caller.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam_pair">bam_pair</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEvcf">vcf</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Germline_variant_caller"><span class="constructor">Germline_variant_caller</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEgermline">germline</a><br>     <a href="Biokepi_pipeline_edsl.Pipeline.Variant_caller.html#TYPEt">Variant_caller.t</a><br>        * <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">bam</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEvcf">vcf</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Seq2HLA"><span class="constructor">Seq2HLA</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEseq2hla_hla_types">seq2hla_hla_types</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.Optitype"><span class="constructor">Optitype</span></span> <span class="keyword">:</span> <code class="type">([ `DNA | `RNA ] *<br>      <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">fastq_sample</a> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a>)</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEoptitype_hla_types">optitype_hla_types</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.With_metadata"><span class="constructor">With_metadata</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEmetadata_spec">metadata_spec</a><br>        * 'a <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code> <span class="keyword">-></span> <code class="type">'a <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a></code></code></td>
+
+</tr></table>
+
+
+
+<pre><span class="keyword">module</span> <a href="Biokepi_pipeline_edsl.Pipeline.Construct.html">Construct</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.Construct.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="VALto_file_prefix"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.to_file_prefix.html">to_file_prefix</a></span> : <code class="type">'a.<br>         ?read:[ `R1 of string | `R2 of string ] -><br>         'a <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALto_json"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.to_json.html">to_json</a></span> : <code class="type">'a.<br>         'a <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">t</a> -> <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEjson">json</a></code></pre>
+<pre><span class="keyword">module</span> <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html">Compiler</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html">..</a> <code class="code"><span class="keyword">end</span></code></pre></body></html>

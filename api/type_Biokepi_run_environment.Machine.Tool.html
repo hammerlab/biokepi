@@ -1,0 +1,90 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Machine.Tool</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Definition</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{&nbsp;name&nbsp;:&nbsp;string;&nbsp;version&nbsp;:&nbsp;string&nbsp;option;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;create&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?version:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_opam_name&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_string&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_directory_name&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Default</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bwa&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;samtools&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;vcftools&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bedtools&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;somaticsniper&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;varscan&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;picard&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mutect&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gatk&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;strelka&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;virmid&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;muse&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;star&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;stringtie&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;cufflinks&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hisat&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hisat2&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mosaik&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;kallisto&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bowtie&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;optitype&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;seq2hla&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;init&nbsp;:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ensure&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.phony_workflow;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;create&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?init:<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?ensure:&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;init&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;ensure&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.phony_workflow<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Kit</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;tool&nbsp;=&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.tool&nbsp;option<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;concat&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;of_list&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.tool&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;get_exn&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;option)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+<span class="keyword">end</span></code></body></html>

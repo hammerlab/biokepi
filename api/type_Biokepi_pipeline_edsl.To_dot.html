@@ -1,0 +1,196 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_dot</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;failwithf&nbsp;:&nbsp;(<span class="keywordsign">'</span>a,&nbsp;unit,&nbsp;string,&nbsp;<span class="keywordsign">'</span>b)&nbsp;<span class="constructor">Pervasives</span>.format4&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Tree</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;box&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;id&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attributes&nbsp;:&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;arrow&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;label&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;points_to&nbsp;:&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Apply</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;*&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Input_value</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.box<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Lambda</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;string&nbsp;*&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Node</span>&nbsp;<span class="keyword">of</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.box&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.arrow&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Variable</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;string&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;node_count&nbsp;:&nbsp;int&nbsp;<span class="constructor">Pervasives</span>.ref<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;id_style&nbsp;:&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Hash</span>&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;make_id&nbsp;:&nbsp;[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Of</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Unique</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;arrow&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.arrow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;variable&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Variable</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lambda&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Lambda</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;<span class="keywordsign">'</span>a&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;apply&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Apply</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;<span class="keywordsign">'</span>a&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;string&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;node&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?a:(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.arrow&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;input_value&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?a:(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_dot&nbsp;:&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">SmartPrint</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;repr&nbsp;=&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;observation&nbsp;=&nbsp;<span class="constructor">SmartPrint</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lambda&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;((var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Variable</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;string&nbsp;])&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Lambda</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;string&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;apply&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>c)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Apply</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;*&nbsp;<span class="keywordsign">'</span>b&nbsp;*&nbsp;<span class="keywordsign">'</span>c&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;observe&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SmartPrint</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_unit&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;list&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;list_map&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;f:(var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;var_count:<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span>.<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fastq&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sample_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fragment_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;r1:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?r2:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fastq_gz&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sample_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fragment_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;r1:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?r2:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bam&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?sorting:[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pair&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pair_first&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pair_second&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;aligner&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;one_to_one&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bwa_aln&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bwa_mem&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gunzip&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gunzip_concat&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;concat&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;merge_bams&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;star&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Star</span>.<span class="constructor">Configuration</span>.<span class="constructor">Align</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hisat&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mosaik&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;stringtie&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Stringtie</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;indel_real_config&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Indel_realigner</span>.t&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Realigner_target_creator</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gatk_indel_realigner&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Indel_realigner</span>.t&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Realigner_target_creator</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gatk_indel_realigner_joint&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Indel_realigner</span>.t&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Realigner_target_creator</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;picard_mark_duplicates&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gatk_bqsr&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Bqsr</span>.t&nbsp;*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Print_reads</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;seq2hla&nbsp;:&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;optitype&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">DNA</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">RNA</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gatk_haplotype_caller&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bam_to_fastq&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sample_name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fragment_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[&lt;&nbsp;<span class="keywordsign">`</span><span class="constructor">PE</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">SE</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;variant_caller&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mutect&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Mutect</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mutect2&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mutect2</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;somaticsniper&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Somaticsniper</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;strelka&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Strelka</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;varscan_somatic&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?adjust_mapq:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;muse&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Muse</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;virmid&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?configuration:<span class="constructor">To_json</span>.<span class="constructor">Tools</span>.<span class="constructor">Virmid</span>.<span class="constructor">Configuration</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;normal:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;tumor:(var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.t<br>
+<span class="keyword">end</span></code></body></html>

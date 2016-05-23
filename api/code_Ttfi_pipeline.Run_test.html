@@ -1,0 +1,132 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Ttfi_pipeline.Run_test</title>
+</head>
+<body>
+<code class="code">(<span class="constructor">Test_pipeline</span>&nbsp;:&nbsp;<span class="constructor">TEST_PIPELINE</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;write_file&nbsp;file&nbsp;~content&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;out_file&nbsp;=&nbsp;open_out&nbsp;file&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_string&nbsp;out_file&nbsp;content;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out_file<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cmdf&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ksprintf&nbsp;(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf&nbsp;<span class="string">"CMD:&nbsp;%s\n%!"</span>&nbsp;s;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;<span class="constructor">Sys</span>.command&nbsp;s&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;0&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;other&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;ksprintf&nbsp;failwith&nbsp;<span class="string">"non-zero-exit:&nbsp;%s&nbsp;-&gt;&nbsp;%d"</span>&nbsp;s&nbsp;other)&nbsp;fmt<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;(//)&nbsp;=&nbsp;<span class="constructor">Filename</span>.concat<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;test_dir&nbsp;=&nbsp;<span class="string">"_build/ttfi-test-results/"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;main&nbsp;prefix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;start_time&nbsp;=&nbsp;<span class="constructor">Unix</span>.gettimeofday&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;test_dir;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;results&nbsp;=&nbsp;ref&nbsp;[]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;add_result&nbsp;fmt&nbsp;=&nbsp;ksprintf&nbsp;(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;results&nbsp;:=&nbsp;s&nbsp;::&nbsp;!results)&nbsp;fmt&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;add_result_file&nbsp;name&nbsp;path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;size&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;s&nbsp;=&nbsp;<span class="constructor">Unix</span>.stat&nbsp;path&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;s.<span class="constructor">Unix</span>.st_size&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;0&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"EMPTY"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;small&nbsp;<span class="keyword">when</span>&nbsp;small&nbsp;&lt;&nbsp;1024&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"%d&nbsp;B"</span>&nbsp;small<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;avg&nbsp;<span class="keyword">when</span>&nbsp;avg&nbsp;&lt;&nbsp;(1024&nbsp;*&nbsp;1024)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%.2f&nbsp;KB"</span>&nbsp;(float&nbsp;avg&nbsp;/.&nbsp;1024.)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;big&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%.2f&nbsp;MB"</span>&nbsp;(float&nbsp;big&nbsp;/.&nbsp;(1024.&nbsp;*.&nbsp;1024.))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"%s:&nbsp;`%s`&nbsp;(%s)"</span>&nbsp;name&nbsp;path&nbsp;size;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_path&nbsp;suffix&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;prefix&nbsp;^&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Display_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_display</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pseudocode&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-pseudocode.txt"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;pseudocode<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Display_pipeline</span>.run&nbsp;()&nbsp;|&gt;&nbsp;<span class="constructor">SmartPrint</span>.to_string&nbsp;80&nbsp;2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"Pseudo-code"</span>&nbsp;pseudocode;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Jsonize_pipeline</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_json</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;json&nbsp;=&nbsp;output_path&nbsp;<span class="string">".json"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;json<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Jsonize_pipeline</span>.run&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.pretty_to_string&nbsp;~std:<span class="keyword">true</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"JSON"</span>&nbsp;json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_dot&nbsp;sm&nbsp;dot&nbsp;png&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;out&nbsp;=&nbsp;open_out&nbsp;dot&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SmartPrint</span>.to_out_channel&nbsp;&nbsp;80&nbsp;2&nbsp;out&nbsp;sm;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"DOT"</span>&nbsp;dot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dotlog&nbsp;=&nbsp;png&nbsp;^&nbsp;<span class="string">".log"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"dot&nbsp;-v&nbsp;-x&nbsp;-Tpng&nbsp;&nbsp;%s&nbsp;-o&nbsp;%s&nbsp;&gt;&nbsp;%s&nbsp;2&gt;&amp;1"</span>&nbsp;dot&nbsp;png&nbsp;dotlog;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"PNG"</span>&nbsp;png;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;e&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"FAILED&nbsp;TO&nbsp;OUTPUT:&nbsp;%s&nbsp;(%s)"</span>&nbsp;dot&nbsp;(<span class="constructor">Printexc</span>.to_string&nbsp;e);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sm_dot&nbsp;=&nbsp;<span class="constructor">Dotize_pipeline</span>.run&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dot&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-1.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;png&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-1.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_dot&nbsp;sm_dot&nbsp;dot&nbsp;png<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_twice_beta_reduced_pipeline</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Test_pipeline</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Transform</span>.<span class="constructor">Apply_functions</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Transform</span>.<span class="constructor">Apply_functions</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dot&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-double-beta.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sm_dot&nbsp;=&nbsp;<span class="constructor">Dotize_twice_beta_reduced_pipeline</span>.run&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;png&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-double-beta.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_dot&nbsp;sm_dot&nbsp;dot&nbsp;png<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Workflow_compiler</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">Make</span>(<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">Defaults</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;42<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;work_dir&nbsp;=&nbsp;<span class="string">"/work/dir/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;machine&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Setup</span>.<span class="constructor">Build_machine</span>.create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssh://example.com/tmp/KT/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Ketrew_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Workflow_compiler</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;workflow&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Ketrew_pipeline</span>.run&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">File_type_specification</span>.get_unit_workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Biokepi&nbsp;TTFI&nbsp;test&nbsp;top-level&nbsp;node"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ignore&nbsp;workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;end_time&nbsp;=&nbsp;<span class="constructor">Unix</span>.gettimeofday&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"Total-time:&nbsp;%.2f s"</span>&nbsp;(end_time&nbsp;-.&nbsp;start_time);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.rev&nbsp;!results<br>
+<br>
+<span class="keyword">end</span></code></body></html>

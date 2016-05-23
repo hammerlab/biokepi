@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_pipeline_edsl.To_display.html">
+<link rel="next" href="Biokepi_pipeline_edsl.To_json.html">
+<link rel="Up" href="Biokepi_pipeline_edsl.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_dot</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_pipeline_edsl.To_display.html" title="Biokepi_pipeline_edsl.To_display">Previous</a>
+&nbsp;<a class="up" href="Biokepi_pipeline_edsl.html" title="Biokepi_pipeline_edsl">Up</a>
+&nbsp;<a class="post" href="Biokepi_pipeline_edsl.To_json.html" title="Biokepi_pipeline_edsl.To_json">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi_pipeline_edsl.To_dot.html">Biokepi_pipeline_edsl.To_dot</a> (<a href="code_Biokepi_pipeline_edsl.To_dot.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> To_dot: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.To_dot.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span id="VALfailwithf"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.failwithf.html">failwithf</a></span> : <code class="type">('a, unit, string, 'b) Pervasives.format4 -> 'a</code></pre>
+<pre><span class="keyword">module</span> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html">Tree</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="TYPErepr"><span class="keyword">type</span> <code class="type">'a</code> repr</span> = <code class="type">var_count:int -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a></code> </pre>
+
+
+<pre><span id="TYPEobservation"><span class="keyword">type</span> <code class="type">'a</code> observation</span> = <code class="type">SmartPrint.t</code> </pre>
+
+
+<pre><span id="VALlambda"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.lambda.html">lambda</a></span> : <code class="type">((var_count:'a -> [> `String of string | `Variable of string * string ]) -><br>        var_count:int -> 'b) -><br>       var_count:int -> [> `Lambda of string * string * 'b ]</code></pre>
+<pre><span id="VALapply"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.apply.html">apply</a></span> : <code class="type">(var_count:'a -> 'b) -><br>       (var_count:'a -> 'c) -> var_count:'a -> [> `Apply of string * 'b * 'c ]</code></pre>
+<pre><span id="VALobserve"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.observe.html">observe</a></span> : <code class="type">(unit -> var_count:int -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a>) -><br>       SmartPrint.t</code></pre>
+<pre><span id="VALto_unit"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.to_unit.html">to_unit</a></span> : <code class="type">'a -> 'a</code></pre>
+<pre><span id="VALlist"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.list.html">list</a></span> : <code class="type">(var_count:'a -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a>) list -><br>       var_count:'a -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a></code></pre>
+<pre><span id="VALlist_map"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.list_map.html">list_map</a></span> : <code class="type">(var_count:'a -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a>) -><br>       f:(var_count:'a -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a>) -><br>       var_count:'a -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">Tree.t</a></code></pre>
+<pre><span class="keyword">include</span> struct ... end</pre>
+</body></html>

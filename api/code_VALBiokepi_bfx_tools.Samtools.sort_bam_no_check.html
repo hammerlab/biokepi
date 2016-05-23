@@ -1,0 +1,43 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Samtools.sort_bam_no_check</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;sort_bam_no_check&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;~by&nbsp;input_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;source&nbsp;=&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest_suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;by&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sorted"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"read-name-sorted"</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest_prefix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;source&nbsp;<span class="string">".bam"</span>)&nbsp;dest_suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;dest_prefix&nbsp;<span class="string">"bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.transform_bam&nbsp;~change_sorting:by&nbsp;input_bam<span class="keywordsign">#</span>product&nbsp;~path:dest&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make_command&nbsp;src&nbsp;des&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;command&nbsp;=&nbsp;[<span class="string">"-@"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;&nbsp;src;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-T"</span>;&nbsp;dest_prefix;&nbsp;<span class="string">"-o"</span>;&nbsp;dest]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;by&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sort"</span>&nbsp;::&nbsp;command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sort"</span>&nbsp;::&nbsp;<span class="string">"-n"</span>&nbsp;::&nbsp;command<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;do_on_bam&nbsp;~run_with&nbsp;input_bam&nbsp;~product&nbsp;~make_command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~more_requirements:[<span class="keywordsign">`</span><span class="constructor">Memory</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Big</span>;&nbsp;<span class="keywordsign">`</span><span class="constructor">Processors</span>&nbsp;processors]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Samtools-sort&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))</code></body></html>

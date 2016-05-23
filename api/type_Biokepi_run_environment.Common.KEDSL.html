@@ -1,0 +1,204 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Common.KEDSL</title>
+</head>
+<body>
+<code class="code"><span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Host</span>&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Host</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Program</span>&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Program</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Condition</span>&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Condition</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Build_process</span>&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Build_process</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;daemonize&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?starting_timeout:float&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?call_script:(string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;list)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?using:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Nohup_setsid</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?no_log_is_ok:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;lsf&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?queue:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?wall_limit:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?processors:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Min</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Min_max</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;*&nbsp;int&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?project:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?request_memory:[&nbsp;<span class="keywordsign">`</span><span class="constructor">GB</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">MB</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?raw_options:string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;pbs&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?queue:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?wall_limit:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Hours</span>&nbsp;<span class="keyword">of</span>&nbsp;float&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?processors:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?email_user:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Always</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Never</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?shell:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;yarn_application&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?daemonize_using:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Nohup_setsid</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?daemon_start_timeout:float&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;yarn_distributed_shell&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?daemonize_using:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Nohup_setsid</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?daemon_start_timeout:float&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?hadoop_bin:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?distributed_shell_shell_jar:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?container_vcores:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;container_memory:[&nbsp;<span class="keywordsign">`</span><span class="constructor">GB</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">MB</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Raw</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;timeout:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Raw</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Seconds</span>&nbsp;<span class="keyword">of</span>&nbsp;int&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;application_name:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Program</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Build_process</span>.t<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Internal_representation</span>&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Internal_representation</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;product&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keyword">constraint</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;=&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;workflow_node&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;product&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;product;&nbsp;render&nbsp;:&nbsp;<span class="constructor">Internal_representation</span>.t&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">constraint</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;=&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;workflow_edge&nbsp;=&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.workflow_edge<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;depends_on&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;workflow_edge<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;on_success_activate&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;workflow_edge<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;on_failure_activate&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;workflow_edge<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;done_when_option&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Dependencies_are</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Is_verified</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="constructor">Condition</span>.t&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Product_is</span>&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;workflow_node&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?active:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?make:<span class="constructor">Build_process</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?done_when:done_when_option&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?metadata:[&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?equivalence:<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Equivalence</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?tags:string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?edges:workflow_edge&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;<span class="keyword">as</span>&nbsp;<span class="keywordsign">'</span>a)&nbsp;product&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;not_already_done&nbsp;=&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;without_product&nbsp;:&nbsp;not_already_done<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;single_file&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;path&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;single_file&nbsp;:&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;single_file&nbsp;product<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;list_of_files&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;paths&nbsp;:&nbsp;string&nbsp;list&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;list_of_files&nbsp;:&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;list_of_files&nbsp;product<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;unknown_product&nbsp;=&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;forget_product&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;unknown_product&nbsp;workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;workflow_to_string&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?ansi_colors:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?indentation:int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;add_tags&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?recursive:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;node_id&nbsp;:&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;node_name&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">class</span>&nbsp;<span class="keyword">type</span>&nbsp;user_artifact&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">object</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;exists&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;is_bigger_than&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;path&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;file&nbsp;:&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;user_artifact<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;unit&nbsp;:&nbsp;user_artifact<br>
+&nbsp;&nbsp;<span class="keyword">class</span>&nbsp;<span class="keyword">type</span>&nbsp;user_target&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">object</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;activate&nbsp;:&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;add_recursive_tags&nbsp;:&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;add_tags&nbsp;:&nbsp;string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;depends_on&nbsp;:&nbsp;user_target&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;get_recursive_tags&nbsp;:&nbsp;string&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;id&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Internal_pervasives</span>.<span class="constructor">Unique_id</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;is_active&nbsp;:&nbsp;bool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;metadata&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;]&nbsp;option<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;name&nbsp;:&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;on_failure_activate&nbsp;:&nbsp;user_target&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;on_success_activate&nbsp;:&nbsp;user_target&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;product&nbsp;:&nbsp;user_artifact<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;render&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;to_display_string&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?ansi_colors:bool&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;?indentation:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;user_target&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Command</span>&nbsp;=&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Command</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;nothing&nbsp;=&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;nothing&nbsp;:&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;target&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Please_KEDSL_workflow</span>&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;file_target&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Please_KEDSL_workflow</span>&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;file_workflow&nbsp;=&nbsp;single_file&nbsp;workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;phony_workflow&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.nothing&nbsp;workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;fastq_reads&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;escaped_sample_name&nbsp;:&nbsp;string;&nbsp;fragment_id&nbsp;:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fragment_id_forced&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;paths&nbsp;:&nbsp;string&nbsp;*&nbsp;string&nbsp;option;&nbsp;r1&nbsp;:&nbsp;single_file&nbsp;workflow_node;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r2&nbsp;:&nbsp;single_file&nbsp;workflow_node&nbsp;option;&nbsp;sample_name&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fastq_reads&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fragment_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;option&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.fastq_reads<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fastq_node_of_single_file_nodes&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?fragment_id:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;&nbsp;product&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;path&nbsp;:&nbsp;string;&nbsp;..&nbsp;&gt;&nbsp;workflow_node&nbsp;option&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;escaped_sample_name&nbsp;:&nbsp;string;&nbsp;fragment_id&nbsp;:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fragment_id_forced&nbsp;:&nbsp;string;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;paths&nbsp;:&nbsp;string&nbsp;*&nbsp;string&nbsp;option;&nbsp;r1&nbsp;:&nbsp;single_file&nbsp;workflow_node;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r2&nbsp;:&nbsp;single_file&nbsp;workflow_node&nbsp;option;&nbsp;sample_name&nbsp;:&nbsp;string&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;bam_file&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Host</span>.t;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;path&nbsp;:&nbsp;string;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bam_file&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;host:<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?sorting:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;reference_build:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;transform_bam&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?change_sorting:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;bam_list&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;bams&nbsp;:&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;list;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew_pure</span>.<span class="constructor">Target</span>.<span class="constructor">Condition</span>.t&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bam_list&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_list<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;explode_bam_list_node&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_list&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;host&nbsp;:&nbsp;<span class="constructor">Host</span>.t;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;path&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reference_build&nbsp;:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorting&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;]&nbsp;option&nbsp;&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;list<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;_&nbsp;bam_or_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Single_bam</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_or_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_workflow_list</span>&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_file&nbsp;workflow_node&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_list&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.bam_or_bams<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;submit&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option;&nbsp;..&nbsp;&gt;&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.workflow_node&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit<br>
+<span class="keyword">end</span></code></body></html>

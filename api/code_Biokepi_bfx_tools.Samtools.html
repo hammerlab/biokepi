@@ -1,0 +1,344 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Samtools</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Remove</span>&nbsp;=&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;sam_to_bam&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)&nbsp;~reference_build&nbsp;file_t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;file_t<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;src&nbsp;<span class="string">".sam"</span>)&nbsp;<span class="string">"bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"samtools"</span>;&nbsp;<span class="string">"view"</span>;&nbsp;<span class="string">"-b"</span>;&nbsp;<span class="string">"-o"</span>;&nbsp;dest;&nbsp;src])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"sam-to-bam-%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;src&nbsp;<span class="string">".sam"</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(bam_file&nbsp;~reference_build&nbsp;dest&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;file_t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;dest);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_success_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;src);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;faidx&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;fasta&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;src&nbsp;<span class="string">"fai"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"samtools"</span>;&nbsp;<span class="string">"faidx"</span>;&nbsp;src])&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"samtools-faidx-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;src)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;dest&nbsp;~host)&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;dest);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;flagstat&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;src&nbsp;<span class="string">"flagstat"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)&nbsp;<span class="keywordsign">&amp;&amp;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"samtools&nbsp;flagstat&nbsp;%s&nbsp;&gt;&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;src)&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;dest)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"samtools-flagstat-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;src)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;dest&nbsp;~host)&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;dest);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;bgzip&nbsp;~run_with&nbsp;input_file&nbsp;output_path&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"bgzip&nbsp;%s&nbsp;-c&nbsp;&gt;&nbsp;%s"</span>&nbsp;input_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;output_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"samtools-bgzip-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_path&nbsp;~host)&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;input_file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;tabix&nbsp;~run_with&nbsp;~tabular_format&nbsp;input_file&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_path&nbsp;=&nbsp;input_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;^&nbsp;<span class="string">".tbi"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;minus_p_argument&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;tabular_format&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Gff</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"gff"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Bed</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"bed"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Sam</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"vcf"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Psltab</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"psltab"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"tabix&nbsp;-p&nbsp;%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;minus_p_argument<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"samtools-tabix-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;output_path&nbsp;~host)&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;input_file;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+<span class="keyword">let</span>&nbsp;do_on_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with:<span class="constructor">Machine</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(more_depends_on=[])&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(more_requirements:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.<span class="constructor">Requirement</span>.t&nbsp;list&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_bam&nbsp;~product&nbsp;~make_command&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sub_command&nbsp;=&nbsp;make_command&nbsp;src&nbsp;product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;(<span class="string">"samtools"</span>&nbsp;::&nbsp;sub_command))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~requirements:more_requirements&nbsp;~name&nbsp;run_with&nbsp;program<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;product&nbsp;~name&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;depends_on&nbsp;input_bam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;more_depends_on)<br>
+<br>
+<span class="keyword">let</span>&nbsp;sort_bam_no_check&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;~by&nbsp;input_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;source&nbsp;=&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest_suffix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;by&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sorted"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"read-name-sorted"</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest_prefix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%s-%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;source&nbsp;<span class="string">".bam"</span>)&nbsp;dest_suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;dest_prefix&nbsp;<span class="string">"bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.transform_bam&nbsp;~change_sorting:by&nbsp;input_bam<span class="keywordsign">#</span>product&nbsp;~path:dest&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make_command&nbsp;src&nbsp;des&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;command&nbsp;=&nbsp;[<span class="string">"-@"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;&nbsp;src;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-T"</span>;&nbsp;dest_prefix;&nbsp;<span class="string">"-o"</span>;&nbsp;dest]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;by&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sort"</span>&nbsp;::&nbsp;command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"sort"</span>&nbsp;::&nbsp;<span class="string">"-n"</span>&nbsp;::&nbsp;command<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;do_on_bam&nbsp;~run_with&nbsp;input_bam&nbsp;~product&nbsp;~make_command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~more_requirements:[<span class="keywordsign">`</span><span class="constructor">Memory</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Big</span>;&nbsp;<span class="keywordsign">`</span><span class="constructor">Processors</span>&nbsp;processors]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Samtools-sort&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+</code><table><tr><td></td><td><span class="comment">(**
+    Uses <code class="code"><span class="string">"samtools sort"</span></code> if the <code class="code">input_bam</code> is not tagged as
+    “sorted as the <code class="code">~by</code> argument.”
+    If it is indeed already sorted the function returns the <code class="code">input_bam</code> node as
+    is.
+ *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">let</span>&nbsp;sort_bam_if_necessary&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;~by<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_bam&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.bam_file&nbsp;<span class="constructor">KEDSL</span>.workflow_node&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>sorting&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;some&nbsp;<span class="keyword">when</span>&nbsp;some&nbsp;=&nbsp;by&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="comment">(*&nbsp;Already&nbsp;sorted&nbsp;“the&nbsp;same&nbsp;way”&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_bam<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;other&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;sort_bam_no_check&nbsp;~run_with&nbsp;input_bam&nbsp;~by<br>
+<br>
+<span class="comment">(*&nbsp;Produce&nbsp;an&nbsp;index&nbsp;for&nbsp;the&nbsp;given&nbsp;BAM&nbsp;file.<br>
+<br>
+-&nbsp;[?check_sorted]&nbsp;First&nbsp;check&nbsp;that&nbsp;the&nbsp;BAM&nbsp;is&nbsp;sorted,&nbsp;and&nbsp;fail&nbsp;if&nbsp;not.<br>
+&nbsp;&nbsp;(default:&nbsp;true)<br>
+*)</span><br>
+<span class="keyword">let</span>&nbsp;index_to_bai&nbsp;~(run_with:<span class="constructor">Machine</span>.t)&nbsp;?(check_sorted=<span class="keyword">true</span>)&nbsp;input_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">begin</span>&nbsp;<span class="keyword">match</span>&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>sorting&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;(<span class="constructor">Some</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>)&nbsp;<span class="keyword">when</span>&nbsp;check_sorted&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"In&nbsp;function&nbsp;Samtools.index_to_bai&nbsp;the&nbsp;input&nbsp;bam&nbsp;%s&nbsp;is&nbsp;not&nbsp;declared&nbsp;as&nbsp;sorted-by-coordinate&nbsp;(samtools-index&nbsp;requires&nbsp;that)"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;()<br>
+&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.single_file&nbsp;&nbsp;~host:(<span class="constructor">Machine</span>.as_host&nbsp;run_with)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="string">"bai"</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make_command&nbsp;src&nbsp;des&nbsp;=&nbsp;[<span class="string">"index"</span>;&nbsp;<span class="string">"-b"</span>;&nbsp;src]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;do_on_bam&nbsp;~run_with&nbsp;input_bam&nbsp;~product&nbsp;~make_command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Samtools-index&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+<br>
+<span class="keyword">let</span>&nbsp;mpileup&nbsp;~run_with&nbsp;?adjust_mapq&nbsp;~region&nbsp;input_bam&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;adjust_mapq_option&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;adjust_mapq&nbsp;<span class="keyword">with</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">""</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;n&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"-C%d"</span>&nbsp;n&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools_region_option&nbsp;=&nbsp;<span class="constructor">Region</span>.to_samtools_option&nbsp;region&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_genome&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;input_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>reference_build&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fasta&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;reference_genome&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pileup&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Filename</span>.chop_suffix&nbsp;src&nbsp;<span class="string">".bam"</span>&nbsp;^<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"-%s%s.mpileup"</span>&nbsp;(<span class="constructor">Region</span>.to_filename&nbsp;region)&nbsp;adjust_mapq_option<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sort_bam_if_necessary&nbsp;~run_with&nbsp;input_bam&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"samtools&nbsp;mpileup&nbsp;%s&nbsp;%s&nbsp;-Bf&nbsp;%s&nbsp;%s&nbsp;&gt;&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;adjust_mapq_option&nbsp;samtools_region_option&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sorted_bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pileup<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"samtools-mpileup-%s"</span>&nbsp;<span class="constructor">Filename</span>.(basename&nbsp;pileup&nbsp;|&gt;&nbsp;chop_extension)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;sorted_bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;index_to_bai&nbsp;~run_with&nbsp;sorted_bam&nbsp;|&gt;&nbsp;depends_on;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;pileup);<br>
+&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;(single_file&nbsp;pileup&nbsp;~host)&nbsp;~make&nbsp;~edges<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(**
+   Merge a list of BAM files.
+<p>
+
+   The BAMs will be sorted, by coordinate, if they are not already.
+<p>
+
+   <code class="code"><span class="string">"samtools merge"</span></code> fails if the list of bams has only one (or zero) bams, so
+   this functions raises an exception if <code class="code">input_bam_list</code> has lenth <code class="code">&lt;</code> 2.
+<p>
+
+   By default, duplicate @PG and @RG IDs will be automatically uniquified with a
+   random suffix.
+<p>
+<ul>
+<li><code class="code">?delete_input_on_success</code>: Delete the list of input BAMs when this node
+   succeeds. (default: true)</li>
+<li><code class="code">?attach_rg_tag</code>: Attach an RG tag to each alignment. The tag value is
+   inferred from file names.(default: false)</li>
+<li><code class="code">?uncompressed_bam_output</code>: Uncompressed BAM output. (default: false)</li>
+<li><code class="code">?compress_level_one</code>: Use zlib compression level 1 to compress the output.
+   (default: false)</li>
+<li><code class="code">?combine_rg_headers</code>: When several input files contain @RG headers with the
+   same ID, emit only one the first of them. (default: false)</li>
+<li><code class="code">?combine_pg_headers</code>: When several input files contain @PG headers with the
+   same ID, emit only one the first of them. (default: false)
+</li>
+</ul>
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">let</span>&nbsp;merge_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(delete_input_on_success&nbsp;=&nbsp;<span class="keyword">true</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(attach_rg_tag&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(uncompressed_bam_output&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(compress_level_one&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(combine_rg_headers&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(combine_pg_headers&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(input_bam_list&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.bam_file&nbsp;<span class="constructor">KEDSL</span>.workflow_node&nbsp;list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(output_bam_path&nbsp;:&nbsp;string)&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;lgth&nbsp;=&nbsp;<span class="constructor">List</span>.length&nbsp;input_bam_list&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;lgth&nbsp;&lt;&nbsp;2&nbsp;<span class="keyword">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Samtools.merge_bams:&nbsp;%d&nbsp;input-bam%s&nbsp;provided&nbsp;and&nbsp;`samtools&nbsp;merge`&nbsp;will&nbsp;fail&nbsp;with&nbsp;less&nbsp;than&nbsp;2&nbsp;Bam&nbsp;files"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lgth<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">match</span>&nbsp;lgth&nbsp;<span class="keyword">with</span>&nbsp;1&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"&nbsp;was"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"s&nbsp;were"</span>)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;input_bam_list&nbsp;~f:(sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;options&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;attach_rg_tag&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-r"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;uncompressed_bam_output&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-u"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;compress_level_one&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-1"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;combine_rg_headers&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-c"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;combine_pg_headers&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-p"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;&nbsp;<span class="constructor">Program</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="string">"samtools"</span>;&nbsp;<span class="string">"merge"</span>]&nbsp;@&nbsp;options&nbsp;@&nbsp;[output_bam_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="constructor">List</span>.map&nbsp;sorted_bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"merge-%d-bams-into-%s"</span>&nbsp;(<span class="constructor">List</span>.length&nbsp;input_bam_list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_bam_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;remove_input_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;input_bam_list&nbsp;~f:(<span class="keyword">fun</span>&nbsp;src&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_success_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;src<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;<span class="constructor">List</span>.map&nbsp;sorted_bams&nbsp;~f:depends_on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="keyword">if</span>&nbsp;delete_input_on_success&nbsp;<span class="keyword">then</span>&nbsp;remove_input_bams&nbsp;<span class="keyword">else</span>&nbsp;[]<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;samtools&nbsp;merge&nbsp;creates&nbsp;sorted&nbsp;bams:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;one&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.hd&nbsp;input_bam_list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Option</span>.value_exn<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~msg:(sprintf&nbsp;<span class="string">"Samtools.merge_bams:&nbsp;input&nbsp;is&nbsp;empty&nbsp;list"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(transform_bam&nbsp;one<span class="keywordsign">#</span>product&nbsp;~path:output_bam_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;product&nbsp;~make&nbsp;~edges<br>
+<br>
+<span class="keyword">end</span></code></body></html>

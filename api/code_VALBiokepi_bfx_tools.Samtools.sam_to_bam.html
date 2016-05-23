@@ -1,0 +1,40 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Samtools.sam_to_bam</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;sam_to_bam&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)&nbsp;~reference_build&nbsp;file_t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;src&nbsp;=&nbsp;file_t<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dest&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;src&nbsp;<span class="string">".sam"</span>)&nbsp;<span class="string">"bam"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"samtools"</span>;&nbsp;<span class="string">"view"</span>;&nbsp;<span class="string">"-b"</span>;&nbsp;<span class="string">"-o"</span>;&nbsp;dest;&nbsp;src])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"sam-to-bam-%s"</span>&nbsp;(<span class="constructor">Filename</span>.chop_suffix&nbsp;src&nbsp;<span class="string">".sam"</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Machine</span>.(as_host&nbsp;run_with)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(bam_file&nbsp;~reference_build&nbsp;dest&nbsp;~host)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;file_t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;dest);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_success_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;src);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]</code></body></html>

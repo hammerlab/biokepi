@@ -1,0 +1,98 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Build_machine</title>
+</head>
+<body>
+<code class="code">:&nbsp;<span class="keyword">sig</span><br>
+</code><table><tr><td></td><td><span class="comment">(** Simplified creation of <code class="code"><span class="constructor">Run_environment</span>.<span class="constructor">Machine</span>.t</code> values *)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Build a <code class="code"><span class="constructor">Run_environment</span>.<span class="constructor">Machine</span>.t</code> with convenient default values.
+<p>
+
+    The <code class="code">string</code> argument is a URI like the one expected 
+    by <code class="code"><span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.<span class="constructor">Host</span>.parse</code> except that the “path” is the
+    meta-playground for Biokepi (the ketrew playground will be
+    <code class="code">(meta_playground // <span class="string">"ketrew_playground"</span>)</code>.
+<p>
+
+    The default <code class="code">run_program</code> is daemonizing with <code class="code"><span class="keywordsign">`</span><span class="constructor">Python_daemon</span></code>.
+<p>
+
+    The default <code class="code">toolkit</code> is default_toolkit
+    from <code class="code"><span class="constructor">Tool_providers</span></code>. This machine will get tools installations and
+    data-fetching from Biokepi's defaults. The <code class="code">?b37</code> argument allows to
+    override the locations of the “B37” genome; to override other default please
+    use <code class="code"><span class="constructor">Run_environment</span>.<span class="constructor">Machine</span>.create</code> directly.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;create&nbsp;:<br>
+&nbsp;&nbsp;?max_processors&nbsp;:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?gatk_jar_location:(unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tool_providers</span>.broad_jar_location)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?mutect_jar_location:(unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tool_providers</span>.broad_jar_location)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?run_program:<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?toolkit:<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?b37:<span class="constructor">Reference_genome</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.t<br>
+<span class="keyword">end</span>&nbsp;<br>
+=&nbsp;<span class="keyword">struct</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;default_run_program&nbsp;:&nbsp;host:<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~host&nbsp;?(name=<span class="string">"biokepi-ssh-box"</span>)&nbsp;?(requirements&nbsp;=&nbsp;[])&nbsp;program&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;daemonize&nbsp;~using:<span class="keywordsign">`</span><span class="constructor">Python_daemon</span>&nbsp;~host&nbsp;program<br>
+<br>
+<span class="keyword">let</span>&nbsp;create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(max_processors&nbsp;=&nbsp;1)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?gatk_jar_location<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?mutect_jar_location<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?run_program&nbsp;?toolkit&nbsp;?b37&nbsp;uri&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;host&nbsp;=&nbsp;<span class="constructor">Host</span>.parse&nbsp;(uri&nbsp;//&nbsp;<span class="string">"ketrew_playground"</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;meta_playground&nbsp;=&nbsp;<span class="constructor">Uri</span>.of_string&nbsp;uri&nbsp;|&gt;&nbsp;<span class="constructor">Uri</span>.path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;run_program&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;default_run_program&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;r&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;r<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;toolkit&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value&nbsp;toolkit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~default:(<span class="constructor">Tool_providers</span>.default_toolkit&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~install_tools_path:(meta_playground&nbsp;//&nbsp;<span class="string">"install-tools"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?gatk_jar_location&nbsp;?mutect_jar_location)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.create&nbsp;(sprintf&nbsp;<span class="string">"ssh-box-%s"</span>&nbsp;uri)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~max_processors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~get_reference_genome:(<span class="keyword">fun</span>&nbsp;name&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;name,&nbsp;b37&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;name,&nbsp;<span class="constructor">Some</span>&nbsp;some37&nbsp;<span class="keyword">when</span>&nbsp;name&nbsp;=&nbsp;<span class="constructor">Reference_genome</span>.name&nbsp;some37&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;some37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;name,&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Download_reference_genomes</span>.get_reference_genome&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~toolkit&nbsp;~host&nbsp;~run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~destination_path:(meta_playground&nbsp;//&nbsp;<span class="string">"reference-genome"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~host<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~toolkit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~work_dir:(meta_playground&nbsp;//&nbsp;<span class="string">"work"</span>)<br>
+<span class="keyword">end</span></code></body></html>

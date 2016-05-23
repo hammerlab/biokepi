@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi.Setup.html">
+<link rel="next" href="Biokepi.Metadata.html">
+<link rel="Up" href="Biokepi.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi.KEDSL</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi.Setup.html" title="Biokepi.Setup">Previous</a>
+&nbsp;<a class="up" href="Biokepi.html" title="Biokepi">Up</a>
+&nbsp;<a class="post" href="Biokepi.Metadata.html" title="Biokepi.Metadata">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi.KEDSL.html">Biokepi.KEDSL</a> (<a href="code_Biokepi.KEDSL.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> KEDSL: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html">Biokepi_run_environment.Common.KEDSL</a></code></pre><div class="info module top">
+Bioinformatics-specific extensions to the <code class="code"><span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span></code> module.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">include</span> Ketrew.EDSL</pre>
+
+<pre><span class="keyword">module</span> <a href="Biokepi_run_environment.Common.KEDSL.Command.html">Command</a>: <code class="type">Ketrew_pure.Target.Command</code></pre>
+<pre><span id="TYPEnothing"><span class="keyword">type</span> <code class="type"></code>nothing</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTnothing.is_done">is_done</span>&nbsp;: <code class="type">Condition.t option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALnothing"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.nothing.html">nothing</a></span> : <code class="type">< is_done : 'a option ></code></pre>
+<pre><span id="VALtarget"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.target.html">target</a></span> : <code class="type">'a -> [> `Please_KEDSL_workflow ]</code></pre>
+<pre><span id="VALfile_target"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.file_target.html">file_target</a></span> : <code class="type">'a -> [> `Please_KEDSL_workflow ]</code></pre>
+<pre><span id="TYPEfile_workflow"><span class="keyword">type</span> <code class="type"></code>file_workflow</span> = <code class="type">single_file workflow_node</code> </pre>
+
+
+<pre><span id="TYPEphony_workflow"><span class="keyword">type</span> <code class="type"></code>phony_workflow</span> = <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEnothing">nothing</a> workflow_node</code> </pre>
+
+
+<pre><span id="TYPEfastq_reads"><span class="keyword">type</span> <code class="type"></code>fastq_reads</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.escaped_sample_name">escaped_sample_name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.fragment_id">fragment_id</span>&nbsp;: <code class="type">string option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.fragment_id_forced">fragment_id_forced</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.paths">paths</span>&nbsp;: <code class="type">string * string option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.r1">r1</span>&nbsp;: <code class="type">single_file workflow_node</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.r2">r2</span>&nbsp;: <code class="type">single_file workflow_node option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfastq_reads.sample_name">sample_name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALfastq_reads"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.fastq_reads.html">fastq_reads</a></span> : <code class="type">?host:Host.t -><br>       ?name:string -><br>       ?fragment_id:string -><br>       string -> string option -> <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfastq_reads">fastq_reads</a></code></pre>
+<pre><span id="VALfastq_node_of_single_file_nodes"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.fastq_node_of_single_file_nodes.html">fastq_node_of_single_file_nodes</a></span> : <code class="type">host:Host.t -><br>       name:string -><br>       ?fragment_id:string -><br>       < is_done : Condition.t option; path : string; .. > product workflow_node -><br>       < is_done : Condition.t option; path : string; .. > workflow_node option -><br>       < escaped_sample_name : string; fragment_id : string option;<br>         fragment_id_forced : string; is_done : Condition.t option;<br>         paths : string * string option; r1 : single_file workflow_node;<br>         r2 : single_file workflow_node option; sample_name : string ><br>       workflow_node</code></pre><div class="info ">
+Create a <code class="code">fastq_reads workflow_node</code> from one or two
+      <code class="code">single_file workflow_node</code>(s).<br>
+</div>
+
+<pre><span id="TYPEbam_file"><span class="keyword">type</span> <code class="type"></code>bam_file</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.host">host</span>&nbsp;: <code class="type">Host.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.path">path</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.reference_build">reference_build</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_file.sorting">sorting</span>&nbsp;: <code class="type">[ `Coordinate | `Read_name ] option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALbam_file"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.bam_file.html">bam_file</a></span> : <code class="type">host:Host.t -><br>       ?sorting:[ `Coordinate | `Read_name ] -><br>       reference_build:string -><br>       string -> <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a></code></pre>
+<pre><span id="VALtransform_bam"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.transform_bam.html">transform_bam</a></span> : <code class="type">?change_sorting:[ `Coordinate | `Read_name ] -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> -><br>       path:string -> <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a></code></pre><div class="info ">
+Make a new bam sharing most of the metadata.<br>
+</div>
+
+<pre><span id="TYPEbam_list"><span class="keyword">type</span> <code class="type"></code>bam_list</span> = &lt;</pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_list.bams">bams</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> list</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_list.is_done">is_done</span>&nbsp;: <code class="type">Ketrew_pure.Target.Condition.t option</code>;</code></td>
+
+</tr></table>
+>
+ </pre>
+
+
+<pre><span id="VALbam_list"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.bam_list.html">bam_list</a></span> : <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> list -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_list">bam_list</a></code></pre>
+<pre><span id="VALexplode_bam_list_node"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.explode_bam_list_node.html">explode_bam_list_node</a></span> : <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_list">bam_list</a> workflow_node -><br>       < host : Host.t; is_done : Condition.t option; path : string;<br>         reference_build : string; sorting : [ `Coordinate | `Read_name ] option ><br>       workflow_node list</code></pre>
+<pre><code><span id="TYPEbam_or_bams"><span class="keyword">type</span> <code class="type">'_</code> bam_or_bams</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_or_bams.Single_bam"><span class="constructor">Single_bam</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> workflow_node</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> workflow_node<br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_or_bams">bam_or_bams</a></code></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbam_or_bams.Bam_workflow_list"><span class="constructor">Bam_workflow_list</span></span> <span class="keyword">:</span> <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">bam_file</a> workflow_node list</code> <span class="keyword">-></span> <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_list">bam_list</a> workflow_node<br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_or_bams">bam_or_bams</a></code></code></td>
+
+</tr></table>
+
+
+
+<pre><span id="VALsubmit"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Common.KEDSL.submit.html">submit</a></span> : <code class="type">< is_done : Ketrew.EDSL.Condition.t option; .. > Ketrew.EDSL.product<br>       Ketrew.EDSL.workflow_node -> unit</code></pre></body></html>

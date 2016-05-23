@@ -1,0 +1,28 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Tool_providers.mutect_tool</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;mutect_tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~host&nbsp;~install_tools_path&nbsp;loc&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.mutect&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_path&nbsp;=&nbsp;install_tools_path&nbsp;//&nbsp;<span class="constructor">Tool_def</span>.to_directory_name&nbsp;tool&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_mutect&nbsp;=&nbsp;get_broad_jar&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;loc&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.create&nbsp;tool&nbsp;~ensure:get_mutect<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;mutect_HOME=%s"</span>&nbsp;install_path)</code></body></html>

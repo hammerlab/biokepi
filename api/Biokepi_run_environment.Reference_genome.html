@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_run_environment.Metadata.html">
+<link rel="next" href="Biokepi_run_environment.Region.html">
+<link rel="Up" href="Biokepi_run_environment.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_run_environment.Metadata.html" title="Biokepi_run_environment.Metadata">Previous</a>
+&nbsp;<a class="up" href="Biokepi_run_environment.html" title="Biokepi_run_environment">Up</a>
+&nbsp;<a class="post" href="Biokepi_run_environment.Region.html" title="Biokepi_run_environment.Region">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi_run_environment.Reference_genome.html">Biokepi_run_environment.Reference_genome</a> (<a href="code_Biokepi_run_environment.Reference_genome.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Reference_genome: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span id="TYPEname"><span class="keyword">type</span> <code class="type"></code>name</span> = <code class="type">string</code> </pre>
+
+
+<pre><span class="keyword">module</span> <a href="Biokepi_run_environment.Reference_genome.Specification.html">Specification</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.Specification.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.specification">specification</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.html#TYPEt">Specification.t</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.location">location</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.cosmic">cosmic</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.dbsnp">dbsnp</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.gtf">gtf</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.cdna">cdna</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> option</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+A reference genome has a name (for display/matching) and a
+     cluster-dependent path.
+     Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.<br>
+</div>
+
+
+<pre><span id="VALcreate"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.create.html">create</a></span> : <code class="type">?cosmic:<a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> -><br>       ?dbsnp:<a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> -><br>       ?gtf:<a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> -><br>       ?cdna:<a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> -><br>       <a href="Biokepi_run_environment.Reference_genome.Specification.html#TYPEt">Specification.t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> -><br>       <a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a></code></pre>
+<pre><span id="VALname"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.name.html">name</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALpath"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.path.html">path</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALcosmic_path_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.cosmic_path_exn.html">cosmic_path_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALdbsnp_path_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.dbsnp_path_exn.html">dbsnp_path_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALgtf_path_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.gtf_path_exn.html">gtf_path_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALcdna_path_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.cdna_path_exn.html">cdna_path_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> string</code></pre>
+<pre><span id="VALfasta"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.fasta.html">fasta</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALcosmic_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.cosmic_exn.html">cosmic_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALdbsnp_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.dbsnp_exn.html">dbsnp_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALgtf_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.gtf_exn.html">gtf_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALgtf"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.gtf.html">gtf</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a> option</code></pre>
+<pre><span id="VALcdna_exn"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.cdna_exn.html">cdna_exn</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEfile_workflow">Biokepi_run_environment.Common.KEDSL.file_workflow</a></code></pre>
+<pre><span id="VALmajor_contigs"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.major_contigs.html">major_contigs</a></span> : <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEt">t</a> -> Region.t list</code></pre></body></html>

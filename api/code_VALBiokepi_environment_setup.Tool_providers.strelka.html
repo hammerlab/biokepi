@@ -1,0 +1,35 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Tool_providers.strelka</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;strelka&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://strelka:%27%27@ftp.illumina.com/v1-branch/v1.0.14/strelka_workflow-1.0.14.tar.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka_bin&nbsp;=&nbsp;<span class="string">"usr"</span>&nbsp;//&nbsp;<span class="string">"bin"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;witness&nbsp;=&nbsp;witness_file&nbsp;@@&nbsp;strelka_bin&nbsp;//&nbsp;<span class="string">"configureStrelkaWorkflow.pl"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_program&nbsp;~path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;C.f.&nbsp;ftp://ftp.illumina.com/v1-branch/v1.0.14/README&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"./configure&nbsp;--prefix=%s"</span>&nbsp;(path&nbsp;//&nbsp;<span class="string">"usr"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;<span class="string">"make&nbsp;&amp;&amp;&nbsp;make&nbsp;install"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;init_program&nbsp;~path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;STRELKA_BIN=%s/%s"</span>&nbsp;path&nbsp;strelka_bin)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;installable_tool&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.strelka&nbsp;~url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init_program&nbsp;~install_program&nbsp;~witness</code></body></html>

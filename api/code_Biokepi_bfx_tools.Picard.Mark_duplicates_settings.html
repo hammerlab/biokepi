@@ -1,0 +1,55 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Picard.Mark_duplicates_settings</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tmpdir:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_sequences_for_disk_read_ends_map:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_file_handles_for_read_ends_map:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sorting_collection_size_ratio:&nbsp;float;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mem_param:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;factory&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span class="string">"factory"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tmpdir&nbsp;=&nbsp;<span class="string">"/tmp"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_sequences_for_disk_read_ends_map&nbsp;=&nbsp;50000;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_file_handles_for_read_ends_map&nbsp;=&nbsp;8000;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sorting_collection_size_ratio&nbsp;=&nbsp;0.25;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;mem_param&nbsp;=&nbsp;<span class="constructor">None</span>;<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;factory&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span class="string">"default"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;max_file_handles_for_read_ends_map&nbsp;=&nbsp;20_000;<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_java_shell_call&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"TMPDIR=%s&nbsp;MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=%d&nbsp;MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=%d&nbsp;SORTING_COLLECTION_SIZE_RATIO=%f&nbsp;java&nbsp;%s&nbsp;-Djava.io.tmpdir=%s&nbsp;"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.tmpdir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.max_sequences_for_disk_read_ends_map<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.max_file_handles_for_read_ends_map<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.sorting_collection_size_ratio<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">match</span>&nbsp;t.mem_param&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">""</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;some&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"-Xmx%s"</span>&nbsp;some)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t.tmpdir<br>
+<br>
+<span class="keyword">end</span></code></body></html>

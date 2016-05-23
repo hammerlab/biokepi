@@ -1,0 +1,186 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Conda</title>
+</head>
+<body>
+<code class="code">:&nbsp;<span class="keyword">sig</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** The contents of the default Conda configuration used in Biokepi. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;biokepi_conda_config&nbsp;:&nbsp;string<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** A workflow node to make sure that Conda is configured. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;configured&nbsp;:<br>
+&nbsp;&nbsp;run_program:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;host:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;install_path:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&lt;&nbsp;is_done&nbsp;:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Condition</span>.t&nbsp;option&nbsp;&gt;&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.workflow_node<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** A transform to run Programs with the Conda enviroment activated. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;init_biokepi_env&nbsp;:&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t<br>
+<span class="keyword">end</span>&nbsp;<br>
+=&nbsp;<span class="keyword">struct</span><br>
+<span class="comment">(*<br>
+&nbsp;&nbsp;Conda&nbsp;is&nbsp;a&nbsp;Python&nbsp;environment&nbsp;and&nbsp;package&nbsp;manager:<br>
+&nbsp;&nbsp;http://conda.pydata.org/docs/<br>
+<br>
+&nbsp;&nbsp;We&nbsp;use&nbsp;it&nbsp;to&nbsp;ensure&nbsp;a&nbsp;consistent&nbsp;Python&nbsp;environment&nbsp;for&nbsp;tools&nbsp;that&nbsp;depend<br>
+&nbsp;&nbsp;on&nbsp;Python.<br>
+*)</span><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;rm_path&nbsp;=&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span>.path_on_host<br>
+<br>
+<span class="keyword">let</span>&nbsp;dir&nbsp;~install_path&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"conda_dir"</span><br>
+<span class="keyword">let</span>&nbsp;commands&nbsp;~install_path&nbsp;com&nbsp;=&nbsp;dir&nbsp;~install_path&nbsp;//&nbsp;<span class="string">"bin"</span>&nbsp;//&nbsp;com<br>
+<span class="keyword">let</span>&nbsp;bin&nbsp;=&nbsp;commands&nbsp;<span class="string">"conda"</span><br>
+<span class="keyword">let</span>&nbsp;activate&nbsp;=&nbsp;commands&nbsp;<span class="string">"activate"</span><br>
+<br>
+<span class="comment">(*&nbsp;give&nbsp;a&nbsp;conda&nbsp;command.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;com&nbsp;~install_path&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Printf</span>.sprintf&nbsp;(<span class="string">"%s&nbsp;"</span>&nbsp;^^&nbsp;fmt)&nbsp;(bin&nbsp;~install_path)<br>
+<br>
+<span class="comment">(*&nbsp;A&nbsp;workflow&nbsp;to&nbsp;ensure&nbsp;that&nbsp;conda&nbsp;is&nbsp;installed.&nbsp;*)</span><br>
+<span class="keyword">let</span>&nbsp;installed&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)&nbsp;~host&nbsp;~install_path&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;conda_exec&nbsp;&nbsp;=&nbsp;single_file&nbsp;~host&nbsp;(bin&nbsp;~install_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_dir&nbsp;=&nbsp;dir&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;conda_exec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Install&nbsp;conda"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~requirements:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>;&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;[<span class="string">"conda"</span>;&nbsp;<span class="string">"installation"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Download</span>.wget_program&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"bash&nbsp;Miniconda3-latest-Linux-x86_64.sh&nbsp;-b&nbsp;-p&nbsp;%s"</span>&nbsp;install_dir))<br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;config&nbsp;=&nbsp;<span class="string">"biokepi_conda_env"</span><br>
+<span class="keyword">let</span>&nbsp;env_name&nbsp;=&nbsp;<span class="string">"biokepi"</span><br>
+<span class="keyword">let</span>&nbsp;biokepi_conda_config&nbsp;=<br>
+{conda<span class="keywordsign">|</span><span class="keywordsign">#</span>&nbsp;<span class="constructor">This</span>&nbsp;file&nbsp;may&nbsp;be&nbsp;used&nbsp;<span class="keyword">to</span>&nbsp;create&nbsp;an&nbsp;environment&nbsp;using:<br>
+<span class="keywordsign">#</span>&nbsp;$&nbsp;conda&nbsp;create&nbsp;--name&nbsp;&lt;env&gt;&nbsp;--file&nbsp;&lt;this&nbsp;file&gt;<br>
+<span class="keywordsign">#</span>&nbsp;platform:&nbsp;linux-64<br>
+@<span class="constructor">EXPLICIT</span><br>
+https://repo.continuum.io/pkgs/free/linux-64/anaconda-client-1.2.2-py27_0.tar.bz2<br>
+https://conda.anaconda.org/bioconda/linux-64/bcftools-1.3-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/biopython-1.66-np110py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/cairo-1.12.18-6.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/clyent-1.2.0-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/cycler-0.10.0-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/distribute-0.6.45-py27_1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/fontconfig-2.11.1-5.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/freetype-2.5.5-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/hdf5-1.8.15.1-2.tar.bz2<br>
+https://conda.anaconda.org/bioconda/linux-64/htslib-1.3-0.tar.bz2<br>
+https://conda.anaconda.org/r/linux-64/libgcc-4.8.5-1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/libpng-1.6.17-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/libxml2-2.9.2-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/matplotlib-1.5.1-np110py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/mkl-11.3.1-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/ncurses-5.9-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/numexpr-2.4.6-np110py27_1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/numpy-1.10.4-py27_1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/openssl-1.0.2g-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pandas-0.17.1-np110py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pip-8.0.3-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pixman-0.32.6-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pycairo-1.10.0-py27_0.tar.bz2<br>
+https://conda.anaconda.org/trung/linux-64/pyinstaller-3.1-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pyparsing-2.0.3-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pyqt-4.11.4-py27_1.tar.bz2<br>
+https://conda.anaconda.org/bioconda/linux-64/pysam-0.9.0-py27_2.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pytables-3.2.2-np110py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/python-2.7.11-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/python-dateutil-2.4.2-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pytz-2015.7-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/pyyaml-3.11-py27_1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/qt-4.8.7-1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/requests-2.9.1-py27_0.tar.bz2<br>
+https://conda.anaconda.org/bioconda/linux-64/samtools-1.3-1.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/setuptools-20.1.1-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/sip-4.16.9-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/six-1.10.0-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/sqlite-3.9.2-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/tk-8.5.18-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/wheel-0.29.0-py27_0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/yaml-0.1.6-0.tar.bz2<br>
+https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2<span class="keywordsign">|</span>conda}<br>
+<br>
+<span class="comment">(*&nbsp;Removed:<br>
+&nbsp;&nbsp;&nbsp;https://repo.continuum.io/pkgs/free/linux-64/readline-6.2-2.tar.bz2<br>
+&nbsp;&nbsp;&nbsp;This&nbsp;default&nbsp;conda&nbsp;compiled&nbsp;readline&nbsp;isn't&nbsp;linked&nbsp;appropriately:<br>
+&nbsp;&nbsp;&nbsp;symbol&nbsp;lookup&nbsp;error:&nbsp;/tmp/_MEIzf9vto/libreadline.so.6:&nbsp;undefined&nbsp;symbol:&nbsp;PC<br>
+&nbsp;&nbsp;&nbsp;We'll&nbsp;ignore&nbsp;it&nbsp;from&nbsp;the&nbsp;configuration&nbsp;and&nbsp;hope&nbsp;that&nbsp;the&nbsp;computer&nbsp;has&nbsp;a&nbsp;sane<br>
+&nbsp;&nbsp;&nbsp;readline&nbsp;lib&nbsp;installed&nbsp;by&nbsp;default.&nbsp;&nbsp;*)</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;cfg_exists&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)&nbsp;~host&nbsp;~install_path&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;file&nbsp;=&nbsp;install_path&nbsp;//&nbsp;config&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~requirements:[<span class="keywordsign">`</span><span class="constructor">Quick_run</span>;&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;[<span class="string">"conda"</span>;&nbsp;<span class="string">"config-file"</span>]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"echo&nbsp;%s&nbsp;&gt;&gt;&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;biokepi_conda_config)&nbsp;file)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;(single_file&nbsp;~host&nbsp;file)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:(<span class="string">"Make&nbsp;sure&nbsp;we&nbsp;have&nbsp;a&nbsp;biokepi&nbsp;conda&nbsp;config&nbsp;file:&nbsp;"</span>&nbsp;^&nbsp;config)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make<br>
+<br>
+<span class="keyword">let</span>&nbsp;configured&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)&nbsp;~host&nbsp;~install_path&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;conf&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;com&nbsp;~install_path&nbsp;<span class="string">"create&nbsp;--name&nbsp;%s&nbsp;--file&nbsp;%s/%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;env_name&nbsp;install_path&nbsp;config&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~requirements:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;[<span class="string">"conda"</span>;&nbsp;<span class="string">"configuration"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sh&nbsp;conf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"source&nbsp;%s&nbsp;%s"</span>&nbsp;(activate&nbsp;~install_path)&nbsp;env_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;chain&nbsp;(<span class="constructor">List</span>.map&nbsp;~f:(shf&nbsp;<span class="string">"pip&nbsp;install&nbsp;%s"</span>)&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"pyomo"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"six"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"packaging"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(installed&nbsp;~run_program&nbsp;~host&nbsp;~install_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(cfg_exists&nbsp;~run_program&nbsp;~host&nbsp;~install_path);<br>
+&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;biokepi_env&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Command</span>.shell&nbsp;~host&nbsp;(com&nbsp;~install_path&nbsp;<span class="string">"env&nbsp;list&nbsp;|&nbsp;grep&nbsp;%s"</span>&nbsp;env_name)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">object</span>&nbsp;<span class="keyword">method</span>&nbsp;is_done&nbsp;=&nbsp;<span class="constructor">Some</span>&nbsp;(<span class="keywordsign">`</span><span class="constructor">Command_returns</span>&nbsp;(biokepi_env,&nbsp;0))&nbsp;<span class="keyword">end</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;product&nbsp;~make&nbsp;~name:<span class="string">"Conda&nbsp;is&nbsp;configured."</span>&nbsp;~edges<br>
+<br>
+<span class="keyword">let</span>&nbsp;init_biokepi_env&nbsp;~install_path&nbsp;&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"source&nbsp;%s&nbsp;%s"</span>&nbsp;(activate&nbsp;~install_path)&nbsp;env_name)<br>
+<span class="keyword">end</span></code></body></html>

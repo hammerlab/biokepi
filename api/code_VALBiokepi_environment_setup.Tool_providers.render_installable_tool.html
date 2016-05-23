@@ -1,0 +1,34 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Tool_providers.render_installable_tool</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;render_installable_tool&nbsp;~run_program&nbsp;~host&nbsp;~install_tools_path&nbsp;tool&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;install_tools_path&nbsp;//&nbsp;<span class="constructor">Tool_def</span>.to_directory_name&nbsp;tool.tool_definition&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;&nbsp;ensure&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;generic_installation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?unarchived_directory:tool.unarchived_directory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~run_program&nbsp;~host&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path:path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_program:(tool.install_program&nbsp;~path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~witness:(tool.witness&nbsp;~host&nbsp;~path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~url:tool.url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(tool.tool_definition.<span class="constructor">Tool_def</span>.name)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.create&nbsp;tool.tool_definition&nbsp;~ensure<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init:(tool.init_program&nbsp;path)</code></body></html>

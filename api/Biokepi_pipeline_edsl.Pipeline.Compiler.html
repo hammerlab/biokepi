@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_pipeline_edsl.Pipeline.Construct.html">
+<link rel="Up" href="Biokepi_pipeline_edsl.Pipeline.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.Pipeline.Compiler</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_pipeline_edsl.Pipeline.Construct.html" title="Biokepi_pipeline_edsl.Pipeline.Construct">Previous</a>
+&nbsp;<a class="up" href="Biokepi_pipeline_edsl.Pipeline.html" title="Biokepi_pipeline_edsl.Pipeline">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi_pipeline_edsl.Pipeline.Compiler.html">Biokepi_pipeline_edsl.Pipeline.Compiler</a> (<a href="code_Biokepi_pipeline_edsl.Pipeline.Compiler.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Compiler: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span id="TYPEpipeline"><span class="keyword">type</span> <code class="type">'a</code> pipeline</span> = <code class="type">'a <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEt">Biokepi_pipeline_edsl.Pipeline.t</a></code> </pre>
+
+
+<pre><span id="TYPEworkflow_option_failure_mode"><span class="keyword">type</span> <code class="type"></code>workflow_option_failure_mode</span> = <code class="type">[ `Fail_if_not_happening | `Silent ]</code> </pre>
+
+
+<pre><span id="TYPEworkflow_option"><span class="keyword">type</span> <code class="type"></code>workflow_option</span> = <code class="type">[ `Map_reduce of [ `Gatk_indel_realigner ]<br>       | `Multi_sample_indel_realignment of<br>           <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEworkflow_option_failure_mode">workflow_option_failure_mode</a><br>       | `Parallel_alignment_over_fastq_fragments of<br>           [ `Bwa | `Bwa_mem | `Hisat | `Mosaik | `Star ] list *<br>           <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEworkflow_option_failure_mode">workflow_option_failure_mode</a> ]</code> </pre>
+
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.reference_build">reference_build</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.html#TYPEname">Biokepi_run_environment.Reference_genome.name</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.work_dir">work_dir</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.machine">machine</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.options">options</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEworkflow_option">workflow_option</a> list</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.wrap_bam_node">wrap_bam_node</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">Biokepi_pipeline_edsl.Pipeline.bam</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.wrap_vcf_node">wrap_vcf_node</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEvcf">Biokepi_pipeline_edsl.Pipeline.vcf</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       Biokepi_run_environment.Common.KEDSL.single_file<br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       Biokepi_run_environment.Common.KEDSL.single_file<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.wrap_gtf_node">wrap_gtf_node</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEgtf">Biokepi_pipeline_edsl.Pipeline.gtf</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       Biokepi_run_environment.Common.KEDSL.single_file<br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       Biokepi_run_environment.Common.KEDSL.single_file<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="VALcreate"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.create.html">create</a></span> : <code class="type">?wrap_bam_node:(<a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">Biokepi_pipeline_edsl.Pipeline.bam</a><br>                       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>                       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>                       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>                       Biokepi_run_environment.Common.KEDSL.workflow_node) -><br>       ?wrap_vcf_node:(<a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEvcf">Biokepi_pipeline_edsl.Pipeline.vcf</a><br>                       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       Biokepi_run_environment.Common.KEDSL.single_file<br>                       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>                       Biokepi_run_environment.Common.KEDSL.single_file<br>                       Biokepi_run_environment.Common.KEDSL.workflow_node) -><br>       ?wrap_gtf_node:(<a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEgtf">Biokepi_pipeline_edsl.Pipeline.gtf</a><br>                       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>                       Biokepi_run_environment.Common.KEDSL.single_file<br>                       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>                       Biokepi_run_environment.Common.KEDSL.single_file<br>                       Biokepi_run_environment.Common.KEDSL.workflow_node) -><br>       ?options:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEworkflow_option">workflow_option</a> list -><br>       reference_build:<a href="Biokepi_run_environment.Reference_genome.html#TYPEname">Biokepi_run_environment.Reference_genome.name</a> -><br>       work_dir:string -><br>       machine:<a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a> -><br>       unit -> <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a></code></pre>
+<pre><span id="VALhas_option"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.has_option.html">has_option</a></span> : <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       (<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEworkflow_option">workflow_option</a> -> bool) -> bool</code></pre>
+<pre><span id="VALapply_with_metadata"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.apply_with_metadata.html">apply_with_metadata</a></span> : <code class="type">metadata_spec:[< `Add_tags of string list | `Add_tags_rec of string list ] -><br>       (< is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option; .. ><br>        as 'a)<br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       'a Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALfastq_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.fastq_step.html">fastq_step</a></span> : <code class="type">read:[ `R1 of string | `R2 of string ] -><br>       compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq">Biokepi_pipeline_edsl.Pipeline.fastq</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.File.html#TYPEt">Biokepi_pipeline_edsl.Pipeline.File.t</a></code></pre>
+<pre><span id="VALfastq_sample_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.fastq_sample_step.html">fastq_sample_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEfastq_sample">Biokepi_pipeline_edsl.Pipeline.fastq_sample</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       < escaped_sample_name : string; fragment_id : string option;<br>         fragment_id_forced : string;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         paths : string * string option;<br>         r1 : Biokepi_run_environment.Common.KEDSL.single_file<br>              Biokepi_run_environment.Common.KEDSL.workflow_node;<br>         r2 : Biokepi_run_environment.Common.KEDSL.single_file<br>              Biokepi_run_environment.Common.KEDSL.workflow_node option;<br>         sample_name : string ><br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALcompile_aligner_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.compile_aligner_step.html">compile_aligner_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam">Biokepi_pipeline_edsl.Pipeline.bam</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALcompile_bam_pair"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.compile_bam_pair.html">compile_bam_pair</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam_pair">Biokepi_pipeline_edsl.Pipeline.bam_pair</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       [ `Normal of<br>           <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>           Biokepi_run_environment.Common.KEDSL.workflow_node ] *<br>       [ `Tumor of<br>           <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>           Biokepi_run_environment.Common.KEDSL.workflow_node ] *<br>       [ `Pipeline of<br>           <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEbam_pair">Biokepi_pipeline_edsl.Pipeline.bam_pair</a><br>           <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> ]</code></pre>
+<pre><span id="VALcompile_variant_caller_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.compile_variant_caller_step.html">compile_variant_caller_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEvcf">Biokepi_pipeline_edsl.Pipeline.vcf</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       Biokepi_run_environment.Common.KEDSL.single_file<br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALcompile_gtf_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.compile_gtf_step.html">compile_gtf_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEgtf">Biokepi_pipeline_edsl.Pipeline.gtf</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       < exists : Ketrew_pure.Target.Condition.t;<br>         is_bigger_than : int -> Ketrew_pure.Target.Condition.t;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string ><br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALseq2hla_hla_types_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.seq2hla_hla_types_step.html">seq2hla_hla_types_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEseq2hla_hla_types">Biokepi_pipeline_edsl.Pipeline.seq2hla_hla_types</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       < is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         paths : string list ><br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALoptitype_hla_types_step"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.Pipeline.Compiler.optitype_hla_types_step.html">optitype_hla_types_step</a></span> : <code class="type">compiler:<a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.Pipeline.html#TYPEoptitype_hla_types">Biokepi_pipeline_edsl.Pipeline.optitype_hla_types</a><br>       <a href="Biokepi_pipeline_edsl.Pipeline.Compiler.html#TYPEpipeline">pipeline</a> -><br>       < is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string ><br>       Biokepi_run_environment.Common.KEDSL.product<br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre></body></html>

@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_bfx_tools.Optitype.html">
+<link rel="next" href="Biokepi_bfx_tools.Samtools.html">
+<link rel="Up" href="Biokepi_bfx_tools.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Picard</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_bfx_tools.Optitype.html" title="Biokepi_bfx_tools.Optitype">Previous</a>
+&nbsp;<a class="up" href="Biokepi_bfx_tools.html" title="Biokepi_bfx_tools">Up</a>
+&nbsp;<a class="post" href="Biokepi_bfx_tools.Samtools.html" title="Biokepi_bfx_tools.Samtools">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi_bfx_tools.Picard.html">Biokepi_bfx_tools.Picard</a> (<a href="code_Biokepi_bfx_tools.Picard.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Picard: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_bfx_tools.Picard.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi_bfx_tools.Picard.Remove.html">Remove</a>: <code class="type"><a href="Biokepi_run_environment.Workflow_utilities.Remove.html">Biokepi_run_environment.Workflow_utilities.Remove</a></code></pre>
+<pre><span id="VALcreate_dict"><span class="keyword">val</span> <a href="code_VALBiokepi_bfx_tools.Picard.create_dict.html">create_dict</a></span> : <code class="type">run_with:<a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a> -><br>       < is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string; .. ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       < exists : Ketrew_pure.Target.Condition.t;<br>         is_bigger_than : int -> Ketrew_pure.Target.Condition.t;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALsort_vcf"><span class="keyword">val</span> <a href="code_VALBiokepi_bfx_tools.Picard.sort_vcf.html">sort_vcf</a></span> : <code class="type">run_with:<a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a> -><br>       ?sequence_dict:< is_done : Biokepi_run_environment.Common.KEDSL.Condition.t<br>                                  option;<br>                        path : string; .. ><br>                      Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       < is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string; .. ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       < exists : Ketrew_pure.Target.Condition.t;<br>         is_bigger_than : int -> Ketrew_pure.Target.Condition.t;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span class="keyword">module</span> <a href="Biokepi_bfx_tools.Picard.Mark_duplicates_settings.html">Mark_duplicates_settings</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_bfx_tools.Picard.Mark_duplicates_settings.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="VALmark_duplicates"><span class="keyword">val</span> <a href="code_VALBiokepi_bfx_tools.Picard.mark_duplicates.html">mark_duplicates</a></span> : <code class="type">?settings:<a href="Biokepi_bfx_tools.Picard.Mark_duplicates_settings.html#TYPEt">Mark_duplicates_settings.t</a> -><br>       run_with:<a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a> -><br>       input_bam:<a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>                 Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       string -><br>       < host : Biokepi_run_environment.Common.KEDSL.Host.t;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string; reference_build : string;<br>         sorting : [ `Coordinate | `Read_name ] option ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALbam_to_fastq"><span class="keyword">val</span> <a href="code_VALBiokepi_bfx_tools.Picard.bam_to_fastq.html">bam_to_fastq</a></span> : <code class="type">?sample_name:string -><br>       run_with:<a href="Biokepi_run_environment.Machine.html#TYPEt">Biokepi_run_environment.Machine.t</a> -><br>       sample_type:[< `Paired_end | `Single_end ] -><br>       output_prefix:string -><br>       <a href="Biokepi_run_environment.Common.KEDSL.html#TYPEbam_file">Biokepi_run_environment.Common.KEDSL.bam_file</a><br>       Biokepi_run_environment.Common.KEDSL.workflow_node -><br>       < escaped_sample_name : string; fragment_id : string option;<br>         fragment_id_forced : string;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         paths : string * string option;<br>         r1 : Biokepi_run_environment.Common.KEDSL.single_file<br>              Biokepi_run_environment.Common.KEDSL.workflow_node;<br>         r2 : Biokepi_run_environment.Common.KEDSL.single_file<br>              Biokepi_run_environment.Common.KEDSL.workflow_node option;<br>         sample_name : string ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre></body></html>

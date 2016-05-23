@@ -1,0 +1,23 @@
+digraph G {
+  size="10,7.5";
+  ratio="fill";
+  rotate=90;
+  fontsize="12pt";
+  rankdir = TB ;
+"Biokepi_run_environment" [style=filled, color=darkturquoise];
+"Biokepi_environment_setup" [style=filled, color=darkturquoise];
+"Biokepi_environment_setup" -> "Biokepi_run_environment";
+"Biokepi_bfx_tools" [style=filled, color=darkturquoise];
+"Biokepi_bfx_tools" -> "Biokepi_run_environment";
+"Biokepi_pipeline_edsl" [style=filled, color=darkturquoise];
+"Biokepi_pipeline_edsl" -> "Biokepi_bfx_tools";
+"All_downloads" [style=filled, color=darkgoldenrod2];
+"All_downloads" -> "Biokepi";
+"Main" [style=filled, color=darkgoldenrod2];
+"Main" -> "Biokepi_run_environment";
+"Ttfi_pipeline" [style=filled, color=darkgoldenrod2];
+"Ttfi_pipeline" -> "Biokepi";
+"Biokepi" [style=filled, color=cyan];
+"Biokepi" -> "Biokepi_pipeline_edsl";
+"Biokepi" -> "Biokepi_environment_setup";
+}

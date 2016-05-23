@@ -1,0 +1,64 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Ttfi_pipeline.Somatic_simplish.vc</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;vc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Insane_library</span>.(fastq_list&nbsp;&nbsp;~dataset:(fst&nbsp;normal)&nbsp;(snd&nbsp;normal))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Insane_library</span>.(fastq_list&nbsp;&nbsp;~dataset:(fst&nbsp;tumor)&nbsp;(snd&nbsp;tumor))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ot_hla&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normal&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.concat&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.optitype&nbsp;<span class="keywordsign">`</span><span class="constructor">DNA</span>&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align&nbsp;fastq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;fastq&nbsp;~f:(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;fq&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.bwa_mem&nbsp;fq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~reference_build:<span class="string">"b37"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.picard_mark_duplicates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal_bam&nbsp;=&nbsp;align&nbsp;normal&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor_bam&nbsp;=&nbsp;align&nbsp;tumor&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_pair&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair&nbsp;normal_bam&nbsp;tumor_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_realigned_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.gatk_indel_realigner_joint&nbsp;bam_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_normal_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;indel_realigned_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.gatk_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_tumor_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_second&nbsp;indel_realigned_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.gatk_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcfs&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal,&nbsp;tumor&nbsp;=&nbsp;final_normal_bam,&nbsp;final_tumor_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.mutect&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.somaticsniper&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.strelka&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.to_unit&nbsp;vcfs;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ot_hla;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit</code></body></html>

@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_run_environment.Machine.Tool.html">
+<link rel="Up" href="Biokepi_run_environment.Machine.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Machine.Make_fun</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_run_environment.Machine.Tool.html" title="Biokepi_run_environment.Machine.Tool">Previous</a>
+&nbsp;<a class="up" href="Biokepi_run_environment.Machine.html" title="Biokepi_run_environment.Machine">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi_run_environment.Machine.Make_fun.html">Biokepi_run_environment.Machine.Make_fun</a> (<a href="code_Biokepi_run_environment.Machine.Make_fun.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Make_fun: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Machine.Make_fun.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Jobs in Biokepi ask the computing environment (defined below in
+    <a href="Biokepi_run_environment.Machine.html"><code class="code"><span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span></code></a>) for resources.
+<p>
+
+    The implementation of the <a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt"><code class="code"><span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t</code></a> function defined by the user
+    is free to interpret those requirements according to the user's
+    computing infrastructure.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi_run_environment.Machine.Make_fun.Requirement.html">Requirement</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Machine.Make_fun.Requirement.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">?name:string -><br>       ?requirements:<a href="Biokepi_run_environment.Machine.Make_fun.Requirement.html#TYPEt">Requirement.t</a> list -><br>       Common.KEDSL.Program.t -> Common.KEDSL.Build_process.t</code> </pre>
+<div class="info ">
+The type of the “run function” used across the library.<br>
+</div>
+
+
+<pre><span id="VALstream_processor"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Machine.Make_fun.stream_processor.html">stream_processor</a></span> : <code class="type">([> `Memory of [> `Small ] | `Processors of int ] as 'a) list -> 'a list</code></pre><div class="info ">
+A stream processor, for this purpose, is a program that runs on one core
+      and does not grow in memory arbitrarily.<br>
+</div>
+
+<pre><span id="VALquick"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Machine.Make_fun.quick.html">quick</a></span> : <code class="type">([> `Quick_run ] as 'a) list -> 'a list</code></pre>
+<pre><span id="VALdownloading"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Machine.Make_fun.downloading.html">downloading</a></span> : <code class="type">([> `Internet_access | `Memory of [> `Small ] | `Processors of int ] as 'a)<br>       list -> 'a list</code></pre>
+<pre><span id="VALwith_self_ids"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Machine.Make_fun.with_self_ids.html">with_self_ids</a></span> : <code class="type">?self_ids:'a -> ([> `Self_identification of 'a ] as 'b) list -> 'b list</code></pre>
+<pre><span id="VALwith_requirements"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Machine.Make_fun.with_requirements.html">with_requirements</a></span> : <code class="type"><a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">t</a> -><br>       <a href="Biokepi_run_environment.Machine.Make_fun.Requirement.html#TYPEt">Requirement.t</a> list -><br>       <a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">t</a></code></pre></body></html>

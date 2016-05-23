@@ -1,0 +1,206 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_json.Make_serializer</title>
+</head>
+<body>
+<code class="code">(<span class="constructor">How</span>&nbsp;:&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;input_value&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(string&nbsp;*&nbsp;string)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;var_count:int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;function_call&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(string&nbsp;*&nbsp;t)&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;string&nbsp;:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t<br>
+&nbsp;&nbsp;<span class="keyword">end</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">How</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_value&nbsp;<span class="string">"fastq"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sample_name"</span>,&nbsp;sample_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"fragment_id"</span>,&nbsp;<span class="constructor">Option</span>.value&nbsp;~default:<span class="string">"NONE"</span>&nbsp;fragment_id;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"R1"</span>,&nbsp;r1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"R2"</span>,&nbsp;<span class="constructor">Option</span>.value&nbsp;~default:<span class="string">"NONE"</span>&nbsp;r2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq_gz<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_value&nbsp;<span class="string">"fastq.gz"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sample_name"</span>,&nbsp;sample_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"fragment_id"</span>,&nbsp;<span class="constructor">Option</span>.value&nbsp;~default:<span class="string">"NONE"</span>&nbsp;fragment_id;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"R1"</span>,&nbsp;r1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"R2"</span>,&nbsp;<span class="constructor">Option</span>.value&nbsp;~default:<span class="string">"NONE"</span>&nbsp;r2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam&nbsp;~path&nbsp;?sorting&nbsp;~reference_build&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;input_value&nbsp;<span class="string">"bam"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"path"</span>,&nbsp;path;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sorting"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value_map&nbsp;~default:<span class="string">"NONE"</span>&nbsp;sorting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:(<span class="keyword">function</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Coordinate</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"Coordinate"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Read_name</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"Read-name"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"reference_build"</span>,&nbsp;reference_build;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair&nbsp;a&nbsp;b&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"make-pair"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"first"</span>,&nbsp;a&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"second"</span>,&nbsp;b&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair_first&nbsp;p&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"pair-first"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"pair"</span>,&nbsp;p&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair_second&nbsp;p&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"pair-second"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"pair"</span>,&nbsp;p&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligner&nbsp;name&nbsp;conf_name&nbsp;~reference_build&nbsp;fq&nbsp;:&nbsp;var_count:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">How</span>.t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~var_count&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fq_compiled&nbsp;=&nbsp;fq&nbsp;~var_count&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;name&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"configuration"</span>,&nbsp;string&nbsp;conf_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"reference_build"</span>,&nbsp;string&nbsp;reference_build;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"input"</span>,&nbsp;fq_compiled;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;one_to_one&nbsp;name&nbsp;conf_name&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bamc&nbsp;=&nbsp;bam&nbsp;~var_count&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;name&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"configuration"</span>,&nbsp;string&nbsp;conf_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"input"</span>,&nbsp;bamc;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_aln<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;<span class="string">"bwa-aln"</span>&nbsp;(<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.name&nbsp;configuration)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_mem<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;<span class="string">"bwa-mem"</span>&nbsp;(<span class="constructor">Tools</span>.<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.name&nbsp;configuration)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip&nbsp;gz&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"gunzip"</span>&nbsp;[<span class="string">"input"</span>,&nbsp;gz&nbsp;~var_count]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip_concat&nbsp;gzl&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"gunzip-concat"</span>&nbsp;[<span class="string">"input-list"</span>,&nbsp;gzl&nbsp;~var_count]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;concat&nbsp;l&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"concat"</span>&nbsp;[<span class="string">"input-list"</span>,&nbsp;l&nbsp;~var_count]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;merge_bams&nbsp;bl&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"merge-bams"</span>&nbsp;[<span class="string">"input-list"</span>,&nbsp;bl&nbsp;~var_count]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Star</span>.<span class="constructor">Configuration</span>.<span class="constructor">Align</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;<span class="string">"star"</span>&nbsp;(<span class="constructor">Tools</span>.<span class="constructor">Star</span>.<span class="constructor">Configuration</span>.<span class="constructor">Align</span>.name&nbsp;configuration)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.default_v1)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;<span class="string">"hisat"</span>&nbsp;(configuration.<span class="constructor">Tools</span>.<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.name)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mosaik&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;<span class="string">"mosaik"</span>&nbsp;<span class="string">"default"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;stringtie&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Stringtie</span>.<span class="constructor">Configuration</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"stringtie"</span>&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Stringtie</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_real_config&nbsp;(indel,&nbsp;target)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(sprintf&nbsp;<span class="string">"I%s-TC%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;indel.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Indel_realigner</span>.name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;target.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Realigner_target_creator</span>.name)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_indel_realigner)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"gatk_indel_realigner"</span>&nbsp;(indel_real_config&nbsp;configuration)<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_indel_realigner_joint<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_indel_realigner)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"gatk_indel_realigner_joint"</span>&nbsp;(indel_real_config&nbsp;configuration)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;picard_mark_duplicates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"picard_mark_duplicates"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_bqsr&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;(bqsr,&nbsp;preads)&nbsp;=&nbsp;configuration&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"gatk_bqsr"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(sprintf&nbsp;<span class="string">"B%s-PR%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bqsr.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Bqsr</span>.name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;preads.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Print_reads</span>.name)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;seq2hla&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"seq2hla"</span>&nbsp;<span class="string">"default"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;optitype&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"optitype"</span>&nbsp;(<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">DNA</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"DNA"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">RNA</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"RNA"</span>)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_haplotype_caller&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;one_to_one&nbsp;<span class="string">"gatk_haplotype_caller"</span>&nbsp;<span class="string">"default"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_to_fastq&nbsp;~sample_name&nbsp;?fragment_id&nbsp;se_or_pe&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bamc&nbsp;=&nbsp;bam&nbsp;~var_count&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;<span class="string">"bam_to_fastq"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"sample_name"</span>,&nbsp;string&nbsp;sample_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"fragment_id"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Option</span>.value_map&nbsp;~f:string&nbsp;~default:(string&nbsp;<span class="string">"N/A"</span>)&nbsp;fragment_id;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"endness"</span>,&nbsp;string&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;se_or_pe&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">SE</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"SE"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">PE</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"PE"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"input"</span>,&nbsp;bamc;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;variant_caller&nbsp;name&nbsp;conf_name&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;~(var_count&nbsp;:&nbsp;int)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;function_call&nbsp;name&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"configuration"</span>,&nbsp;string&nbsp;conf_name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"normal"</span>,&nbsp;normal&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"tumor"</span>,&nbsp;tumor&nbsp;~var_count;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Mutect</span>.<span class="constructor">Configuration</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"mutect"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Mutect</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect2&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mutect2</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"mutect2"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mutect2</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somaticsniper&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Somaticsniper</span>.<span class="constructor">Configuration</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"somaticsniper"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Somaticsniper</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Strelka</span>.<span class="constructor">Configuration</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"strelka"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Strelka</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;varscan_somatic&nbsp;?adjust_mapq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"varscan_somatic"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Option</span>.value_map&nbsp;~f:(sprintf&nbsp;<span class="string">"amap%d"</span>)&nbsp;~default:<span class="string">"default"</span>&nbsp;adjust_mapq)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Muse</span>.<span class="constructor">Configuration</span>.default&nbsp;<span class="keywordsign">`</span><span class="constructor">WGS</span>)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"muse"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Muse</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;virmid&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Tools</span>.<span class="constructor">Virmid</span>.<span class="constructor">Configuration</span>.default)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;variant_caller&nbsp;<span class="string">"virmid"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;configuration.<span class="constructor">Tools</span>.<span class="constructor">Virmid</span>.<span class="constructor">Configuration</span>.name<br>
+<br>
+<span class="keyword">end</span></code></body></html>

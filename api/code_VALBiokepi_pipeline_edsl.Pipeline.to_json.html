@@ -1,0 +1,119 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.Pipeline.to_json</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;<span class="keyword">rec</span>&nbsp;to_json:&nbsp;<span class="keyword">type</span>&nbsp;a.&nbsp;a&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;json&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;w&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;call&nbsp;name&nbsp;(args&nbsp;:&nbsp;json&nbsp;list):&nbsp;json&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">List</span>&nbsp;(<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name&nbsp;::&nbsp;args)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;w&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fastq_gz</span>&nbsp;file&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;call&nbsp;<span class="string">"Fastq_gz"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Fastq</span>&nbsp;file&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;call&nbsp;<span class="string">"Fastq"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_sample</span>&nbsp;(name,&nbsp;file)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Bam-sample"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;file<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_to_fastq</span>&nbsp;(name,&nbsp;how,&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;how_string&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;how&nbsp;<span class="keyword">with</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Paired</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"Paired"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Single</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"Single"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Bam-to-fastq"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;how_string;&nbsp;to_json&nbsp;bam]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Paired_end_sample</span>&nbsp;({sample_name;&nbsp;fragment_id},&nbsp;r1,&nbsp;r2)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Paired-end"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;sample_name;&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;fragment_id;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_json&nbsp;r1;&nbsp;to_json&nbsp;r2]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Single_end_sample</span>&nbsp;({sample_name;&nbsp;fragment_id},&nbsp;r)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Single-end"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;sample_name;&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;fragment_id;&nbsp;to_json&nbsp;r]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gunzip_concat</span>&nbsp;fastq_gz_list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Gunzip-concat"</span>&nbsp;(<span class="constructor">List</span>.map&nbsp;~f:to_json&nbsp;fastq_gz_list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Concat_text</span>&nbsp;fastq_list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Concat"</span>&nbsp;(<span class="constructor">List</span>.map&nbsp;~f:to_json&nbsp;fastq_list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bwa</span>&nbsp;(config,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"BWA"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"configuration"</span>,&nbsp;<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.to_json&nbsp;config];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to_json&nbsp;input<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bwa_mem</span>&nbsp;(params,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;input&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"BWA-MEM"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"configuration"</span>,&nbsp;<span class="constructor">Bwa</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.to_json&nbsp;params];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_json<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Star</span>&nbsp;(conf,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;input&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"STAR"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"configuration"</span>,&nbsp;<span class="constructor">Star</span>.<span class="constructor">Configuration</span>.<span class="constructor">Align</span>.to_json&nbsp;conf];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Hisat</span>&nbsp;(conf,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;input&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"HISAT"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"configuration"</span>,&nbsp;<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.to_json&nbsp;conf];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Stringtie</span>&nbsp;(conf,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;input&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Stringtie"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"configuration"</span>,&nbsp;<span class="constructor">Stringtie</span>.<span class="constructor">Configuration</span>.to_json&nbsp;conf];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Mosaik</span>&nbsp;(input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;input&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"MOSAIK"</span>&nbsp;[input_json]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gatk_indel_realigner</span>&nbsp;((indel_cfg,&nbsp;target_cfg),&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_cfg_json&nbsp;=&nbsp;<span class="constructor">Indel_realigner</span>.to_json&nbsp;indel_cfg&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;target_cfg_json&nbsp;=&nbsp;<span class="constructor">Realigner_target_creator</span>.to_json&nbsp;target_cfg&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Gatk_indel_realigner"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Configuration"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"IndelRealigner&nbsp;Configuration"</span>,&nbsp;indel_cfg_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"RealignerTargetCreator&nbsp;Configuration"</span>,&nbsp;target_cfg_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;input_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Gatk_bqsr</span>&nbsp;((bqsr_cfg,&nbsp;print_reads_cfg),&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;input_json&nbsp;=&nbsp;to_json&nbsp;bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Gatk_bqsr"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Configuration"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Bqsr"</span>,&nbsp;<span class="constructor">Bqsr</span>.to_json&nbsp;bqsr_cfg;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Print_reads"</span>,&nbsp;<span class="constructor">Print_reads</span>.to_json&nbsp;print_reads_cfg;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;input_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Germline_variant_caller</span>&nbsp;(gvc,&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;gvc.<span class="constructor">Variant_caller</span>.name&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Configuration"</span>,&nbsp;gvc.<span class="constructor">Variant_caller</span>.configuration_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;to_json&nbsp;bam;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Picard_mark_duplicates</span>&nbsp;(settings,&nbsp;bam)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;settings&nbsp;should&nbsp;not&nbsp;impact&nbsp;the&nbsp;output,&nbsp;so&nbsp;we&nbsp;don't&nbsp;dump&nbsp;them.&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Picard_mark_duplicates"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"input"</span>,&nbsp;to_json&nbsp;bam]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Bam_pair</span>&nbsp;(normal,&nbsp;tumor)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Bam-pair"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<span class="string">"normal"</span>,&nbsp;to_json&nbsp;normal;&nbsp;<span class="string">"tumor"</span>,&nbsp;to_json&nbsp;tumor]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Somatic_variant_caller</span>&nbsp;(svc,&nbsp;bam_pair)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;svc.<span class="constructor">Variant_caller</span>.name&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Configuration"</span>,&nbsp;svc.<span class="constructor">Variant_caller</span>.configuration_json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;to_json&nbsp;bam_pair;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Seq2HLA</span>&nbsp;input&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Seq2HLA"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;to_json&nbsp;input<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Optitype</span>&nbsp;(kind,&nbsp;input)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;call&nbsp;<span class="string">"Optitype"</span>&nbsp;[<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Input"</span>,&nbsp;to_json&nbsp;input;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"Kind"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;(<span class="keyword">match</span>&nbsp;kind&nbsp;<span class="keyword">with</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">DNA</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"DNA"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">RNA</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"RNA"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">With_metadata</span>&nbsp;(_,&nbsp;p)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;to_json&nbsp;p</code></body></html>

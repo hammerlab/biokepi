@@ -1,0 +1,78 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Samtools.merge_bams</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;merge_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(delete_input_on_success&nbsp;=&nbsp;<span class="keyword">true</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(attach_rg_tag&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(uncompressed_bam_output&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(compress_level_one&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(combine_rg_headers&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(combine_pg_headers&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(input_bam_list&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.bam_file&nbsp;<span class="constructor">KEDSL</span>.workflow_node&nbsp;list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(output_bam_path&nbsp;:&nbsp;string)&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;samtools&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.samtools&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;lgth&nbsp;=&nbsp;<span class="constructor">List</span>.length&nbsp;input_bam_list&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;lgth&nbsp;&lt;&nbsp;2&nbsp;<span class="keyword">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Samtools.merge_bams:&nbsp;%d&nbsp;input-bam%s&nbsp;provided&nbsp;and&nbsp;`samtools&nbsp;merge`&nbsp;will&nbsp;fail&nbsp;with&nbsp;less&nbsp;than&nbsp;2&nbsp;Bam&nbsp;files"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lgth<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">match</span>&nbsp;lgth&nbsp;<span class="keyword">with</span>&nbsp;1&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"&nbsp;was"</span>&nbsp;<span class="keywordsign">|</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"s&nbsp;were"</span>)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sorted_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;input_bam_list&nbsp;~f:(sort_bam_if_necessary&nbsp;~run_with&nbsp;~by:<span class="keywordsign">`</span><span class="constructor">Coordinate</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;options&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;attach_rg_tag&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-r"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;uncompressed_bam_output&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-u"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;compress_level_one&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-1"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;combine_rg_headers&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-c"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;(<span class="keyword">if</span>&nbsp;combine_pg_headers&nbsp;<span class="keyword">then</span>&nbsp;[<span class="string">"-p"</span>]&nbsp;<span class="keyword">else</span>&nbsp;[])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;&nbsp;<span class="constructor">Program</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<span class="string">"samtools"</span>;&nbsp;<span class="string">"merge"</span>]&nbsp;@&nbsp;options&nbsp;@&nbsp;[output_bam_path]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="constructor">List</span>.map&nbsp;sorted_bams&nbsp;~f:(<span class="keyword">fun</span>&nbsp;bam&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bam<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"merge-%d-bams-into-%s"</span>&nbsp;(<span class="constructor">List</span>.length&nbsp;input_bam_list)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;output_bam_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=&nbsp;<span class="constructor">Machine</span>.run_program&nbsp;~name&nbsp;run_with&nbsp;program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;remove_input_bams&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;input_bam_list&nbsp;~f:(<span class="keyword">fun</span>&nbsp;src&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_success_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;src<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;samtools)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;output_bam_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;<span class="constructor">List</span>.map&nbsp;sorted_bams&nbsp;~f:depends_on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;<span class="keyword">if</span>&nbsp;delete_input_on_success&nbsp;<span class="keyword">then</span>&nbsp;remove_input_bams&nbsp;<span class="keyword">else</span>&nbsp;[]<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;product&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;samtools&nbsp;merge&nbsp;creates&nbsp;sorted&nbsp;bams:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;one&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.hd&nbsp;input_bam_list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Option</span>.value_exn<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~msg:(sprintf&nbsp;<span class="string">"Samtools.merge_bams:&nbsp;input&nbsp;is&nbsp;empty&nbsp;list"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(transform_bam&nbsp;one<span class="keywordsign">#</span>product&nbsp;~path:output_bam_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name&nbsp;product&nbsp;~make&nbsp;~edges</code></body></html>

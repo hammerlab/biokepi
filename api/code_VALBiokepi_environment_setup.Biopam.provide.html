@@ -1,0 +1,40 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Biopam.provide</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;provide&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;it&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_workflow&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;install_tool&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;it&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;export_var&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;it.tool_type&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">None</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;v&nbsp;&nbsp;&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;path&nbsp;=&nbsp;install_workflow<span class="keywordsign">#</span>product<span class="keywordsign">#</span>shell_which&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Some</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;%s=\"%s${%s:+:}${%s}\""</span>&nbsp;v&nbsp;path&nbsp;v&nbsp;v)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.create&nbsp;it.definition<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~ensure:install_workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;it.requires_conda<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="constructor">Conda</span>.init_biokepi_env&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;'Does&nbsp;not&nbsp;need&nbsp;Conda'"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;it.init_environment&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Opam</span>.kcom&nbsp;~root_name:(<span class="constructor">Opam</span>.root_of_package&nbsp;it.package)&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(shf&nbsp;<span class="string">"eval&nbsp;$(%s)"</span>)&nbsp;<span class="string">"config&nbsp;env"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Option</span>.value&nbsp;export_var&nbsp;~default:(sh&nbsp;<span class="string">"echo&nbsp;'No&nbsp;export&nbsp;var'"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</code></body></html>

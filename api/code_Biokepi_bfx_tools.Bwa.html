@@ -1,0 +1,273 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_bfx_tools.Bwa</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Remove</span>&nbsp;=&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Configuration</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_gap_open_penalty&nbsp;=&nbsp;11<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_gap_extension_penalty&nbsp;=&nbsp;4<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Common</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gap_open_penalty:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gap_extension_penalty:&nbsp;int;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;<span class="string">"default"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gap_open_penalty&nbsp;=&nbsp;default_gap_open_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gap_extension_penalty&nbsp;=&nbsp;default_gap_extension_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;t&nbsp;=&nbsp;t.name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_json&nbsp;{name;&nbsp;gap_open_penalty;&nbsp;gap_extension_penalty}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Assoc</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"name"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">String</span>&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"gap_open_penalty"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Int</span>&nbsp;gap_open_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"gap_extension_penalty"</span>,&nbsp;<span class="keywordsign">`</span><span class="constructor">Int</span>&nbsp;gap_extension_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Aln</span>&nbsp;=&nbsp;<span class="constructor">Common</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Mem</span>&nbsp;=&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;index<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;`bwa&nbsp;index`&nbsp;creates&nbsp;a&nbsp;bunch&nbsp;of&nbsp;files,&nbsp;c.f.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[this&nbsp;question](https://www.biostars.org/p/73585/)&nbsp;we&nbsp;detect&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`.bwt`&nbsp;one.&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.bwa&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"bwa-index-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.bwt"</span>&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;~host:(<span class="constructor">Machine</span>.(as_host&nbsp;run_with))&nbsp;result)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;bwa_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.aligner]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~make:(<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"bwa"</span>;&nbsp;<span class="string">"index"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"bwa&nbsp;index&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)))<br>
+<br>
+<span class="keyword">let</span>&nbsp;read_group_header_option&nbsp;algorithm&nbsp;~sample_name&nbsp;~read_group_id&nbsp;=<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;this&nbsp;option&nbsp;should&nbsp;magically&nbsp;make&nbsp;the&nbsp;sam&nbsp;file&nbsp;compatible<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mutect&nbsp;and&nbsp;other&nbsp;GATK-like&nbsp;pieces&nbsp;of&nbsp;software<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://seqanswers.com/forums/showthread.php?t=17233<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;`LB`&nbsp;one&nbsp;seems&nbsp;“necessary”&nbsp;for&nbsp;somatic&nbsp;sniper:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`[bam_header_parse]&nbsp;missing&nbsp;LB&nbsp;tag&nbsp;in&nbsp;@RG&nbsp;lines.`<br>
+&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;algorithm&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span><span class="keywordsign">`</span><span class="constructor">Mem</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"-R&nbsp;'@RG\\tID:%s\\tSM:%s\\tLB:ga\\tPL:Illumina'"</span>&nbsp;read_group_id&nbsp;sample_name<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span><span class="keywordsign">`</span><span class="constructor">Aln</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"-r&nbsp;'@RG\\tID:%s\\tSM:%s\\tLB:ga\\tPL:Illumina'"</span>&nbsp;read_group_id&nbsp;sample_name<br>
+<br>
+<span class="keyword">let</span>&nbsp;mem_align_to_sam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~fastq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;~(r1:&nbsp;KEDSL.single_file&nbsp;KEDSL.workflow_node)&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;?(r2:&nbsp;KEDSL.single_file&nbsp;KEDSL.workflow_node&nbsp;option)&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(result_prefix:string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;in_work_dir&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;<span class="constructor">Filename</span>.(quote&nbsp;(dirname&nbsp;result_prefix))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;`bwa&nbsp;index`&nbsp;creates&nbsp;a&nbsp;bunch&nbsp;of&nbsp;files,&nbsp;c.f.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[this&nbsp;question](https://www.biostars.org/p/73585/)&nbsp;we&nbsp;detect&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`.bwt`&nbsp;one.&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.bwa&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_index&nbsp;=&nbsp;index&nbsp;~reference_build&nbsp;~run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.sam"</span>&nbsp;result_prefix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r1_path,&nbsp;r2_path_opt&nbsp;=&nbsp;fastq<span class="keywordsign">#</span>product<span class="keywordsign">#</span>paths&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"bwa-mem-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;r1_path)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_base_command&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"bwa&nbsp;mem"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(read_group_header_option&nbsp;<span class="keywordsign">`</span><span class="constructor">Mem</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sample_name:fastq<span class="keywordsign">#</span>product<span class="keywordsign">#</span>escaped_sample_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~read_group_id:(<span class="constructor">Filename</span>.basename&nbsp;r1_path));<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-t"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-O"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;configuration.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.gap_open_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-E"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;configuration.<span class="constructor">Configuration</span>.<span class="constructor">Mem</span>.gap_extension_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r1_path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_base_target&nbsp;~bwa_command&nbsp;&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;result&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;depends_on&nbsp;bwa_index<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;depends_on&nbsp;fastq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;result)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.aligner]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~processors&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"bwa"</span>;&nbsp;<span class="string">"mem"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;in_work_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;bwa_command))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;r2_path_opt&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;read2&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_command&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bwa_base_command;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;read2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"&gt;"</span>;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;bwa_base_target&nbsp;~bwa_command<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_command&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bwa_base_command;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"&gt;"</span>;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;bwa_base_target&nbsp;~bwa_command<br>
+<br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;align_to_sam<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(configuration&nbsp;=&nbsp;<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~fastq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(result_prefix:string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~(run_with&nbsp;:&nbsp;<span class="constructor">Machine</span>.t)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;reference_fasta&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.get_reference_genome&nbsp;run_with&nbsp;reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Reference_genome</span>.fasta&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;in_work_dir&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.shf&nbsp;<span class="string">"cd&nbsp;%s"</span>&nbsp;<span class="constructor">Filename</span>.(quote&nbsp;(dirname&nbsp;result_prefix))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;`bwa&nbsp;index`&nbsp;creates&nbsp;a&nbsp;bunch&nbsp;of&nbsp;files,&nbsp;c.f.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[this&nbsp;question](https://www.biostars.org/p/73585/)&nbsp;we&nbsp;detect&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`.bwt`&nbsp;one.&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_tool&nbsp;=&nbsp;<span class="constructor">Machine</span>.get_tool&nbsp;run_with&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.bwa&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_index&nbsp;=&nbsp;index&nbsp;~reference_build&nbsp;~run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;<span class="constructor">Machine</span>.max_processors&nbsp;run_with&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_aln&nbsp;read_number&nbsp;read&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"bwa-aln-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;read)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s-R%d.sai"</span>&nbsp;result_prefix&nbsp;read_number&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_command&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">String</span>.concat&nbsp;~sep:<span class="string">"&nbsp;"</span>&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"bwa&nbsp;aln"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-t"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;processors;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-O"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;configuration.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.gap_open_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"-E"</span>;&nbsp;<span class="constructor">Int</span>.to_string&nbsp;configuration.<span class="constructor">Configuration</span>.<span class="constructor">Aln</span>.gap_extension_penalty;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;read);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"&gt;"</span>;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;result&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;fastq;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;bwa_index;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;bwa_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.aligner]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~processors&nbsp;~name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"bwa"</span>;&nbsp;<span class="string">"aln"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;in_work_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;sh&nbsp;bwa_command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r1_path,&nbsp;r2_path_opt&nbsp;=&nbsp;fastq<span class="keywordsign">#</span>product<span class="keywordsign">#</span>paths&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r1_sai&nbsp;=&nbsp;bwa_aln&nbsp;1&nbsp;r1_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;r2_sai_opt&nbsp;=&nbsp;<span class="constructor">Option</span>.map&nbsp;r2_path_opt&nbsp;~f:(<span class="keyword">fun</span>&nbsp;r&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(bwa_aln&nbsp;2&nbsp;r,&nbsp;r))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"bwa-sam-%s"</span>&nbsp;(<span class="constructor">Filename</span>.basename&nbsp;result_prefix)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;result&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"%s.sam"</span>&nbsp;result_prefix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program,&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;common_edges&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;r1_sai;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;reference_fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;bwa_index;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;bwa_tool);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate&nbsp;(<span class="constructor">Remove</span>.file&nbsp;~run_with&nbsp;result);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;r2_sai_opt&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;(r2_sai,&nbsp;r2)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;in_work_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"bwa&nbsp;sampe&nbsp;%s&nbsp;%s&nbsp;%s&nbsp;%s&nbsp;%s&nbsp;%s&nbsp;&gt;&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(read_group_header_option&nbsp;<span class="keywordsign">`</span><span class="constructor">Aln</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sample_name:fastq<span class="keywordsign">#</span>product<span class="keywordsign">#</span>escaped_sample_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~read_group_id:(<span class="constructor">Filename</span>.basename&nbsp;r1_path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r1_sai<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r2_sai<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r1_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;result)),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(depends_on&nbsp;r2_sai&nbsp;::&nbsp;common_edges)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(init&nbsp;bwa_tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;in_work_dir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"bwa&nbsp;samse&nbsp;%s&nbsp;%s&nbsp;%s&nbsp;&gt;&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(read_group_header_option&nbsp;<span class="keywordsign">`</span><span class="constructor">Aln</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~sample_name:fastq<span class="keywordsign">#</span>product<span class="keywordsign">#</span>escaped_sample_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~read_group_id:(<span class="constructor">Filename</span>.basename&nbsp;r1_path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;reference_fasta<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;r1_sai<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;result)),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;common_edges<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(single_file&nbsp;result&nbsp;~host:<span class="constructor">Machine</span>.(as_host&nbsp;run_with))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name&nbsp;~edges<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="constructor">Target_tags</span>.aligner]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<span class="constructor">Machine</span>.run_big_program&nbsp;run_with&nbsp;~processors:1&nbsp;~name&nbsp;&nbsp;program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~self_ids:[<span class="string">"bwa"</span>;&nbsp;<span class="string">"sampe"</span>])<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;sam<br>
+<span class="keyword">end</span></code></body></html>

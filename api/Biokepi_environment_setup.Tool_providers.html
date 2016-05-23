@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_environment_setup.Download_reference_genomes.html">
+<link rel="Up" href="Biokepi_environment_setup.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Tool_providers</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_environment_setup.Download_reference_genomes.html" title="Biokepi_environment_setup.Download_reference_genomes">Previous</a>
+&nbsp;<a class="up" href="Biokepi_environment_setup.html" title="Biokepi_environment_setup">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi_environment_setup.Tool_providers.html">Biokepi_environment_setup.Tool_providers</a> (<a href="code_Biokepi_environment_setup.Tool_providers.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Tool_providers: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_environment_setup.Tool_providers.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span id="VALrm_path"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.rm_path.html">rm_path</a></span> : <code class="type">host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       string -><br>       < is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALgeneric_installation"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.generic_installation.html">generic_installation</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_path:string -><br>       install_program:Biokepi_run_environment.Common.KEDSL.Program.t -><br>       witness:(< is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>                  .. ><br>                as 'a)<br>               Biokepi_run_environment.Common.KEDSL.product -><br>       url:string -><br>       ?unarchived_directory:string -><br>       string -> 'a Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span class="keyword">module</span> <a href="Biokepi_environment_setup.Tool_providers.Tool_def.html">Tool_def</a>: <code class="type"><a href="Biokepi_run_environment.Machine.Tool.Definition.html">Biokepi_run_environment.Machine.Tool.Definition</a></code></pre>
+<pre><code><span id="TYPEinstallable"><span class="keyword">type</span> <code class="type"></code>installable</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.tool_definition">tool_definition</span>&nbsp;: <code class="type">Tool_def.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.url">url</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.install_program">install_program</span>&nbsp;: <code class="type">path:string -> Biokepi_run_environment.Common.KEDSL.Program.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.init_program">init_program</span>&nbsp;: <code class="type">path:string -> Biokepi_run_environment.Common.KEDSL.Program.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.witness">witness</span>&nbsp;: <code class="type">host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       path:string -> Biokepi_run_environment.Common.KEDSL.unknown_product</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTinstallable.unarchived_directory">unarchived_directory</span>&nbsp;: <code class="type">string option</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="VALnoop"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.noop.html">noop</a></span> : <code class="type">Biokepi_run_environment.Common.KEDSL.Program.t</code></pre>
+<pre><span id="VALinstallable_tool"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.installable_tool.html">installable_tool</a></span> : <code class="type">url:string -><br>       ?install_program:(path:string -><br>                         Biokepi_run_environment.Common.KEDSL.Program.t) -><br>       ?init_program:(path:string -> Biokepi_run_environment.Common.KEDSL.Program.t) -><br>       witness:(host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>                path:string -> Biokepi_run_environment.Common.KEDSL.unknown_product) -><br>       ?unarchived_directory:string -><br>       Tool_def.t -> <a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALrender_installable_tool"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.render_installable_tool.html">render_installable_tool</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_tools_path:string -><br>       <a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a> -><br>       <a href="Biokepi_run_environment.Machine.Tool.html#TYPEt">Biokepi_run_environment.Machine.Tool.t</a></code></pre>
+<pre><span id="VALadd_to_dollar_path"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.add_to_dollar_path.html">add_to_dollar_path</a></span> : <code class="type">path:string -> Biokepi_run_environment.Common.KEDSL.Program.t</code></pre>
+<pre><span id="VALmake_and_copy_bin"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.make_and_copy_bin.html">make_and_copy_bin</a></span> : <code class="type">string -> path:string -> Biokepi_run_environment.Common.KEDSL.Program.t</code></pre>
+<pre><span id="VALwitness_file"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.witness_file.html">witness_file</a></span> : <code class="type">string -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       path:string -> < is_done : Ketrew_pure.Target.Condition.t option ></code></pre>
+<pre><span id="VALwitness_list"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.witness_list.html">witness_list</a></span> : <code class="type">string list -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       path:string -> < is_done : Ketrew_pure.Target.Condition.t option ></code></pre>
+<pre><span id="VALbwa"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.bwa.html">bwa</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALstringtie"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.stringtie.html">stringtie</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALvcftools"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.vcftools.html">vcftools</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALbedtools"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.bedtools.html">bedtools</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALmosaik"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.mosaik.html">mosaik</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALstar"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.star.html">star</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALhisat"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.hisat.html">hisat</a></span> : <code class="type">Tool_def.t -> <a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALkallisto"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.kallisto.html">kallisto</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALsamtools"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.samtools.html">samtools</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALcufflinks"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.cufflinks.html">cufflinks</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALsomaticsniper"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.somaticsniper.html">somaticsniper</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALvarscan"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.varscan.html">varscan</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALpicard"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.picard.html">picard</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="TYPEbroad_jar_location"><span class="keyword">type</span> <code class="type"></code>broad_jar_location</span> = <code class="type">[ `Fail of string | `Scp of string | `Wget of string ]</code> </pre>
+<div class="info ">
+Mutect (and some other tools) are behind some web-login annoying thing:
+   c.f. &lt;http://www.broadinstitute.org/cancer/cga/mutect_download&gt;
+   So the user of the lib must provide an SSH or HTTP URL (or
+   reimplement the `Tool.t` is some other way).<br>
+</div>
+
+
+<pre><span id="VALget_broad_jar"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.get_broad_jar.html">get_broad_jar</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_path:string -><br>       [< `Fail of 'a & string | `Scp of string | `Wget of string ] -><br>       < exists : Ketrew_pure.Target.Condition.t;<br>         is_bigger_than : int -> Ketrew_pure.Target.Condition.t;<br>         is_done : Biokepi_run_environment.Common.KEDSL.Condition.t option;<br>         path : string ><br>       Biokepi_run_environment.Common.KEDSL.workflow_node</code></pre>
+<pre><span id="VALmutect_tool"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.mutect_tool.html">mutect_tool</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_tools_path:string -><br>       [< `Fail of 'a & string | `Scp of string | `Wget of string ] -><br>       <a href="Biokepi_run_environment.Machine.Tool.html#TYPEt">Biokepi_run_environment.Machine.Tool.t</a></code></pre>
+<pre><span id="VALgatk_tool"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.gatk_tool.html">gatk_tool</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_tools_path:string -><br>       [< `Fail of 'a & string | `Scp of string | `Wget of string ] -><br>       <a href="Biokepi_run_environment.Machine.Tool.html#TYPEt">Biokepi_run_environment.Machine.Tool.t</a></code></pre>
+<pre><span id="VALstrelka"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.strelka.html">strelka</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre><div class="info ">
+Strelka is built from source but does not seem to build on MacOSX.<br>
+</div>
+
+<pre><span id="VALvirmid"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.virmid.html">virmid</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALmuse"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.muse.html">muse</a></span> : <code class="type"><a href="Biokepi_environment_setup.Tool_providers.html#TYPEinstallable">installable</a></code></pre>
+<pre><span id="VALdefault_jar_location"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.default_jar_location.html">default_jar_location</a></span> : <code class="type">string -> unit -> <a href="Biokepi_environment_setup.Tool_providers.html#TYPEbroad_jar_location">broad_jar_location</a></code></pre>
+<pre><span id="VALdefault_toolkit"><span class="keyword">val</span> <a href="code_VALBiokepi_environment_setup.Tool_providers.default_toolkit.html">default_toolkit</a></span> : <code class="type">run_program:<a href="Biokepi_run_environment.Machine.Make_fun.html#TYPEt">Biokepi_run_environment.Machine.Make_fun.t</a> -><br>       host:Biokepi_run_environment.Common.KEDSL.Host.t -><br>       install_tools_path:string -><br>       ?mutect_jar_location:(unit -><br>                             <a href="Biokepi_environment_setup.Tool_providers.html#TYPEbroad_jar_location">broad_jar_location</a>) -><br>       ?gatk_jar_location:(unit -><br>                           <a href="Biokepi_environment_setup.Tool_providers.html#TYPEbroad_jar_location">broad_jar_location</a>) -><br>       unit -> <a href="Biokepi_run_environment.Machine.Tool.Kit.html#TYPEt">Biokepi_run_environment.Machine.Tool.Kit.t</a></code></pre></body></html>

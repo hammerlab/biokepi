@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Biokepi_run_environment.Reference_genome.Specification.Default.html">
+<link rel="Up" href="Biokepi_run_environment.Reference_genome.Specification.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome.Specification.Location</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Biokepi_run_environment.Reference_genome.Specification.html" title="Biokepi_run_environment.Reference_genome.Specification">Up</a>
+&nbsp;<a class="post" href="Biokepi_run_environment.Reference_genome.Specification.Default.html" title="Biokepi_run_environment.Reference_genome.Specification.Default">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi_run_environment.Reference_genome.Specification.Location.html">Biokepi_run_environment.Reference_genome.Specification.Location</a> (<a href="code_Biokepi_run_environment.Reference_genome.Specification.Location.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Location: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">[ `Concat of<br>           <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">t</a> list<br>       | `Gunzip of<br>           <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">t</a><br>       | `Untar of <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">t</a><br>       | `Url of string<br>       | `Vcf_concat of<br>           (string *<br>            <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">t</a>)<br>           list ]</code> </pre>
+
+
+<pre><span id="VALurl"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.Location.url.html">url</a></span> : <code class="type">'a -> [> `Url of 'a ]</code></pre>
+<pre><span id="VALvcf_concat"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.Location.vcf_concat.html">vcf_concat</a></span> : <code class="type">'a -> [> `Vcf_concat of 'a ]</code></pre>
+<pre><span id="VALconcat"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.Location.concat.html">concat</a></span> : <code class="type">'a -> [> `Concat of 'a ]</code></pre>
+<pre><span id="VALgunzip"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.Location.gunzip.html">gunzip</a></span> : <code class="type">'a -> [> `Gunzip of 'a ]</code></pre>
+<pre><span id="VALuntar"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.Location.untar.html">untar</a></span> : <code class="type">'a -> [> `Untar of 'a ]</code></pre></body></html>

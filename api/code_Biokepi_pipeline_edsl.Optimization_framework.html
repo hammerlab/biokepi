@@ -1,0 +1,174 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.Optimization_framework</title>
+</head>
+<body>
+<code class="code"><span class="keyword">struct</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(**
+   QueL-like Compiler Optimization Framework
+<p>
+
+   This is “stolen” from <code class="code"><span class="string">"quel_o.ml"</span></code> …
+   i.e. the “Query optimization framework in tagless-final.”
+<p>
+
+   The code is reusable for any optimization pass.
+<p>
+
+*)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="constructor">Trans_base</span>&nbsp;=&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;from<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;term<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fwd&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;from&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;term&nbsp;<span class="comment">(*&nbsp;reflection&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;bwd&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;term&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;from&nbsp;<span class="comment">(*&nbsp;reification&nbsp;*)</span><br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="constructor">Transformation</span>&nbsp;=&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Trans_base</span><br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fmap&nbsp;&nbsp;:&nbsp;(<span class="keywordsign">'</span>a&nbsp;from&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;from)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;(<span class="keywordsign">'</span>a&nbsp;term&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;term)<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;fmap2&nbsp;:&nbsp;(<span class="keywordsign">'</span>a&nbsp;from&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;from&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>c&nbsp;from)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keywordsign">'</span>a&nbsp;term&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>b&nbsp;term&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">'</span>c&nbsp;term)<br>
+<span class="keyword">end</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Add the default implementations of the mapping functions *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Define_transformation</span>(<span class="constructor">X</span>&nbsp;:&nbsp;<span class="constructor">Trans_base</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">X</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fmap&nbsp;&nbsp;f&nbsp;term&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;fwd&nbsp;(f&nbsp;(bwd&nbsp;term))<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fmap2&nbsp;f&nbsp;term1&nbsp;term2&nbsp;=&nbsp;fwd&nbsp;(f&nbsp;(bwd&nbsp;term1)&nbsp;(bwd&nbsp;term2))<br>
+<span class="keyword">end</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** The default, generic optimizer.
+<p>
+
+    Concrete optimizers are built by overriding the interpretations
+    of some DSL forms.
+<p>
+
+    See the module <code class="code"><span class="constructor">Transform_applications</span></code> for an example of use.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Generic_optimizer</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">X</span>:&nbsp;<span class="constructor">Transformation</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Input</span>:&nbsp;<span class="constructor">Semantics</span>.<span class="constructor">Bioinformatics_base</span>&nbsp;<span class="keyword">with</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;repr&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">X</span>.from)<br>
+&nbsp;&nbsp;:&nbsp;<span class="constructor">Semantics</span>.<span class="constructor">Bioinformatics_base</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;repr&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">X</span>.term<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">and</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;observation&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">Input</span>.observation<br>
+=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Tools</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_bfx_tools</span><br>
+&nbsp;&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">X</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;repr&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;term<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;observation&nbsp;&nbsp;=&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="constructor">Input</span>.observation<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;lambda&nbsp;f&nbsp;=&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;x&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bwd&nbsp;(f&nbsp;(fwd&nbsp;x))))<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;apply&nbsp;e1&nbsp;e2&nbsp;=&nbsp;fmap2&nbsp;<span class="constructor">Input</span>.apply&nbsp;e1&nbsp;e2<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;observe&nbsp;f&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Input</span>.observe&nbsp;(<span class="keyword">fun</span>&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;bwd&nbsp;(f&nbsp;()))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;list&nbsp;l&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.list&nbsp;(<span class="constructor">List</span>.map&nbsp;bwd&nbsp;l))<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;list_map&nbsp;l&nbsp;~f&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.list_map&nbsp;(bwd&nbsp;l)&nbsp;(bwd&nbsp;f))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;to_unit&nbsp;x&nbsp;=&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.to_unit&nbsp;(bwd&nbsp;x))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair&nbsp;a&nbsp;b&nbsp;=&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.pair&nbsp;(bwd&nbsp;a)&nbsp;(bwd&nbsp;b))<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair_first&nbsp;x&nbsp;=&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.pair_first&nbsp;(bwd&nbsp;x))<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pair_second&nbsp;x&nbsp;=&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.pair_second&nbsp;(bwd&nbsp;x))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.fastq&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;())<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq_gz&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.fastq_gz&nbsp;~sample_name&nbsp;?fragment_id&nbsp;~r1&nbsp;?r2&nbsp;())<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam&nbsp;~path&nbsp;?sorting&nbsp;~reference_build&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.bam&nbsp;~path&nbsp;?sorting&nbsp;~reference_build&nbsp;())<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_aln&nbsp;?configuration&nbsp;~reference_build&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.bwa_aln&nbsp;?configuration&nbsp;~reference_build&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bwa_mem&nbsp;?configuration&nbsp;~reference_build&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.bwa_mem&nbsp;?configuration&nbsp;~reference_build&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;star&nbsp;?configuration&nbsp;~reference_build&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.star&nbsp;?configuration&nbsp;~reference_build&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hisat&nbsp;?configuration&nbsp;~reference_build&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.hisat&nbsp;?configuration&nbsp;~reference_build&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mosaik&nbsp;~reference_build&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.mosaik&nbsp;~reference_build&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;stringtie&nbsp;?configuration&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.stringtie&nbsp;?configuration&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_indel_realigner&nbsp;?configuration&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gatk_indel_realigner&nbsp;?configuration&nbsp;(bwd&nbsp;bam))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_indel_realigner_joint&nbsp;?configuration&nbsp;pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gatk_indel_realigner_joint&nbsp;?configuration&nbsp;(bwd&nbsp;pair))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;picard_mark_duplicates&nbsp;?configuration&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.picard_mark_duplicates&nbsp;?configuration&nbsp;(bwd&nbsp;bam))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_bqsr&nbsp;?configuration&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gatk_bqsr&nbsp;?configuration&nbsp;(bwd&nbsp;bam))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;seq2hla&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.seq2hla&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;optitype&nbsp;how&nbsp;fq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.optitype&nbsp;how&nbsp;(bwd&nbsp;fq))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gatk_haplotype_caller&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gatk_haplotype_caller&nbsp;(bwd&nbsp;bam))<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip&nbsp;gz&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gunzip&nbsp;(bwd&nbsp;gz))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip_concat&nbsp;gzl&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.gunzip_concat&nbsp;(bwd&nbsp;gzl))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;concat&nbsp;l&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.concat&nbsp;(bwd&nbsp;l))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;merge_bams&nbsp;bl&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.merge_bams&nbsp;(bwd&nbsp;bl))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_to_fastq&nbsp;~sample_name&nbsp;?fragment_id&nbsp;se_or_pe&nbsp;bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.bam_to_fastq&nbsp;~sample_name&nbsp;?fragment_id&nbsp;se_or_pe&nbsp;(bwd&nbsp;bam))<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.mutect&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mutect2&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.mutect2&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somaticsniper&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.somaticsniper&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;strelka&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.strelka&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;varscan_somatic&nbsp;?adjust_mapq&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.varscan_somatic<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?adjust_mapq&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;muse&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.muse&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;virmid&nbsp;?configuration&nbsp;~normal&nbsp;~tumor&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fwd&nbsp;(<span class="constructor">Input</span>.virmid&nbsp;?configuration&nbsp;~normal:(bwd&nbsp;normal)&nbsp;~tumor:(bwd&nbsp;tumor)&nbsp;())<br>
+<br>
+<span class="keyword">end</span><br>
+<span class="keyword">end</span></code></body></html>

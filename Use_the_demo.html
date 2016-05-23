@@ -1,0 +1,53 @@
+ <!DOCTYPE html> <html> <head><link rel="stylesheet" href="https://cdn.rawgit.com/hammerlab/ketrew/2d1c430cca52caa71e363a765ff8775a6ae14ba9/src/doc/code_style.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap-theme.min.css" type="text/css"><meta charset="utf-8"><title>Biokepi: Use the demo</title></head><body><div class="container"><h1>Biokepi: Use the demo</h1><div class="row">
+<div class="col-md-3">
+<h2>Contents</h2><h2>Menu</h2><ul><li><a href='index.html'>Home</a></li><li><a href='Module_Hierarchy.html'>Module Hierarchy</a></li><li><a href='Guide_to_the_code.html'>Guide to the code</a></li><li><a href='Use_the_demo.html'>Use the demo</a></li><li><a href='edsl_extension_register_result.html'>EDSL Extension “Register Results”</a></li><li><a href='./api/index.html'>API Documentation</a></li></ul></div><div class="col-md-9"><h1 id="UsingTheDemoApplication">Using The Demo Application</h1>
+
+<p>Once all set with Ketrew&#39;s
+<a href='http://seb.mondet.org/software/ketrew/#GettingStarted'>mini-tutorial</a>, one can
+submit a few Biokepi “example” pipelines to that same Ketrew daemon.</p>
+<p>The application is meant to show how to program with the library, especially
+how to build pipelines with <a href='pipeline.html'>Biokepi.Pipeline</a>.</p>
+<p>For now the demo looks like a somatic variant calling pipeline (hence
+the use of the words “tumor,” “normal,” etc.). They have not been debugged
+enough to be used in production.</p>
+<p>It is configured with environment variables. It will run the pipelines on a
+given machine, accessed through SSH. Unfortunately within the demo one cannot
+specify a scheduler interface.</p>
+<p>Variables to set:</p>
+<ul><li><code>BIOKEPI_DATASET_NAME</code>: a name for the dataset to be analyzed.
+ This is used as a namespace for file-naming and separating work environments
+ from other analyses run by Biokepi on target machine.</li><li><code>BIOKEPI_NORMAL_R1</code>, <code>BIOKEPI_NORMAL_R2</code>, <code>BIOKEPI_TUMOR_R1</code>, and
+ <code>BIOKEPI_TUMOR_R2</code>: the input files. For now each variable may contain a
+ comma-separated list of
+ <a href='http://en.wikipedia.org/wiki/FASTQ_format'>*.fastq.gz</a> (absolute) files on
+ the running machine.</li><li><code>BIOKEPI_SSH_BOX_URI</code>: an URI describing the machine to run on. For example
+ <code>ssh://SshName//home/user/biokepi-test/metaplay</code> where:<ul><li><code>SshName</code> would be an entry in the <code>.ssh/config</code> of the server running
+ Ketrew.</li><li><code>/home/user/biokepi-test/metaplay</code> is the top-level directory where every
+ generated file will go.</li></ul></li><li><code>BIOKEPI_MUTECT_JAR_SCP</code> or <code>BIOKEPI_MUTECT_JAR_WGET</code>: if you use
+ <a href='http://www.broadinstitute.org/cancer/cga/mutect'>Mutect</a> (the default
+ pipeline does) you need to provide a way to download the JAR file (<code>biokepi</code>
+ would violate its non-free license by doing it itself). So use something like:
+ <code>BIOKEPI_MUTECT_JAR_SCP=MyServer:/path/to/mutect.jar</code>.<br />
+ Same goes for <code>GATK</code> (with <code>BIOKEPI_GATK_JAR_{SCP,WGET}</code>).</li><li><code>BIOKEPI_CYCLEDASH_URL</code>: if you are using
+ <a href='https://github.com/hammerlab/cycledash'>Cycledash</a> (i.e. the option <code>-P</code>)
+ then you need to provide the base URL (Biokepi will append <code>/runs</code> and
+ <code>/upload</code> to that URL).</li></ul>
+
+<p>For example:</p>
+<pre class='shell'><code class='shell'>export BIOKEPI_DATASET_NAME=&quot;CP4242&quot;
+export BIOKEPI_NORMAL_R1=/path/to/R1_L001.fastq.gz,/R1_L002.fastq.gz
+export BIOKEPI_NORMAL_R2=/path/to/R2_L001.fastq.gz,/R2_L002.fastq.gz
+export BIOKEPI_TUMOR_R1=/path/to/R1_L001.fastq.gz,/R1_L002.fastq.gz
+export BIOKEPI_TUMOR_R2=/path/to/R2_L001.fastq.gz,/R2_L002.fastq.gz
+export BIOKEPI_SSH_BOX_URI=ssh://SshName//home/user/biokepi-test/metaplay
+export BIOKEPI_MUTECT_JAR_SCP=MyServer:path/to/mutect.jar
+export BIOKEPI_GATK_JAR_WGET=http://example.com/top-secret/gatk.jar
+export BIOKEPI_CYCLEDASH_URL=http://cycledash.example.com</code></pre>
+
+<p>Then you can run a few predefined somatic pipelines:</p>
+<pre><code>./biokepi-demo list-named-pipelines</code></pre><p>will list the names you can use.</p>
+<pre><code>./biokepi-demo dump-pipeline -N somatic-crazy</code></pre><p>will display the JSON representation of the pipeline named <code>somatic-crazy</code>.</p>
+<pre><code>./biokepi-demo run -N somatic-simple-mutect</code></pre><p>should submit a the pipeline to your Ketrew server.</p>
+</div></div></div></body><html>

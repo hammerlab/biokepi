@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Main.html">
+<link rel="next" href="Biokepi.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Ttfi_pipeline</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Main.html" title="Main">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Biokepi.html" title="Biokepi">Next</a>
+</div>
+<h1>Module <a href="type_Ttfi_pipeline.html">Ttfi_pipeline</a> (<a href="code_Ttfi_pipeline.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Ttfi_pipeline: <code class="code"><span class="keyword">sig</span></code> <a href="Ttfi_pipeline.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+This test uses the high-level EDSL and tries different compilation targets,
+    but does not produce runnable workflows.
+<p>
+
+    The workflow itself is voluntarily too big and abuses lambda expressions.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module type</span> <a href="Ttfi_pipeline.TEST_PIPELINE.html">TEST_PIPELINE</a> = <code class="code"><span class="keyword">functor</span> (</code><code class="code"><span class="constructor">Bfx</span></code><code class="code"> : </code><code class="type"><a href="Biokepi.EDSL.Semantics.html">Biokepi.EDSL.Semantics</a></code><code class="code">) <span class="keywordsign">-&gt;</span> </code><code class="code"><span class="keyword">sig</span></code> <a href="Ttfi_pipeline.TEST_PIPELINE.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><span class="keyword">module</span> <a href="Ttfi_pipeline.Run_test.html">Run_test</a>: <div class="sig_block"><code class="code"><span class="keyword">functor</span> (</code><code class="code"><span class="constructor">Test_pipeline</span></code><code class="code"> : </code><code class="type"><a href="Ttfi_pipeline.TEST_PIPELINE.html">TEST_PIPELINE</a></code><code class="code">) <span class="keywordsign">-&gt;</span> </code><code class="code"><span class="keyword">sig</span></code> <a href="Ttfi_pipeline.Run_test.html">..</a> <code class="code"><span class="keyword">end</span></code></div></pre>
+<pre><span class="keyword">module</span> <a href="Ttfi_pipeline.Pipeline_insane.html">Pipeline_insane</a>: <div class="sig_block"><code class="code"><span class="keyword">functor</span> (</code><code class="code"><span class="constructor">Bfx</span></code><code class="code"> : </code><code class="type"><a href="Biokepi.EDSL.Semantics.html">Biokepi.EDSL.Semantics</a></code><code class="code">) <span class="keywordsign">-&gt;</span> </code><code class="code"><span class="keyword">sig</span></code> <a href="Ttfi_pipeline.Pipeline_insane.html">..</a> <code class="code"><span class="keyword">end</span></code></div></pre>
+<pre><span class="keyword">module</span> <a href="Ttfi_pipeline.Somatic_simplish.html">Somatic_simplish</a>: <div class="sig_block"><code class="code"><span class="keyword">functor</span> (</code><code class="code"><span class="constructor">Bfx</span></code><code class="code"> : </code><code class="type"><a href="Biokepi.EDSL.Semantics.html">Biokepi.EDSL.Semantics</a></code><code class="code">) <span class="keywordsign">-&gt;</span> </code><code class="code"><span class="keyword">sig</span></code> <a href="Ttfi_pipeline.Somatic_simplish.html">..</a> <code class="code"><span class="keyword">end</span></code></div></pre></body></html>

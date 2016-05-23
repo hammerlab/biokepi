@@ -1,0 +1,45 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : All_downloads.ref_genomes_workflow</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;ref_genomes_workflow&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges_of_genome&nbsp;g&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Ref_genome</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.filter_map&nbsp;[fasta;&nbsp;cosmic_exn;&nbsp;dbsnp_exn;&nbsp;gtf_exn;&nbsp;cdna_exn;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~f:<span class="keyword">begin</span>&nbsp;<span class="keyword">fun</span>&nbsp;f&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">try</span>&nbsp;<span class="constructor">Some</span>&nbsp;(f&nbsp;g&nbsp;|&gt;&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>.depends_on)&nbsp;<span class="keyword">with</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">None</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;get_all&nbsp;genome&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;without_product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Get&nbsp;all&nbsp;of&nbsp;%s's&nbsp;files"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Ref_genome</span>.name&nbsp;genome))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:(edges_of_genome&nbsp;genome)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;genomes&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_environment_setup</span>.<span class="constructor">Download_reference_genomes</span>.default_genome_providers&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;genomes&nbsp;~f:(<span class="keyword">fun</span>&nbsp;(name,&nbsp;pull)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;genome&nbsp;=&nbsp;pull&nbsp;~toolkit&nbsp;~host&nbsp;~destination_path&nbsp;~run_program&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(get_all&nbsp;genome))<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;without_product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"All&nbsp;downloads&nbsp;to&nbsp;%s"</span>&nbsp;destination_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~tags:[<span class="string">"biokepi"</span>;&nbsp;<span class="string">"test"</span>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~edges</code></body></html>

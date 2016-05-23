@@ -1,0 +1,400 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_environment_setup.Biopam</title>
+</head>
+<body>
+<code class="code">:&nbsp;<span class="keyword">sig</span><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** The default location from where we download opam. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;default_opam_url&nbsp;:&nbsp;string<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** The default location from where we download biopam. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">val</span>&nbsp;default_biopam_url&nbsp;:&nbsp;string<br>
+<br>
+<span class="keyword">type</span>&nbsp;tool_type&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** The export variable that points to witness. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span><br>
+]<br>
+</code><table><tr><td></td><td><span class="comment">(** The type of tool that we are installing via opam.
+<p>
+
+   This guides installation and determines:
+    1. where we look for the <a href=".html#TYPEELT.witness">witness</a> in
+       <code class="code">opam_install_path</code>/<code class="code">package</code> or <code class="code">opam_install_path</code>/bin.
+    2. Whether we export $PATH (Application) or $LIBVAR (Library).*)</span></td></tr></table><code class="code"><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** A description of what we'd like Biopam to install.*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">type</span>&nbsp;install_target&nbsp;=&nbsp;<span class="keyword">private</span>&nbsp;{<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** The package handle the Biopam package provides. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;definition:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** What are we installing? See <code class="code">tool_type</code>. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;tool_type&nbsp;:&nbsp;tool_type;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Name of the package: `opam install <code class="code">package</code>` *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;package&nbsp;:&nbsp;string;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** File that is passed to test determine success and what is exported. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;witness&nbsp;:&nbsp;string;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Test to determine success of the install.
+      Defaults to `test -e witness`. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;test&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(host:<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.t)&nbsp;option;<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Install&nbsp;dependencies.&nbsp;*)</span><br>
+&nbsp;&nbsp;edges&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list;<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Transform&nbsp;the&nbsp;install&nbsp;and&nbsp;init&nbsp;programs,&nbsp;e.g.&nbsp;it&nbsp;needs&nbsp;to&nbsp;be&nbsp;run&nbsp;in&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specific&nbsp;environment.&nbsp;Defaults&nbsp;to&nbsp;a&nbsp;“no-op”.&nbsp;*)</span><br>
+&nbsp;&nbsp;init_environment&nbsp;:&nbsp;install_path:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Whether this package requires Conda packages. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;requires_conda:&nbsp;bool;<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Which opam-repository the tool should come from. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;repository:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;];<br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Which compiler should be used to create the tool's own installation
+      opam-switch.  *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;compiler:&nbsp;string&nbsp;option;<br>
+}<br>
+<br>
+<span class="keyword">val</span>&nbsp;install_target:<br>
+&nbsp;&nbsp;?tool_type:tool_type&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?test:(host:&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?edges:&nbsp;<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?init_environment:(install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?requires_conda:bool&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;witness:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?package:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?repository:[&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?compiler:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;install_target<br>
+</code><table><tr><td></td><td><span class="comment">(** Create <code class="code">install_target</code> values.
+<p>
+<ul>
+<li><code class="code">tool_type</code>: the kind of tool being installed.
+    See <code class="code">tool_type</code>.
+    Default: <code class="code"><span class="keywordsign">`</span><span class="constructor">Application</span></code>.</li>
+<li><code class="code">test</code>: test to determine success of the install.
+    Default: <code class="code"><span class="string">"test -e &lt;witness&gt;"</span></code>.</li>
+<li><code class="code">edges</code>: dependencies to install first.</li>
+<li><code class="code">init_environment</code>: transform the install and init programs, e.g. it
+    needs to be run in a specific environment. Defaults to a “no-op”.</li>
+<li><code class="code">witness</code>: name of the file (base-name) that is tested
+    to determine the success of an installation (usually the
+    binary for <code class="code"><span class="keywordsign">`</span><span class="constructor">Application</span></code>s, or the JAR for Java libraries, etc.).</li>
+<li><code class="code">requires_conda</code>: whether this package requires Python packages installed
+    with <code class="code"><span class="constructor">Conda</span></code>.</li>
+<li><code class="code">package</code>: the package name in the opam sense i.e.
+    <code class="code"><span class="string">"opam install &lt;package-name&gt;"</span></code> (the default is to
+    construct the package name from the <code class="code"><span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t</code>).</li>
+<li><code class="code">repository</code>:  Which opam-repository the tool should come from:
+    <ul>
+<li><code class="code"><span class="keywordsign">`</span><span class="constructor">Biopam</span></code>: the Biopam project's repository (<b>default</b>).</li>
+<li><code class="code"><span class="keywordsign">`</span><span class="constructor">Opam</span></code>: the default Opam repository.</li>
+<li><code class="code"><span class="keywordsign">`</span><span class="constructor">Custom</span> url</code>: use custom URL.</li>
+</ul>
+</li>
+<li><code class="code">compiler</code>: Which compiler should be used to create the tool's own
+    installation opam-switch (the default is <code class="code"><span class="constructor">None</span></code> corresponding to <code class="code"><span class="string">"0.0.0"</span></code>
+    for <code class="code"><span class="keywordsign">`</span><span class="constructor">Biopam</span></code> and <code class="code"><span class="string">"4.02.3"</span></code> for <code class="code"><span class="keywordsign">`</span><span class="constructor">Opam</span></code> or <code class="code"><span class="keywordsign">`</span><span class="constructor">Custom</span> _</code>)</li>
+<li>anonymous argument: the tool that the installation-target provides.
+</li>
+</ul>
+*)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">val</span>&nbsp;provide&nbsp;:<br>
+&nbsp;&nbsp;run_program:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;host:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;install_target&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.t<br>
+</code><table><tr><td></td><td><span class="comment">(** Provide the specified (via install_target) tool.*)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">val</span>&nbsp;default&nbsp;:&nbsp;<br>
+&nbsp;&nbsp;run_program:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;host:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;install_path:string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.t<br>
+</code><table><tr><td></td><td><span class="comment">(** A set of default tools that have been specified in this module.*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">end</span>&nbsp;<br>
+=&nbsp;<span class="keyword">struct</span><br>
+</code><table><tr><td></td><td><span class="comment">(**
+Provide tools via Biopam: https://github.com/solvuu/biopam
+*)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi_run_environment</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="comment">(*&nbsp;What&nbsp;are&nbsp;we&nbsp;installing&nbsp;via&nbsp;opam.&nbsp;This&nbsp;determines&nbsp;where&nbsp;we&nbsp;look&nbsp;for&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;witness;&nbsp;in&nbsp;[opam_install_path]/package&nbsp;or&nbsp;[opam_install_path]/bin.&nbsp;*)</span><br>
+<span class="keyword">type</span>&nbsp;tool_type&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span><br>
+]<br>
+<br>
+<span class="keyword">type</span>&nbsp;install_target&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;definition:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.t;<br>
+&nbsp;&nbsp;tool_type&nbsp;:&nbsp;tool_type;<br>
+&nbsp;&nbsp;package&nbsp;:&nbsp;string;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** What do we call 'install opam ' with *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;witness&nbsp;:&nbsp;string;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** File that must exist after install, ex:<ul>
+<li>bowtie exec</li>
+<li>picard.jar </li>
+</ul>
+*)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;test&nbsp;:&nbsp;(host:<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.t)&nbsp;option;<br>
+&nbsp;&nbsp;edges&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.workflow_edge&nbsp;list;<br>
+<br>
+&nbsp;&nbsp;init_environment&nbsp;:&nbsp;install_path:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.t;<br>
+&nbsp;&nbsp;requires_conda:&nbsp;bool;<br>
+&nbsp;&nbsp;repository:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;<span class="keyword">of</span>&nbsp;string&nbsp;];<br>
+&nbsp;&nbsp;compiler:&nbsp;string&nbsp;option;<br>
+}<br>
+<span class="keyword">let</span>&nbsp;install_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(tool_type&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?test<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(edges&nbsp;=&nbsp;[])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(init_environment&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~install_path&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(sh&nbsp;<span class="string">"echo&nbsp;'Default&nbsp;Init'"</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(requires_conda&nbsp;=&nbsp;<span class="keyword">false</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~witness<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?package<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?(repository&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?compiler<br>
+&nbsp;&nbsp;&nbsp;&nbsp;definition&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;package&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;package&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;p<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.to_opam_name&nbsp;definition&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;{definition;&nbsp;tool_type;&nbsp;package;&nbsp;witness;&nbsp;test;&nbsp;edges;<br>
+&nbsp;&nbsp;&nbsp;init_environment;&nbsp;requires_conda;&nbsp;repository;&nbsp;compiler}<br>
+<br>
+<span class="keyword">let</span>&nbsp;default_test&nbsp;~host&nbsp;path&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.shell&nbsp;~host&nbsp;(sprintf&nbsp;<span class="string">"test&nbsp;-e&nbsp;%s"</span>&nbsp;path)<br>
+<br>
+<span class="keyword">let</span>&nbsp;default_opam_url&nbsp;=<br>
+&nbsp;&nbsp;<span class="string">"https://github.com/ocaml/opam/releases/download/1.2.2/opam-1.2.2-x86_64-Linux"</span><br>
+<br>
+<span class="comment">(*&nbsp;Hide&nbsp;the&nbsp;messy&nbsp;logic&nbsp;of&nbsp;calling&nbsp;opam&nbsp;in&nbsp;here.&nbsp;This&nbsp;should&nbsp;not&nbsp;be&nbsp;exported<br>
+&nbsp;&nbsp;&nbsp;and&nbsp;use&nbsp;the&nbsp;Biopam&nbsp;functions&nbsp;directly.*)</span><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Opam</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dir&nbsp;~install_path&nbsp;=&nbsp;install_path&nbsp;//&nbsp;<span class="string">"opam_dir"</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bin&nbsp;~install_path&nbsp;=&nbsp;dir&nbsp;~install_path&nbsp;//&nbsp;<span class="string">"opam"</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;root&nbsp;~install_path&nbsp;name&nbsp;=&nbsp;dir&nbsp;~install_path&nbsp;//&nbsp;<span class="string">"opam-root-"</span>&nbsp;^&nbsp;name<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Instead&nbsp;of&nbsp;just&nbsp;making&nbsp;sure&nbsp;that&nbsp;this&nbsp;file&nbsp;exists?&nbsp;Wouldn't&nbsp;it&nbsp;be&nbsp;better<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;make&nbsp;sure&nbsp;that&nbsp;a&nbsp;command&nbsp;from&nbsp;this&nbsp;program&nbsp;gives&nbsp;the&nbsp;right&nbsp;output?<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ie.&nbsp;$&nbsp;opam&nbsp;--version&nbsp;=&nbsp;1.2.2&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;target&nbsp;~host&nbsp;~install_path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.single_file&nbsp;~host&nbsp;(bin&nbsp;~install_path)<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;A&nbsp;workflow&nbsp;to&nbsp;ensure&nbsp;that&nbsp;opam&nbsp;is&nbsp;installed.&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;installed&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)&nbsp;~host&nbsp;~install_path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;=&nbsp;default_opam_url&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;opam_exec&nbsp;&nbsp;&nbsp;=&nbsp;target&nbsp;~host&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_dir&nbsp;=&nbsp;dir&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;opam_exec<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Install&nbsp;opam"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~requirements:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;[<span class="string">"opam-installation"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exec&nbsp;[<span class="string">"mkdir"</span>;&nbsp;<span class="string">"-p"</span>;&nbsp;install_dir]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;exec&nbsp;[<span class="string">"cd"</span>;&nbsp;install_dir]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Workflow_utilities</span>.<span class="constructor">Download</span>.wget_program&nbsp;~output_filename:<span class="string">"opam"</span>&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"chmod&nbsp;+x&nbsp;%s"</span>&nbsp;opam_exec<span class="keywordsign">#</span>path))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on_failure_activate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Workflow_utilities</span>.<span class="constructor">Remove</span>.path_on_host&nbsp;~host&nbsp;install_dir);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;kcom&nbsp;~root_name&nbsp;~install_path&nbsp;k&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bin&nbsp;=&nbsp;bin&nbsp;~install_path&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;root&nbsp;=&nbsp;root&nbsp;~install_path&nbsp;root_name&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;PATH:&nbsp;we&nbsp;add&nbsp;`opam`&nbsp;so&nbsp;that&nbsp;installation&nbsp;scripts&nbsp;can&nbsp;use&nbsp;the&nbsp;tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;OCAMLRUNPARAM:&nbsp;we&nbsp;want&nbsp;OCaml&nbsp;backtraces<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;OPAMLOCKRETRIES:&nbsp;installations&nbsp;should&nbsp;concurrently&nbsp;but&nbsp;in&nbsp;case&nbsp;of&nbsp;we<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bump&nbsp;the&nbsp;lock&nbsp;to&nbsp;wait&nbsp;instead&nbsp;of&nbsp;fail<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;OPAMBASEPACKAGES:&nbsp;we&nbsp;make&nbsp;sure&nbsp;opam&nbsp;does&nbsp;not&nbsp;install&nbsp;any&nbsp;package&nbsp;by<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;OPAMYES:&nbsp;answer&nbsp;`y`&nbsp;to&nbsp;all&nbsp;questions&nbsp;(i.e.&nbsp;batch&nbsp;mode)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;OPAMROOT:&nbsp;our&nbsp;per-package&nbsp;replacement&nbsp;for&nbsp;`~/.opam/`<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*)</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ksprintf&nbsp;k<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"PATH=%s:$PATH&nbsp;OCAMLRUNPARAM=b&nbsp;OPAMLOCKRETRIES=20000&nbsp;OPAMBASEPACKAGES=&nbsp;OPAMYES=true&nbsp;OPAMROOT=%s&nbsp;%s&nbsp;"</span>&nbsp;^^&nbsp;fmt)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Filename</span>.dirname&nbsp;bin)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;root<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bin<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;program_sh&nbsp;?(never_fail&nbsp;=&nbsp;<span class="keyword">false</span>)&nbsp;~root_name&nbsp;~install_path&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;kcom&nbsp;~root_name&nbsp;~install_path&nbsp;(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.sh<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;never_fail<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;s&nbsp;^&nbsp;<span class="string">"&nbsp;|&nbsp;echo&nbsp;'Never&nbsp;fails'"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;s))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;command_shell&nbsp;~root_name&nbsp;~host&nbsp;~install_path&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;kcom&nbsp;~root_name&nbsp;~install_path&nbsp;(<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.shell&nbsp;~host)&nbsp;fmt<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tool_type_to_variable&nbsp;=&nbsp;<span class="keyword">function</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;_&nbsp;&nbsp;&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"lib"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"bin"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;root_of_package&nbsp;p&nbsp;=&nbsp;<span class="string">"root-"</span>&nbsp;^&nbsp;p<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Answer&nbsp;Opam&nbsp;'which'&nbsp;questions&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;which&nbsp;~install_path&nbsp;{package;&nbsp;witness;&nbsp;tool_type;&nbsp;_}&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;v&nbsp;=&nbsp;tool_type_to_variable&nbsp;tool_type&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;s&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;package_name&nbsp;=&nbsp;<span class="constructor">String</span>.take_while&nbsp;package&nbsp;~f:((&lt;&gt;)&nbsp;<span class="string">'.'</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kcom&nbsp;~root_name:(root_of_package&nbsp;package)&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">fun</span>&nbsp;x&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;x)&nbsp;<span class="string">"config&nbsp;var&nbsp;%s:%s"</span>&nbsp;package_name&nbsp;v&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(sprintf&nbsp;<span class="string">"$(%s)"</span>&nbsp;s)&nbsp;//&nbsp;witness<br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;default_biopam_url&nbsp;=&nbsp;<span class="string">"https://github.com/solvuu/biopam.git"</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;install_tool&nbsp;~(run_program&nbsp;:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t)&nbsp;~host&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;({package;&nbsp;test;&nbsp;edges;&nbsp;init_environment;&nbsp;repository;&nbsp;_&nbsp;}&nbsp;<span class="keyword">as</span>&nbsp;it)&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run_prog&nbsp;name&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_program<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~requirements:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Internet_access</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Self_identification</span>&nbsp;[<span class="string">"opam"</span>;&nbsp;name;&nbsp;package];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;root_name&nbsp;=&nbsp;<span class="constructor">Opam</span>.root_of_package&nbsp;package&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;default_compiler,&nbsp;repo_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;repository&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Biopam</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"0.0.0"</span>,&nbsp;default_biopam_url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Opam</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"4.02.3"</span>,&nbsp;<span class="string">"https://opam.ocaml.org"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Custom</span>&nbsp;c&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"4.02.3"</span>,&nbsp;c<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;compiler&nbsp;=&nbsp;<span class="constructor">Option</span>.value&nbsp;it.compiler&nbsp;~default:default_compiler&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;<span class="constructor">KEDSL</span>.depends_on&nbsp;(<span class="constructor">Opam</span>.installed&nbsp;~run_program&nbsp;~host&nbsp;~install_path)]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;it.requires_conda<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;(<span class="constructor">Conda</span>.configured&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;())&nbsp;::&nbsp;edges<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;edges&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;<span class="string">"Installing&nbsp;"</span>&nbsp;^&nbsp;package&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;make&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;run_prog&nbsp;<span class="string">"install"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;it.requires_conda<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="constructor">Conda</span>.init_biokepi_env&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;'Does&nbsp;not&nbsp;need&nbsp;Conda'"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"rm&nbsp;-fr&nbsp;%s"</span>&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;root_name)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Opam</span>.program_sh<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~install_path&nbsp;~root_name&nbsp;<span class="string">"init&nbsp;--comp=%s&nbsp;%s"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compiler&nbsp;(<span class="constructor">Filename</span>.quote&nbsp;repo_url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Opam</span>.program_sh&nbsp;~root_name&nbsp;~install_path&nbsp;<span class="string">"install&nbsp;%s"</span>&nbsp;package<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;shell_which&nbsp;=&nbsp;<span class="constructor">Opam</span>.which&nbsp;~install_path&nbsp;it&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;test&nbsp;=&nbsp;(<span class="constructor">Option</span>.value&nbsp;test&nbsp;~default:default_test)&nbsp;~host&nbsp;shell_which&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cond&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">object</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;is_done&nbsp;=&nbsp;<span class="constructor">Some</span>&nbsp;(<span class="keywordsign">`</span><span class="constructor">Command_returns</span>&nbsp;(test,&nbsp;0))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">method</span>&nbsp;shell_which&nbsp;=&nbsp;shell_which<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;cond&nbsp;~name&nbsp;~make&nbsp;~edges<br>
+<br>
+<span class="keyword">let</span>&nbsp;provide&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;it&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;install_workflow&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;install_tool&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;it&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;export_var&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;it.tool_type&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Application</span>&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">None</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;v&nbsp;&nbsp;&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;path&nbsp;=&nbsp;install_workflow<span class="keywordsign">#</span>product<span class="keywordsign">#</span>shell_which&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Some</span>&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(shf&nbsp;<span class="string">"export&nbsp;%s=\"%s${%s:+:}${%s}\""</span>&nbsp;v&nbsp;path&nbsp;v&nbsp;v)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.create&nbsp;it.definition<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~ensure:install_workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init:<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="keyword">if</span>&nbsp;it.requires_conda<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span>&nbsp;<span class="constructor">Conda</span>.init_biokepi_env&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span>&nbsp;sh&nbsp;<span class="string">"echo&nbsp;'Does&nbsp;not&nbsp;need&nbsp;Conda'"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;it.init_environment&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Opam</span>.kcom&nbsp;~root_name:(<span class="constructor">Opam</span>.root_of_package&nbsp;it.package)&nbsp;~install_path<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(shf&nbsp;<span class="string">"eval&nbsp;$(%s)"</span>)&nbsp;<span class="string">"config&nbsp;env"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;<span class="constructor">Option</span>.value&nbsp;export_var&nbsp;~default:(sh&nbsp;<span class="string">"echo&nbsp;'No&nbsp;export&nbsp;var'"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+<span class="keyword">let</span>&nbsp;test_version&nbsp;~host&nbsp;path&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">KEDSL</span>.<span class="constructor">Command</span>.shell&nbsp;~host&nbsp;(sprintf&nbsp;<span class="string">"%s&nbsp;--version"</span>&nbsp;path)<br>
+<br>
+<span class="keyword">let</span>&nbsp;picard&nbsp;=<br>
+&nbsp;&nbsp;install_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~tool_type:(<span class="keywordsign">`</span><span class="constructor">Library</span>&nbsp;<span class="string">"PICARD_JAR"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~witness:<span class="string">"picard.jar"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.create&nbsp;<span class="string">"picard"</span>&nbsp;~version:<span class="string">"1.128"</span>)<br>
+<br>
+<span class="keyword">let</span>&nbsp;bowtie&nbsp;=<br>
+&nbsp;&nbsp;install_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~witness:<span class="string">"bowtie"</span>&nbsp;~test:test_version<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.bowtie<br>
+<br>
+<span class="keyword">let</span>&nbsp;seq2hla&nbsp;=<br>
+&nbsp;&nbsp;install_target<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~witness:<span class="string">"seq2HLA"</span>&nbsp;~requires_conda:<span class="keyword">true</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;~package:<span class="string">"seq2HLA.2.2"</span>&nbsp;<span class="comment">(*&nbsp;we&nbsp;need&nbsp;to&nbsp;uppercase&nbsp;HLA&nbsp;for&nbsp;opam&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.seq2hla<br>
+<br>
+<span class="keyword">let</span>&nbsp;optitype&nbsp;=<br>
+&nbsp;&nbsp;install_target&nbsp;~witness:<span class="string">"OptiTypePipeline"</span>&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>.optitype<br>
+&nbsp;&nbsp;&nbsp;&nbsp;~requires_conda:<span class="keyword">true</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;~init_environment:<span class="constructor">KEDSL</span>.<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~install_path&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;name&nbsp;=&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(<span class="constructor">Default</span>.optitype.<span class="constructor">Definition</span>.name)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shf&nbsp;<span class="string">"export&nbsp;OPAMROOT=%s"</span>&nbsp;(<span class="constructor">Opam</span>.root_of_package&nbsp;name&nbsp;|&gt;&nbsp;<span class="constructor">Opam</span>.root&nbsp;~install_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;shf&nbsp;<span class="string">"export&nbsp;OPTITYPE_DATA=$(%s&nbsp;config&nbsp;var&nbsp;lib)/optitype"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Opam</span>.bin&nbsp;~install_path)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+<span class="keyword">let</span>&nbsp;default&nbsp;:<br>
+&nbsp;&nbsp;run_program:&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Make_fun</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;host:&nbsp;<span class="constructor">Common</span>.<span class="constructor">KEDSL</span>.<span class="constructor">Host</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;install_path:&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;_&nbsp;=&nbsp;<span class="keyword">fun</span>&nbsp;~run_program&nbsp;~host&nbsp;~install_path&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.of_list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.map&nbsp;~f:(provide&nbsp;~run_program&nbsp;~host&nbsp;~install_path)&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;picard;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bowtie;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;seq2hla;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;optitype;<br>
+&nbsp;&nbsp;])<br>
+<br>
+<span class="keyword">end</span></code></body></html>

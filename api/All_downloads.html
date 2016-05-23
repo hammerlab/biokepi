@@ -1,0 +1,47 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_pipeline_edsl.html">
+<link rel="next" href="Main.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : All_downloads</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_pipeline_edsl.html" title="Biokepi_pipeline_edsl">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;<a class="post" href="Main.html" title="Main">Next</a>
+</div>
+<h1>Module <a href="type_All_downloads.html">All_downloads</a> (<a href="code_All_downloads.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> All_downloads: <code class="code"><span class="keyword">sig</span></code> <a href="All_downloads.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="All_downloads.Ref_genome.html">Ref_genome</a>: <code class="type"><a href="Biokepi_run_environment.Reference_genome.html">Biokepi_run_environment.Reference_genome</a></code></pre>
+<pre><span id="VALfailwithf"><span class="keyword">val</span> <a href="code_VALAll_downloads.failwithf.html">failwithf</a></span> : <code class="type">('a, unit, string, 'b) Pervasives.format4 -> 'a</code></pre>
+<pre><span id="VALget_env"><span class="keyword">val</span> <a href="code_VALAll_downloads.get_env.html">get_env</a></span> : <code class="type">string -> string -> string</code></pre>
+<pre><span id="VAL(//)"><span class="keyword">val</span> <a href="code_VALAll_downloads.(_slash__slash_).html">(//)</a></span> : <code class="type">string -> string -> string</code></pre>
+<pre><span id="VALhost"><span class="keyword">val</span> <a href="code_VALAll_downloads.host.html">host</a></span> : <code class="type">Ketrew.EDSL.Host.t</code></pre>
+<pre><span id="VALdestination_path"><span class="keyword">val</span> <a href="code_VALAll_downloads.destination_path.html">destination_path</a></span> : <code class="type">string</code></pre>
+<pre><span id="VALrun_program"><span class="keyword">val</span> <a href="code_VALAll_downloads.run_program.html">run_program</a></span> : <code class="type">?name:'a -><br>       ?requirements:'b -> Ketrew.EDSL.Program.t -> Ketrew.EDSL.Build_process.t</code></pre>
+<pre><span id="VALbiocaml_def"><span class="keyword">val</span> <a href="code_VALAll_downloads.biocaml_def.html">biocaml_def</a></span> : <code class="type">Biokepi.Machine.Tool.Definition.t</code></pre>
+<pre><span id="VALbiocaml"><span class="keyword">val</span> <a href="code_VALAll_downloads.biocaml.html">biocaml</a></span> : <code class="type">Biokepi.Setup.Biopam.install_target</code></pre>
+<pre><span id="VALledit_def"><span class="keyword">val</span> <a href="code_VALAll_downloads.ledit_def.html">ledit_def</a></span> : <code class="type">Biokepi.Machine.Tool.Definition.t</code></pre>
+<pre><span id="VALledit"><span class="keyword">val</span> <a href="code_VALAll_downloads.ledit.html">ledit</a></span> : <code class="type">Biokepi.Setup.Biopam.install_target</code></pre>
+<pre><span id="VALtoolkit"><span class="keyword">val</span> <a href="code_VALAll_downloads.toolkit.html">toolkit</a></span> : <code class="type">Biokepi.Machine.Tool.Kit.t</code></pre>
+<pre><span id="VALref_genomes_workflow"><span class="keyword">val</span> <a href="code_VALAll_downloads.ref_genomes_workflow.html">ref_genomes_workflow</a></span> : <code class="type">< is_done : Ketrew.EDSL.Condition.t option > Ketrew.EDSL.product<br>       Ketrew.EDSL.product Ketrew.EDSL.product Ketrew.EDSL.workflow_node</code></pre>
+<pre><span id="VALtools_workflow"><span class="keyword">val</span> <a href="code_VALAll_downloads.tools_workflow.html">tools_workflow</a></span> : <code class="type">< is_done : Ketrew.EDSL.Condition.t option > Ketrew.EDSL.product<br>       Ketrew.EDSL.product Ketrew.EDSL.product Ketrew.EDSL.product<br>       Ketrew.EDSL.workflow_node</code></pre>
+<pre><span id="VALworkflow"><span class="keyword">val</span> <a href="code_VALAll_downloads.workflow.html">workflow</a></span> : <code class="type">[< `Ref_genomes | `Tools ] -><br>       < is_done : Ketrew.EDSL.Condition.t option > Ketrew.EDSL.product<br>       Ketrew.EDSL.product Ketrew.EDSL.product Ketrew.EDSL.workflow_node</code></pre></body></html>

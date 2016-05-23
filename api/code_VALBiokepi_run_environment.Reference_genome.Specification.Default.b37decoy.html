@@ -1,0 +1,31 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome.Specification.Default.b37decoy</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;b37decoy&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.b37decoy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;b37_dbsnp_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;b37_exome_gtf_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cosmic:<span class="constructor">Location</span>.(url&nbsp;b37_cosmic_url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cdna:<span class="constructor">Location</span>.(url&nbsp;b37_cdna_url&nbsp;|&gt;&nbsp;gunzip)</code></body></html>

@@ -1,0 +1,82 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : All_downloads.tools_workflow</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;tools_workflow&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tools_to_test&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Default</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;which_size_and&nbsp;bin&nbsp;&nbsp;l&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"which&nbsp;"</span>&nbsp;^&nbsp;bin)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;(<span class="string">"ls&nbsp;-l&nbsp;$(which&nbsp;"</span>&nbsp;^&nbsp;bin&nbsp;^&nbsp;<span class="string">")"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;(<span class="string">"file&nbsp;$(which&nbsp;"</span>&nbsp;^&nbsp;bin&nbsp;^&nbsp;<span class="string">")"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;::&nbsp;l&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bwa,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"bwa"</span>&nbsp;[<span class="string">"bwa&nbsp;||&nbsp;echo&nbsp;Done"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stringtie,&nbsp;which_size_and&nbsp;<span class="string">"stringtie"</span>&nbsp;[&nbsp;<span class="string">"stringtie&nbsp;--help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bedtools,&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"bedtools"</span>&nbsp;[&nbsp;<span class="string">"bedtools&nbsp;--help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vcftools,&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"vcftools"</span>&nbsp;[&nbsp;<span class="string">"vcftools&nbsp;--help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO:&nbsp;Mosaik's&nbsp;installation&nbsp;is&nbsp;still&nbsp;broken<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mosaik,&nbsp;&nbsp;&nbsp;&nbsp;which_size_and&nbsp;"MosaikAligner"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;["MosaikAligner&nbsp;--help";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ls&nbsp;-l&nbsp;\"$MOSAIK_PE_ANN\"";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ls&nbsp;-l&nbsp;\"$MOSAIK_SE_ANN\"";&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;star,&nbsp;&nbsp;&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"STAR"</span>&nbsp;[];&nbsp;<span class="comment">(*&nbsp;STAR&nbsp;does&nbsp;not&nbsp;work&nbsp;on&nbsp;OSX,&nbsp;can't<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;find&nbsp;a&nbsp;command&nbsp;that&nbsp;exits&nbsp;with&nbsp;0*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hisat,&nbsp;&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"hisat"</span>&nbsp;[<span class="string">"hisat&nbsp;--help"</span>];&nbsp;<span class="comment">(*&nbsp;hisat&nbsp;does&nbsp;not&nbsp;work&nbsp;on&nbsp;OSX*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hisat2,&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"hisat2"</span>&nbsp;[<span class="string">"hisat2&nbsp;--help"</span>];&nbsp;<span class="comment">(*&nbsp;hisat&nbsp;does&nbsp;not&nbsp;work&nbsp;on&nbsp;OSX*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kallisto,&nbsp;which_size_and&nbsp;<span class="string">"kallisto"</span>&nbsp;[<span class="string">"kallisto&nbsp;version"</span>];&nbsp;<span class="comment">(*&nbsp;kallisto&nbsp;does&nbsp;not&nbsp;work&nbsp;on&nbsp;OSX*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;samtools,&nbsp;which_size_and&nbsp;<span class="string">"samtools"</span>&nbsp;[<span class="string">"samtools&nbsp;--help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;samtools,&nbsp;which_size_and&nbsp;<span class="string">"bgzip"</span>&nbsp;[<span class="string">"bgzip&nbsp;--help&nbsp;||&nbsp;echo&nbsp;OK"</span>];&nbsp;<span class="comment">(*&nbsp;tool&nbsp;returns&nbsp;1&nbsp;on&nbsp;--help&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;samtools,&nbsp;which_size_and&nbsp;<span class="string">"tabix"</span>&nbsp;[<span class="string">"tabix&nbsp;--help&nbsp;||&nbsp;echo&nbsp;OK"</span>];&nbsp;<span class="comment">(*&nbsp;idem.&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;varscan,&nbsp;[<span class="string">"ls&nbsp;-l&nbsp;\"$VARSCAN_JAR\""</span>;&nbsp;<span class="string">"java&nbsp;-jar&nbsp;$VARSCAN_JAR&nbsp;-help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;picard,&nbsp;[<span class="string">"ls&nbsp;-l&nbsp;\"$PICARD_JAR\""</span>];&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"java&nbsp;-jar&nbsp;$PICARD_JAR&nbsp;--help"&nbsp;gave&nbsp;the&nbsp;epic:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"'--help'&nbsp;is&nbsp;not&nbsp;a&nbsp;valid&nbsp;command.&nbsp;See&nbsp;PicardCommandLine&nbsp;--help&nbsp;for&nbsp;more&nbsp;information"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;strelka,&nbsp;[<span class="string">"ls&nbsp;-l&nbsp;\"$STRELKA_BIN\""</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"perl&nbsp;-c&nbsp;$STRELKA_BIN/configureStrelkaWorkflow.pl"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;virmid,&nbsp;[<span class="string">"ls&nbsp;-l&nbsp;\"$VIRMID_JAR\""</span>;&nbsp;<span class="string">"java&nbsp;-jar&nbsp;$VIRMID_JAR&nbsp;-help"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;muse,&nbsp;which_size_and&nbsp;<span class="string">"$muse_bin"</span>&nbsp;[<span class="string">"$muse_bin&nbsp;call&nbsp;-h"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;muse&nbsp;call&nbsp;-h&nbsp;displays&nbsp;an&nbsp;error&nbsp;but&nbsp;still&nbsp;returns&nbsp;0&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;somaticsniper,&nbsp;which_size_and&nbsp;<span class="string">"somaticsniper"</span>&nbsp;[<span class="string">"somaticsniper&nbsp;-v"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;seq2hla,&nbsp;which_size_and&nbsp;<span class="string">"seq2HLA"</span>&nbsp;[<span class="string">"seq2HLA&nbsp;--version"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;optitype,&nbsp;which_size_and&nbsp;<span class="string">"OptiTypePipeline"</span>&nbsp;[<span class="string">"OptiTypePipeline&nbsp;-h"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ledit_def,&nbsp;&nbsp;which_size_and&nbsp;<span class="string">"ledit"</span>&nbsp;[<span class="string">"ledit&nbsp;-v"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;biocaml_def,&nbsp;[<span class="string">"ocamlfind&nbsp;list&nbsp;|&nbsp;grep&nbsp;biocaml"</span>];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">open</span>&nbsp;<span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;edges&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;tools_to_test&nbsp;~f:(<span class="keyword">fun</span>&nbsp;(def,&nbsp;cmds)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tool&nbsp;=&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Kit</span>.get_exn&nbsp;toolkit&nbsp;def&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workflow_node&nbsp;without_product<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:(sprintf&nbsp;<span class="string">"Test&nbsp;tool&nbsp;%s:&nbsp;%S, …"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.<span class="constructor">Definition</span>.to_string&nbsp;def)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.hd_exn&nbsp;cmds))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~make:(run_program&nbsp;<span class="constructor">Program</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.init&nbsp;tool<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">&amp;&amp;</span>&nbsp;chain&nbsp;(<span class="constructor">List</span>.map&nbsp;cmds&nbsp;~f:sh)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~edges:[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depends_on&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.<span class="constructor">Tool</span>.(ensure&nbsp;tool)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;depends_on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;workflow_node&nbsp;without_product&nbsp;~name:<span class="string">"All&nbsp;tool&nbsp;installations"</span>&nbsp;~edges</code></body></html>

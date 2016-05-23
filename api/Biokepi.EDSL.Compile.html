@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Biokepi.EDSL.Transform.html">
+<link rel="Up" href="Biokepi.EDSL.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi.EDSL.Compile</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Biokepi.EDSL.html" title="Biokepi.EDSL">Up</a>
+&nbsp;<a class="post" href="Biokepi.EDSL.Transform.html" title="Biokepi.EDSL.Transform">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi.EDSL.Compile.html">Biokepi.EDSL.Compile</a> (<a href="code_Biokepi.EDSL.Compile.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Compile: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.EDSL.Compile.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Various compilers to “interpret” the EDSL.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Compile.To_display.html">To_display</a>: <code class="type"><a href="Biokepi_pipeline_edsl.To_display.html">Biokepi_pipeline_edsl.To_display</a></code></pre><div class="info">
+Compiler to <code class="code"><span class="constructor">SmartPrint</span>.t</code> displayable pseudo code,
+        see the <a href="https://github.com/clarus/smart-print">smart-print</a> library.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Compile.To_workflow.html">To_workflow</a>: <code class="type"><a href="Biokepi_pipeline_edsl.To_workflow.html">Biokepi_pipeline_edsl.To_workflow</a></code></pre><div class="info">
+Compiler to Ketrew workflows using the <a href="Biokepi.Tools.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Tools</span></code></a> implementations.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Compile.To_json.html">To_json</a>: <code class="type"><a href="Biokepi_pipeline_edsl.To_json.html">Biokepi_pipeline_edsl.To_json</a></code></pre><div class="info">
+Compiler to JSON (<code class="code"><span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.t</code>).
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Compile.To_dot.html">To_dot</a>: <code class="type"><a href="Biokepi_pipeline_edsl.To_dot.html">Biokepi_pipeline_edsl.To_dot</a></code></pre><div class="info">
+Compiler to 
+        <a href="https://en.wikipedia.org/wiki/DOT_(graph_description_language)">DOT</a>
+        graph descriptions.
+</div>
+</body></html>

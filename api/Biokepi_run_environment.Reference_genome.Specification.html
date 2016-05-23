@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="Biokepi_run_environment.Reference_genome.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome.Specification</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Biokepi_run_environment.Reference_genome.html" title="Biokepi_run_environment.Reference_genome">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi_run_environment.Reference_genome.Specification.html">Biokepi_run_environment.Reference_genome.Specification</a> (<a href="code_Biokepi_run_environment.Reference_genome.Specification.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Specification: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.Specification.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html">Location</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.Specification.Location.html">..</a> <code class="code"><span class="keyword">end</span></code></pre>
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.name">name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.metadata">metadata</span>&nbsp;: <code class="type">string option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.fasta">fasta</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.dbsnp">dbsnp</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.cosmic">cosmic</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.exome_gtf">exome_gtf</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.cdna">cdna</span>&nbsp;: <code class="type"><a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> option</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.major_contigs">major_contigs</span>&nbsp;: <code class="type">string list option</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="VALcreate"><span class="keyword">val</span> <a href="code_VALBiokepi_run_environment.Reference_genome.Specification.create.html">create</a></span> : <code class="type">?metadata:string -><br>       fasta:<a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> -><br>       ?dbsnp:<a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> -><br>       ?cosmic:<a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> -><br>       ?exome_gtf:<a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> -><br>       ?cdna:<a href="Biokepi_run_environment.Reference_genome.Specification.Location.html#TYPEt">Location.t</a> -><br>       ?major_contigs:string list -><br>       string -> <a href="Biokepi_run_environment.Reference_genome.Specification.html#TYPEt">t</a></code></pre>
+<pre><span class="keyword">module</span> <a href="Biokepi_run_environment.Reference_genome.Specification.Default.html">Default</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_run_environment.Reference_genome.Specification.Default.html">..</a> <code class="code"><span class="keyword">end</span></code></pre></body></html>

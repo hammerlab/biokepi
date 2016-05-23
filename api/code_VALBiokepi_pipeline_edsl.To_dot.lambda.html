@@ -1,0 +1,38 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_dot.lambda</title>
+</head>
+<body>
+<code class="code"><span class="keyword">let</span>&nbsp;lambda&nbsp;f&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">fun</span>&nbsp;~var_count&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;var_name&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"Var_%d"</span>&nbsp;var_count&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Here&nbsp;is&nbsp;the&nbsp;hack&nbsp;that&nbsp;makes&nbsp;nodes&nbsp;containing&nbsp;variables&nbsp;“semi-unique.”<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[var_repr_fake]&nbsp;is&nbsp;a&nbsp;first&nbsp;version&nbsp;of&nbsp;the&nbsp;variable&nbsp;representation,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;that&nbsp;we&nbsp;feed&nbsp;to&nbsp;the&nbsp;the&nbsp;function&nbsp;[f]&nbsp;a&nbsp;first&nbsp;time.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;resulting&nbsp;tree&nbsp;is&nbsp;used&nbsp;to&nbsp;create&nbsp;the&nbsp;real&nbsp;variable&nbsp;representation,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;first&nbsp;argument&nbsp;[applied_once]&nbsp;will&nbsp;be&nbsp;hashed&nbsp;to&nbsp;create&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unique-for-this-subtree&nbsp;identifier.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Finally&nbsp;get&nbsp;the&nbsp;normal&nbsp;[applied]&nbsp;subtree&nbsp;and&nbsp;feed&nbsp;it&nbsp;to&nbsp;[Tree.lambda].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;var_repr_fake&nbsp;=&nbsp;<span class="keyword">fun</span>&nbsp;~var_count&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.string&nbsp;var_name&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;applied_once&nbsp;=&nbsp;f&nbsp;var_repr_fake&nbsp;~var_count:(var_count&nbsp;+&nbsp;1)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;var_repr&nbsp;=&nbsp;<span class="keyword">fun</span>&nbsp;~var_count&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Tree</span>.variable&nbsp;applied_once&nbsp;var_name&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;applied&nbsp;=&nbsp;f&nbsp;var_repr&nbsp;~var_count:(var_count&nbsp;+&nbsp;1)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Tree</span>.lambda&nbsp;var_name&nbsp;applied</code></body></html>

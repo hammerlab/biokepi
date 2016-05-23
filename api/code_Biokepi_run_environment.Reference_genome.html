@@ -1,0 +1,378 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_run_environment.Reference_genome</title>
+</head>
+<body>
+<code class="code">:&nbsp;<span class="keyword">sig</span><br>
+</code><table><tr><td></td><td><span class="comment">(**************************************************************************)</span></td></tr></table><code class="code"><br>
+<span class="comment">(*&nbsp;&nbsp;Copyright&nbsp;2014,&nbsp;Sebastien&nbsp;Mondet&nbsp;&lt;seb@mondet.org&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;Licensed&nbsp;under&nbsp;the&nbsp;Apache&nbsp;License,&nbsp;Version&nbsp;2.0&nbsp;(the&nbsp;"License");&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;you&nbsp;may&nbsp;not&nbsp;use&nbsp;this&nbsp;file&nbsp;except&nbsp;in&nbsp;compliance&nbsp;with&nbsp;the&nbsp;License.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;You&nbsp;may&nbsp;obtain&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;License&nbsp;at&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://www.apache.org/licenses/LICENSE-2.0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;Unless&nbsp;required&nbsp;by&nbsp;applicable&nbsp;law&nbsp;or&nbsp;agreed&nbsp;to&nbsp;in&nbsp;writing,&nbsp;software&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;distributed&nbsp;under&nbsp;the&nbsp;License&nbsp;is&nbsp;distributed&nbsp;on&nbsp;an&nbsp;"AS&nbsp;IS"&nbsp;BASIS,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;WITHOUT&nbsp;WARRANTIES&nbsp;OR&nbsp;CONDITIONS&nbsp;OF&nbsp;ANY&nbsp;KIND,&nbsp;either&nbsp;express&nbsp;or&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;implied.&nbsp;&nbsp;See&nbsp;the&nbsp;License&nbsp;for&nbsp;the&nbsp;specific&nbsp;language&nbsp;governing&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+<span class="comment">(*&nbsp;&nbsp;permissions&nbsp;and&nbsp;limitations&nbsp;under&nbsp;the&nbsp;License.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+</code><table><tr><td></td><td><span class="comment">(**************************************************************************)</span></td></tr></table><code class="code"><br>
+<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Representation of Reference Genomes *)</span></td></tr></table><code class="code"><br>
+<br>
+<br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">type</span>&nbsp;name&nbsp;=&nbsp;string<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Specification</span>&nbsp;:&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Location</span>&nbsp;:&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Url</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf_concat</span>&nbsp;<span class="keyword">of</span>&nbsp;(string&nbsp;*&nbsp;t)&nbsp;list&nbsp;<span class="comment">(*&nbsp;name&nbsp;×&nbsp;location&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Concat</span>&nbsp;<span class="keyword">of</span>&nbsp;t&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Gunzip</span>&nbsp;<span class="keyword">of</span>&nbsp;t&nbsp;<span class="comment">(*&nbsp;Should&nbsp;this&nbsp;be&nbsp;guessed&nbsp;from&nbsp;the&nbsp;URL&nbsp;extension?&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Untar</span>&nbsp;<span class="keyword">of</span>&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;url&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Url</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;vcf_concat&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf_concat</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;concat&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Concat</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;gunzip&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Gunzip</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;untar&nbsp;:&nbsp;<span class="keywordsign">'</span>a&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&gt;&nbsp;<span class="keywordsign">`</span><span class="constructor">Untar</span>&nbsp;<span class="keyword">of</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;<span class="keyword">private</span>&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;:&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;metadata&nbsp;:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fasta&nbsp;:&nbsp;<span class="constructor">Location</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dbsnp&nbsp;:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cosmic&nbsp;:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exome_gtf&nbsp;:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cdna&nbsp;:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;major_contigs&nbsp;:&nbsp;string&nbsp;list&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;create&nbsp;:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;?metadata:string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;fasta:<span class="constructor">Location</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?dbsnp:<span class="constructor">Location</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?cosmic:<span class="constructor">Location</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?exome_gtf:<span class="constructor">Location</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?cdna:<span class="constructor">Location</span>.t&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;?major_contigs:string&nbsp;list&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;string&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;t<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Default</span>&nbsp;:<br>
+&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Name</span>&nbsp;:&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** The “names” of the default genomes; the values are provided to
+          simplify code and make it less typo-error-prone but the string can be
+          ipused directly (e.g. <code class="code">b37</code> is just <code class="code"><span class="string">"b37"</span></code>). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b37&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b37decoy&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b38&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hg18&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hg19&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mm10&nbsp;:&nbsp;name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b37&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b37decoy&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;b38&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hg18&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;hg19&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;mm10&nbsp;:&nbsp;t<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;<span class="keyword">private</span>&nbsp;{<br>
+&nbsp;&nbsp;specification:&nbsp;<span class="constructor">Specification</span>.t;<br>
+&nbsp;&nbsp;location&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.file_workflow;<br>
+&nbsp;&nbsp;cosmic&nbsp;:&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;dbsnp&nbsp;:&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;gtf&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;cdna&nbsp;:&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+}<br>
+</code><table><tr><td></td><td><span class="comment">(** A reference genome has a name (for display/matching) and a
+     cluster-dependent path.
+     Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.
+*)</span></td></tr></table><code class="code"><br>
+<br>
+<br>
+<span class="keyword">val</span>&nbsp;create&nbsp;:<br>
+&nbsp;&nbsp;?cosmic:<span class="constructor">KEDSL</span>.file_workflow&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?dbsnp:<span class="constructor">KEDSL</span>.file_workflow&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?gtf:<span class="constructor">KEDSL</span>.file_workflow&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;?cdna:<span class="constructor">KEDSL</span>.file_workflow&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="constructor">Specification</span>.t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t<br>
+</code><table><tr><td></td><td><span class="comment">(** Build a <code class="code"><span class="constructor">Reference_genome</span>.t</code> record. *)</span></td></tr></table><code class="code"><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** <h5 id="5_UsualAccessors">Usual Accessors </h5> *)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">val</span>&nbsp;name&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;name<br>
+<span class="keyword">val</span>&nbsp;path&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<span class="keyword">val</span>&nbsp;cosmic_path_exn&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<span class="keyword">val</span>&nbsp;dbsnp_path_exn&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<span class="keyword">val</span>&nbsp;gtf_path_exn&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<span class="keyword">val</span>&nbsp;cdna_path_exn&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;string<br>
+<br>
+<span class="keyword">val</span>&nbsp;major_contigs&nbsp;:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Region</span>.t&nbsp;list<br>
+</code><table><tr><td></td><td><span class="comment">(** <h5 id="5_Targets">Targets</h5> *)</span></td></tr></table><code class="code"><br>
+<br>
+<span class="keyword">val</span>&nbsp;fasta:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+<span class="keyword">val</span>&nbsp;cosmic_exn:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+<span class="keyword">val</span>&nbsp;dbsnp_exn:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+<span class="keyword">val</span>&nbsp;gtf_exn:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+<span class="keyword">val</span>&nbsp;gtf:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option<br>
+<span class="keyword">val</span>&nbsp;cdna_exn:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow<br>
+<span class="keyword">end</span>&nbsp;<br>
+=&nbsp;<span class="keyword">struct</span><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Common</span><br>
+<br>
+<span class="keyword">type</span>&nbsp;name&nbsp;=&nbsp;string<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Specification</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Location</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Url</span>&nbsp;<span class="keyword">of</span>&nbsp;string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf_concat</span>&nbsp;<span class="keyword">of</span>&nbsp;(string&nbsp;*&nbsp;t)&nbsp;list&nbsp;<span class="comment">(*&nbsp;name&nbsp;×&nbsp;location&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Concat</span>&nbsp;<span class="keyword">of</span>&nbsp;t&nbsp;list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Gunzip</span>&nbsp;<span class="keyword">of</span>&nbsp;t&nbsp;<span class="comment">(*&nbsp;Should&nbsp;this&nbsp;be&nbsp;guessed&nbsp;from&nbsp;the&nbsp;URL&nbsp;extension?&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Untar</span>&nbsp;<span class="keyword">of</span>&nbsp;t<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;url&nbsp;u&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Url</span>&nbsp;u<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcf_concat&nbsp;l&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Vcf_concat</span>&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;concat&nbsp;l&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Concat</span>&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gunzip&nbsp;l&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Gunzip</span>&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;untar&nbsp;l&nbsp;=&nbsp;<span class="keywordsign">`</span><span class="constructor">Untar</span>&nbsp;l<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;metadata:&nbsp;string&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fasta:&nbsp;<span class="constructor">Location</span>.t;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dbsnp:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cosmic:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exome_gtf:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;&nbsp;<span class="comment">(*&nbsp;maybe&nbsp;desrves&nbsp;a&nbsp;better&nbsp;name?&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;cdna:&nbsp;<span class="constructor">Location</span>.t&nbsp;option;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;major_contigs:&nbsp;string&nbsp;list&nbsp;option;<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?metadata<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?dbsnp<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?cosmic<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?exome_gtf<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?cdna<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?major_contigs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;name;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;metadata;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fasta;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dbsnp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cosmic;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;exome_gtf;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;cdna;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;major_contigs;<br>
+&nbsp;&nbsp;}<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Default</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;major_contigs_b37&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.init&nbsp;22&nbsp;(<span class="keyword">fun</span>&nbsp;i&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"%d"</span>&nbsp;(i&nbsp;+&nbsp;1))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;[<span class="string">"X"</span>;&nbsp;<span class="string">"Y"</span>;&nbsp;<span class="string">"MT"</span>;]<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;major_contigs_hg_family&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.init&nbsp;22&nbsp;(<span class="keyword">fun</span>&nbsp;i&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"chr%d"</span>&nbsp;(i&nbsp;+&nbsp;1))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"chrX"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"chrY"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"chrM"</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;major_contigs_mm10&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.init&nbsp;19&nbsp;(<span class="keyword">fun</span>&nbsp;i&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"%d"</span>&nbsp;(i&nbsp;+&nbsp;1))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;@&nbsp;[&nbsp;<span class="string">"X"</span>;&nbsp;<span class="string">"Y"</span>&nbsp;]<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Name</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37&nbsp;=&nbsp;<span class="string">"b37"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37decoy&nbsp;=&nbsp;<span class="string">"b37decoy"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b38&nbsp;=&nbsp;<span class="string">"b38"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg18&nbsp;=&nbsp;<span class="string">"hg18"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg19&nbsp;=&nbsp;<span class="string">"hg19"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mm10&nbsp;=&nbsp;<span class="string">"mm10"</span><br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Used&nbsp;by&nbsp;both&nbsp;B37&nbsp;and&nbsp;B37decoy&nbsp;*)</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37_dbsnp_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/dbsnp_138.b37.vcf.gz"</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37_cosmic_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://www.broadinstitute.org/cancer/cga/sites/default/files/data/tools/mutect/b37_cosmic_v54_120711.vcf"</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37_exome_gtf_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-75/gtf/homo_sapiens/Homo_sapiens.GRCh37.75.gtf.gz"</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37_cdna_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh37.75.cdna.all.fa.gz"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;url&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/b37/human_g1k_v37.fasta.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;b37_dbsnp_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Alternate?<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/VCF/v4.0/00-All.vcf.gz"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cosmic:<span class="constructor">Location</span>.(url&nbsp;b37_cosmic_url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;b37_exome_gtf_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cdna:<span class="constructor">Location</span>.(url&nbsp;b37_cdna_url&nbsp;|&gt;&nbsp;gunzip)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b37decoy&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.b37decoy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;url<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/phase2_reference_assembly_sequence/hs37d5.fa.gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;b37_dbsnp_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;b37_exome_gtf_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cosmic:<span class="constructor">Location</span>.(url&nbsp;b37_cosmic_url)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cdna:<span class="constructor">Location</span>.(url&nbsp;b37_cdna_url&nbsp;|&gt;&nbsp;gunzip)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b38&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Release&nbsp;79&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_b38&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/VCF/00-All.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gtf_b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/Homo_sapiens.GRCh38.79.gtf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cdna_b38_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/Homo_sapiens.GRCh38.cdna.all.fa.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.b38<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_b37<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(url&nbsp;b38_url|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;dbsnp_b38&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;gtf_b38_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~cdna:<span class="constructor">Location</span>.(url&nbsp;cdna_b38_url&nbsp;|&gt;&nbsp;gunzip)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg18&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg18_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg18/Homo_sapiens_assembly18.fasta.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_hg18_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg18/dbsnp_138.hg18.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.hg18<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_hg_family<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(url&nbsp;hg18_url|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;dbsnp_hg18_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg19&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;hg19_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/ucsc.hg19.fasta.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_hg19_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/hg19/dbsnp_138.hg19.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.hg19<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_hg_family<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(url&nbsp;hg19_url|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(url&nbsp;dbsnp_hg19_url&nbsp;|&gt;&nbsp;gunzip)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mm10&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;mm10_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_mm10_snps_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.snps.rsIDdbSNPv137.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dbsnp_mm10_indels_url&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/mgp.v3.indels.rsIDdbSNPv137.vcf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;gene_annotations_gtf&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ftp://ftp.ensembl.org/pub/release-79/gtf/mus_musculus/Mus_musculus.GRCm38.79.gtf.gz"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;create&nbsp;<span class="constructor">Name</span>.mm10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~metadata:<span class="string">"Provided&nbsp;by&nbsp;the&nbsp;Biokepi&nbsp;Library"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~major_contigs:major_contigs_mm10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~fasta:<span class="constructor">Location</span>.(url&nbsp;mm10_url&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~dbsnp:<span class="constructor">Location</span>.(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vcf_concat&nbsp;[<span class="string">"db_snps.vcf"</span>,&nbsp;url&nbsp;dbsnp_mm10_snps_url&nbsp;|&gt;&nbsp;gunzip;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"db_indels.vcf"</span>,&nbsp;url&nbsp;dbsnp_mm10_indels_url&nbsp;|&gt;&nbsp;gunzip]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~exome_gtf:<span class="constructor">Location</span>.(url&nbsp;gene_annotations_gtf&nbsp;|&gt;&nbsp;gunzip)<br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** A reference genome has a name (for display/matching) and a
+     cluster-dependent path.
+     Corresponding Cosmic and dbSNP databases (VCFs) can be added to the mix.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">type</span>&nbsp;t&nbsp;=&nbsp;{<br>
+&nbsp;&nbsp;specification:&nbsp;<span class="constructor">Specification</span>.t;<br>
+&nbsp;&nbsp;location:&nbsp;<span class="constructor">KEDSL</span>.file_workflow;<br>
+&nbsp;&nbsp;cosmic:&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;dbsnp:&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;gtf:&nbsp;&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+&nbsp;&nbsp;cdna:&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;option;<br>
+}<br>
+<br>
+<span class="keyword">let</span>&nbsp;create&nbsp;?cosmic&nbsp;?dbsnp&nbsp;?gtf&nbsp;?cdna&nbsp;specification&nbsp;location&nbsp;=<br>
+&nbsp;&nbsp;{specification;&nbsp;location;&nbsp;cosmic;&nbsp;dbsnp;&nbsp;gtf;&nbsp;cdna}<br>
+<br>
+<br>
+<span class="keyword">let</span>&nbsp;name&nbsp;t&nbsp;=&nbsp;t.specification.<span class="constructor">Specification</span>.name<br>
+<span class="keyword">let</span>&nbsp;path&nbsp;t&nbsp;=&nbsp;t.location<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+<span class="keyword">let</span>&nbsp;cosmic_path_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;msg&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"cosmic_path_exn&nbsp;of&nbsp;%s"</span>&nbsp;(name&nbsp;t)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cosmic&nbsp;=&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg&nbsp;t.cosmic&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;cosmic<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+<br>
+<span class="keyword">let</span>&nbsp;dbsnp_path_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;msg&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"dbsnp_path_exn&nbsp;of&nbsp;%s"</span>&nbsp;(name&nbsp;t)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;trgt&nbsp;=&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg&nbsp;t.dbsnp&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;trgt<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+<br>
+<span class="keyword">let</span>&nbsp;gtf_path_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;msg&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"gtf_path_exn&nbsp;of&nbsp;%s"</span>&nbsp;(name&nbsp;t)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;trgt&nbsp;=&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg&nbsp;t.gtf&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;trgt<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+<br>
+<span class="keyword">let</span>&nbsp;cdna_path_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;msg&nbsp;=&nbsp;sprintf&nbsp;<span class="string">"cdna_path_exn&nbsp;of&nbsp;%s"</span>&nbsp;(name&nbsp;t)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;target&nbsp;=&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg&nbsp;t.cdna&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;target<span class="keywordsign">#</span>product<span class="keywordsign">#</span>path<br>
+<br>
+<span class="keyword">let</span>&nbsp;fasta:&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">KEDSL</span>.file_workflow&nbsp;=&nbsp;<span class="keyword">fun</span>&nbsp;t&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;t.location<br>
+<span class="keyword">let</span>&nbsp;cosmic_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg:(sprintf&nbsp;<span class="string">"%s:&nbsp;no&nbsp;COSMIC"</span>&nbsp;(name&nbsp;t))&nbsp;t.cosmic<br>
+<span class="keyword">let</span>&nbsp;dbsnp_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg:(sprintf&nbsp;<span class="string">"%s:&nbsp;no&nbsp;DBSNP"</span>&nbsp;(name&nbsp;t))&nbsp;t.dbsnp<br>
+<span class="keyword">let</span>&nbsp;gtf_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg:(sprintf&nbsp;<span class="string">"%s:&nbsp;no&nbsp;GTF"</span>&nbsp;(name&nbsp;t))&nbsp;t.gtf<br>
+<span class="keyword">let</span>&nbsp;gtf&nbsp;t&nbsp;=&nbsp;t.gtf<br>
+<span class="keyword">let</span>&nbsp;cdna_exn&nbsp;t&nbsp;=<br>
+&nbsp;&nbsp;<span class="constructor">Option</span>.value_exn&nbsp;~msg:(sprintf&nbsp;<span class="string">"%s:&nbsp;no&nbsp;cDNA&nbsp;fasta&nbsp;file"</span>&nbsp;(name&nbsp;t))&nbsp;t.cdna<br>
+<br>
+<span class="keyword">let</span>&nbsp;major_contigs&nbsp;t&nbsp;:&nbsp;<span class="constructor">Region</span>.t&nbsp;list&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;t.specification.<span class="constructor">Specification</span>.major_contigs&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">None</span>&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;failwithf&nbsp;<span class="string">"Reference&nbsp;%S&nbsp;does&nbsp;have&nbsp;major-contigs/chromosomes&nbsp;defined"</span>&nbsp;(name&nbsp;t)<br>
+&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="constructor">Some</span>&nbsp;l&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">List</span>.map&nbsp;l&nbsp;~f:(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Chromosome</span>&nbsp;s)<br>
+<br>
+<span class="keyword">end</span></code></body></html>

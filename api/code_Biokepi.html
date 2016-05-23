@@ -1,0 +1,257 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi</title>
+</head>
+<body>
+<code class="code"></code><table><tr><td></td><td><span class="comment">(** 
+   Top-level entry point into the library
+<p>
+
+   Biokepi provides different levels of abstraction to construct (Ketrew)
+   pipelines:
+<p>
+<ul>
+<li><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span></code>: very high-level embedded domain specific language that
+   encode very consise complex pipelines and uses OCaml type-system to verify
+   properties on them. The EDSL expressions can be “compiled” to Ketrew
+   worfklows, to JSON, to Graphviz <code class="code"><span class="string">"dot"</span></code> graphs, … <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Pipeline</span></code> is an
+   earlier, soon to be deprecated, implementation of the same idea.</li>
+<li><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Tools</span></code>: is a lower-level library of functions producing
+   Ketrew-workflow-nodes.</li>
+</ul>
+
+   The above modules use:
+<p>
+<ul>
+<li>some extensions to the Ketrew workflow EDSL see <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">KEDSL</span></code>,</li>
+<li>and an abstraction of the computing infrastructure of the user of the
+   library: <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span></code>.</li>
+</ul>
+
+   Finally the <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Setup</span></code> module provides (optional) tools to create
+   a proper <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.t</code> that fits your computing environment (OS
+   environment, cluster schedulers, installation of tools, fetching of
+   reference data, etc.).
+<p>
+
+*)</span></td></tr></table><code class="code"><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(**
+   The Embedded Bioinformatics Domain Specific Language
+<p>
+
+   This Embedded DSL is implemented following the “Typed Tagless Final
+   Interpreter” method.
+<p>
+
+   It's usage is as follows:
+<p>
+<ul>
+<li>Write EDSL expressions inside a functor taking the module type
+   <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span></code> (i.e. the definition of the EDSL) as argument.
+   Export some of them with the <code class="code">observe</code> function.</li>
+<li>Apply the functor the desired “compilers/interpreters.” The interpreter
+   can themselves be functors.</li>
+</ul>
+
+   Example: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline_1</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Reusable&nbsp;function&nbsp;withing&nbsp;the&nbsp;EDSL:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align_list_of_single_end_fastqs&nbsp;(l&nbsp;:&nbsp;string&nbsp;list)&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;]&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;list_expression&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;l&nbsp;~f:(<span class="keyword">fun</span>&nbsp;path&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;create&nbsp;[&nbsp;`Fastq&nbsp;]&nbsp;repr&nbsp;term:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.fastq&nbsp;~sample_name:<span class="string">"Test"</span>&nbsp;~r1:path&nbsp;())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;<span class="comment">(*&nbsp;Assmble&nbsp;OCaml&nbsp;list&nbsp;into&nbsp;an&nbsp;EDSL&nbsp;list&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligner&nbsp;:&nbsp;([&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;])&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;create&nbsp;an&nbsp;EDSL-level&nbsp;function&nbsp;with&nbsp;`lambda`:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;fq&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Bfx</span>.bwa_aln&nbsp;~reference_build:<span class="string">"hg19"</span>&nbsp;fq)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Call&nbsp;the&nbsp;aligner&nbsp;on&nbsp;all&nbsp;fastq-terms&nbsp;and&nbsp;then&nbsp;merge&nbsp;the&nbsp;result<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;a&nbsp;single&nbsp;bam:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;list_expression&nbsp;~f:aligner&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Function&nbsp;“exported”&nbsp;(to&nbsp;be&nbsp;used&nbsp;after&nbsp;compilation):&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align_list&nbsp;l&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;]&nbsp;<span class="constructor">Bfx</span>.observation&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.observe&nbsp;(<span class="keyword">fun</span>&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;align_list_of_single_end_fastqs&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    You can then compile this pipeline,
+    (you can apply any sub-module of <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Compile</span></code>, with potential
+    <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Transform</span></code> functors applied) for example to a dot-graph: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_pipeline_1</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Pipeline_1</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pipeline_1_dot&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;<span class="string">"pipeline-1.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;pipeline_1_dot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Dotize_pipeline_1</span>.align_list&nbsp;[&nbsp;<span class="comment">(*&nbsp;FASTQS&nbsp;*)</span>&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pipeline_1_png&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;<span class="string">"pipeline-1.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"dot&nbsp;-v&nbsp;-Tpng&nbsp;&nbsp;%s&nbsp;-o&nbsp;%s"</span>&nbsp;pipeline_1_dot&nbsp;pipeline_1_png;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    Or reuse it in further pipelines: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline_2</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">P1</span>&nbsp;=&nbsp;<span class="constructor">Pipeline_1</span>(<span class="constructor">Bfx</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;use&nbsp;the&nbsp;function&nbsp;&nbsp;P1.align_list_of_single_end_fastqs&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    See the <code class="code"><span class="constructor">TTfi_pipeline</span></code> test (<code class="code"><span class="string">"./src/test/ttfi_pipeline.ml"</span></code>) for more
+    examples.
+<p>
+
+    This framework is also extensible, one can add new constructs to the
+    language or new transformations while reusing most of the work already
+    done.
+<p>
+
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">EDSL</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** The definition of the Embedded DSL *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="constructor">Semantics</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">Semantics</span>.<span class="constructor">Bioinformatics_base</span><br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Various compilers to “interpret” the EDSL. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Compile</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Compiler to <code class="code"><span class="constructor">SmartPrint</span>.t</code> displayable pseudo code,
+        see the <a href="https://github.com/clarus/smart-print">smart-print</a> library.
+    *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">To_display</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_display</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Compiler to Ketrew workflows using the <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Tools</span></code> implementations.
+<p>
+
+        The compiler is itself a functor, see the example:
+        <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Workflow_compiler</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">Make</span>(<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;42<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;work_dir&nbsp;=&nbsp;<span class="string">"/work/dir/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;machine&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Setup</span>.<span class="constructor">Build_machine</span>.create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssh://example.com/tmp/KT/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Ketrew_pipeline_1</span>&nbsp;=&nbsp;<span class="constructor">Pipeline_1</span>(<span class="constructor">Workflow_compiler</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">To_workflow</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_workflow</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Compiler to JSON (<code class="code"><span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.t</code>). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">To_json</span>&nbsp;:&nbsp;<span class="constructor">Semantics</span>.<span class="constructor">Bioinformatics_base</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;repr&nbsp;=&nbsp;var_count:&nbsp;int&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.json<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">and</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;observation&nbsp;=&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.json&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_json</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Compiler to 
+        <a href="https://en.wikipedia.org/wiki/DOT_(graph_description_language)">DOT</a>
+        graph descriptions.  *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">To_dot</span>&nbsp;:&nbsp;<span class="constructor">Semantics</span>.<span class="constructor">Bioinformatics_base</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">type</span>&nbsp;<span class="keywordsign">'</span>a&nbsp;observation&nbsp;=&nbsp;<span class="constructor">SmartPrint</span>.t&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">To_dot</span><br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Transformations on the EDSL. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Transform</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;</td><td><span class="comment">(** Apply as much EDSL functions as possible to their arguments (including
+        <code class="code">list_map</code>). *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Apply_functions</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">Transform_applications</span>.<span class="constructor">Apply</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+&nbsp;&nbsp;</code><table><tr><td>&nbsp;&nbsp;</td><td><span class="comment">(** Library of reusable pieces of pipeline. *)</span></td></tr></table><code class="code"><br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Library</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">Pipeline_library</span><br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** The description of the computing infrastructure used in Biokepi.
+<p>
+
+    The <code class="code"><span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span></code> provides an API to interact with the
+    computing environment, it is used by all the programs in <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Tools</span></code>
+    (and hence by the <code class="code"><span class="constructor">EDSL</span></code> through the <code class="code"><span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span></code>
+    compiler). It is used to:
+<p>
+<ul>
+<li>interact with cluster schedulers, by wrapping <code class="code"><span class="constructor">Ketrew</span></code> build-processes
+    (YARN, LSF, etc.);</li>
+<li>provide reference data (genomes, databases, etc.);</li>
+<li>ensure the software used by the workflows is available for use.</li>
+</ul>
+
+    The user of the library has to provide (at least) one <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.t</code>
+    instance to run the workflows.
+    The <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Setup</span></code> module provides an extensive set of defaults to
+    simplify this.
+<p>
+
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Machine</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Machine</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Help with the creation of <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.t</code> instances. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Setup</span>&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Biokepi_environment_setup</span><br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Bioinformatics-specific extensions to the <code class="code"><span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span></code> module. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">KEDSL</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Common</span>.<span class="constructor">KEDSL</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Values describing the current version of the library. *)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Metadata</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_run_environment</span>.<span class="constructor">Metadata</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Implementations of the Bioinformatics Ketrew workflow-nodes.
+<p>
+
+    This module provides a lower-level access to the bioinformatics tools to
+    build Ketrew workflows.
+<p>
+
+    It is used by the EDSL (through <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span></code>) but
+    users are welcome to use it directly if needed.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Tools</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_bfx_tools</span><br>
+<br>
+</code><table><tr><td></td><td><span class="comment">(** Earlier implementation of the Embedded DSL (kept for backwards
+    compatibility).
+<p>
+
+    <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Pipeline</span>.t</code> is a GADT describing high-level workflows.
+<p>
+
+    One defines pipelines using the <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Pipeline</span>.<span class="constructor">Construct</span></code> module and
+    compiles them to JSON or to Ketrew workflows.
+<p>
+
+    See <code class="code"><span class="string">"src/pipeline_edsl/common_pipelines.ml"</span></code> and <code class="code"><span class="string">"src/app/main.ml"</span></code>
+    for examples.
+<p>
+
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline</span>&nbsp;=&nbsp;<span class="constructor">Biokepi_pipeline_edsl</span>.<span class="constructor">Pipeline</span><br>
+</code></body></html>

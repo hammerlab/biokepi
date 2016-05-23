@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Ttfi_pipeline.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Ttfi_pipeline.html" title="Ttfi_pipeline">Previous</a>
+&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi.html">Biokepi</a> (<a href="code_Biokepi.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Biokepi: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Top-level entry point into the library
+<p>
+
+   Biokepi provides different levels of abstraction to construct (Ketrew)
+   pipelines:
+<p>
+<ul>
+<li><a href="Biokepi.EDSL.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span></code></a>: very high-level embedded domain specific language that
+   encode very consise complex pipelines and uses OCaml type-system to verify
+   properties on them. The EDSL expressions can be “compiled” to Ketrew
+   worfklows, to JSON, to Graphviz <code class="code"><span class="string">"dot"</span></code> graphs, … <a href="Biokepi.Pipeline.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Pipeline</span></code></a> is an
+   earlier, soon to be deprecated, implementation of the same idea.</li>
+<li><a href="Biokepi.Tools.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Tools</span></code></a>: is a lower-level library of functions producing
+   Ketrew-workflow-nodes.</li>
+</ul>
+
+   The above modules use:
+<p>
+<ul>
+<li>some extensions to the Ketrew workflow EDSL see <a href="Biokepi.KEDSL.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">KEDSL</span></code></a>,</li>
+<li>and an abstraction of the computing infrastructure of the user of the
+   library: <a href="Biokepi.Machine.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span></code></a>.</li>
+</ul>
+
+   Finally the <a href="Biokepi.Setup.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Setup</span></code></a> module provides (optional) tools to create
+   a proper <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.t</code> that fits your computing environment (OS
+   environment, cluster schedulers, installation of tools, fetching of
+   reference data, etc.).<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.html">EDSL</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.EDSL.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+The Embedded Bioinformatics Domain Specific Language
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.Machine.html">Machine</a>: <code class="type"><a href="Biokepi_run_environment.Machine.html">Biokepi_run_environment.Machine</a></code></pre><div class="info">
+The description of the computing infrastructure used in Biokepi.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.Setup.html">Setup</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.Setup.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Help with the creation of <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Machine</span>.t</code> instances.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.KEDSL.html">KEDSL</a>: <code class="type"><a href="Biokepi_run_environment.Common.KEDSL.html">Biokepi_run_environment.Common.KEDSL</a></code></pre><div class="info">
+Bioinformatics-specific extensions to the <code class="code"><span class="constructor">Ketrew</span>.<span class="constructor">EDSL</span></code> module.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.Metadata.html">Metadata</a>: <code class="type"><a href="Biokepi_run_environment.Metadata.html">Biokepi_run_environment.Metadata</a></code></pre><div class="info">
+Values describing the current version of the library.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.Tools.html">Tools</a>: <code class="type"><a href="Biokepi_bfx_tools.html">Biokepi_bfx_tools</a></code></pre><div class="info">
+Implementations of the Bioinformatics Ketrew workflow-nodes.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.Pipeline.html">Pipeline</a>: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline.html">Biokepi_pipeline_edsl.Pipeline</a></code></pre><div class="info">
+Earlier implementation of the Embedded DSL (kept for backwards
+    compatibility).
+</div>
+</body></html>

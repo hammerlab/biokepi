@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="previous" href="Biokepi_pipeline_edsl.To_workflow.Defaults.html">
+<link rel="Up" href="Biokepi_pipeline_edsl.To_workflow.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_workflow.Make</title>
+</head>
+<body>
+<div class="navbar"><a class="pre" href="Biokepi_pipeline_edsl.To_workflow.Defaults.html" title="Biokepi_pipeline_edsl.To_workflow.Defaults">Previous</a>
+&nbsp;<a class="up" href="Biokepi_pipeline_edsl.To_workflow.html" title="Biokepi_pipeline_edsl.To_workflow">Up</a>
+&nbsp;</div>
+<h1>Functor <a href="type_Biokepi_pipeline_edsl.To_workflow.Make.html">Biokepi_pipeline_edsl.To_workflow.Make</a> (<a href="code_Biokepi_pipeline_edsl.To_workflow.Make.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Make: <div class="sig_block"><code class="code"><span class="keyword">functor</span> (</code><code class="code"><span class="constructor">Config</span></code><code class="code"> : </code><code class="type"><a href="Biokepi_pipeline_edsl.To_workflow.Compiler_configuration.html">Compiler_configuration</a></code><code class="code">) <span class="keywordsign">-&gt;</span> </code><code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.To_workflow.Make.html">..</a> <code class="code"><span class="keyword">end</span></code></div></pre><table border="0" cellpadding="3" width="100%">
+<tr>
+<td align="left" valign="top" width="1%%"><b>Parameters: </b></td>
+<td>
+<table class="paramstable">
+<tr>
+<td align="center" valign="top" width="15%">
+<code>Config</code></td>
+<td align="center" valign="top">:</td>
+<td><code class="type"><a href="Biokepi_pipeline_edsl.To_workflow.Compiler_configuration.html">Compiler_configuration</a></code>
+</table>
+</td>
+</tr>
+</table>
+<hr width="100%">
+
+<pre><span class="keyword">include</span> File_type_specification</pre>
+
+<pre><span id="TYPErepr"><span class="keyword">type</span> <code class="type">'a</code> repr</span> = <code class="type">'a t</code> </pre>
+
+
+<pre><span id="TYPEobservation"><span class="keyword">type</span> <code class="type">'a</code> observation</span> = <code class="type">'a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a></code> </pre>
+
+
+<pre><span id="VALobserve"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.observe.html">observe</a></span> : <code class="type">(unit -> 'a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a>) -><br>       'a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPEobservation">observation</a></code></pre>
+<pre><span id="VALlambda"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.lambda.html">lambda</a></span> : <code class="type">('a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> -><br>        'b <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a>) -><br>       ('a -> 'b) <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a></code></pre>
+<pre><span id="VALapply"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.apply.html">apply</a></span> : <code class="type">('a -> 'b) <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> -><br>       'a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> -><br>       'b <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a></code></pre>
+<pre><span id="VALlist"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.list.html">list</a></span> : <code class="type">'a <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> list -><br>       'a list <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a></code></pre>
+<pre><span id="VALlist_map"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.list_map.html">list_map</a></span> : <code class="type">'a list <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> -><br>       f:('a -> 'b) <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a> -><br>       'b list <a href="Biokepi_pipeline_edsl.To_workflow.Make.html#TYPErepr">repr</a></code></pre>
+<pre><span id="VALto_unit"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.to_unit.html">to_unit</a></span> : <code class="type">'a t -> unit t</code></pre>
+<pre><span id="VALfastq"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.fastq.html">fastq</a></span> : <code class="type">sample_name:string -><br>       ?fragment_id:string -> r1:string -> ?r2:string -> unit -> [ `Fastq ] t</code></pre>
+<pre><span id="VALfastq_gz"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.fastq_gz.html">fastq_gz</a></span> : <code class="type">sample_name:string -><br>       ?fragment_id:string -><br>       r1:string -> ?r2:string -> unit -> [ `Gz of [ `Fastq ] ] t</code></pre>
+<pre><span id="VALbam"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.bam.html">bam</a></span> : <code class="type">path:string -><br>       ?sorting:[ `Coordinate | `Read_name ] -><br>       reference_build:string -> unit -> [ `Bam ] t</code></pre>
+<pre><span id="VALbwa_aln"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.bwa_aln.html">bwa_aln</a></span> : <code class="type">?configuration:Tools.Bwa.Configuration.Aln.t -><br>       reference_build:string -> [ `Fastq ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALbwa_mem"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.bwa_mem.html">bwa_mem</a></span> : <code class="type">?configuration:Tools.Bwa.Configuration.Mem.t -><br>       reference_build:string -> [ `Fastq ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALstar"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.star.html">star</a></span> : <code class="type">?configuration:Tools.Star.Configuration.Align.t -><br>       reference_build:string -> [ `Fastq ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALhisat"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.hisat.html">hisat</a></span> : <code class="type">?configuration:Tools.Hisat.Configuration.t -><br>       reference_build:string -> [ `Fastq ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALmosaik"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.mosaik.html">mosaik</a></span> : <code class="type">reference_build:string -> [ `Fastq ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALgunzip"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gunzip.html">gunzip</a></span> : <code class="type">'a. [ `Gz of 'a ] t -> 'a t</code></pre>
+<pre><span id="VALgunzip_concat"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gunzip_concat.html">gunzip_concat</a></span> : <code class="type">'a -> 'b</code></pre>
+<pre><span id="VALconcat"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.concat.html">concat</a></span> : <code class="type">'a. 'a list t -> 'a t</code></pre>
+<pre><span id="VALmerge_bams"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.merge_bams.html">merge_bams</a></span> : <code class="type">[ `Bam ] list t -> [ `Bam ] t</code></pre>
+<pre><span id="VALstringtie"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.stringtie.html">stringtie</a></span> : <code class="type">?configuration:Tools.Stringtie.Configuration.t -> [ `Bam ] t -> [ `Gtf ] t</code></pre>
+<pre><span id="VALgatk_indel_realigner"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gatk_indel_realigner.html">gatk_indel_realigner</a></span> : <code class="type">?configuration:Tools.Gatk.Configuration.Indel_realigner.t *<br>                      Tools.Gatk.Configuration.Realigner_target_creator.t -><br>       [ `Bam ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALgatk_indel_realigner_joint"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gatk_indel_realigner_joint.html">gatk_indel_realigner_joint</a></span> : <code class="type">?configuration:Tools.Gatk.Configuration.Indel_realigner.t *<br>                      Tools.Gatk.Configuration.Realigner_target_creator.t -><br>       ([ `Bam ] * [ `Bam ]) t -> ([ `Bam ] * [ `Bam ]) t</code></pre>
+<pre><span id="VALpicard_mark_duplicates"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.picard_mark_duplicates.html">picard_mark_duplicates</a></span> : <code class="type">?configuration:Tools.Picard.Mark_duplicates_settings.t -><br>       [ `Bam ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALgatk_bqsr"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gatk_bqsr.html">gatk_bqsr</a></span> : <code class="type">?configuration:Tools.Gatk.Configuration.Bqsr.t *<br>                      Tools.Gatk.Configuration.Print_reads.t -><br>       [ `Bam ] t -> [ `Bam ] t</code></pre>
+<pre><span id="VALseq2hla"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.seq2hla.html">seq2hla</a></span> : <code class="type">[ `Fastq ] t -> [ `Seq2hla_result ] t</code></pre>
+<pre><span id="VALoptitype"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.optitype.html">optitype</a></span> : <code class="type">[< `DNA | `RNA ] -> [ `Fastq ] t -> [ `Optitype_result ] t</code></pre>
+<pre><span id="VALgatk_haplotype_caller"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.gatk_haplotype_caller.html">gatk_haplotype_caller</a></span> : <code class="type">[ `Bam ] t -> [ `Vcf ] t</code></pre>
+<pre><span id="VALbam_to_fastq"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.bam_to_fastq.html">bam_to_fastq</a></span> : <code class="type">sample_name:string -><br>       ?fragment_id:'a -> [< `PE | `SE ] -> [ `Bam ] t -> [ `Fastq ] t</code></pre>
+<pre><span id="VALmutect"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.mutect.html">mutect</a></span> : <code class="type">?configuration:Tools.Mutect.Configuration.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALmutect2"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.mutect2.html">mutect2</a></span> : <code class="type">?configuration:Tools.Gatk.Configuration.Mutect2.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALsomaticsniper"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.somaticsniper.html">somaticsniper</a></span> : <code class="type">?configuration:Tools.Somaticsniper.Configuration.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALstrelka"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.strelka.html">strelka</a></span> : <code class="type">?configuration:Tools.Strelka.Configuration.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALvarscan_somatic"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.varscan_somatic.html">varscan_somatic</a></span> : <code class="type">?adjust_mapq:int -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALmuse"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.muse.html">muse</a></span> : <code class="type">?configuration:Tools.Muse.Configuration.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre>
+<pre><span id="VALvirmid"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_workflow.Make.virmid.html">virmid</a></span> : <code class="type">?configuration:Tools.Virmid.Configuration.t -><br>       normal:[ `Bam ] t -> tumor:[ `Bam ] t -> unit -> [ `Vcf ] t</code></pre></body></html>

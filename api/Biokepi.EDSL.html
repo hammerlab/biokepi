@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="next" href="Biokepi.Machine.html">
+<link rel="Up" href="Biokepi.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi.EDSL</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Biokepi.html" title="Biokepi">Up</a>
+&nbsp;<a class="post" href="Biokepi.Machine.html" title="Biokepi.Machine">Next</a>
+</div>
+<h1>Module <a href="type_Biokepi.EDSL.html">Biokepi.EDSL</a> (<a href="code_Biokepi.EDSL.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> EDSL: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.EDSL.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+The Embedded Bioinformatics Domain Specific Language
+<p>
+
+   This Embedded DSL is implemented following the “Typed Tagless Final
+   Interpreter” method.
+<p>
+
+   It's usage is as follows:
+<p>
+<ul>
+<li>Write EDSL expressions inside a functor taking the module type
+   <a href="Biokepi.EDSL.Semantics.html"><code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span></code></a> (i.e. the definition of the EDSL) as argument.
+   Export some of them with the <code class="code">observe</code> function.</li>
+<li>Apply the functor the desired “compilers/interpreters.” The interpreter
+   can themselves be functors.</li>
+</ul>
+
+   Example: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline_1</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Reusable&nbsp;function&nbsp;withing&nbsp;the&nbsp;EDSL:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align_list_of_single_end_fastqs&nbsp;(l&nbsp;:&nbsp;string&nbsp;list)&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;]&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;list_expression&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;l&nbsp;~f:(<span class="keyword">fun</span>&nbsp;path&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;create&nbsp;[&nbsp;`Fastq&nbsp;]&nbsp;repr&nbsp;term:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.fastq&nbsp;~sample_name:<span class="string">"Test"</span>&nbsp;~r1:path&nbsp;())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;<span class="comment">(*&nbsp;Assmble&nbsp;OCaml&nbsp;list&nbsp;into&nbsp;an&nbsp;EDSL&nbsp;list&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligner&nbsp;:&nbsp;([&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;])&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;create&nbsp;an&nbsp;EDSL-level&nbsp;function&nbsp;with&nbsp;`lambda`:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;fq&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Bfx</span>.bwa_aln&nbsp;~reference_build:<span class="string">"hg19"</span>&nbsp;fq)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Call&nbsp;the&nbsp;aligner&nbsp;on&nbsp;all&nbsp;fastq-terms&nbsp;and&nbsp;then&nbsp;merge&nbsp;the&nbsp;result<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;into&nbsp;a&nbsp;single&nbsp;bam:&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;list_expression&nbsp;~f:aligner&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;Function&nbsp;“exported”&nbsp;(to&nbsp;be&nbsp;used&nbsp;after&nbsp;compilation):&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align_list&nbsp;l&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;]&nbsp;<span class="constructor">Bfx</span>.observation&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.observe&nbsp;(<span class="keyword">fun</span>&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;align_list_of_single_end_fastqs&nbsp;l<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    You can then compile this pipeline,
+    (you can apply any sub-module of <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Compile</span></code>, with potential
+    <code class="code"><span class="constructor">Biokepi</span>.<span class="constructor">Transform</span></code> functors applied) for example to a dot-graph: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_pipeline_1</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Pipeline_1</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pipeline_1_dot&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;<span class="string">"pipeline-1.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;pipeline_1_dot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Dotize_pipeline_1</span>.align_list&nbsp;[&nbsp;<span class="comment">(*&nbsp;FASTQS&nbsp;*)</span>&nbsp;];<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pipeline_1_png&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;<span class="string">"pipeline-1.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"dot&nbsp;-v&nbsp;-Tpng&nbsp;&nbsp;%s&nbsp;-o&nbsp;%s"</span>&nbsp;pipeline_1_dot&nbsp;pipeline_1_png;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    Or reuse it in further pipelines: <pre class="codepre"><code class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline_2</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">P1</span>&nbsp;=&nbsp;<span class="constructor">Pipeline_1</span>(<span class="constructor">Bfx</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;use&nbsp;the&nbsp;function&nbsp;&nbsp;P1.align_list_of_single_end_fastqs&nbsp;*)</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;</code></pre>
+<p>
+
+    See the <code class="code"><span class="constructor">TTfi_pipeline</span></code> test (<code class="code"><span class="string">"./src/test/ttfi_pipeline.ml"</span></code>) for more
+    examples.
+<p>
+
+    This framework is also extensible, one can add new constructs to the
+    language or new transformations while reusing most of the work already
+    done.<br>
+</div>
+<hr width="100%">
+
+<pre><span class="keyword">module type</span> <a href="Biokepi.EDSL.Semantics.html">Semantics</a> = <code class="type"><a href="Biokepi_pipeline_edsl.Semantics.Bioinformatics_base.html">Biokepi_pipeline_edsl.Semantics.Bioinformatics_base</a></code></pre><div class="info">
+The definition of the Embedded DSL
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Compile.html">Compile</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.EDSL.Compile.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Various compilers to “interpret” the EDSL.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Transform.html">Transform</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi.EDSL.Transform.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+Transformations on the EDSL.
+</div>
+
+<pre><span class="keyword">module</span> <a href="Biokepi.EDSL.Library.html">Library</a>: <code class="type"><a href="Biokepi_pipeline_edsl.Pipeline_library.html">Biokepi_pipeline_edsl.Pipeline_library</a></code></pre><div class="info">
+Library of reusable pieces of pipeline.
+</div>
+</body></html>

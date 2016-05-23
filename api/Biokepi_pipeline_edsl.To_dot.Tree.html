@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="Biokepi_pipeline_edsl.To_dot.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Biokepi_pipeline_edsl.To_dot.Tree</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="Biokepi_pipeline_edsl.To_dot.html" title="Biokepi_pipeline_edsl.To_dot">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Biokepi_pipeline_edsl.To_dot.Tree.html">Biokepi_pipeline_edsl.To_dot.Tree</a> (<a href="code_Biokepi_pipeline_edsl.To_dot.Tree.html">.ml</a>)</h1>
+
+<pre><span class="keyword">module</span> Tree: <code class="code"><span class="keyword">sig</span></code> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><hr width="100%">
+
+<pre><code><span id="TYPEbox"><span class="keyword">type</span> <code class="type"></code>box</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbox.id">id</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbox.name">name</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTbox.attributes">attributes</span>&nbsp;: <code class="type">(string * string) list</code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><code><span id="TYPEarrow"><span class="keyword">type</span> <code class="type"></code>arrow</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTarrow.label">label</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTarrow.points_to">points_to</span>&nbsp;: <code class="type"><a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a></code>;</code></td>
+
+</tr></table>
+}
+
+
+
+<pre><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = <code class="type">[ `Apply of<br>           string * <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a> *<br>           <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a><br>       | `Input_value of <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEbox">box</a><br>       | `Lambda of string * string * <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a><br>       | `Node of<br>           <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEbox">box</a> *<br>           <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEarrow">arrow</a> list<br>       | `String of string<br>       | `Variable of string * string ]</code> </pre>
+
+
+<pre><span id="VALnode_count"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.node_count.html">node_count</a></span> : <code class="type">int Pervasives.ref</code></pre>
+<pre><span id="VALid_style"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.id_style.html">id_style</a></span> : <code class="type">[> `Hash ]</code></pre>
+<pre><span id="VALmake_id"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.make_id.html">make_id</a></span> : <code class="type">[< `Of of 'a | `Unique ] -> string</code></pre>
+<pre><span id="VALarrow"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.arrow.html">arrow</a></span> : <code class="type">string -><br>       <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a> -><br>       <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEarrow">arrow</a></code></pre>
+<pre><span id="VALvariable"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.variable.html">variable</a></span> : <code class="type">'a -> 'b -> [> `Variable of string * 'b ]</code></pre>
+<pre><span id="VALlambda"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.lambda.html">lambda</a></span> : <code class="type">'a -> 'b -> [> `Lambda of string * 'a * 'b ]</code></pre>
+<pre><span id="VALapply"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.apply.html">apply</a></span> : <code class="type">'a -> 'b -> [> `Apply of string * 'a * 'b ]</code></pre>
+<pre><span id="VALstring"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.string.html">string</a></span> : <code class="type">'a -> [> `String of 'a ]</code></pre>
+<pre><span id="VALnode"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.node.html">node</a></span> : <code class="type">?id:string -><br>       ?a:(string * string) list -><br>       string -><br>       <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEarrow">arrow</a> list -><br>       <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a></code></pre>
+<pre><span id="VALinput_value"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.input_value.html">input_value</a></span> : <code class="type">?a:(string * string) list -> string -> <a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a></code></pre>
+<pre><span id="VALto_dot"><span class="keyword">val</span> <a href="code_VALBiokepi_pipeline_edsl.To_dot.Tree.to_dot.html">to_dot</a></span> : <code class="type"><a href="Biokepi_pipeline_edsl.To_dot.Tree.html#TYPEt">t</a> -> SmartPrint.t</code></pre></body></html>

@@ -1,1 +1,31 @@
-<div><a href="doc/index.html">Biokepi API</a></div>
+ <!DOCTYPE html> <html> <head><link rel="stylesheet" href="https://cdn.rawgit.com/hammerlab/ketrew/2d1c430cca52caa71e363a765ff8775a6ae14ba9/src/doc/code_style.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/bootstrap/3.1.1/css/bootstrap-theme.min.css" type="text/css"><meta charset="utf-8"><title>Biokepi: Home</title></head><body><div class="container"><h1>Biokepi: Home</h1><div class="row">
+<div class="col-md-3">
+<h2>Contents</h2><ul><li><a href='#Build'>Build</a>
+</li><li><a href='#Usage'>Usage</a>
+</li></ul><h2>Menu</h2><ul><li><a href='index.html'>Home</a></li><li><a href='Module_Hierarchy.html'>Module Hierarchy</a></li><li><a href='Guide_to_the_code.html'>Guide to the code</a></li><li><a href='Use_the_demo.html'>Use the demo</a></li><li><a href='edsl_extension_register_result.html'>EDSL Extension “Register Results”</a></li><li><a href='./api/index.html'>API Documentation</a></li></ul></div><div class="col-md-9"><h1 id="BiokepiBioinformaticsKetrewPipelines">Biokepi: Bioinformatics Ketrew Pipelines</h1>
+
+<p>This project provides a family of libraries to construct
+“<a href='http://seb.mondet.org/software/ketrew/'>Ketrew</a> Workflows” for
+bioinformatics pipelines.</p>
+<p>This should be considered <em>“alpha / preview”</em> software.</p>
+<h2 id="Build">Build</h2>
+
+<p>The main dependency is <a href='http://seb.mondet.org/software/ketrew/'>Ketrew</a> (which
+requires OCaml ≥ 4.02.2).</p>
+<p>To install the pre-release through <code>opam</code>:</p>
+<pre><code>opam pin add biokepi &quot;https://github.com/hammerlab/biokepi.git#biokepi.0.0.0&quot;
+[opam install biokepi]</code></pre><p>To use the <code>master</code> branch you need also to track the <code>master</code> branch of Ketrew:</p>
+<pre><code>opam pin add ketrew https://github.com/hammerlab/ketrew.git
+opam pin add biokepi https://github.com/hammerlab/biokepi.git</code></pre><p>To build locally:</p>
+<pre><code>omake
+omake build-all  # To build also all the tests
+omake doc  # To build the documentation, cf. _build/doc/index.html</code></pre><h2 id="Usage">Usage</h2>
+
+<p>The <a href='api/Biokepi.html' title='Biokepi'><code>Biokepi</code></a> module is the main entry point for most use cases.</p>
+<p>There are “demo” command-line applications in the <code>src/app/</code> directory and
+tests in <code>src/test/</code>.</p>
+<p>The main demo application (<code>src/app/main.ml</code>) is documented here: <a href='./Use_the_demo.html'>Use the
+demo</a>.</p>
+</div></div></div></body><html>

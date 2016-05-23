@@ -1,0 +1,380 @@
+<html><head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of extensions" rel=Appendix href="index_extensions.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Index of module types" rel=Appendix href="index_module_types.html">
+<link title="Biokepi_run_environment" rel="Chapter" href="Biokepi_run_environment.html">
+<link title="Biokepi_environment_setup" rel="Chapter" href="Biokepi_environment_setup.html">
+<link title="Biokepi_bfx_tools" rel="Chapter" href="Biokepi_bfx_tools.html">
+<link title="Biokepi_pipeline_edsl" rel="Chapter" href="Biokepi_pipeline_edsl.html">
+<link title="All_downloads" rel="Chapter" href="All_downloads.html">
+<link title="Main" rel="Chapter" href="Main.html">
+<link title="Ttfi_pipeline" rel="Chapter" href="Ttfi_pipeline.html">
+<link title="Biokepi" rel="Chapter" href="Biokepi.html"><title>Biokepi API : Ttfi_pipeline</title>
+</head>
+<body>
+<code class="code"></code><table><tr><td></td><td><span class="comment">(** This test uses the high-level EDSL and tries different compilation targets,
+    but does not produce runnable workflows.
+<p>
+
+    The workflow itself is voluntarily too big and abuses lambda expressions.
+*)</span></td></tr></table><code class="code"><br>
+<span class="keyword">open</span>&nbsp;<span class="constructor">Nonstd</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="keyword">type</span>&nbsp;<span class="constructor">TEST_PIPELINE</span>&nbsp;=&nbsp;<br>
+&nbsp;&nbsp;<span class="keyword">functor</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;<span class="keyword">sig</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">val</span>&nbsp;run&nbsp;:&nbsp;unit&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;unit&nbsp;<span class="constructor">Bfx</span>.observation<br>
+&nbsp;&nbsp;<span class="keyword">end</span><br>
+<br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Run_test</span>(<span class="constructor">Test_pipeline</span>&nbsp;:&nbsp;<span class="constructor">TEST_PIPELINE</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;write_file&nbsp;file&nbsp;~content&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;out_file&nbsp;=&nbsp;open_out&nbsp;file&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_string&nbsp;out_file&nbsp;content;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out_file<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;_&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out_file<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;cmdf&nbsp;fmt&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ksprintf&nbsp;(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf&nbsp;<span class="string">"CMD:&nbsp;%s\n%!"</span>&nbsp;s;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;<span class="constructor">Sys</span>.command&nbsp;s&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;0&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;other&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;ksprintf&nbsp;failwith&nbsp;<span class="string">"non-zero-exit:&nbsp;%s&nbsp;-&gt;&nbsp;%d"</span>&nbsp;s&nbsp;other)&nbsp;fmt<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;(//)&nbsp;=&nbsp;<span class="constructor">Filename</span>.concat<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;test_dir&nbsp;=&nbsp;<span class="string">"_build/ttfi-test-results/"</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;main&nbsp;prefix&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;start_time&nbsp;=&nbsp;<span class="constructor">Unix</span>.gettimeofday&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"mkdir&nbsp;-p&nbsp;%s"</span>&nbsp;test_dir;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;results&nbsp;=&nbsp;ref&nbsp;[]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;add_result&nbsp;fmt&nbsp;=&nbsp;ksprintf&nbsp;(<span class="keyword">fun</span>&nbsp;s&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;results&nbsp;:=&nbsp;s&nbsp;::&nbsp;!results)&nbsp;fmt&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;add_result_file&nbsp;name&nbsp;path&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;size&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;s&nbsp;=&nbsp;<span class="constructor">Unix</span>.stat&nbsp;path&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">match</span>&nbsp;s.<span class="constructor">Unix</span>.st_size&nbsp;<span class="keyword">with</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;0&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="string">"EMPTY"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;small&nbsp;<span class="keyword">when</span>&nbsp;small&nbsp;&lt;&nbsp;1024&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;sprintf&nbsp;<span class="string">"%d&nbsp;B"</span>&nbsp;small<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;avg&nbsp;<span class="keyword">when</span>&nbsp;avg&nbsp;&lt;&nbsp;(1024&nbsp;*&nbsp;1024)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%.2f&nbsp;KB"</span>&nbsp;(float&nbsp;avg&nbsp;/.&nbsp;1024.)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;big&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sprintf&nbsp;<span class="string">"%.2f&nbsp;MB"</span>&nbsp;(float&nbsp;big&nbsp;/.&nbsp;(1024.&nbsp;*.&nbsp;1024.))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"%s:&nbsp;`%s`&nbsp;(%s)"</span>&nbsp;name&nbsp;path&nbsp;size;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_path&nbsp;suffix&nbsp;=&nbsp;test_dir&nbsp;//&nbsp;prefix&nbsp;^&nbsp;suffix&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Display_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_display</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;pseudocode&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-pseudocode.txt"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;pseudocode<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Display_pipeline</span>.run&nbsp;()&nbsp;|&gt;&nbsp;<span class="constructor">SmartPrint</span>.to_string&nbsp;80&nbsp;2);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"Pseudo-code"</span>&nbsp;pseudocode;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Jsonize_pipeline</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_json</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;json&nbsp;=&nbsp;output_path&nbsp;<span class="string">".json"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;write_file&nbsp;json<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~content:(<span class="constructor">Jsonize_pipeline</span>.run&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Yojson</span>.<span class="constructor">Basic</span>.pretty_to_string&nbsp;~std:<span class="keyword">true</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"JSON"</span>&nbsp;json;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;output_dot&nbsp;sm&nbsp;dot&nbsp;png&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">try</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;out&nbsp;=&nbsp;open_out&nbsp;dot&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">SmartPrint</span>.to_out_channel&nbsp;&nbsp;80&nbsp;2&nbsp;out&nbsp;sm;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close_out&nbsp;out;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"DOT"</span>&nbsp;dot;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dotlog&nbsp;=&nbsp;png&nbsp;^&nbsp;<span class="string">".log"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cmdf&nbsp;<span class="string">"dot&nbsp;-v&nbsp;-x&nbsp;-Tpng&nbsp;&nbsp;%s&nbsp;-o&nbsp;%s&nbsp;&gt;&nbsp;%s&nbsp;2&gt;&amp;1"</span>&nbsp;dot&nbsp;png&nbsp;dotlog;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result_file&nbsp;<span class="string">"PNG"</span>&nbsp;png;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">with</span>&nbsp;e&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"FAILED&nbsp;TO&nbsp;OUTPUT:&nbsp;%s&nbsp;(%s)"</span>&nbsp;dot&nbsp;(<span class="constructor">Printexc</span>.to_string&nbsp;e);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sm_dot&nbsp;=&nbsp;<span class="constructor">Dotize_pipeline</span>.run&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dot&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-1.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;png&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-1.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_dot&nbsp;sm_dot&nbsp;dot&nbsp;png<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Dotize_twice_beta_reduced_pipeline</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Test_pipeline</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Transform</span>.<span class="constructor">Apply_functions</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Transform</span>.<span class="constructor">Apply_functions</span>(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_dot</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;dot&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-double-beta.dot"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;sm_dot&nbsp;=&nbsp;<span class="constructor">Dotize_twice_beta_reduced_pipeline</span>.run&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;png&nbsp;=&nbsp;output_path&nbsp;<span class="string">"-double-beta.png"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output_dot&nbsp;sm_dot&nbsp;dot&nbsp;png<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Workflow_compiler</span>&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">Make</span>(<span class="keyword">struct</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">include</span>&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">Defaults</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;processors&nbsp;=&nbsp;42<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;work_dir&nbsp;=&nbsp;<span class="string">"/work/dir/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;machine&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Setup</span>.<span class="constructor">Build_machine</span>.create<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">"ssh://example.com/tmp/KT/"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Ketrew_pipeline</span>&nbsp;=&nbsp;<span class="constructor">Test_pipeline</span>(<span class="constructor">Workflow_compiler</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;workflow&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Ketrew_pipeline</span>.run&nbsp;()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Compile</span>.<span class="constructor">To_workflow</span>.<span class="constructor">File_type_specification</span>.get_unit_workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~name:<span class="string">"Biokepi&nbsp;TTFI&nbsp;test&nbsp;top-level&nbsp;node"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ignore&nbsp;workflow<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;end_time&nbsp;=&nbsp;<span class="constructor">Unix</span>.gettimeofday&nbsp;()&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;add_result&nbsp;<span class="string">"Total-time:&nbsp;%.2f s"</span>&nbsp;(end_time&nbsp;-.&nbsp;start_time);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.rev&nbsp;!results<br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Pipeline_insane</span>&nbsp;(<span class="constructor">Bfx</span>&nbsp;:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;fastq_list&nbsp;~dataset&nbsp;files&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;files&nbsp;~f:<span class="keyword">begin</span>&nbsp;<span class="keyword">function</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">|</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(r1,&nbsp;r2)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;r1&nbsp;<span class="string">".gz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">||</span>&nbsp;<span class="constructor">Filename</span>.check_suffix&nbsp;r1&nbsp;<span class="string">".fqz"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.(fastq_gz&nbsp;~sample_name:dataset&nbsp;~r1&nbsp;~r2&nbsp;()&nbsp;|&gt;&nbsp;gunzip)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">else</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.(fastq&nbsp;~sample_name:dataset&nbsp;~r1&nbsp;~r2&nbsp;())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list<br>
+<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;every_vc_on_fastqs&nbsp;~reference_build&nbsp;~normal&nbsp;~tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligner&nbsp;which_one&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;fq&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;which_one&nbsp;~reference_build&nbsp;fq)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align_list&nbsp;how&nbsp;(list_of_fastqs&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list&nbsp;<span class="constructor">Bfx</span>.repr)&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;list_of_fastqs&nbsp;~f:how&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligners&nbsp;=&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.bwa_aln&nbsp;?configuration:&nbsp;<span class="constructor">None</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.bwa_mem&nbsp;?configuration:&nbsp;<span class="constructor">None</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.hisat&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.default_v1;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.hisat&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Hisat</span>.<span class="constructor">Configuration</span>.default_v2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.star&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Star</span>.<span class="constructor">Configuration</span>.<span class="constructor">Align</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;<span class="constructor">Bfx</span>.mosaik;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aligner&nbsp;@@&nbsp;(<span class="keyword">fun</span>&nbsp;~reference_build&nbsp;fastq&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.bwa_aln&nbsp;~reference_build&nbsp;fastq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.bam_to_fastq&nbsp;~sample_name:<span class="string">"realigned"</span>&nbsp;<span class="keywordsign">`</span><span class="constructor">PE</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.bwa_mem&nbsp;?configuration:&nbsp;<span class="constructor">None</span>&nbsp;~reference_build<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somatic_of_pair&nbsp;how&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair_second&nbsp;pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;how&nbsp;~normal&nbsp;~tumor&nbsp;())<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;somatic_vcs&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;~f:somatic_of_pair&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.mutect<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Mutect</span>.<span class="constructor">Configuration</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.mutect2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.<span class="constructor">Mutect2</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.somaticsniper<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Somaticsniper</span>.<span class="constructor">Configuration</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.strelka<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Strelka</span>.<span class="constructor">Configuration</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.varscan_somatic&nbsp;?adjust_mapq:<span class="constructor">None</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.muse<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Muse</span>.<span class="constructor">Configuration</span>.wes;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.virmid<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Virmid</span>.<span class="constructor">Configuration</span>.default;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;aligned_pairs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;(([&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list&nbsp;*&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list)&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;([&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;]&nbsp;*&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;])&nbsp;list)&nbsp;<span class="constructor">Bfx</span>.repr&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;aligners&nbsp;~f:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;(al&nbsp;:&nbsp;([&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Bam</span>&nbsp;])&nbsp;<span class="constructor">Bfx</span>.repr)&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(align_list&nbsp;al&nbsp;(<span class="constructor">Bfx</span>.pair_first&nbsp;pair&nbsp;:&nbsp;[&nbsp;<span class="keywordsign">`</span><span class="constructor">Fastq</span>&nbsp;]&nbsp;list&nbsp;<span class="constructor">Bfx</span>.repr))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(align_list&nbsp;al&nbsp;(<span class="constructor">Bfx</span>.pair_second&nbsp;pair))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcfs&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">List</span>.map&nbsp;somatic_vcs&nbsp;~f:(<span class="keyword">fun</span>&nbsp;vc&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;(<span class="constructor">Bfx</span>.apply&nbsp;aligned_pairs&nbsp;pair)&nbsp;~f:(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;bam_pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;(||&gt;)&nbsp;x&nbsp;f&nbsp;=&nbsp;<span class="constructor">Bfx</span>.apply&nbsp;f&nbsp;x&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indelreal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.gatk_indel_realigner_joint<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pair)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;map_pair&nbsp;f&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b1&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;b2&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair_second&nbsp;pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair&nbsp;(f&nbsp;b1)&nbsp;(f&nbsp;b2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bqsr_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.gatk_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;map_pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;markdups_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.picard_mark_duplicates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;map_pair&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bam_pair&nbsp;||&gt;&nbsp;markdups_pair&nbsp;||&gt;&nbsp;indelreal&nbsp;||&gt;&nbsp;bqsr_pair&nbsp;||&gt;&nbsp;vc<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;||&gt;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;workflow_of_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;pair&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Bfx</span>.apply&nbsp;aligned_pairs&nbsp;pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;~f:(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;p<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.stringtie<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Stringtie</span>.<span class="constructor">Configuration</span>.default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.apply&nbsp;vcfs&nbsp;pair&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.apply<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;p&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.concat&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.seq2hla))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span>&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.apply<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;<span class="constructor">Bfx</span>.pair_second&nbsp;p&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.concat&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.optitype&nbsp;<span class="keywordsign">`</span><span class="constructor">RNA</span>))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">begin</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.apply&nbsp;aligned_pairs&nbsp;pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;~f:(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;p&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;p<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.gatk_haplotype_caller<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">end</span>;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.apply&nbsp;workflow_of_pair&nbsp;(<span class="constructor">Bfx</span>.pair&nbsp;normal&nbsp;tumor)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"normal-1"</span>,&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(<span class="string">"/input/normal-1-001-r1.fastq"</span>,&nbsp;<span class="string">"/input/normal-1-001-r2.fastq"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(<span class="string">"/input/normal-1-002-r1.fastq"</span>,&nbsp;<span class="string">"/input/normal-1-002-r2.fastq"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(<span class="string">"/input/normal-1-003-r1.fqz"</span>,&nbsp;&nbsp;&nbsp;<span class="string">"/input/normal-1-003-r2.fqz"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="string">"tumor-1"</span>,&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(<span class="string">"/input/tumor-1-001-r1.fastq.gz"</span>,&nbsp;<span class="string">"/input/tumor-1-001-r2.fastq.gz"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keywordsign">`</span><span class="constructor">Pair</span>&nbsp;(<span class="string">"/input/tumor-1-002-r1.fastq.gz"</span>,&nbsp;<span class="string">"/input/tumor-1-002-r2.fastq.gz"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.observe&nbsp;(<span class="keyword">fun</span>&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;every_vc_on_fastqs<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~reference_build:<span class="string">"b37"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~normal:(fastq_list&nbsp;~dataset:(fst&nbsp;normal)&nbsp;(snd&nbsp;normal))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~tumor:(fastq_list&nbsp;~dataset:(fst&nbsp;tumor)&nbsp;(snd&nbsp;tumor))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">module</span>&nbsp;<span class="constructor">Somatic_simplish</span>(<span class="constructor">Bfx</span>:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">EDSL</span>.<span class="constructor">Semantics</span>)&nbsp;=&nbsp;<span class="keyword">struct</span><br>
+<br>
+&nbsp;&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Insane_library</span>&nbsp;=&nbsp;<span class="constructor">Pipeline_insane</span>(<span class="constructor">Bfx</span>)<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vc&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Insane_library</span>.(fastq_list&nbsp;&nbsp;~dataset:(fst&nbsp;normal)&nbsp;(snd&nbsp;normal))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Insane_library</span>.(fastq_list&nbsp;&nbsp;~dataset:(fst&nbsp;tumor)&nbsp;(snd&nbsp;tumor))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;ot_hla&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normal&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.concat&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.optitype&nbsp;<span class="keywordsign">`</span><span class="constructor">DNA</span>&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;align&nbsp;fastq&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list_map&nbsp;fastq&nbsp;~f:(<span class="constructor">Bfx</span>.lambda&nbsp;(<span class="keyword">fun</span>&nbsp;fq&nbsp;<span class="keywordsign">-&gt;</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.bwa_mem&nbsp;fq<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~reference_build:<span class="string">"b37"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.picard_mark_duplicates<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Picard</span>.<span class="constructor">Mark_duplicates_settings</span>.default<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;))&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal_bam&nbsp;=&nbsp;align&nbsp;normal&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;tumor_bam&nbsp;=&nbsp;align&nbsp;tumor&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.merge_bams&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;bam_pair&nbsp;=&nbsp;<span class="constructor">Bfx</span>.pair&nbsp;normal_bam&nbsp;tumor_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;indel_realigned_pair&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.gatk_indel_realigner_joint&nbsp;bam_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_indel_realigner<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_normal_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_first&nbsp;indel_realigned_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.gatk_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;final_tumor_bam&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.pair_second&nbsp;indel_realigned_pair<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.gatk_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;~configuration:&nbsp;<span class="constructor">Biokepi</span>.<span class="constructor">Tools</span>.<span class="constructor">Gatk</span>.<span class="constructor">Configuration</span>.default_bqsr<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;vcfs&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;normal,&nbsp;tumor&nbsp;=&nbsp;final_normal_bam,&nbsp;final_tumor_bam&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.mutect&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.somaticsniper&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.strelka&nbsp;~normal&nbsp;~tumor&nbsp;();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.list&nbsp;[<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.to_unit&nbsp;vcfs;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ot_hla;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]&nbsp;|&gt;&nbsp;<span class="constructor">Bfx</span>.to_unit<br>
+<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;run&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="constructor">Bfx</span>.observe&nbsp;(<span class="keyword">fun</span>&nbsp;()&nbsp;<span class="keywordsign">-&gt;</span>&nbsp;vc)<br>
+<span class="keyword">end</span><br>
+<br>
+<span class="keyword">let</span>&nbsp;()&nbsp;=<br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Go_insane</span>&nbsp;=&nbsp;<span class="constructor">Run_test</span>(<span class="constructor">Pipeline_insane</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;insane_result&nbsp;=&nbsp;&nbsp;<span class="constructor">Go_insane</span>.main&nbsp;<span class="string">"pipeline-insane"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span class="keyword">module</span>&nbsp;<span class="constructor">Go_simple_somatic</span>&nbsp;=&nbsp;<span class="constructor">Run_test</span>(<span class="constructor">Somatic_simplish</span>)&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;simple_somatic_result&nbsp;=&nbsp;&nbsp;<span class="constructor">Go_simple_somatic</span>.main&nbsp;<span class="string">"pipeline-simple-somatic"</span>&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;<span class="keyword">let</span>&nbsp;display_result&nbsp;mod_name&nbsp;results&nbsp;=<br>
+&nbsp;&nbsp;&nbsp;&nbsp;printf&nbsp;<span class="string">"-&nbsp;`%s`:\n%s\n%!"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mod_name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="constructor">List</span>.map&nbsp;results&nbsp;~f:(sprintf&nbsp;<span class="string">"&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;%s\n"</span>)&nbsp;|&gt;&nbsp;<span class="constructor">String</span>.concat&nbsp;<span class="string">""</span>);<br>
+&nbsp;&nbsp;<span class="keyword">in</span><br>
+&nbsp;&nbsp;printf&nbsp;<span class="string">"\n###&nbsp;Test&nbsp;results:\n\n"</span>;<br>
+&nbsp;&nbsp;display_result&nbsp;<span class="string">"Pipeline_insane"</span>&nbsp;insane_result;<br>
+&nbsp;&nbsp;display_result&nbsp;<span class="string">"Somatic_simplish"</span>&nbsp;simple_somatic_result;<br>
+&nbsp;&nbsp;()<br>
+</code></body></html>
