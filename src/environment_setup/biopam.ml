@@ -26,6 +26,7 @@ type install_target = {
   requires_conda: bool;
   repository: [ `Biopam | `Opam | `Custom of string ];
   compiler: string option;
+  pin: string option;
 }
 let install_target
     ?(tool_type = `Application)
@@ -38,13 +39,14 @@ let install_target
     ?package
     ?(repository = `Biopam)
     ?compiler
+    ?pin
     definition =
   let package =
     match package with
     | Some p -> p
     | None -> Machine.Tool.Definition.to_opam_name definition in
   {definition; tool_type; package; witness; test; edges;
-   init_environment; requires_conda; repository; compiler}
+   init_environment; requires_conda; repository; compiler; pin}
 
 let default_test ~host path =
   KEDSL.Command.shell ~host (sprintf "test -e %s" path)
@@ -160,6 +162,12 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     | `Custom c -> "4.02.3", c
   in
   let compiler = Option.value it.compiler ~default:default_compiler in
+  let pin_command =
+    match it.pin with
+    | None -> Program.sh "echo 'Package Not Pinned'"
+    | Some url ->
+      Opam.program_sh ~root_name ~install_path "pin add -n %s %s" package url
+  in
   let edges =
     let edges =
       [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
@@ -178,6 +186,7 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
         && Opam.program_sh
           ~install_path ~root_name "init --comp=%s %s"
           compiler (Filename.quote repo_url)
+        && pin_command
         && Opam.program_sh ~root_name ~install_path "install %s" package
       )
   in
