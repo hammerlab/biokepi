@@ -54,6 +54,9 @@ type install_target = private {
   (** Which compiler should be used to create the tool's own installation
       opam-switch.  *)
   compiler: string option;
+
+  (** Use ["opam pin"]. *)
+  pin: string option;
 }
 
 val install_target:
@@ -66,6 +69,7 @@ val install_target:
   ?package:string ->
   ?repository:[ `Biopam | `Custom of string | `Opam ] ->
   ?compiler:string ->
+  ?pin: string ->
   Machine.Tool.Definition.t ->
   install_target
 (** Create {!install_target} values.
@@ -95,6 +99,7 @@ val install_target:
     - [compiler]: Which compiler should be used to create the tool's own
     installation opam-switch (the default is [None] corresponding to ["0.0.0"]
     for [`Biopam] and ["4.02.3"] for [`Opam] or [`Custom _])
+    - [pin]: use ["opam pin"] on the given URL.
     - anonymous argument: the tool that the installation-target provides.
 *)
 
