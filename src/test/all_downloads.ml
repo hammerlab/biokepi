@@ -43,6 +43,15 @@ let ledit =
     ~compiler:"4.02.3"
 
 
+let hlarp_def = Biokepi.Machine.Tool.Definition.create "hlarp" ~version:"dev"
+let hlarp =
+  Biokepi.Setup.Biopam.install_target hlarp_def
+    ~tool_type:`Application
+    ~witness:"hlarp"
+    ~repository:`Opam
+    ~compiler:"4.02.3"
+    ~pin:"https://github.com/hammerlab/hlarp.git"
+
 let toolkit =
   let install_tools_path = destination_path // "tools" in
   Biokepi.Machine.Tool.Kit.concat [
@@ -54,6 +63,9 @@ let toolkit =
       Biokepi.Setup.Biopam.provide ~host ~run_program
         ~install_path:(install_tools_path // "biopam-kit")
         ledit;
+      Biokepi.Setup.Biopam.provide ~host ~run_program
+        ~install_path:(install_tools_path // "biopam-kit")
+        hlarp;
     ];
     Biokepi_environment_setup.Tool_providers.default_toolkit () ~host
       ~run_program ~install_tools_path;
@@ -128,6 +140,7 @@ let tools_workflow =
       optitype, which_size_and "OptiTypePipeline" ["OptiTypePipeline -h"];
       ledit_def,  which_size_and "ledit" ["ledit -v"];
       biocaml_def, ["ocamlfind list | grep biocaml"];
+      hlarp_def, ["hlarp --version"];
      ]
   in
   let open Ketrew.EDSL in
