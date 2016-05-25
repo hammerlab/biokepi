@@ -182,5 +182,9 @@ module type Bioinformatics_base = sig
     unit ->
     [ `Vcf ] repr
 
+  val fastqc: [ `Fastq ] repr -> [ `Fastqc ] repr
+  (** Call the FASTQC tool (the result is an output directory custom to the
+      tool). *)
+
 end
 

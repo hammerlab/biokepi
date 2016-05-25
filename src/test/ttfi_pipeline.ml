@@ -247,6 +247,12 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
                 pair
               |> Bfx.to_unit
             end;
+            begin
+              Bfx.apply
+                (Bfx.lambda (fun p -> Bfx.pair_first p |> Bfx.concat |> Bfx.fastqc))
+                pair
+              |> Bfx.to_unit
+            end;
             begin 
               Bfx.apply
                 (Bfx.lambda (fun p -> Bfx.pair_second p |> Bfx.concat |> Bfx.optitype `RNA))

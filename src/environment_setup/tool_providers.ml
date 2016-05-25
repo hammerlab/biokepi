@@ -444,6 +444,7 @@ let default_toolkit
       install @@ hisat Machine.Tool.Default.hisat2;
       install mosaik;
       install kallisto;
+      install fastqc;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
