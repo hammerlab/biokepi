@@ -172,6 +172,10 @@ module Make_serializer (How : sig
   let seq2hla =
     one_to_one "seq2hla" "default"
 
+  let fastqc =
+    one_to_one "fastqc" "default"
+
+
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
 

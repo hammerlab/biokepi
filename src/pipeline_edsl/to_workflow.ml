@@ -15,6 +15,7 @@ module File_type_specification = struct
     | Gtf: single_file workflow_node -> [ `Gtf ] t
     | Seq2hla_result: list_of_files workflow_node -> [ `Seq2hla_result ] t
     | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
+    | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -28,6 +29,7 @@ module File_type_specification = struct
     | Vcf _ -> "Vcf"
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
+    | Fastqc_result _ -> "Fastqc_result"
     | Optitype_result _ -> "Optitype_result"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
@@ -62,6 +64,11 @@ module File_type_specification = struct
     | Seq2hla_result v -> v
     | o -> fail_get o "Seq2hla_result"
 
+  let get_fastqc_result : [ `Fastqc ] t -> list_of_files workflow_node =
+    function
+    | Fastqc_result v -> v
+    | o -> fail_get o "Fastqc_result"
+
   let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
@@ -95,6 +102,7 @@ module File_type_specification = struct
     | Vcf wf ->   one_depends_on wf
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
+    | Fastqc_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
@@ -433,6 +441,17 @@ module Make (Config : Compiler_configuration)
       Tools.Seq2HLA.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
+
+  let fastqc fq =
+    let fastq = get_fastq fq in
+    let output_folder =
+      Config.work_dir //
+      sprintf "%s-%s_fastqc-result"
+        fastq#product#escaped_sample_name
+        fastq#product#fragment_id_forced
+    in
+    Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
+
 
   let optitype how fq =
     let fastq = get_fastq fq in

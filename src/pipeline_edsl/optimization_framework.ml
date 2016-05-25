@@ -146,4 +146,7 @@ module Generic_optimizer
   let virmid ?configuration ~normal ~tumor () =
     fwd (Input.virmid ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
 
+  let fastqc fq =
+    fwd (Input.fastqc (bwd fq))
+
 end
