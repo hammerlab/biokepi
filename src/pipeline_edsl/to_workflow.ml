@@ -40,8 +40,7 @@ module File_type_specification = struct
   let fail_get other name =
     ksprintf failwith "Error while extracting File_type_specification.t \
                        (%s case, in %s), this usually means that the type \
-                       has been wrongly extended, and provides more than one \
-                       [ `%s ] t case" name (to_string other) name
+                       has been wrongly extended" (to_string other) name
 
   let get_fastq : [ `Fastq ] t -> fastq_reads workflow_node = function
   | Fastq b -> b
