@@ -52,4 +52,6 @@ let default ~host ~run_program ~install_tools_path () =
     create_python_tool ~host ~run_program ~install_tools_path 
       ~check_bin:"isovar-protein-sequences"
       (Pip, Package_Source ("isovar", "git+https://github.com/hammerlab/isovar"));
+    create_python_tool ~host ~run_program ~install_tools_path 
+      (Pip, Package_Source ("topiary", "git+https://github.com/hammerlab/topiary"));
    ]
