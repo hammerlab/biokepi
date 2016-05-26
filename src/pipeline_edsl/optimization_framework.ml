@@ -153,5 +153,7 @@ module Generic_optimizer
     fwd (Input.vcf_annotate_polyphen reference_build (bwd vcf))
   let isovar ?configuration reference_build vcf bam =
     fwd (Input.isovar ?configuration reference_build (bwd vcf) (bwd bam))
+  let topiary ?configuration reference_build vcf predictor alleles = 
+    fwd (Input.topiary ?configuration reference_build (bwd vcf) predictor (bwd alleles))
 
 end

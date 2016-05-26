@@ -196,7 +196,15 @@ module type Bioinformatics_base = sig
     Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     [ `Bam ] repr ->
-    [ `Isovar ] repr 
+    [ `Isovar ] repr
+
+  val topiary:
+    ?configuration: Topiary.Configuration.t ->
+    Biokepi_run_environment.Reference_genome.name ->
+    [ `Vcf ] repr ->
+    Topiary.predictor_type ->
+    [ `Alleles ] repr ->
+    [ `Topiary ] repr
 
 end
 

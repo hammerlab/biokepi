@@ -181,6 +181,11 @@ module Make_serializer (How : sig
   let isovar ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
     one_to_one "isovar" "default"
 
+  let topiary 
+    ?(configuration = Tools.Topiary.Configuration.default) 
+    reference_build vcf predictor =
+    one_to_one "topiary" "default"
+
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
 
