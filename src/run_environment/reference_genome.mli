@@ -41,6 +41,8 @@ module Specification : sig
   end
   type t = private {
     name : name;
+    ensembl : int;
+    species : string;
     metadata : string option;
     fasta : Location.t;
     dbsnp : Location.t option;
@@ -53,6 +55,8 @@ module Specification : sig
   val create :
     ?metadata:string ->
     fasta:Location.t ->
+    ensembl:int ->
+    species:string ->
     ?dbsnp:Location.t ->
     ?cosmic:Location.t ->
     ?exome_gtf:Location.t ->
@@ -110,6 +114,8 @@ val create :
 (** {5 Usual Accessors } *)
 
 val name : t -> name
+val ensembl : t -> int
+val species : t -> string
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string

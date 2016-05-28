@@ -51,5 +51,7 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_
 let default ~host ~run_program ~install_tools_path () =
    Machine.Tool.Kit.of_list [
     create_python_tool ~host ~run_program ~install_tools_path 
+      (Pip, Package_PyPI "pyensembl");
+    create_python_tool ~host ~run_program ~install_tools_path 
       (Pip, Package_PyPI "vcf-annotate-polyphen");
    ]
