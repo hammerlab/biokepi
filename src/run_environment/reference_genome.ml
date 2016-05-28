@@ -176,8 +176,8 @@ module Default = struct
       "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/\
        mgp.v3.indels.rsIDdbSNPv137.vcf.gz" in
     let gene_annotations_gtf =
-      "ftp://ftp.ensembl.org/pub/release-79/gtf/mus_musculus/\
-       Mus_musculus.GRCm38.79.gtf.gz" in
+      "ftp://ftp.ensembl.org/pub/release-84/gtf/mus_musculus/\
+       Mus_musculus.GRCm38.84.gtf.gz" in
     create Name.mm10
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
