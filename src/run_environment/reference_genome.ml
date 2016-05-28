@@ -22,6 +22,8 @@ module Specification = struct
 
   type t = {
     name: string;
+    ensembl: int;
+    species: string;
     metadata: string option;
     fasta: Location.t;
     dbsnp: Location.t option;
@@ -35,6 +37,8 @@ module Specification = struct
   let create
       ?metadata
       ~fasta
+      ~ensembl
+      ~species
       ?dbsnp
       ?cosmic
       ?exome_gtf
@@ -43,6 +47,8 @@ module Specification = struct
       ?major_contigs
       name = {
     name;
+    ensembl;
+    species;
     metadata;
     fasta;
     dbsnp;
@@ -96,8 +102,13 @@ module Default = struct
     "ftp://genetics.bwh.harvard.edu/pph2/whess/\
      polyphen-2.2.2-whess-2011_12.sqlite.bz2"
 
+  let human = "homo sapiens"
+  let mouse = "mus musculus"
+
   let b37 =
     create Name.b37
+      ~species:human
+      ~ensembl:75
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -115,6 +126,8 @@ module Default = struct
 
   let b37decoy =
     create Name.b37decoy
+      ~species:human
+      ~ensembl:75
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -143,6 +156,8 @@ module Default = struct
       "http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
     create Name.b38
+      ~species:human
+      ~ensembl:79
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(url b38_url|> gunzip)
@@ -158,6 +173,8 @@ module Default = struct
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg18/dbsnp_138.hg18.vcf.gz" in
     create Name.hg18
+      ~ensembl:54
+      ~species:human
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg18_url|> gunzip)
@@ -170,6 +187,8 @@ module Default = struct
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg19/dbsnp_138.hg19.vcf.gz" in
     create Name.hg19
+      ~ensembl:75
+      ~species:human
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg19_url|> gunzip)
@@ -190,6 +209,8 @@ module Default = struct
       "ftp://ftp.ensembl.org/pub/release-79/gtf/mus_musculus/\
        Mus_musculus.GRCm38.79.gtf.gz" in
     create Name.mm10
+      ~ensembl:84
+      ~species:mouse
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
       ~fasta:Location.(url mm10_url |> gunzip)
@@ -222,8 +243,9 @@ type t = {
 let create ?cosmic ?dbsnp ?gtf ?cdna ?whess specification location =
   {specification; location; cosmic; dbsnp; gtf; cdna; whess}
 
-
 let name t = t.specification.Specification.name
+let ensembl t = t.specification.Specification.ensembl
+let species t = t.specification.Specification.species
 let path t = t.location#product#path
 let cosmic_path_exn t =
   let msg = sprintf "cosmic_path_exn of %s" (name t) in
