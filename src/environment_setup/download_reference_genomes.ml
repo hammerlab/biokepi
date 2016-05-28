@@ -12,6 +12,8 @@ let of_specification
   let {
     Specification.
     name;
+    ensembl;
+    species;
     metadata;
     fasta;
     dbsnp;

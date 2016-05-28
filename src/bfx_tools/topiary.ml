@@ -55,6 +55,7 @@ let run ~(run_with: Machine.t)
   ?padding_around_mutation
   ?self_filter_directory
   ?(skip_variant_errors=false)
+  ~reference_build
   ~variants
   ~predictor
   ~alleles
@@ -102,10 +103,15 @@ let run ~(run_with: Machine.t)
   let padding_arg = maybe_argument ~f:string_of_int "--padding-around-mutation" padding_around_mutation in 
   let self_filter_directory = maybe_argument ~f:str_of_str "--self-filter-directory" self_filter_directory in
   let skip_error_arg = if skip_variant_errors then ["--skip-variant-errors"] else [] in
+  let ensembl = 
+    Machine.(get_reference_genome run_with reference_build) 
+    |> Reference_genome.ensembl
+  in
+  let ensembl_arg = ["--ensembl-version"; string_of_int ensembl] in
   let arguments = 
       var_arg @ predictor_arg @ allele_arg @ output_arg @ rna_arg
       @ length_arg @ novel_arg @ ic50_arg @ percentile_arg @ padding_arg
-      @ skip_error_arg @ self_filter_directory
+      @ skip_error_arg @ self_filter_directory @ ensembl_arg
   in
   let name = sprintf "topiary_%s" (Filename.basename output_path) in
   workflow_node
@@ -113,6 +119,7 @@ let run ~(run_with: Machine.t)
     ~name
     ~edges:[
       depends_on Machine.Tool.(ensure topiary);
+      depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
     ]
     ~make:(
       Machine.run_program run_with ~name

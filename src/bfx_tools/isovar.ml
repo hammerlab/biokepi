@@ -25,6 +25,7 @@ let run ~(run_with: Machine.t)
     ~name
     ~edges:[
       depends_on Machine.Tool.(ensure isovar_tool);
+      depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
     ]
     ~make:(
       Machine.run_program run_with ~name
