@@ -6,13 +6,13 @@ let rm_path = Workflow_utilities.Remove.path_on_host
 
 let generic_installation
     ~(run_program : Machine.Make_fun.t)
-    ~host ~install_path 
+    ~host ~install_path
     ~install_program ~witness ~url
     ?unarchived_directory
     tool_name =
   let archive = Filename.basename url in
-  let archive_kind = 
-    if Filename.check_suffix url "bz2" then `Tar "j" 
+  let archive_kind =
+    if Filename.check_suffix url "bz2" then `Tar "j"
     else if Filename.check_suffix url "gz"  then `Tar "z"
     else if Filename.check_suffix url "tar" then `Tar ""
     else if Filename.check_suffix url "zip" then `Zip
@@ -27,13 +27,15 @@ let generic_installation
                      ~default:(tool_name ^ "*")) in
     match archive_kind with
     | `Tar tar_option ->
-      chain [ shf "tar xvf%s %s" tar_option archive; and_cd ]
+      chain [shf "tar xvf%s %s" tar_option archive;
+             shf "rm f %s" archive; and_cd]
     | `Zip ->
-      chain [ shf "unzip %s" archive; and_cd]
+      chain [shf "unzip %s" archive; shf "rm -f %s" archive; and_cd]
     | `Deb ->
       chain [
         exec ["ar"; "x"; archive];
         exec ["tar"; "xvfz"; "data.tar.gz"];
+        exec ["rm"; "-f"; "data.tar.gz"];
       ]
     | `None -> sh "echo Not-an-archive"
   in
@@ -88,7 +90,7 @@ let render_installable_tool ~run_program ~host ~install_tools_path tool =
   let  ensure =
     generic_installation
       ?unarchived_directory:tool.unarchived_directory
-      ~run_program ~host 
+      ~run_program ~host
       ~install_path:path
       ~install_program:(tool.install_program ~path)
       ~witness:(tool.witness ~host ~path)
@@ -113,8 +115,8 @@ let witness_list l =
     KEDSL.list_of_files ~host (List.map l ~f:(fun bin -> path // bin))
     |> fun p -> object method is_done = p#is_done end
 
-let bwa = 
-  installable_tool 
+let bwa =
+  installable_tool
     Machine.Tool.Default.bwa
     ~url:"http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2"
     ~install_program:(make_and_copy_bin "bwa")
@@ -186,7 +188,7 @@ let star =
 
 let hisat tool =
   let open KEDSL in
-  let url, hisat_binary = 
+  let url, hisat_binary =
     let open Machine.Tool.Default in
     match tool with
     | one when one = hisat ->
@@ -237,12 +239,12 @@ let samtools =
 
 
 let cufflinks =
-  let url = 
+  let url =
     "http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/\
      cufflinks-2.2.1.Linux_x86_64.tar.gz" in
   let witness = witness_file "cufflinks" in
   let install_program ~path = KEDSL.Program.(shf "cp * %s" path) in
-  installable_tool Machine.Tool.Default.cufflinks ~install_program ~url 
+  installable_tool Machine.Tool.Default.cufflinks ~install_program ~url
     ~init_program:add_to_dollar_path ~witness
 
 let somaticsniper =
@@ -294,7 +296,7 @@ type broad_jar_location = [
 
 let get_broad_jar
     ~(run_program : Machine.Make_fun.t)
-    ~host ~install_path 
+    ~host ~install_path
     loc =
   let open KEDSL in
   let jar_name =
@@ -349,7 +351,7 @@ let gatk_tool
   Machine.Tool.create tool ~ensure
     ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
 
-(** 
+(**
 
 Strelka is built from source but does not seem to build on MacOSX.
 
@@ -396,11 +398,11 @@ let muse =
 
 let fastqc =
   let url =
-    "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip" 
+    "http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip"
   in
   let binary = "fastqc" in
   let binary_path path = path // binary in
-  let init_program ~path = 
+  let init_program ~path =
     KEDSL.Program.(shf "export FASTQC_BIN=%s" (binary_path path))
   in
   installable_tool Machine.Tool.Default.fastqc ~url
@@ -449,4 +451,3 @@ let default_toolkit
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
   ]
-
