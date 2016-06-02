@@ -5,7 +5,7 @@ let run ~(run_with:Machine.t) ~fastq ~output_folder =
   let open KEDSL in
   let open Ketrew_pure.Target.Volume in
   let fastqc = Machine.get_tool run_with Machine.Tool.Default.fastqc in
-  let paths = 
+  let paths =
       let r1_path, r2_path_opt = fastq#product#paths in
       match r2_path_opt with
       | Some r2_path -> [r1_path; r2_path]
@@ -16,8 +16,8 @@ let run ~(run_with:Machine.t) ~fastq ~output_folder =
     match parts with
     | [] -> failwith "Couldn't guess the fastq filename from the path."
     | hd :: tl -> hd
-  in    
-  let output_files = 
+  in
+  let output_files =
     paths
     |> List.map ~f:get_file_name
     |> List.map ~f:(fun p -> Re.replace_string (Re_posix.compile_pat ".fastq$") "_fastqc.html" p)
@@ -36,4 +36,5 @@ let run ~(run_with:Machine.t) ~fastq ~output_folder =
     ~edges: [
       on_failure_activate (Workflow_utilities.Remove.directory ~run_with output_folder);
       depends_on (Machine.Tool.ensure fastqc);
+      depends_on fastq;
     ]
