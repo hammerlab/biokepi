@@ -411,7 +411,8 @@ let fastqc =
         shf "cp -r * %s" path
         && shf "chmod +x %s" (binary_path path)
       )
-  ~init_program
+    ~init_program
+    ~unarchived_directory:"FastQC"
 
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
