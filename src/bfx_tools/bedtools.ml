@@ -12,11 +12,14 @@ module Configuration = struct
                                     together and passed to the command. *)
       with_headers: bool;      (** The header of A will be prepended to the
                                    output. [-header]. *)
+      unique_features: bool;    (** Write the original A entry one if any
+                                    overlaps found in B. *)
     }
-    let default = { params = []; with_headers = true; }
+    let default = { params = []; with_headers = true; unique_features = true; }
 
-    let render {params; with_headers} =
+    let render {params; with_headers; unique_features; } =
       (if with_headers then " -header " else " ")
+      ^ (if unique_features then " -u " else " ")
       ^ (String.concat ~sep:" " params)
   end
 end
