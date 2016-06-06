@@ -13,7 +13,9 @@ module File_type_specification = struct
     | Bam: bam_file workflow_node -> [ `Bam ] t
     | Vcf: single_file workflow_node -> [ `Vcf ] t
     | Gtf: single_file workflow_node -> [ `Gtf ] t
-    | Seq2hla_result: list_of_files workflow_node -> [ `Seq2hla_result ] t
+    | Seq2hla_result:
+        Seq2HLA.product workflow_node ->
+      [ `Seq2hla_result ] t
     | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
@@ -58,7 +60,8 @@ module File_type_specification = struct
   | Gtf v -> v
   | o -> fail_get o "Gtf"
 
-  let get_seq2hla_result : [ `Seq2hla_result ] t -> list_of_files workflow_node =
+  let get_seq2hla_result : [ `Seq2hla_result ] t ->
+    Seq2HLA.product workflow_node =
     function
     | Seq2hla_result v -> v
     | o -> fail_get o "Seq2hla_result"
