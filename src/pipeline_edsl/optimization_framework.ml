@@ -145,8 +145,38 @@ module Generic_optimizer
     fwd (Input.muse ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
   let virmid ?configuration ~normal ~tumor () =
     fwd (Input.virmid ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
-
   let fastqc fq =
     fwd (Input.fastqc (bwd fq))
-
+  let vcf_annotate_polyphen reference_build vcf =
+    fwd (Input.vcf_annotate_polyphen reference_build (bwd vcf))
+  let isovar ?min_reads ?protein_sequence_length reference_build vcf bam =
+    fwd (Input.isovar ?min_reads ?protein_sequence_length reference_build (bwd vcf) (bwd bam))
+  let topiary 
+    ?rna_gene_fpkm_tracking_file
+    ?rna_min_gene_expression
+    ?rna_transcript_fpkm_tracking_file
+    ?rna_min_transcript_expression
+    ?rna_transcript_fkpm_gtf_file
+    ?mhc_epitope_lengths
+    ?only_novel_epitopes
+    ?ic50_cutoff
+    ?percentile_cutoff
+    ?padding_around_mutation
+    ?self_filter_directory
+    ?skip_variant_errors
+    reference_build variants_vcf predictor allele_file =
+    fwd (Input.topiary 
+      ?rna_gene_fpkm_tracking_file
+      ?rna_min_gene_expression
+      ?rna_transcript_fpkm_tracking_file
+      ?rna_min_transcript_expression
+      ?rna_transcript_fkpm_gtf_file
+      ?mhc_epitope_lengths
+      ?only_novel_epitopes
+      ?ic50_cutoff
+      ?percentile_cutoff
+      ?padding_around_mutation
+      ?self_filter_directory
+      ?skip_variant_errors
+      reference_build variants_vcf predictor allele_file)
 end

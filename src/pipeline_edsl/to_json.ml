@@ -175,6 +175,17 @@ module Make_serializer (How : sig
   let fastqc =
     one_to_one "fastqc" "default"
 
+  let topiary =
+    one_to_one "topiary" "default"
+
+  let vcf_annotate_polyphen = 
+    one_to_one "vcf_annotate_polyphen" "default"
+
+  let isovar =
+    one_to_one "isovar" "default"
+
+  let pyensembl = 
+    one_to_one "pyensembl" "default"
 
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")

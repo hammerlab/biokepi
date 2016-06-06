@@ -186,5 +186,37 @@ module type Bioinformatics_base = sig
   (** Call the FASTQC tool (the result is an output directory custom to the
       tool). *)
 
+  val vcf_annotate_polyphen: 
+    Biokepi_run_environment.Reference_genome.name ->
+    [ `Vcf ] repr -> 
+    [ `Vcf ] repr
+
+  val isovar:
+    ?min_reads: int ->
+    ?protein_sequence_length: int ->
+    Biokepi_run_environment.Reference_genome.name ->
+    [ `Vcf ] repr -> 
+    [ `Bam ] repr ->
+    [ `Isovar ] repr
+
+  val topiary:
+    ?rna_gene_fpkm_tracking_file: string ->
+    ?rna_min_gene_expression: float ->
+    ?rna_transcript_fpkm_tracking_file: string ->
+    ?rna_min_transcript_expression: float ->
+    ?rna_transcript_fkpm_gtf_file: string ->
+    ?mhc_epitope_lengths: int list ->
+    ?only_novel_epitopes: string ->
+    ?ic50_cutoff: float ->
+    ?percentile_cutoff: float ->
+    ?padding_around_mutation: int ->
+    ?self_filter_directory: string ->
+    ?skip_variant_errors: bool ->
+    Biokepi_run_environment.Reference_genome.name ->
+    string ->
+    Topiary.predictor_type ->
+    string ->
+    [ `Topiary ] repr
+
 end
 

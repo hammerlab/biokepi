@@ -16,6 +16,8 @@ module File_type_specification = struct
     | Seq2hla_result: list_of_files workflow_node -> [ `Seq2hla_result ] t
     | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
+    | Topiary_result: single_file workflow_node -> [ `Topiary ] t
+    | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -30,6 +32,8 @@ module File_type_specification = struct
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
     | Fastqc_result _ -> "Fastqc_result"
+    | Topiary_result _ -> "Topiary_result"
+    | Isovar_result _ -> "Isovar_result"
     | Optitype_result _ -> "Optitype_result"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
@@ -68,6 +72,16 @@ module File_type_specification = struct
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
 
+  let get_topiary_result : [ `Topiary ] t -> single_file workflow_node =
+    function
+    | Topiary_result v -> v
+    | o -> fail_get o "Topiary_result"
+
+  let get_isovar_result : [ `Isovar ] t -> single_file workflow_node =
+    function
+    | Isovar_result v -> v
+    | o -> fail_get o "Isovar_result"
+
   let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
@@ -102,6 +116,8 @@ module File_type_specification = struct
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
     | Fastqc_result wf -> one_depends_on wf
+    | Topiary_result wf -> one_depends_on wf
+    | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
@@ -451,6 +467,75 @@ module Make (Config : Compiler_configuration)
     in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
 
+  let topiary  
+    ?rna_gene_fpkm_tracking_file
+    ?rna_min_gene_expression
+    ?rna_transcript_fpkm_tracking_file
+    ?rna_min_transcript_expression
+    ?rna_transcript_fkpm_gtf_file
+    ?mhc_epitope_lengths
+    ?only_novel_epitopes
+    ?ic50_cutoff
+    ?percentile_cutoff
+    ?padding_around_mutation
+    ?self_filter_directory
+    ?skip_variant_errors
+    reference_build variants_vcf predictor allele_file =
+    let output_file =
+      Config.work_dir //
+      sprintf "%s_%s_topiary-results.csv"
+        (Filename.chop_extension variants_vcf)
+        (Topiary.predictor_to_string predictor)
+    in
+    Topiary_result (
+      Tools.Topiary.run ~run_with
+        ~reference_build
+        ~variants:(`VCF_file variants_vcf) 
+        ~predictor
+        ~alleles:(`File allele_file)
+        ~output:(`CSV output_file)
+        ?rna_gene_fpkm_tracking_file
+        ?rna_min_gene_expression
+        ?rna_transcript_fpkm_tracking_file
+        ?rna_min_transcript_expression
+        ?rna_transcript_fkpm_gtf_file
+        ?mhc_epitope_lengths
+        ?only_novel_epitopes
+        ?ic50_cutoff
+        ?percentile_cutoff
+        ?padding_around_mutation
+        ?self_filter_directory
+        ?skip_variant_errors
+    )
+
+  let isovar ?min_reads ?protein_sequence_length reference_build vcf bam =
+    let input_vcf = get_vcf vcf in
+    let ivcf = input_vcf#product#path in
+    let input_bam = get_bam bam in
+    let ibam = input_bam#product#path in
+    let output_file =
+      Config.work_dir //
+      sprintf "%s_%s_isovar-result.csv"
+        (Filename.chop_extension ivcf)
+        (Filename.chop_extension ibam)
+    in
+    Isovar_result (
+      Tools.Isovar.run ~run_with 
+        ?min_reads ?protein_sequence_length
+        ~reference_build ~vcf:ivcf ~bam:ibam ~output_file
+    )
+
+  let vcf_annotate_polyphen reference_build vcf =
+    let input_vcf = get_vcf vcf in
+    let input_path = input_vcf#product#path in
+    let output_vcf =
+      Config.work_dir //
+      Filename.chop_extension input_path ^ "_polyphen.vcf"
+    in
+    Vcf (
+      Tools.Vcfannotatepolyphen.run ~run_with 
+        ~reference_build ~vcf:input_path ~output_vcf
+      )
 
   let optitype how fq =
     let fastq = get_fastq fq in
