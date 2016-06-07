@@ -28,7 +28,7 @@ let generic_installation
     match archive_kind with
     | `Tar tar_option ->
       chain [shf "tar xvf%s %s" tar_option archive;
-             shf "rm f %s" archive; and_cd]
+             shf "rm -f %s" archive; and_cd]
     | `Zip ->
       chain [shf "unzip %s" archive; shf "rm -f %s" archive; and_cd]
     | `Deb ->
