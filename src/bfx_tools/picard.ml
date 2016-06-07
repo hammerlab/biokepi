@@ -167,7 +167,8 @@ let bam_to_fastq
   let program =
     Program.(
       Machine.Tool.(init picard_jar) &&
-      shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
+      shf "mkdir -p %s" (r1 |> Filename.dirname |> Filename.quote)
+      && shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
         (Filename.quote sorted_bam#product#path)
         (String.concat ~sep:" " fastq_output_options)
     ) in
