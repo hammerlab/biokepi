@@ -447,11 +447,87 @@ let call_gatk ~analysis ?(region=`Full) args =
   sh (String.concat ~sep:" "
         ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
 
-let base_quality_score_recalibrator
+let base_quality_score_recalibrator_on_region
     ~configuration:(bqsr_configuration, print_reads_configuration)
     ~run_with
-    ~input_bam ~output_bam =
+    ~input_bam
+    ~result_prefix
+    ~region =
   let open KEDSL in
+  let region_name = Region.to_filename region in
+  let output_file suffix =
+    sprintf "%s-%s%s" result_prefix region_name suffix in
+  let output_bam = output_file ".bam" in
+  let name =
+    sprintf "gatk-%s-on-%s" (Filename.basename output_bam) region_name in
+  let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
+  let reference_genome =
+    Machine.get_reference_genome run_with input_bam#product#reference_build in
+  let fasta = Reference_genome.fasta reference_genome in
+  let db_snp = Reference_genome.dbsnp_exn reference_genome in
+  let sorted_bam =
+    Samtools.sort_bam_if_necessary
+      ~run_with ~by:`Coordinate input_bam in
+  let input_bam = `Please_use_the_sorted_one in ignore input_bam;
+  let recal_data_table =
+    Filename.chop_suffix sorted_bam#product#path ".bam"
+    ^ sprintf "-%s-recal_data.table" region_name
+  in
+  let processors = Machine.max_processors run_with in
+  let make =
+    Machine.run_big_program run_with ~name ~processors
+      ~self_ids:["gatk"; "bqsr"]
+      Program.(
+        Machine.Tool.(init gatk)
+        && call_gatk ~analysis:"BaseRecalibrator" ~region ([
+          "-nct"; Int.to_string processors;
+          "-I"; sorted_bam#product#path;
+          "-R"; fasta#product#path;
+          "-knownSites"; db_snp#product#path;
+          "-o"; recal_data_table;
+        ] @ Configuration.Bqsr.render bqsr_configuration)
+        && call_gatk ~analysis:"PrintReads" ([
+          "-nct"; Int.to_string processors;
+          "-R"; fasta#product#path;
+          "-I"; sorted_bam#product#path;
+          "-BQSR"; recal_data_table;
+          "-o"; output_bam;
+        ] @ Configuration.Print_reads.render print_reads_configuration)
+      ) in
+  workflow_node ~name (transform_bam sorted_bam#product ~path:output_bam)
+    ~make
+    ~edges:[
+      depends_on Machine.Tool.(ensure gatk);
+      depends_on fasta; depends_on db_snp;
+      depends_on sorted_bam;
+      depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+      on_failure_activate (Remove.file ~run_with output_bam);
+      on_failure_activate (Remove.file ~run_with recal_data_table);
+    ]
+
+let base_quality_score_recalibrator
+    ~configuration ~run_with ~input_bam ~result_prefix how =
+  let reference =
+    Machine.get_reference_genome run_with input_bam#product#reference_build in
+  let run_on_region region =
+    base_quality_score_recalibrator_on_region ~configuration
+      ~run_with ~input_bam ~result_prefix ~region
+  in
+  match how with
+  | `Region region -> run_on_region region
+  (* base_quality_score_recalibrator_on_region ~configuration
+     ~run_with ~input_bam ~result_prefix ~region *)
+  | `Map_reduce ->
+    let all_nodes =
+      List.map (Reference_genome.major_contigs reference)
+        ~f:(run_on_region) (* we add edges only to the last step *)
+    in
+    let result_path = result_prefix ^ "-merged.bam" in
+    Samtools.merge_bams ~run_with all_nodes result_path
+
+
+
+  (* let open KEDSL in
   let name = sprintf "gatk-%s" (Filename.basename output_bam) in
   let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
   let reference_genome =
@@ -495,7 +571,7 @@ let base_quality_score_recalibrator
       depends_on (Samtools.index_to_bai ~run_with sorted_bam);
       on_failure_activate (Remove.file ~run_with output_bam);
       on_failure_activate (Remove.file ~run_with recal_data_table);
-    ]
+    ] *)
 
 
 let haplotype_caller
