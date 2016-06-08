@@ -486,7 +486,7 @@ let base_quality_score_recalibrator_on_region
           "-knownSites"; db_snp#product#path;
           "-o"; recal_data_table;
         ] @ Configuration.Bqsr.render bqsr_configuration)
-        && call_gatk ~analysis:"PrintReads" ([
+        && call_gatk ~analysis:"PrintReads" ~region ([
           "-nct"; Int.to_string processors;
           "-R"; fasta#product#path;
           "-I"; sorted_bam#product#path;
