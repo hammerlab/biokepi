@@ -16,6 +16,7 @@ travis_install_on_linux () {
         4.02.0,1.2.0) ppa=avsm/ocaml42+opam12 ;;
         4.02.2,1.1.0) ppa=avsm/ocaml42+opam11 ;;
         4.02.2,1.2.0) ppa=avsm/ocaml42+opam12 ;;
+        4.02.3,1.2.1) ppa=avsm/ocaml42+opam12 ;;
       *) echo Unknown $OCAML_VERSION,$OPAM_VERSION; exit 1 ;;
     esac
 
@@ -81,6 +82,6 @@ module My_cluster = struct
   let datasets_home = "/datasets/"
   let machine =
     Biokepi.Setup.Build_machine.create "ssh://example.com/tmp/KT/"
-end 
+end
 EOCAML
 ocaml src/examples/edsl_extension_register_result.ml
