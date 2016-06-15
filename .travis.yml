@@ -5,4 +5,4 @@ os:
 - osx
 sudo: true
 env: 
-  - OCAML_VERSION=4.02.2 OPAM_VERSION=1.2.0
+  - OCAML_VERSION=4.02.3 OPAM_VERSION=1.2.1
