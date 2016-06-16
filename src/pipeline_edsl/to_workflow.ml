@@ -95,7 +95,7 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get other "Pair"
 
-  let rec as_dependency_edges : type a. a t -> workflow_edge list = 
+  let rec as_dependency_edges : type a. a t -> workflow_edge list =
     let one_depends_on wf = [depends_on wf] in
     function
     | To_unit v -> as_dependency_edges v
@@ -110,7 +110,7 @@ module File_type_specification = struct
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
     | other -> fail_get other "as_dependency_edges"
 
-  let get_unit_workflow : 
+  let get_unit_workflow :
     name: string ->
     unit t ->
     unknown_product workflow_node =
@@ -129,13 +129,15 @@ module type Compiler_configuration = sig
   val work_dir: string
   val machine : Machine.t
   val map_reduce_gatk_indel_realigner : bool
+  val map_reduce_bqsr : bool
 end
 module Defaults = struct
   let map_reduce_gatk_indel_realigner = true
+  let map_reduce_bqsr = true
 end
 
 
-module Make (Config : Compiler_configuration) 
+module Make (Config : Compiler_configuration)
     : Semantics.Bioinformatics_base
     with type 'a repr = 'a File_type_specification.t and
     type 'a observation = 'a File_type_specification.t
@@ -147,7 +149,7 @@ module Make (Config : Compiler_configuration)
   let failf fmt =
     ksprintf failwith fmt
 
-  type 'a repr = 'a t 
+  type 'a repr = 'a t
   type 'a observation = 'a repr
 
   let observe : (unit -> 'a repr) -> 'a observation = fun f -> f ()
@@ -176,7 +178,7 @@ module Make (Config : Compiler_configuration)
       ~sample_name ?fragment_id ~r1 ?r2 () =
     Fastq (
       KEDSL.workflow_node (KEDSL.fastq_reads ~host ~name:sample_name r1 r2)
-        ~name:(sprintf "Input-fastq: %s (%s)" sample_name 
+        ~name:(sprintf "Input-fastq: %s (%s)" sample_name
                  (Option.value fragment_id ~default:(Filename.basename r1)))
     )
 
@@ -185,7 +187,7 @@ module Make (Config : Compiler_configuration)
     Gz (
       Fastq (
         KEDSL.workflow_node (KEDSL.fastq_reads ~host ~name:sample_name r1 r2)
-          ~name:(sprintf "Input-fastq-gz: %s (%s)" sample_name 
+          ~name:(sprintf "Input-fastq-gz: %s (%s)" sample_name
                    (Option.value fragment_id ~default:(Filename.basename r1)))
       )
     )
@@ -202,7 +204,7 @@ module Make (Config : Compiler_configuration)
       ~configuration ~reference_build fastq =
     let freads = get_fastq fastq in
     let result_prefix =
-      Config.work_dir // 
+      Config.work_dir //
       sprintf "%s-%s_%s-%s"
         freads#product#escaped_sample_name
         (Option.value freads#product#fragment_id ~default:"")
@@ -372,7 +374,7 @@ module Make (Config : Compiler_configuration)
       ?(configuration = Tools.Gatk.Configuration.default_indel_realigner)
       on_what ->
       match Config.map_reduce_gatk_indel_realigner with
-      | true -> 
+      | true ->
         Tools.Gatk.indel_realigner_map_reduce ~run_with ~compress:false
           ~configuration on_what
       | false ->
@@ -402,7 +404,7 @@ module Make (Config : Compiler_configuration)
   let picard_mark_duplicates
       ?(configuration = Tools.Picard.Mark_duplicates_settings.default) bam =
     let input_bam = get_bam bam in
-    let output_bam = 
+    let output_bam =
       (* We assume that the settings do not impact the actual result. *)
       Filename.chop_extension input_bam#product#path ^ "_markdup.bam" in
     Bam (
@@ -412,16 +414,18 @@ module Make (Config : Compiler_configuration)
 
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) bam =
     let input_bam = get_bam bam in
-    let output_bam = 
+    let result_prefix =
       let (bqsr, preads) = configuration in
       Filename.chop_extension input_bam#product#path
-      ^ sprintf "_bqsr-B%sP%s.bam"
+      ^ sprintf "_bqsr-B%sP%s"
         bqsr.Tools.Gatk.Configuration.Bqsr.name
         preads.Tools.Gatk.Configuration.Print_reads.name
     in
+    let how =
+      if Config.map_reduce_bqsr then `Map_reduce else `Region `Full in
     Bam (
       Tools.Gatk.base_quality_score_recalibrator ~configuration
-        ~run_with ~input_bam ~output_bam
+        ~run_with ~input_bam ~result_prefix how
     )
 
   let seq2hla fq =
@@ -511,7 +515,7 @@ module Make (Config : Compiler_configuration)
     )
 
   let mutect =
-    somatic_vc "mutect" 
+    somatic_vc "mutect"
       Tools.Mutect.Configuration.name
       Tools.Mutect.Configuration.default
       (fun
@@ -521,7 +525,7 @@ module Make (Config : Compiler_configuration)
           ~normal ~tumor ~result_prefix `Map_reduce)
 
   let mutect2 =
-    somatic_vc "mutect2" 
+    somatic_vc "mutect2"
       Tools.Gatk.Configuration.Mutect2.name
       Tools.Gatk.Configuration.Mutect2.default
       (fun
@@ -533,7 +537,7 @@ module Make (Config : Compiler_configuration)
           ~result_prefix `Map_reduce)
 
   let somaticsniper =
-    somatic_vc "somaticsniper" 
+    somatic_vc "somaticsniper"
       Tools.Somaticsniper.Configuration.name
       Tools.Somaticsniper.Configuration.default
       (fun
@@ -543,7 +547,7 @@ module Make (Config : Compiler_configuration)
           ~configuration ~run_with ~normal ~tumor ~result_prefix ())
 
   let strelka =
-    somatic_vc "strelka" 
+    somatic_vc "strelka"
       Tools.Strelka.Configuration.name
       Tools.Strelka.Configuration.default
       (fun
@@ -565,7 +569,7 @@ module Make (Config : Compiler_configuration)
       ~configuration:()
 
   let muse =
-    somatic_vc "muse" 
+    somatic_vc "muse"
       Tools.Muse.Configuration.name
       (Tools.Muse.Configuration.default `WGS)
       (fun
@@ -576,7 +580,7 @@ module Make (Config : Compiler_configuration)
           ~run_with ~normal ~tumor ~result_prefix `Map_reduce)
 
   let virmid =
-    somatic_vc "virmid" 
+    somatic_vc "virmid"
       Tools.Virmid.Configuration.name
       Tools.Virmid.Configuration.default
       (fun

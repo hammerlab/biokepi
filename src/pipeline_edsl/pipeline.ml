@@ -514,7 +514,7 @@ module Compiler = struct
     | `Parallel_alignment_over_fastq_fragments of
         [ `Bwa_mem | `Bwa | `Mosaik | `Star | `Hisat ] list
         * workflow_option_failure_mode
-    | `Map_reduce of [ `Gatk_indel_realigner ]
+    | `Map_reduce of [ `Gatk_indel_realigner | `Gatk_bqsr ]
   ]
   type t = {
     reference_build: Reference_genome.name;
@@ -562,10 +562,10 @@ module Compiler = struct
       failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
     | Gunzip_concat (l: fastq_gz pipeline list) ->
       let fastqs =
-        let rec f = 
+        let rec f =
           function
           | Fastq_gz t -> t
-          | With_metadata (metadata_spec, p) -> 
+          | With_metadata (metadata_spec, p) ->
             apply_with_metadata ~metadata_spec (f p)
         in
         List.map l ~f in
@@ -633,7 +633,7 @@ module Compiler = struct
                 match r1, r2 with
                 | (Fastq_gz wf1, Fastq_gz wf2) ->
                   let new_info =
-                    incr count; 
+                    incr count;
                     {info with
                      fragment_id =
                        (* fragmenting = creating fragments of previous fragment *)
@@ -707,9 +707,11 @@ module Compiler = struct
           ~configuration (KEDSL.Single_bam input_bam)
       | Gatk_bqsr (configuration, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
-        let output_bam = result_prefix ^ ".bam" in
+        let how =
+          if has_option compiler ((=) (`Map_reduce `Gatk_bqsr))
+          then `Map_reduce else `Region `Full in
         Gatk.base_quality_score_recalibrator
-          ~configuration ~run_with:machine ~input_bam ~output_bam
+          ~configuration ~run_with:machine ~input_bam ~result_prefix how
       | Picard_mark_duplicates (settings, bam) ->
         let input_bam = compile_aligner_step ~compiler bam in
         let output_bam = result_prefix ^ ".bam" in
