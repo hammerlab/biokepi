@@ -30,7 +30,7 @@ end
 let (//) = Filename.concat
 (** [path // filename] will concat [filename] to the end of [path]. *)
 
-let debug_mode = 
+let debug_mode =
   ref (try Sys.getenv "BIOKEPI_DEBUG" = "true" with _ -> false)
 let dbg fmt = ksprintf (fun s ->
     if !debug_mode
@@ -72,8 +72,8 @@ module KEDSL = struct
   type fastq_reads = <
     is_done: Ketrew_pure.Target.Condition.t option;
     paths : string * (string option);
-    r1 : single_file workflow_node;
-    r2 : single_file workflow_node option;
+    r1 : single_file;
+    r2 : single_file option;
     sample_name: string;
     escaped_sample_name: string;
     fragment_id: string option;
@@ -83,14 +83,14 @@ module KEDSL = struct
     object (self)
       val r1_file = single_file ?host r1
       val r2_file_opt = Option.map r2_opt ~f:(single_file ?host)
-      method r1 =
-        workflow_node r1_file
-          ~name:(sprintf "File: %s" (Filename.basename r1_file#path))
-      method r2 = 
-        Option.map r2_file_opt ~f:(fun r2_file ->
+      method r1 = r1_file
+        (* workflow_node r1_file
+          ~name:(sprintf "File: %s" (Filename.basename r1_file#path)) *)
+      method r2 =  r2_file_opt
+        (* Option.map r2_file_opt ~f:(fun r2_file ->
             workflow_node r2_file
               ~name:(sprintf "File: %s" (Filename.basename r2_file#path))
-          )
+          ) *)
       method paths = (r1, r2_opt)
       method is_done =
         Some (match r2_file_opt with
@@ -106,6 +106,25 @@ module KEDSL = struct
           | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
           | other -> '_')
     end
+
+  let read_1_file_node (fq : fastq_reads workflow_node) =
+    let product = fq#product#r1 in
+    workflow_node product
+      ~name:(sprintf "READ1 of %s-%s"
+               fq#product#sample_name
+               fq#product#fragment_id_forced)
+      ~equivalence:`None
+      ~edges:[depends_on fq]
+
+  let read_2_file_node (fq : fastq_reads workflow_node) =
+    Option.map fq#product#r2 ~f:(fun product ->
+        workflow_node product
+          ~name:(sprintf "READ2 of %s-%s"
+                   fq#product#sample_name
+                   fq#product#fragment_id_forced)
+          ~equivalence:`None
+          ~edges:[depends_on fq]
+      )
 
   (** Create a [fastq_reads workflow_node] from one or two
       [single_file workflow_node](s).
@@ -123,7 +142,7 @@ module KEDSL = struct
     in
     workflow_node product
       ~equivalence:`None
-      ~name:(sprintf "Assembled-fastq: %s (%s)" 
+      ~name:(sprintf "Assembled-fastq: %s (%s)"
                name (Option.value fragment_id
                        ~default:(Filename.basename fastq_r1#product#path)))
       ~edges
@@ -163,7 +182,7 @@ module KEDSL = struct
     bams: bam_file list;
   >
   let bam_list (bams : bam_file list) : bam_list =
-    object 
+    object
       method bams = bams
       method is_done =
         Some (
