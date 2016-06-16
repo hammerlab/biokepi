@@ -562,10 +562,10 @@ module Compiler = struct
       failwith "Compilation of Biokepi.Pipeline.Concat_text: not implemented"
     | Gunzip_concat (l: fastq_gz pipeline list) ->
       let fastqs =
-        let rec f = 
+        let rec f =
           function
           | Fastq_gz t -> t
-          | With_metadata (metadata_spec, p) -> 
+          | With_metadata (metadata_spec, p) ->
             apply_with_metadata ~metadata_spec (f p)
         in
         List.map l ~f in
@@ -633,7 +633,7 @@ module Compiler = struct
                 match r1, r2 with
                 | (Fastq_gz wf1, Fastq_gz wf2) ->
                   let new_info =
-                    incr count; 
+                    incr count;
                     {info with
                      fragment_id =
                        (* fragmenting = creating fragments of previous fragment *)
@@ -876,8 +876,9 @@ module Compiler = struct
            need a unique type for that. *)
       let fastq_pair = fastq_sample_step ~compiler sample in
       let sample_name = fastq_pair#product#sample_name in
-      let r1 = fastq_pair#product#r1 in
-      let r2 = match fastq_pair#product#r2 with
+      let r1 = KEDSL.read_1_file_node fastq_pair in
+      let r2 =
+        match KEDSL.read_2_file_node fastq_pair with
         | Some r2 -> r2
         | _ -> failwithf "Seq2HLA doesn't support Single_end_sample(s)."
       in
