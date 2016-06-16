@@ -2,6 +2,13 @@
 open Nonstd
 let failwithf fmt = ksprintf failwith fmt
 
+type parameters = {
+  color_input: name: string -> attributes: (string * string) list -> string option;
+}
+let default_parameters = {
+  color_input = (fun ~name ~attributes -> None);
+}
+
 module Tree = struct
   type box = { id: string; name : string; attributes: (string * string) list}
   type arrow = {
@@ -46,7 +53,7 @@ module Tree = struct
     let id = make_id (`Of (name, a)) in
     `Input_value {id; name; attributes = a}
 
-  let to_dot t =
+  let to_dot t ~parameters =
     let open SmartPrint in
     let semicolon = string ";" in
     let sentence sp = sp ^-^ semicolon ^-^ newline in
@@ -112,11 +119,16 @@ module Tree = struct
       | `String s ->
         failwithf "`String %S -> should have been eliminated" s
       | `Input_value {id; name; attributes} ->
+        let color =
+          parameters.color_input ~name ~attributes
+          |> Option.value ~default:"black"
+        in
         sentence (
           string id ^^ dot_attributes [
             label_attribute (label name attributes);
             font_name `Mono;
             "shape", in_quotes "Mrecord";
+            "color", in_quotes color;
           ]
         )
         |> one
@@ -155,7 +167,7 @@ end
 
 type 'a repr = var_count: int -> Tree.t
 
-type 'a observation = SmartPrint.t
+type 'a observation = parameters: parameters -> SmartPrint.t
 
 let lambda f =
   fun ~var_count ->

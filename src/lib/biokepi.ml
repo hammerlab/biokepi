@@ -1,4 +1,4 @@
-(** 
+(**
    Top-level entry point into the library
 
 
@@ -14,7 +14,7 @@
    Ketrew-workflow-nodes.
 
    The above modules use:
-   
+
    - some extensions to the Ketrew workflow EDSL see {!Biokepi.KEDSL},
    - and an abstraction of the computing infrastructure of the user of the
    library: {!Biokepi.Machine}.
@@ -94,7 +94,7 @@
     This framework is also extensible, one can add new constructs to the
     language or new transformations while reusing most of the work already
     done.
-  
+
 *)
 module EDSL = struct
 
@@ -135,13 +135,21 @@ module EDSL = struct
        type 'a observation = Yojson.Basic.json =
       Biokepi_pipeline_edsl.To_json
 
-    (** Compiler to 
+    (** Compiler to
         {{:https://en.wikipedia.org/wiki/DOT_(graph_description_language)}DOT}
         graph descriptions.  *)
-    module To_dot : Semantics.Bioinformatics_base
-      with 
-       type 'a observation = SmartPrint.t =
-      Biokepi_pipeline_edsl.To_dot
+    module To_dot : sig
+      include Semantics.Bioinformatics_base
+        with
+          type 'a observation =
+            parameters: Biokepi_pipeline_edsl.To_dot.parameters -> SmartPrint.t
+      type parameters = Biokepi_pipeline_edsl.To_dot.parameters = {
+        color_input:
+          name: string -> attributes: (string * string) list -> string option;
+      }
+      val default_parameters : parameters
+    end = Biokepi_pipeline_edsl.To_dot
+
   end
 
   (** Transformations on the EDSL. *)

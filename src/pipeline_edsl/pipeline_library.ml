@@ -15,6 +15,8 @@ module Input = struct
     | PE of string * string
     | SE of string
     | Of_bam of [ `PE | `SE ] * [ `Coordinate | `Read_name ] option * string * string
+    [@@deriving show,yojson]
+
   let pe ?fragment_id a b = (fragment_id, PE (a, b))
   let se ?fragment_id a = (fragment_id, SE a)
   let of_bam ?fragment_id ?sorted ~reference_build how s =
@@ -24,7 +26,7 @@ end
 
 module Make (Bfx : Semantics.Bioinformatics_base) = struct
 
-  (** 
+  (**
      This functions guesses whether to use [fastq] or [fastq_gz] given the
      file name extension. If [r1] and [r2] dot match, it fails with an
      exception.

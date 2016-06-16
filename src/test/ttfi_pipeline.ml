@@ -6,7 +6,7 @@
 *)
 open Nonstd
 
-module type TEST_PIPELINE = 
+module type TEST_PIPELINE =
   functor (Bfx : Biokepi.EDSL.Semantics) ->
   sig
     val run : unit -> unit Bfx.observation
@@ -82,7 +82,8 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
     in
     begin
       let module Dotize_pipeline = Test_pipeline(Biokepi.EDSL.Compile.To_dot) in
-      let sm_dot = Dotize_pipeline.run () in
+      let sm_dot =
+        Dotize_pipeline.run () Biokepi.EDSL.Compile.To_dot.default_parameters in
       let dot = output_path "-1.dot" in
       let png = output_path "-1.png" in
       output_dot sm_dot dot png
@@ -98,7 +99,9 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
         )
       in
       let dot = output_path "-double-beta.dot" in
-      let sm_dot = Dotize_twice_beta_reduced_pipeline.run () in
+      let sm_dot =
+        Dotize_twice_beta_reduced_pipeline.run ()
+          ~parameters:Biokepi.EDSL.Compile.To_dot.default_parameters in
       let png = output_path "-double-beta.png" in
       output_dot sm_dot dot png
     end;
@@ -253,7 +256,7 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
                 pair
               |> Bfx.to_unit
             end;
-            begin 
+            begin
               Bfx.apply
                 (Bfx.lambda (fun p -> Bfx.pair_second p |> Bfx.concat |> Bfx.optitype `RNA))
                 pair

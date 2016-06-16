@@ -2,11 +2,11 @@
 ## Example Extension: “Register Product”
 
 This example is an extension to the language in `Biokepi.EDSL.Semantics`,
-that registers some files in a database. 
+that registers some files in a database.
 
 The author of the pipeline registers the results that they consider
 “interesting” thanks to new function that we will add to the EDSL.
- 
+
 
 The only requirement is the `biokepi` library:
 M*)
@@ -137,7 +137,7 @@ We functorize the module to provide such an infrastructure (assuming the
 Again we `include` the `To_json` compiler from Biokepi, and add the function
 `register`.
 M*)
-module To_json_with_register (Memory: sig 
+module To_json_with_register (Memory: sig
     val add : string -> Yojson.Basic.json -> unit
   end) = struct
   include Biokepi.EDSL.Compile.To_json
@@ -169,7 +169,7 @@ The function `register` creates an intermediary Ketrew workflow-node.
 
 
 M*)
-module To_workflow_with_register 
+module To_workflow_with_register
     (Mem : sig val look_up: string -> Yojson.Basic.json end)
     (Config : sig
        include Biokepi.EDSL.Compile.To_workflow.Compiler_configuration
@@ -225,7 +225,9 @@ We output a PNG graph of the pipeline:
 M*)
   let module Dotize_pipeline =
     Example_pipeline(To_dot_with_register) in
-  let sm_dot = Dotize_pipeline.run ~normal ~tumor in
+  let sm_dot =
+    Dotize_pipeline.run ~normal ~tumor
+      ~parameters: To_dot_with_register.default_parameters in
   ignore (
     sprintf "echo %s > /tmp/example.dot ; \
              dot -v -x /tmp/example.dot -Tpng -o example.png"
@@ -262,7 +264,7 @@ M*)
 And finaly we compile the pipeline to a Ketrew workflow, and return it:
 M*)
   let module Workflow_compiler =
-    To_workflow_with_register 
+    To_workflow_with_register
       (Mem)
       (struct
         include Biokepi.EDSL.Compile.To_workflow.Defaults
