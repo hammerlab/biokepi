@@ -242,11 +242,6 @@ module Make (Config : Compiler_configuration)
       fastq_node_of_single_file_nodes
         ?fragment_id ~host ~name:sample_name linked_r1 linked_r2
     )
-  (* Fastq (
-     KEDSL.workflow_node (KEDSL.fastq_reads ~host ~name:sample_name r1 r2)
-      ~name:(sprintf "Input-fastq: %s (%s)" sample_name
-               (Option.value fragment_id ~default:(Filename.basename r1)))
-     ) *)
 
   let fastq_gz
       ~sample_name ?fragment_id ~r1 ?r2 () =
@@ -254,27 +249,6 @@ module Make (Config : Compiler_configuration)
       fastq
         ~sample_name ?fragment_id ~r1 ?r2 ()
     )
-      (* Fastq (
-        let open KEDSL in
-        let read1 =
-          workflow_node (single_file ~host r1)
-            ~name:(sprintf "Input-fastq-gz: Read1 of %s (%s)" sample_name r1)
-        in
-        let read2 =
-          Option.map r2 (fun r2p ->
-              workflow_node (single_file ~host r2p)
-                ~name:(sprintf "Input-fastq-gz: Read2 of %s (%s)"
-                         sample_name r2))
-        in
-        let linked_r1 =
-          deal_with_input_file read1 ~make_product:(single_file ~host) in
-        let linked_r2 =
-          Option.map read2 (fun read ->
-              deal_with_input_file read ~make_product:(single_file ~host)) in
-        fastq_node_of_single_file_nodes
-          ?fragment_id ~host ~name:sample_name linked_r1 linked_r2
-      )
-    ) *)
 
   let bam ~path ?sorting ~reference_build () =
     Bam (
