@@ -129,9 +129,17 @@ module type Compiler_configuration = sig
   val work_dir: string
   val machine : Machine.t
   val map_reduce_gatk_indel_realigner : bool
+
+  (** What to do with input files: copy or link them to the work directory, or
+      do nothing. Doing nothing means letting some tools like ["samtools sort"]
+      write in the input-file's directory. *)
+  val input_files: [ `Copy | `Link | `Do_nothing ]
 end
+
+
 module Defaults = struct
   let map_reduce_gatk_indel_realigner = true
+  let input_files = `Link
 end
 
 
@@ -172,29 +180,88 @@ module Make (Config : Compiler_configuration)
   let host = Machine.as_host Config.machine
   let run_with = Config.machine
 
+  let deal_with_input_file (ifile : _ KEDSL.workflow_node) ~make_product =
+    let open KEDSL in
+    let new_path = Config.work_dir // Filename.basename ifile#product#path in
+    let make =
+      Machine.quick_run_program Config.machine Program.(
+          shf "mkdir -p %s" Config.work_dir
+          && (
+            match Config.input_files with
+            | `Link ->
+              shf "cd %s" Config.work_dir
+              && shf "ln -s %s" ifile#product#path
+            | `Copy ->
+              shf "cp %s %s" ifile#product#path new_path
+            | `Do_nothing ->
+              shf "echo 'No input action on %s'" ifile#product#path
+          )
+        )
+    in
+    let host = ifile#product#host in
+    let product =
+      match Config.input_files with
+      | `Do_nothing -> ifile#product
+      | `Link | `Copy -> make_product new_path
+    in
+    let name =
+      sprintf "Input file %s (%s)" (Filename.basename new_path)
+        (match Config.input_files with
+        | `Link -> "link"
+        | `Copy -> "copy"
+        | `Do_nothing -> "as-is")
+    in
+    let done_when =
+      `Is_verified Condition.(
+          chain_and [
+            volume_exists
+              Volume.(create ~host ~root:Config.work_dir (dir "." []));
+            product#is_done
+            |> Option.value_exn ~msg:"File without is_done?";
+          ]
+        )
+    in
+    workflow_node product ~done_when ~name ~make
+      ~edges:[depends_on ifile]
+
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =
     Fastq (
-      KEDSL.workflow_node (KEDSL.fastq_reads ~host ~name:sample_name r1 r2)
-        ~name:(sprintf "Input-fastq: %s (%s)" sample_name
-                 (Option.value fragment_id ~default:(Filename.basename r1)))
+      let open KEDSL in
+      let read n path =
+        workflow_node (single_file ~host path)
+          ~name:(sprintf "Input: Read%d of %s (%s)" n
+                   sample_name (Filename.basename path)) in
+      let read1 = read 1 r1 in
+      let read2 = Option.map r2 (read 2) in
+      let linked_r1 =
+        deal_with_input_file read1 ~make_product:(single_file ~host) in
+      let linked_r2 =
+        Option.map read2 (fun read ->
+            deal_with_input_file read ~make_product:(single_file ~host)) in
+      fastq_node_of_single_file_nodes
+        ?fragment_id ~host ~name:sample_name linked_r1 linked_r2
     )
 
   let fastq_gz
       ~sample_name ?fragment_id ~r1 ?r2 () =
     Gz (
-      Fastq (
-        KEDSL.workflow_node (KEDSL.fastq_reads ~host ~name:sample_name r1 r2)
-          ~name:(sprintf "Input-fastq-gz: %s (%s)" sample_name
-                   (Option.value fragment_id ~default:(Filename.basename r1)))
-      )
+      fastq
+        ~sample_name ?fragment_id ~r1 ?r2 ()
     )
 
   let bam ~path ?sorting ~reference_build () =
     Bam (
-      KEDSL.workflow_node
-        (KEDSL.bam_file ~host ?sorting ~reference_build path)
-        ~name:(sprintf "Input-bam: %s" (Filename.basename path))
+      let open KEDSL in
+      let host = Machine.as_host Config.machine in
+      let make_product path =
+        bam_file ~host ?sorting ~reference_build path in
+      let input =
+        workflow_node (make_product path)
+          ~name:(sprintf "Input-bam: %s" (Filename.basename path)) in
+      let dealt_with =
+        deal_with_input_file input ~make_product in
+      dealt_with
     )
 
   let make_aligner
@@ -453,7 +520,6 @@ module Make (Config : Compiler_configuration)
         fastq#product#fragment_id_forced
     in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
-
 
   let optitype how fq =
     let fastq = get_fastq fq in
