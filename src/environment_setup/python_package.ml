@@ -15,11 +15,15 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_
     ?check_bin ?version
     (installation:install_tool_type * install_source_type) =
   let open KEDSL in
+  let versionize ?version ~sep name = match version with
+    | None -> name
+    | Some v -> name ^ sep ^ v
+  in
   let install_command, name =
     match installation with
-    | (Pip, Package_PyPI pname) -> ["pip"; "install"; pname], pname
+    | (Pip, Package_PyPI pname) -> ["pip"; "install"; versionize ?version ~sep:"==" pname], pname
     | (Pip, Package_Source (pname, source)) -> ["pip"; "install"; source], pname
-    | (Conda, Package_Conda pname) -> ["conda"; "install"; pname], pname
+    | (Conda, Package_Conda pname) -> ["conda"; "install"; versionize ?version ~sep:"=" pname], pname
     | (Conda, Package_PyPI pname) -> ["conda"; "skeleton"; "pypi"; pname], pname
     | _ -> failwith "Installation type not supported."
   in
