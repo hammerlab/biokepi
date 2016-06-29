@@ -182,9 +182,12 @@ module Make_serializer (How : sig
     one_to_one "isovar" "default"
 
   let topiary 
-    ?(configuration = Tools.Topiary.Configuration.default) 
-    reference_build vcf predictor =
-    one_to_one "topiary" "default"
+    ?(configuration = Tools.Topiary.Configuration.default)
+    reference_build vcf predictor alleles =
+    fun ~(var_count : int) ->
+      function_call "topiary" [
+        "alleles", string alleles;
+      ]
 
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")

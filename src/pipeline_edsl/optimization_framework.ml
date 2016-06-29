@@ -154,6 +154,6 @@ module Generic_optimizer
   let isovar ?configuration reference_build vcf bam =
     fwd (Input.isovar ?configuration reference_build (bwd vcf) (bwd bam))
   let topiary ?configuration reference_build vcf predictor alleles = 
-    fwd (Input.topiary ?configuration reference_build (bwd vcf) predictor (bwd alleles))
+    fwd (Input.topiary ?configuration reference_build (bwd vcf) predictor alleles)
 
 end

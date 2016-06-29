@@ -20,7 +20,6 @@ module File_type_specification = struct
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
-    | Topiary_allele: single_file workflow_node -> [ `Alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -37,7 +36,6 @@ module File_type_specification = struct
     | Fastqc_result _ -> "Fastqc_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
-    | Topiary_allele _ -> "Topiary_allele"
     | Optitype_result _ -> "Optitype_result"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
@@ -82,11 +80,6 @@ module File_type_specification = struct
     | Isovar_result v -> v
     | o -> fail_get o "Isovar_result"
 
-  let get_topiary_alleles : [ `Alleles ] t -> single_file workflow_node =
-    function
-    | Topiary_allele v -> v
-    | o -> fail_get o "Topiary_allele"
-
   let get_topiary_result : [ `Topiary ] t -> single_file workflow_node =
     function
     | Topiary_result v -> v
@@ -129,7 +122,6 @@ module File_type_specification = struct
     | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
-    | Topiary_allele wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
     | other -> fail_get other "as_dependency_edges"
@@ -567,17 +559,16 @@ module Make (Config : Compiler_configuration)
 
   let topiary ?(configuration=Tools.Topiary.Configuration.default) reference_build vcf predictor alleles =
     let v = get_vcf vcf in
-    let a = get_topiary_alleles alleles in
     let out_filename = sprintf "%s_%s_%s_topiary_result.csv"
       (Filename.chop_extension v#product#path)
       (Tools.Topiary.predictor_to_string predictor)
-      (Filename.chop_extension a#product#path)
+      (Filename.chop_extension alleles)
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
       Tools.Topiary.run 
         ~configuration ~run_with 
-        ~reference_build ~variants_vcf:v ~predictor ~alleles_file:a 
+        ~reference_build ~variants_vcf:v ~predictor ~alleles_file:alleles 
         ~output:(`CSV output_file)
     )
 

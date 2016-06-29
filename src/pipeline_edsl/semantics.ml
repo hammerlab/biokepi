@@ -203,7 +203,7 @@ module type Bioinformatics_base = sig
     Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     Topiary.predictor_type ->
-    [ `Alleles ] repr ->
+    string ->
     [ `Topiary ] repr
 
 end
