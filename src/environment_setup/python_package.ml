@@ -55,12 +55,12 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_
 let default ~host ~run_program ~install_tools_path () =
    Machine.Tool.Kit.of_list [
     create_python_tool ~host ~run_program ~install_tools_path 
-      (Pip, Package_PyPI "pyensembl");
+      ~version:"0.9.3" (Pip, Package_PyPI "pyensembl");
     create_python_tool ~host ~run_program ~install_tools_path 
-      (Pip, Package_PyPI "vcf-annotate-polyphen");
+      ~version:"0.1.2" (Pip, Package_PyPI "vcf-annotate-polyphen");
     create_python_tool ~host ~run_program ~install_tools_path 
-      ~check_bin:"isovar-protein-sequences"
-      (Pip, Package_Source ("isovar", "git+https://github.com/hammerlab/isovar"));
+      ~version:"0.0.6" ~check_bin:"isovar-protein-sequences"
+      (Pip, Package_PyPI "isovar");
     create_python_tool ~host ~run_program ~install_tools_path 
-      (Pip, Package_Source ("topiary", "git+https://github.com/hammerlab/topiary"));
+      ~version:"0.0.21" (Pip, Package_PyPI "topiary");
    ]
