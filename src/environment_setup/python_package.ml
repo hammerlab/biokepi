@@ -8,11 +8,11 @@ type install_source_type =
   | Package_Source of string * string
   | Package_Conda of string
 
-let bin_in_conda_environment ~install_tools_path command =
-  Conda.(environment_path ~install_path:install_tools_path) // "bin" // command
+let bin_in_conda_environment ~conda_env command =
+  Conda.(environment_path ~conda_env) // "bin" // command
 
-let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_path 
-    ?check_bin ?version
+let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path 
+    ?check_bin ?version ?(python_version=`Python3)
     (installation:install_tool_type * install_source_type) =
   let open KEDSL in
   let versionize ?version ~sep name = match version with
@@ -27,8 +27,9 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_
     | (Conda, Package_PyPI pname) -> ["conda"; "skeleton"; "pypi"; pname], pname
     | _ -> failwith "Installation type not supported."
   in
+  let conda_env = Conda.setup_environment ~python_version install_path name in
   let single_file_check id =
-    single_file ~host (bin_in_conda_environment ~install_tools_path id)
+    single_file ~host (bin_in_conda_environment ~conda_env id)
   in
   let exec_check = 
     match check_bin with 
@@ -38,29 +39,28 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_tools_
   let ensure =
     workflow_node exec_check
       ~name:("Installing Python tool: " ^ name)
-      ~edges:[depends_on 
-        Conda.(configured ~run_program ~host ~install_path:install_tools_path ());]
+      ~edges:[ depends_on Conda.(configured ~run_program ~host ~conda_env) ]
       ~make:(run_program
         ~requirements:[
           `Internet_access; `Self_identification ["python"; "installation"]
         ]
         Program.(
-          Conda.init_biokepi_env ~install_path:install_tools_path 
+          Conda.init_env ~conda_env ()
           && exec install_command)
         )
   in
-  let init = Conda.init_biokepi_env install_tools_path in
+  let init = Conda.init_env ~conda_env () in
   Machine.Tool.create Machine.Tool.Definition.(create name) ~ensure ~init
 
-let default ~host ~run_program ~install_tools_path () =
+let default ~host ~run_program ~install_path () =
    Machine.Tool.Kit.of_list [
-    create_python_tool ~host ~run_program ~install_tools_path 
+    create_python_tool ~host ~run_program ~install_path 
       ~version:"0.9.3" (Pip, Package_PyPI "pyensembl");
-    create_python_tool ~host ~run_program ~install_tools_path 
+    create_python_tool ~host ~run_program ~install_path 
       ~version:"0.1.2" (Pip, Package_PyPI "vcf-annotate-polyphen");
-    create_python_tool ~host ~run_program ~install_tools_path 
+    create_python_tool ~host ~run_program ~install_path 
       ~version:"0.0.6" ~check_bin:"isovar-protein-sequences"
       (Pip, Package_PyPI "isovar");
-    create_python_tool ~host ~run_program ~install_tools_path 
+    create_python_tool ~host ~run_program ~install_path 
       ~version:"0.0.21" (Pip, Package_PyPI "topiary");
    ]
