@@ -72,14 +72,14 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
 let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open KEDSL in
   let create_env =
-    com ~conda_env "create -y -q --prefix %s python=%d" 
+    com ~conda_env "create -y -q --prefix %s python=%d"
       (envs_dir ~conda_env // conda_env.name)
       (match conda_env.python_version with `Python2 -> 2 | `Python3 -> 3)
   in
   let install_package (package, version) =
     Program.(
-      shf "conda install %s%s" 
-        package 
+      shf "conda install %s%s"
+        package
         (match version with `Latest -> "" | `Version v -> "=" ^ v)
     )
   in
@@ -97,12 +97,14 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
       )
   in
   let edges = [ depends_on (installed ~run_program ~host ~conda_env) ] in
-  let product = single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda") in
+  let product =
+    (single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda")
+     :> < is_done : Common.KEDSL.Condition.t option >)  in
   workflow_node product ~make ~name:"Conda is configured." ~edges
 
 let init_env ~conda_env () =
   KEDSL.Program.(
-    shf "source %s %s" 
+    shf "source %s %s"
       (activate ~conda_env)
       (envs_dir ~conda_env // conda_env.name)
   )
