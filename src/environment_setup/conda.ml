@@ -97,10 +97,7 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
       )
   in
   let edges = [ depends_on (installed ~run_program ~host ~conda_env) ] in
-  let new_env =
-    Command.shell ~host (com ~conda_env "env list | grep %s" conda_env.name) in
-  let product =
-    object method is_done = Some (`Command_returns (new_env, 0)) end in
+  let product = single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda") in
   workflow_node product ~make ~name:"Conda is configured." ~edges
 
 let init_env ~conda_env () =
