@@ -63,7 +63,7 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
           `Internet_access; `Self_identification ["conda"; "installation"]
         ]
         Program.(
-          exec ["mkdir"; "-p"; install_dir]
+          exec ["mkdir"; "-p"; conda_env.install_path]
           && exec ["cd"; conda_env.install_path]
           && Workflow_utilities.Download.wget_program url
           && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir))
