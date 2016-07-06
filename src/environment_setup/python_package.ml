@@ -27,7 +27,10 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
     | (Conda, Package_PyPI pname) -> ["conda"; "skeleton"; "pypi"; pname], pname
     | _ -> failwith "Installation type not supported."
   in
-  let conda_env = Conda.setup_environment ~python_version install_path name in
+  let main_subdir = name ^ "_conda_dir" in
+  let conda_env = 
+    Conda.setup_environment ~python_version ~main_subdir install_path name
+  in
   let single_file_check id =
     single_file ~host (bin_in_conda_environment ~conda_env id)
   in
