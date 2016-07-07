@@ -539,8 +539,7 @@ module Make (Config : Compiler_configuration)
 
   let vcf_annotate_polyphen reference_build vcf =
     let v = get_vcf vcf in
-    let out_filename = Filename.chop_extension v#product#path ^ "_polyphen.vcf" in
-    let output_vcf = Config.work_dir // out_filename in 
+    let output_vcf = (Filename.chop_extension v#product#path) ^ "_polyphen.vcf" in
     Vcf (
       Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
     )
@@ -549,8 +548,8 @@ module Make (Config : Compiler_configuration)
     let v = get_vcf vcf in
     let b = get_bam bam in
     let out_filename = sprintf "%s_%s_isovar_result.csv"
-      (Filename.chop_extension v#product#path)
-      (Filename.chop_extension b#product#path)
+      (Filename.chop_extension (Filename.basename v#product#path))
+      (Filename.chop_extension (Filename.basename b#product#path))
     in
     let output_file = Config.work_dir // out_filename in 
     Isovar_result (
@@ -560,9 +559,9 @@ module Make (Config : Compiler_configuration)
   let topiary ?(configuration=Tools.Topiary.Configuration.default) reference_build vcf predictor alleles =
     let v = get_vcf vcf in
     let out_filename = sprintf "%s_%s_%s_topiary_result.csv"
-      (Filename.chop_extension v#product#path)
+      (Filename.chop_extension (Filename.basename v#product#path))
       (Tools.Topiary.predictor_to_string predictor)
-      (Filename.chop_extension alleles)
+      (Filename.chop_extension (Filename.basename alleles))
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
