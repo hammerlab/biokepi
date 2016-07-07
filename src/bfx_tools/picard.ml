@@ -73,7 +73,7 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
 module Mark_duplicates_settings = struct
   type t = {
     name: string;
-    tmpdir: string;
+    tmpdir: string option;
     max_sequences_for_disk_read_ends_map: int;
     max_file_handles_for_read_ends_map: int;
     sorting_collection_size_ratio: float;
@@ -81,7 +81,7 @@ module Mark_duplicates_settings = struct
   }
   let factory = {
     name = "factory";
-    tmpdir = "/tmp";
+    tmpdir = None;
     max_sequences_for_disk_read_ends_map = 50000;
     max_file_handles_for_read_ends_map = 8000;
     sorting_collection_size_ratio = 0.25;
@@ -94,20 +94,22 @@ module Mark_duplicates_settings = struct
     max_file_handles_for_read_ends_map = 20_000;
   }
 
-  let to_java_shell_call t =
+  let to_java_shell_call ~default_tmp_dir t =
+    let tmp_dir =
+      Option.value t.tmpdir ~default:default_tmp_dir in
     sprintf "TMPDIR=%s \
              MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=%d \
              MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=%d \
              SORTING_COLLECTION_SIZE_RATIO=%f \
              java %s -Djava.io.tmpdir=%s "
-      t.tmpdir
+      tmp_dir
       t.max_sequences_for_disk_read_ends_map
       t.max_file_handles_for_read_ends_map
       t.sorting_collection_size_ratio
       (match t.mem_param with
       | None  -> ""
       | Some some -> sprintf "-Xmx%s" some)
-      t.tmpdir
+      tmp_dir
 
 end
 
@@ -121,7 +123,10 @@ let mark_duplicates
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
   let program =
-    let java_call = Mark_duplicates_settings.to_java_shell_call settings in
+    let java_call =
+      let default_tmp_dir =
+        Filename.chop_extension output_bam_path ^ ".tmpdir" in
+      Mark_duplicates_settings.to_java_shell_call ~default_tmp_dir settings in
     Program.(Machine.Tool.(init picard_jar) &&
              shf "%s -jar $PICARD_JAR MarkDuplicates \
                   VALIDATION_STRINGENCY=LENIENT \
