@@ -78,7 +78,7 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   in
   let install_package (package, version) =
     Program.(
-      shf "conda install %s%s"
+      shf "conda install -y %s%s"
         package
         (match version with `Latest -> "" | `Version v -> "=" ^ v)
     )
