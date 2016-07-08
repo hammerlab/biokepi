@@ -87,6 +87,14 @@ module Configuration = struct
     include Gatk_config ()
   end
 
+  module Combine_variants = struct
+    include Gatk_config ()
+  end
+
+  module Annotate_variants = struct
+    include Gatk_config ()
+  end
+
   type indel_realigner = (Indel_realigner.t * Realigner_target_creator.t)
   type bqsr = (Bqsr.t * Print_reads.t)
 
@@ -639,3 +647,95 @@ let mutect2
     in
     let final_vcf = result_prefix ^ "-merged.vcf" in
     Vcftools.vcf_concat ~run_with targets ~final_vcf ~more_edges
+
+
+(** Combine variant records from different sources.
+
+    cf. https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_variantutils_CombineVariants.php  *)
+let combine_variants
+    ?(configuration=Configuration.Combine_variants.default)
+    ?(edges=[])
+    ~run_with
+    ~variant_sources
+    ~output_vcf_path
+    ~genotype_merge_option
+  =
+  let open KEDSL in
+  let reference =
+    Machine.get_reference_genome run_with "" in (* how to get the reference we want to use? *)
+  let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
+  let reference_fasta = Reference_genome.fasta reference in
+  let variant_sources =
+    List.map variant_sources
+      ~f:(function
+        | `Vcf vcf -> sprintf "--variant %s" vcf#product#path
+        | `Vcf_named_sample (sample_name, vcf) ->
+          sprintf "--variant:%s %s" sample_name vcf#product#path) in
+  let merge_option =
+    "-genotypeMergeOptions " ^
+    match genotype_merge_option with
+    | `Uniquify -> "UNIQUIFY"
+    | `Prioritize samples ->
+      "PRIORITIZE --priority " ^ String.concat ~sep:"," samples
+    | `Unsorted -> "UNSORTED"
+    | `Require_unique -> "REQUIRE_UNIQUE"
+  in
+  let name = sprintf "CombineVariants to %s" (Filename.basename output_vcf_path) in
+  let make =
+    Machine.run_big_program run_with ~name
+      ~self_ids:["gatk"; "combine-variants"]
+      Program.(
+        Machine.Tool.(init gatk)
+        && shf "cd %s" (Filename.dirname output_vcf_path)
+        && call_gatk ~analysis:"CombineVariants" ([
+          "-R"; reference_fasta#product#path;
+          "-o"; output_vcf_path;
+          "-genotypeMergeOptions"; merge_option;
+          ] @ variant_sources
+            @ Configuration.Combine_variants.render configuration)
+      )
+  in
+  workflow_node ~name ~make
+    (single_file output_vcf_path ~host:Machine.(as_host run_with))
+    ~tags:[Target_tags.variant_caller]
+    ~edges:(edges @ [
+        depends_on Machine.Tool.(ensure gatk);
+        depends_on reference_fasta;
+        on_failure_activate (Remove.file ~run_with output_vcf_path);
+      ])
+
+(** Annotate variant calls with context information.
+
+    cf. https://www.broadinstitute.org/gatk/gatkdocs/org_broadinstitute_gatk_tools_walkers_annotator_VariantAnnotator.php *)
+let variant_annotator
+    ?(configuration=Configuration.Annotate_variants.default)
+    ?(edges=[])
+    ~run_with
+    ~output_vcf_path
+  =
+    let open KEDSL in
+  let reference =
+    Machine.get_reference_genome run_with "" in (* how to get the reference we want to use? *)
+  let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
+  let reference_fasta = Reference_genome.fasta reference in
+  let name = sprintf "AnnotateVariants to %s" (Filename.basename output_vcf_path) in
+  let make =
+    Machine.run_big_program run_with ~name
+      ~self_ids:["gatk"; "annotate-variants"]
+      Program.(
+        Machine.Tool.(init gatk)
+        && shf "cd %s" (Filename.dirname output_vcf_path)
+        && call_gatk ~analysis:"CombineVariants" ([
+          "-R"; reference_fasta#product#path;
+          "-o"; output_vcf_path;
+          ] @ Configuration.Annotate_variants.render configuration)
+      )
+  in
+  workflow_node ~name ~make
+    (single_file output_vcf_path ~host:Machine.(as_host run_with))
+    ~tags:[Target_tags.variant_caller]
+    ~edges:(edges @ [
+        depends_on Machine.Tool.(ensure gatk);
+        depends_on reference_fasta;
+        on_failure_activate (Remove.file ~run_with output_vcf_path);
+      ])
