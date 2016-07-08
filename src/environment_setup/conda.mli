@@ -10,6 +10,7 @@ type conda_environment_type = private {
   python_version: [ `Python2 | `Python3 ];
   channels: string list; (* supported installation channels *)
   base_packages: (string * conda_version_type) list; (* defualt installations *)
+  banned_packages: string list; (* packages to be removed after initial setup *)
   install_path: string; (* where to install the conda and environments *)
   main_subdir: string; (* subdir that will contain conda utilities *)
   envs_subdir: string; (* subdir that will contain the environment files *)
@@ -19,6 +20,7 @@ type conda_environment_type = private {
 val setup_environment :
   ?custom_channels: string list ->
   ?base_packages: (string * conda_version_type) list ->
+  ?banned_packages: string list ->
   ?main_subdir: string ->
   ?envs_subdir: string ->
   ?python_version: [ `Python2 | `Python3 ] ->

@@ -21,6 +21,7 @@ type conda_environment_type = {
   python_version: [ `Python2 | `Python3 ];
   channels: string list;
   base_packages: (string * conda_version_type) list;
+  banned_packages: string list;
   install_path: string;
   main_subdir: string;
   envs_subdir: string;
@@ -29,13 +30,14 @@ type conda_environment_type = {
 let setup_environment
   ?(custom_channels = [])
   ?(base_packages = [])
+  ?(banned_packages = [])
   ?(main_subdir = "conda_dir")
   ?(envs_subdir = "envs")
   ?(python_version = `Python2)
   install_path
   name =
   let channels = [ "bioconda"; "r" ] @ custom_channels in
-  {name; python_version; channels; base_packages; install_path; main_subdir; envs_subdir}
+  {name; python_version; channels; base_packages; banned_packages; install_path; main_subdir; envs_subdir}
 
 let main_dir ~conda_env = conda_env.install_path // conda_env.main_subdir
 let envs_dir ~conda_env = conda_env.install_path // conda_env.envs_subdir
@@ -83,6 +85,9 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
         (match version with `Latest -> "" | `Version v -> "=" ^ v)
     )
   in
+  let force_rm_package package = 
+    Program.(shf "conda remove -y --force %s" package)
+  in
   let make =
     run_program
       ~requirements:[
@@ -94,6 +99,7 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
         && shf "source %s %s" (activate ~conda_env) (envs_dir ~conda_env // conda_env.name)
         && chain (List.map ~f:(shf "conda config --add channels %s") conda_env.channels)
         && chain (List.map ~f:install_package conda_env.base_packages)
+        && chain (List.map ~f:force_rm_package conda_env.banned_packages)
       )
   in
   let edges = [ depends_on (installed ~run_program ~host ~conda_env) ] in

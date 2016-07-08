@@ -104,6 +104,8 @@ let get_conda_env =
       ("yaml", `Version "0.1.6");
       ("zlib", `Version "1.2.8");
     ]
+    (* see https://github.com/ContinuumIO/anaconda-issues/issues/152#issuecomment-225214743 *)
+    ~banned_packages: [ "readline" ] 
     ~python_version:`Python2
 
 (* Hide the messy logic of calling opam in here. This should not be exported
