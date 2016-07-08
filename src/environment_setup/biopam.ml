@@ -69,7 +69,7 @@ let get_conda_env =
       ("fontconfig", `Version "2.11.1");
       ("freetype", `Version "2.5.5");
       ("hdf5", `Version "1.8.15.1");
-      ("htslib", `Version "1.3-0");
+      ("htslib", `Version "1.3");
       ("libgcc", `Version "4.8.5");
       ("libpng", `Version "1.6.17");
       ("libxml2", `Version "2.9.2");
@@ -90,9 +90,9 @@ let get_conda_env =
       ("python-dateutil", `Version "2.4.2");
       ("pytz", `Version "2015.7");
       ("pyyaml", `Version "3.11");
-      ("qt", `Version "4.8.7-1");
+      ("qt", `Version "4.8.7");
       ("requests", `Version "2.9.1");
-      ("samtools", `Version "1.3-1");
+      ("samtools", `Version "1.3");
       ("setuptools", `Version "20.1.1");
       ("sip", `Version "4.16.9");
       ("six", `Version "1.10.0");
