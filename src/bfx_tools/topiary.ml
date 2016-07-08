@@ -13,11 +13,11 @@ type predictor_type = [
   | `NetMHCcons
   | `Random
   | `SMM
-  | `SSM_PMBEC
+  | `SMM_PMBEC
   | `NetMHCpan_IEDB
   | `NetMHCcons_IEDB
-  | `SSM_IEDB
-  | `SSM_PMBEC_IEDB
+  | `SMM_IEDB
+  | `SMM_PMBEC_IEDB
 ]
 
 let predictor_to_string = function
@@ -26,12 +26,12 @@ let predictor_to_string = function
   | `NetMHCIIpan -> "netmhciipan"
   | `NetMHCcons -> "netmhccons"
   | `Random -> "random"
-  | `SMM -> "ssm"
-  | `SSM_PMBEC -> "ssm-pmbec"
+  | `SMM -> "smm"
+  | `SMM_PMBEC -> "smm-pmbec"
   | `NetMHCpan_IEDB -> "netmhcpan-iedb"
   | `NetMHCcons_IEDB -> "netmhccons-iedb"
-  | `SSM_IEDB -> "smm-iedb"
-  | `SSM_PMBEC_IEDB -> "smm-pmbec-iedb"
+  | `SMM_IEDB -> "smm-iedb"
+  | `SMM_PMBEC_IEDB -> "smm-pmbec-iedb"
 
 
 module Configuration = struct
@@ -137,7 +137,7 @@ let run ~(run_with: Machine.t)
     Machine.get_tool run_with Machine.Tool.Definition.(create "topiary")
   in
   let var_arg = ["--vcf"; variants_vcf#product#path] in
-  let predictor_arg = ["--predictor"; (predictor_to_string predictor)] in
+  let predictor_arg = ["--mhc-predictor"; (predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file] in
   let (output_arg, output_path) = 
     match output with
@@ -168,15 +168,10 @@ let run ~(run_with: Machine.t)
   let self_filter_directory = maybe_argument ~f:str_of_str "--self-filter-directory" c.self_filter_directory in
   let skip_error_arg = if_argument "--skip-variant-errors" c.skip_variant_errors in
   let novel_arg = if_argument "--only-novel-epitopes" c.only_novel_epitopes in
-  let ensembl = 
-    Machine.(get_reference_genome run_with reference_build) 
-    |> Reference_genome.ensembl
-  in
-  let ensembl_arg = ["--ensembl-version"; string_of_int ensembl] in
   let arguments = 
       var_arg @ predictor_arg @ allele_arg @ output_arg @ rna_arg
       @ length_arg @ novel_arg @ ic50_arg @ percentile_arg @ padding_arg
-      @ skip_error_arg @ self_filter_directory @ ensembl_arg
+      @ skip_error_arg @ self_filter_directory
       @ Configuration.render configuration
   in
   let name = sprintf "topiary_%s" (Filename.basename output_path) in
