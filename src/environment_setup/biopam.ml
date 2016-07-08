@@ -57,7 +57,7 @@ let default_opam_url =
 
 let get_conda_env =
   Conda.setup_environment
-    ~custom_channels: [ "trung" ]
+    ~custom_channels: [ "trung"; "conda-forge" ]
     ~base_packages: [
       ("anaconda-client", `Version "1.2.2");
       ("bcftools", `Version "1.3");
@@ -79,10 +79,12 @@ let get_conda_env =
       ("numexpr", `Version "2.4.6");
       ("numpy", `Version "1.10.4");
       ("openssl", `Version "1.0.2g");
+      ("packaging", `Version "16.7");
       ("pandas", `Version "0.17.1");
       ("pixman", `Version "0.32.6");
       ("pycairo", `Version "1.10.0");
       ("pyinstaller", `Version "3.1");
+      ("pyomo", `Version "4.3");
       ("pyparsing", `Version "2.0.3");
       ("pyqt", `Version "4.11.4");
       ("pysam", `Version "0.9.0");
