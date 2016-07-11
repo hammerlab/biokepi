@@ -178,8 +178,9 @@ module Make_serializer (How : sig
   let vcf_annotate_polyphen reference_build =
     one_to_one "vcf_annotate_polyphen" "default"
 
-  let isovar ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
-    one_to_one "isovar" "default"
+  let isovar
+      ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
+    one_to_one "isovar" Tools.Isovar.Configuration.(name configuration)
 
   let topiary 
     ?(configuration = Tools.Topiary.Configuration.default)
@@ -187,6 +188,7 @@ module Make_serializer (How : sig
     fun ~(var_count : int) ->
       let vcf_compiled = vcf ~var_count in
       function_call "topiary" [
+        "configuration", string Tools.Topiary.Configuration.(name configuration);
         "alleles", string alleles;
         "reference_build", string reference_build;
         "predictor", string Tools.Topiary.(predictor_to_string predictor);
