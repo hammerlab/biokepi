@@ -175,6 +175,19 @@ module Make_serializer (How : sig
   let fastqc =
     one_to_one "fastqc" "default"
 
+  let vcf_annotate_polyphen reference_build =
+    one_to_one "vcf_annotate_polyphen" "default"
+
+  let isovar ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
+    one_to_one "isovar" "default"
+
+  let topiary 
+    ?(configuration = Tools.Topiary.Configuration.default)
+    reference_build vcf predictor alleles =
+    fun ~(var_count : int) ->
+      function_call "topiary" [
+        "alleles", string alleles;
+      ]
 
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")

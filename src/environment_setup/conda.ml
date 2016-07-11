@@ -11,22 +11,52 @@ open Common
 
 let rm_path = Workflow_utilities.Remove.path_on_host
 
-let dir ~install_path = install_path // "conda_dir"
-let commands ~install_path com = dir ~install_path // "bin" // com
-let bin = commands "conda"
-let activate = commands "activate"
+type conda_version_type = [
+  | `Latest
+  | `Version of string
+]
+
+type conda_environment_type = {
+  name: string;
+  python_version: [ `Python2 | `Python3 ];
+  channels: string list;
+  base_packages: (string * conda_version_type) list;
+  banned_packages: string list;
+  install_path: string;
+  main_subdir: string;
+  envs_subdir: string;
+}
+
+let setup_environment
+  ?(custom_channels = [])
+  ?(base_packages = [])
+  ?(banned_packages = [])
+  ?(main_subdir = "conda_dir")
+  ?(envs_subdir = "envs")
+  ?(python_version = `Python2)
+  install_path
+  name =
+  let channels = [ "bioconda"; "r" ] @ custom_channels in
+  {name; python_version; channels; base_packages; banned_packages; install_path; main_subdir; envs_subdir}
+
+let main_dir ~conda_env = conda_env.install_path // conda_env.main_subdir
+let envs_dir ~conda_env = conda_env.install_path // conda_env.envs_subdir
+let commands ~conda_env com = main_dir ~conda_env // "bin" // com
+let bin ~conda_env = commands ~conda_env "conda"
+let activate ~conda_env = commands ~conda_env "activate"
+let environment_path ~conda_env = envs_dir ~conda_env // conda_env.name
 
 (* give a conda command. *)
-let com ~install_path fmt =
-  Printf.sprintf ("%s " ^^ fmt) (bin ~install_path)
+let com ~conda_env fmt =
+  Printf.sprintf ("%s " ^^ fmt) (bin ~conda_env)
 
 (* A workflow to ensure that conda is installed. *)
-let installed ~(run_program : Machine.Make_fun.t) ~host ~install_path =
+let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
   let open KEDSL in
   let url =
     "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" in
-  let conda_exec  = single_file ~host (bin ~install_path) in
-  let install_dir = dir ~install_path in
+  let conda_exec  = single_file ~host (bin ~conda_env) in
+  let install_dir = main_dir ~conda_env in
   workflow_node conda_exec
     ~name:"Install conda"
     ~make:(
@@ -35,89 +65,29 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~install_path =
           `Internet_access; `Self_identification ["conda"; "installation"]
         ]
         Program.(
-          exec ["mkdir"; "-p"; install_path]
-          && exec ["cd"; install_path]
+          exec ["mkdir"; "-p"; conda_env.install_path]
+          && exec ["cd"; conda_env.install_path]
           && Workflow_utilities.Download.wget_program url
           && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir))
 
 
-let config = "biokepi_conda_env"
-let env_name = "biokepi"
-let biokepi_conda_config =
-{conda|# This file may be used to create an environment using:
-# $ conda create --name <env> --file <this file>
-# platform: linux-64
-@EXPLICIT
-https://repo.continuum.io/pkgs/free/linux-64/anaconda-client-1.2.2-py27_0.tar.bz2
-https://conda.anaconda.org/bioconda/linux-64/bcftools-1.3-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/biopython-1.66-np110py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/cairo-1.12.18-6.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/clyent-1.2.0-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/cycler-0.10.0-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/distribute-0.6.45-py27_1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/fontconfig-2.11.1-5.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/freetype-2.5.5-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/hdf5-1.8.15.1-2.tar.bz2
-https://conda.anaconda.org/bioconda/linux-64/htslib-1.3-0.tar.bz2
-https://conda.anaconda.org/r/linux-64/libgcc-4.8.5-1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/libpng-1.6.17-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/libxml2-2.9.2-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/matplotlib-1.5.1-np110py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/mkl-11.3.1-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/ncurses-5.9-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/numexpr-2.4.6-np110py27_1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/numpy-1.10.4-py27_1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/openssl-1.0.2g-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pandas-0.17.1-np110py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pip-8.0.3-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pixman-0.32.6-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pycairo-1.10.0-py27_0.tar.bz2
-https://conda.anaconda.org/trung/linux-64/pyinstaller-3.1-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pyparsing-2.0.3-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pyqt-4.11.4-py27_1.tar.bz2
-https://conda.anaconda.org/bioconda/linux-64/pysam-0.9.0-py27_2.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pytables-3.2.2-np110py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/python-2.7.11-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/python-dateutil-2.4.2-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pytz-2015.7-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/pyyaml-3.11-py27_1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/qt-4.8.7-1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/requests-2.9.1-py27_0.tar.bz2
-https://conda.anaconda.org/bioconda/linux-64/samtools-1.3-1.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/setuptools-20.1.1-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/sip-4.16.9-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/six-1.10.0-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/sqlite-3.9.2-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/tk-8.5.18-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/wheel-0.29.0-py27_0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/yaml-0.1.6-0.tar.bz2
-https://repo.continuum.io/pkgs/free/linux-64/zlib-1.2.8-0.tar.bz2|conda}
-
-(* Removed:
-   https://repo.continuum.io/pkgs/free/linux-64/readline-6.2-2.tar.bz2
-   This default conda compiled readline isn't linked appropriately:
-   symbol lookup error: /tmp/_MEIzf9vto/libreadline.so.6: undefined symbol: PC
-   We'll ignore it from the configuration and hope that the computer has a sane
-   readline lib installed by default.  *)
-
-let cfg_exists ~(run_program : Machine.Make_fun.t) ~host ~install_path =
+let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open KEDSL in
-  let file = install_path // config in
-  let make =
-    run_program
-      ~requirements:[`Quick_run; `Self_identification ["conda"; "config-file"]]
-      Program.(exec ["mkdir"; "-p"; install_path]
-               && shf "echo %s >> %s" (Filename.quote biokepi_conda_config) file)
+  let create_env =
+    com ~conda_env "create -y -q --prefix %s python=%d"
+      (envs_dir ~conda_env // conda_env.name)
+      (match conda_env.python_version with `Python2 -> 2 | `Python3 -> 3)
   in
-  workflow_node (single_file ~host file)
-    ~name:("Make sure we have a biokepi conda config file: " ^ config)
-    ~make
-
-let configured ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
-  let open KEDSL in
-  let conf =
-    com ~install_path "create --name %s --file %s/%s"
-      env_name install_path config in
+  let install_package (package, version) =
+    Program.(
+      shf "conda install -y %s%s"
+        package
+        (match version with `Latest -> "" | `Version v -> "=" ^ v)
+    )
+  in
+  let force_rm_package package = 
+    Program.(shf "conda remove -y --force %s" package)
+  in
   let make =
     run_program
       ~requirements:[
@@ -125,24 +95,22 @@ let configured ~(run_program : Machine.Make_fun.t) ~host ~install_path () =
         `Self_identification ["conda"; "configuration"];
       ]
       Program.(
-        sh conf
-        && shf "source %s %s" (activate ~install_path) env_name
-        && chain (List.map ~f:(shf "pip install %s") [
-            "pyomo";
-            "six";
-            "packaging";
-          ])
+        sh create_env
+        && shf "source %s %s" (activate ~conda_env) (envs_dir ~conda_env // conda_env.name)
+        && chain (List.map ~f:(shf "conda config --add channels %s") conda_env.channels)
+        && chain (List.map ~f:install_package conda_env.base_packages)
+        && chain (List.map ~f:force_rm_package conda_env.banned_packages)
       )
   in
-  let edges = [
-    depends_on (installed ~run_program ~host ~install_path);
-    depends_on (cfg_exists ~run_program ~host ~install_path);
-  ] in
-  let biokepi_env =
-    Command.shell ~host (com ~install_path "env list | grep %s" env_name) in
+  let edges = [ depends_on (installed ~run_program ~host ~conda_env) ] in
   let product =
-    object method is_done = Some (`Command_returns (biokepi_env, 0)) end in
+    (single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda")
+     :> < is_done : Common.KEDSL.Condition.t option >)  in
   workflow_node product ~make ~name:"Conda is configured." ~edges
 
-let init_biokepi_env ~install_path  =
-  KEDSL.Program.(shf "source %s %s" (activate ~install_path) env_name)
+let init_env ~conda_env () =
+  KEDSL.Program.(
+    shf "source %s %s"
+      (activate ~conda_env)
+      (envs_dir ~conda_env // conda_env.name)
+  )

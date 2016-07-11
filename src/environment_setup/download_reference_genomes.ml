@@ -12,12 +12,15 @@ let of_specification
   let {
     Specification.
     name;
+    ensembl;
+    species;
     metadata;
     fasta;
     dbsnp;
     cosmic;
     exome_gtf; (* maybe desrves a better name? *)
     cdna;
+    whess;
     major_contigs;
   } = specification in
   let dest_file f = destination_path // name // f in
@@ -26,6 +29,9 @@ let of_specification
     | `Url url (* Right now, `wget_gunzip` is clever enough to not gunzip *)
     | `Gunzip `Url url ->
       Workflow_utilities.Download.wget_gunzip
+        ~host ~run_program ~destination:(dest_file filename) url
+    | `Bunzip2 `Url url ->
+      Workflow_utilities.Download.wget_bunzip2
         ~host ~run_program ~destination:(dest_file filename) url
     | `Vcf_concat l ->
       let vcfs =
@@ -56,6 +62,7 @@ let of_specification
     ?dbsnp:(compile_location_opt "dbsnp.vcf" dbsnp)
     ?gtf:(compile_location_opt "transcripts.gtf" exome_gtf)
     ?cdna:(compile_location_opt "cdns-all.fa" cdna)
+    ?whess:(compile_location_opt "whess.sqlite" whess)
 
 type pull_function =
   toolkit:Machine.Tool.Kit.t ->

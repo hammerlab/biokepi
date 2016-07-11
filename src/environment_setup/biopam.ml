@@ -55,6 +55,59 @@ let default_opam_url =
   "https://github.com/ocaml/opam/releases/download/\
    1.2.2/opam-1.2.2-x86_64-Linux"
 
+let get_conda_env =
+  Conda.setup_environment
+    ~custom_channels: [ "trung"; "conda-forge" ]
+    ~base_packages: [
+      ("anaconda-client", `Version "1.2.2");
+      ("bcftools", `Version "1.3");
+      ("biopython", `Version "1.66");
+      ("cairo", `Version "1.12.18");
+      ("clyent", `Version "1.2.0");
+      ("cycler", `Version "0.10.0");
+      ("distribute", `Version "0.6.45");
+      ("fontconfig", `Version "2.11.1");
+      ("freetype", `Version "2.5.5");
+      ("hdf5", `Version "1.8.15.1");
+      ("htslib", `Version "1.3");
+      ("libgcc", `Version "4.8.5");
+      ("libpng", `Version "1.6.17");
+      ("libxml2", `Version "2.9.2");
+      ("matplotlib", `Version "1.5.1");
+      ("mkl", `Version "11.3.1");
+      ("ncurses", `Version "5.9");
+      ("numexpr", `Version "2.4.6");
+      ("numpy", `Version "1.10.4");
+      ("openssl", `Version "1.0.2g");
+      ("packaging", `Version "16.7");
+      ("pandas", `Version "0.17.1");
+      ("pixman", `Version "0.32.6");
+      ("pycairo", `Version "1.10.0");
+      ("pyinstaller", `Version "3.1");
+      ("pyomo", `Version "4.3");
+      ("pyparsing", `Version "2.0.3");
+      ("pyqt", `Version "4.11.4");
+      ("pysam", `Version "0.9.0");
+      ("pytables", `Version "3.2.2");
+      ("python-dateutil", `Version "2.4.2");
+      ("pytz", `Version "2015.7");
+      ("pyyaml", `Version "3.11");
+      ("qt", `Version "4.8.7");
+      ("requests", `Version "2.9.1");
+      ("samtools", `Version "1.3");
+      ("setuptools", `Version "20.1.1");
+      ("sip", `Version "4.16.9");
+      ("six", `Version "1.10.0");
+      ("sqlite", `Version "3.9.2");
+      ("tk", `Version "8.5.18");
+      ("wheel", `Version "0.29.0");
+      ("yaml", `Version "0.1.6");
+      ("zlib", `Version "1.2.8");
+    ]
+    (* see https://github.com/ContinuumIO/anaconda-issues/issues/152#issuecomment-225214743 *)
+    ~banned_packages: [ "readline" ] 
+    ~python_version:`Python2
+
 (* Hide the messy logic of calling opam in here. This should not be exported
    and use the Biopam functions directly.*)
 module Opam = struct
@@ -147,6 +200,7 @@ let default_biopam_url = "https://github.com/solvuu/biopam.git"
 let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ({package; test; edges; init_environment; repository; _ } as it) =
   let open KEDSL in
+  let conda_env = get_conda_env install_path it.package in
   let run_prog name =
     run_program
       ~requirements:[
@@ -173,14 +227,14 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
       [ KEDSL.depends_on (Opam.installed ~run_program ~host ~install_path)] in
     if it.requires_conda
     then
-      depends_on (Conda.configured ~run_program ~host ~install_path ()) :: edges
+      depends_on (Conda.configured ~run_program ~host ~conda_env) :: edges
     else edges in
   let name = "Installing " ^ package in
   let make =
     run_prog "install"
       Program.(
         (if it.requires_conda
-         then Conda.init_biokepi_env ~install_path
+         then Conda.init_env ~conda_env ()
          else sh "echo 'Does not need Conda'")
         && shf "rm -fr %s" (Filename.quote root_name)
         && Opam.program_sh
@@ -201,6 +255,7 @@ let install_tool ~(run_program : Machine.Make_fun.t) ~host ~install_path
   workflow_node cond ~name ~make ~edges
 
 let provide ~run_program ~host ~install_path it =
+  let conda_env = get_conda_env install_path it.package in
   let install_workflow =
     install_tool ~run_program ~host ~install_path it in
   let export_var =
@@ -214,7 +269,7 @@ let provide ~run_program ~host ~install_path it =
     ~ensure:install_workflow
     ~init:KEDSL.Program.(
         (if it.requires_conda
-         then Conda.init_biokepi_env ~install_path
+         then Conda.init_env ~conda_env ()
          else sh "echo 'Does not need Conda'")
         && it.init_environment ~install_path
         && Opam.kcom ~root_name:(Opam.root_of_package it.package) ~install_path

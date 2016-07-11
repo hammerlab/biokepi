@@ -9,42 +9,53 @@ module Specification = struct
       | `Vcf_concat of (string * t) list (* name × location *)
       | `Concat of t list
       | `Gunzip of t (* Should this be guessed from the URL extension? *)
+      | `Bunzip2 of t
       | `Untar of t
     ]
     let url u = `Url u
     let vcf_concat l = `Vcf_concat l
     let concat l = `Concat l
     let gunzip l = `Gunzip l
+    let bunzip2 l = `Bunzip2 l
     let untar l = `Untar l
   end
 
   type t = {
     name: string;
+    ensembl: int;
+    species: string;
     metadata: string option;
     fasta: Location.t;
     dbsnp: Location.t option;
     cosmic: Location.t option;
     exome_gtf: Location.t option; (* maybe desrves a better name? *)
     cdna: Location.t option;
+    whess: Location.t option;
     major_contigs: string list option;
   }
 
   let create
       ?metadata
       ~fasta
+      ~ensembl
+      ~species
       ?dbsnp
       ?cosmic
       ?exome_gtf
       ?cdna
+      ?whess
       ?major_contigs
       name = {
     name;
+    ensembl;
+    species;
     metadata;
     fasta;
     dbsnp;
     cosmic;
     exome_gtf;
     cdna;
+    whess;
     major_contigs;
   }
 
@@ -87,9 +98,17 @@ module Default = struct
   let b37_cdna_url =
     "http://ftp.ensembl.org/pub/release-75/fasta/homo_sapiens/cdna/\
      Homo_sapiens.GRCh37.75.cdna.all.fa.gz"
+  let b37_whess_url =
+    "ftp://genetics.bwh.harvard.edu/pph2/whess/\
+     polyphen-2.2.2-whess-2011_12.sqlite.bz2"
+
+  let human = "homo sapiens"
+  let mouse = "mus musculus"
 
   let b37 =
     create Name.b37
+      ~species:human
+      ~ensembl:75
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -103,9 +122,12 @@ module Default = struct
       ~cosmic:Location.(url b37_cosmic_url)
       ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
+      ~whess:Location.(url b37_whess_url |> bunzip2)
 
   let b37decoy =
     create Name.b37decoy
+      ~species:human
+      ~ensembl:75
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
@@ -117,6 +139,7 @@ module Default = struct
       ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cosmic:Location.(url b37_cosmic_url)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
+      ~whess:Location.(url b37_whess_url |> bunzip2)
 
   let b38 =
     (* Release 79 *)
@@ -133,6 +156,8 @@ module Default = struct
       "http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
     create Name.b38
+      ~species:human
+      ~ensembl:79
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(url b38_url|> gunzip)
@@ -148,6 +173,8 @@ module Default = struct
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg18/dbsnp_138.hg18.vcf.gz" in
     create Name.hg18
+      ~ensembl:54
+      ~species:human
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg18_url|> gunzip)
@@ -160,10 +187,13 @@ module Default = struct
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg19/dbsnp_138.hg19.vcf.gz" in
     create Name.hg19
+      ~ensembl:75
+      ~species:human
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg19_url|> gunzip)
       ~dbsnp:Location.(url dbsnp_hg19_url |> gunzip)
+      ~whess:Location.(url b37_whess_url |> bunzip2)
 
   let mm10 =
     let mm10_url =
@@ -179,6 +209,8 @@ module Default = struct
       "ftp://ftp.ensembl.org/pub/release-84/gtf/mus_musculus/\
        Mus_musculus.GRCm38.84.gtf.gz" in
     create Name.mm10
+      ~ensembl:84
+      ~species:mouse
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
       ~fasta:Location.(url mm10_url |> gunzip)
@@ -205,13 +237,15 @@ type t = {
   dbsnp:  KEDSL.file_workflow option;
   gtf:  KEDSL.file_workflow option;
   cdna: KEDSL.file_workflow option;
+  whess: KEDSL.file_workflow option;
 }
 
-let create ?cosmic ?dbsnp ?gtf ?cdna specification location =
-  {specification; location; cosmic; dbsnp; gtf; cdna}
-
+let create ?cosmic ?dbsnp ?gtf ?cdna ?whess specification location =
+  {specification; location; cosmic; dbsnp; gtf; cdna; whess}
 
 let name t = t.specification.Specification.name
+let ensembl t = t.specification.Specification.ensembl
+let species t = t.specification.Specification.species
 let path t = t.location#product#path
 let cosmic_path_exn t =
   let msg = sprintf "cosmic_path_exn of %s" (name t) in
@@ -233,6 +267,11 @@ let cdna_path_exn t =
     let target = Option.value_exn ~msg t.cdna in
     target#product#path
 
+let whess_path_exn t =
+    let msg = sprintf "whess_path_exn of %s" (name t) in
+    let target = Option.value_exn ~msg t.whess in
+    target#product#path
+
 let fasta: t -> KEDSL.file_workflow = fun t -> t.location
 let cosmic_exn t =
   Option.value_exn ~msg:(sprintf "%s: no COSMIC" (name t)) t.cosmic
@@ -243,6 +282,8 @@ let gtf_exn t =
 let gtf t = t.gtf
 let cdna_exn t =
   Option.value_exn ~msg:(sprintf "%s: no cDNA fasta file" (name t)) t.cdna
+let whess_exn t =
+  Option.value_exn ~msg:(sprintf "%s: no WHESS file" (name t)) t.whess
 
 let major_contigs t : Region.t list =
   match t.specification.Specification.major_contigs with

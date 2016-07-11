@@ -29,31 +29,39 @@ module Specification : sig
       | `Vcf_concat of (string * t) list (* name × location *)
       | `Concat of t list
       | `Gunzip of t (* Should this be guessed from the URL extension? *)
+      | `Bunzip2 of t
       | `Untar of t
     ]
     val url : 'a -> [> `Url of 'a ]
     val vcf_concat : 'a -> [> `Vcf_concat of 'a ]
     val concat : 'a -> [> `Concat of 'a ]
     val gunzip : 'a -> [> `Gunzip of 'a ]
+    val bunzip2 : 'a -> [> `Bunzip2 of 'a ]
     val untar : 'a -> [> `Untar of 'a ]
   end
   type t = private {
     name : name;
+    ensembl : int;
+    species : string;
     metadata : string option;
     fasta : Location.t;
     dbsnp : Location.t option;
     cosmic : Location.t option;
     exome_gtf : Location.t option;
     cdna : Location.t option;
+    whess : Location.t option;
     major_contigs : string list option;
   }
   val create :
     ?metadata:string ->
     fasta:Location.t ->
+    ensembl:int ->
+    species:string ->
     ?dbsnp:Location.t ->
     ?cosmic:Location.t ->
     ?exome_gtf:Location.t ->
     ?cdna:Location.t ->
+    ?whess:Location.t ->
     ?major_contigs:string list ->
     string ->
     t
@@ -86,6 +94,7 @@ type t = private {
   dbsnp :  KEDSL.file_workflow option;
   gtf : KEDSL.file_workflow option;
   cdna : KEDSL.file_workflow option;
+  whess : KEDSL.file_workflow option;
 }
 (** A reference genome has a name (for display/matching) and a
      cluster-dependent path.
@@ -98,17 +107,21 @@ val create :
   ?dbsnp:KEDSL.file_workflow ->
   ?gtf:KEDSL.file_workflow ->
   ?cdna:KEDSL.file_workflow ->
+  ?whess:KEDSL.file_workflow ->
   Specification.t -> KEDSL.file_workflow -> t
 (** Build a [Reference_genome.t] record. *)
 
 (** {5 Usual Accessors } *)
 
 val name : t -> name
+val ensembl : t -> int
+val species : t -> string
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
+val whess_path_exn : t -> string
 
 val major_contigs : t -> Region.t list
 (** {5 Targets} *)
@@ -119,3 +132,4 @@ val dbsnp_exn: t -> KEDSL.file_workflow
 val gtf_exn: t -> KEDSL.file_workflow
 val gtf: t -> KEDSL.file_workflow option
 val cdna_exn: t -> KEDSL.file_workflow
+val whess_exn: t -> KEDSL.file_workflow

@@ -18,6 +18,8 @@ module File_type_specification = struct
       [ `Seq2hla_result ] t
     | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
+    | Isovar_result: single_file workflow_node -> [ `Isovar ] t
+    | Topiary_result: single_file workflow_node -> [ `Topiary ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -32,6 +34,8 @@ module File_type_specification = struct
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
     | Fastqc_result _ -> "Fastqc_result"
+    | Isovar_result _ -> "Isovar_result"
+    | Topiary_result _ -> "Topiary_result"
     | Optitype_result _ -> "Optitype_result"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
@@ -71,6 +75,16 @@ module File_type_specification = struct
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
 
+  let get_isovar_result : [ `Isovar ] t -> single_file workflow_node =
+    function
+    | Isovar_result v -> v
+    | o -> fail_get o "Isovar_result"
+
+  let get_topiary_result : [ `Topiary ] t -> single_file workflow_node =
+    function
+    | Topiary_result v -> v
+    | o -> fail_get o "Topiary_result"
+
   let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
@@ -105,7 +119,9 @@ module File_type_specification = struct
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
     | Fastqc_result wf -> one_depends_on wf
+    | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
+    | Topiary_result wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
     | other -> fail_get other "as_dependency_edges"
@@ -520,6 +536,40 @@ module Make (Config : Compiler_configuration)
         fastq#product#fragment_id_forced
     in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
+
+  let vcf_annotate_polyphen reference_build vcf =
+    let v = get_vcf vcf in
+    let output_vcf = (Filename.chop_extension v#product#path) ^ "_polyphen.vcf" in
+    Vcf (
+      Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
+    )
+
+  let isovar ?(configuration=Tools.Isovar.Configuration.default) reference_build vcf bam =
+    let v = get_vcf vcf in
+    let b = get_bam bam in
+    let out_filename = sprintf "%s_%s_isovar_result.csv"
+      (Filename.chop_extension (Filename.basename v#product#path))
+      (Filename.chop_extension (Filename.basename b#product#path))
+    in
+    let output_file = Config.work_dir // out_filename in 
+    Isovar_result (
+      Tools.Isovar.run ~configuration ~run_with ~reference_build ~vcf:v ~bam:b ~output_file
+    )
+
+  let topiary ?(configuration=Tools.Topiary.Configuration.default) reference_build vcf predictor alleles =
+    let v = get_vcf vcf in
+    let out_filename = sprintf "%s_%s_%s_topiary_result.csv"
+      (Filename.chop_extension (Filename.basename v#product#path))
+      (Tools.Topiary.predictor_to_string predictor)
+      (Filename.chop_extension (Filename.basename alleles))
+    in
+    let output_file = Config.work_dir // out_filename in
+    Topiary_result (
+      Tools.Topiary.run 
+        ~configuration ~run_with 
+        ~reference_build ~variants_vcf:v ~predictor ~alleles_file:alleles 
+        ~output:(`CSV output_file)
+    )
 
   let optitype how fq =
     let fastq = get_fastq fq in
