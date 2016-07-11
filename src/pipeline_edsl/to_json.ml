@@ -185,8 +185,12 @@ module Make_serializer (How : sig
     ?(configuration = Tools.Topiary.Configuration.default)
     reference_build vcf predictor alleles =
     fun ~(var_count : int) ->
+      let vcf_compiled = vcf ~var_count in
       function_call "topiary" [
         "alleles", string alleles;
+        "reference_build", string reference_build;
+        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "vcf", vcf_compiled;
       ]
 
   let optitype how =
