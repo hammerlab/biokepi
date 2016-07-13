@@ -227,7 +227,7 @@ module Make (Config : Compiler_configuration)
         | `Copy -> "copy"
         | `Do_nothing -> "as-is")
     in
-    let done_when =
+    let ensures =
       `Is_verified Condition.(
           chain_and [
             volume_exists
@@ -237,7 +237,7 @@ module Make (Config : Compiler_configuration)
           ]
         )
     in
-    workflow_node product ~done_when ~name ~make
+    workflow_node product ~ensures ~name ~make
       ~edges:[depends_on ifile]
 
   let fastq

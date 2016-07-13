@@ -7,7 +7,7 @@ module Remove = struct
     let open KEDSL in
     workflow_node nothing
       ~name:(sprintf "rm-%s" (Filename.basename path))
-      ~done_when:(`Is_verified (`Command_returns (
+      ~ensures:(`Is_verified (`Command_returns (
           Command.shell ~host:Machine.(as_host run_with)
             (sprintf "ls %s" path),
           2)))
@@ -19,7 +19,7 @@ module Remove = struct
     let open KEDSL in
     workflow_node nothing
       ~name:(sprintf "rmdir-%s" (Filename.basename path))
-      ~done_when:(`Is_verified (`Command_returns (
+      ~ensures:(`Is_verified (`Command_returns (
           Command.shell ~host:Machine.(as_host run_with)
             (sprintf "ls %s" path),
           2
