@@ -111,4 +111,4 @@ let intersect
   let host = Machine.as_host run_with in
   let out = single_file ~host output in
   workflow_node out ~name ~edges ~make
-    ~done_when:(`Is_verified (out#is_bigger_than 1))
+    ~ensures:(`Is_verified (out#is_bigger_than 1))
