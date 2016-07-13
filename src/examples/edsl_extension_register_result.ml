@@ -163,7 +163,7 @@ The function `register` creates an intermediary Ketrew workflow-node.
 - It has the parameter ``~equivalence:`None`` to make sure Ketrew does not
   merge it with the child node.
 - We force the condition of the node to be “not already done:”
-  ``~done_when:`Dependencies_are``.
+  ``~ensures:`Nohting``.
 - It has two dependencies: the child node and the actual registration in the
   database (from above `FDB.register`).ster`).
 
@@ -192,7 +192,7 @@ module To_workflow_with_register
       let new_node =
         let open Ketrew.EDSL in
         workflow_node any_node#product ~equivalence:`None
-          ~done_when:`Dependencies_are
+          ~ensures:`Nothing
           ~name:(Printf.sprintf "Parent-of-registration: %s -> %s"
                    metadata
                    (Filename.basename any_node#product#path))
