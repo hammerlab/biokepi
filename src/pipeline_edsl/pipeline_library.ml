@@ -7,9 +7,10 @@ open Biokepi_run_environment.Common
 module Input = struct
   type t =
     | Fastq of fastq
+  and fastq_fragment = (string option * fastq_data)
   and fastq = {
     sample_name : string;
-    files : (string option * fastq_data) list; (* TODO: rename to “fragments” *)
+    files : fastq_fragment list; (* TODO: rename to “fragments” *)
   }
   and fastq_data =
     | PE of string * string
