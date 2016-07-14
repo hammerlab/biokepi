@@ -114,7 +114,7 @@ module Input = struct
       | other -> error ~json:other "Expecting {\"fragment\": ... , \"data\": ...}"
     in
     match j with
-    | `Assoc ["Biokepi_input_v0", more] ->
+    | `Assoc [vtag, more] when vtag = current_version_tag ->
       begin match more with
       | `Assoc ["Fastq",
                 `Assoc ["sample-name", `String sample; "fragments", `List frgs]] ->
