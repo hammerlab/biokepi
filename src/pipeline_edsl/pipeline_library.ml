@@ -24,7 +24,7 @@ module Input = struct
     (fragment_id, Of_bam (how, sorted, reference_build,  s))
   let fastq_sample ~sample_name files = Fastq {sample_name; files}
 
-  let tag_v0 = "Biokepi_input_v0"
+  let tag_v0 = "biokepi-input-v0"
   let current_version_tag = tag_v0
 
   let to_yojson =
@@ -33,12 +33,14 @@ module Input = struct
     let data_to_yojson =
       function
       | PE (r1, r2) ->
-        `Assoc ["PE", `Assoc ["R1", string r1; "R2", string r2]]
-      | SE f -> `Assoc ["SE", string f]
+        `Assoc ["paired-end", `Assoc ["r1", string r1; "r2", string r2]]
+      | SE f -> `Assoc ["single-end", string f]
       | Of_bam (how, sorto, refb, fil) ->
-        `Assoc ["Bam",
+        `Assoc ["bam",
                 `Assoc ["kind",
-                        string (match how with `PE -> "PE" | `SE -> "SE");
+                        string (match how with
+                          | `PE -> "paired-end"
+                          | `SE -> "single-end");
                         "sorting",
                         (match sorto with
                         | None  -> `Null
@@ -56,7 +58,7 @@ module Input = struct
     function
     | Fastq {sample_name; files} ->
       `Assoc [current_version_tag,
-              `Assoc ["Fastq", `Assoc [
+              `Assoc ["fastq", `Assoc [
                   "sample-name", string sample_name;
                   "fragments", files_to_yojson files;
                 ]]]
@@ -73,10 +75,10 @@ module Input = struct
         ) fmt in
     let data_of_yojson =
       function
-      | `Assoc ["PE", `Assoc ["R1", `String r1; "R2", `String r2]] ->
+      | `Assoc ["paired-end", `Assoc ["r1", `String r1; "r2", `String r2]] ->
         return (PE (r1, r2))
-      | `Assoc ["SE", `String file] -> SE file |> return
-      | `Assoc ["Bam", `Assoc ["kind", `String kind;
+      | `Assoc ["single-end", `String file] -> SE file |> return
+      | `Assoc ["bam", `Assoc ["kind", `String kind;
                                "sorting", sorting;
                                "reference-genome", `String refb;
                                "path", `String path;]] ->
@@ -90,8 +92,8 @@ module Input = struct
         end
         >>= fun sorting ->
         begin match kind with
-        | "SE" -> return `SE
-        | "PE" -> return `PE
+        | "single-end" -> return `SE
+        | "paired-end" -> return `PE
         | other -> error "Kind in bam must be \"SE\" or \"PE\""
         end
         >>= fun kind ->
@@ -117,7 +119,7 @@ module Input = struct
     match j with
     | `Assoc [vtag, more] when vtag = current_version_tag ->
       begin match more with
-      | `Assoc ["Fastq",
+      | `Assoc ["fastq",
                 `Assoc ["sample-name", `String sample; "fragments", `List frgs]] ->
         List.fold ~init:(return []) frgs ~f:(fun prev frag ->
             prev >>= fun p ->
