@@ -141,7 +141,8 @@ module EDSL = struct
     module To_dot : sig
       include Semantics.Bioinformatics_base
         with
-          type 'a observation =
+          type 'a repr = var_count:int -> Biokepi_pipeline_edsl.To_dot.Tree.t
+         with type 'a observation =
             parameters: Biokepi_pipeline_edsl.To_dot.parameters -> SmartPrint.t
       type parameters = Biokepi_pipeline_edsl.To_dot.parameters = {
         color_input:
