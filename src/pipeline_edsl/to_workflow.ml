@@ -1,5 +1,6 @@
 
 open Nonstd
+module String = Sosa.Native_string
 let (//) = Filename.concat
 
 (** The link between {!Biokepi.KEDSL} values and EDSL expression types. *)
@@ -20,6 +21,7 @@ module File_type_specification = struct
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
+    | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -37,8 +39,10 @@ module File_type_specification = struct
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
     | Optitype_result _ -> "Optitype_result"
+    | MHC_alleles _ -> "MHC_alleles"
     | Gz a -> sprintf "(gz %s)" (to_string a)
-    | List l -> sprintf "[%s]" (List.map l ~f:to_string |> String.concat "; ")
+    | List l ->
+      sprintf "[%s]" (List.map l ~f:to_string |> String.concat ~sep:"; ")
     | Pair (a, b) -> sprintf "(%s, %s)" (to_string a) (to_string b)
     | Lambda _ -> "--LAMBDA--"
     | _ -> "##UNKNOWN##"
@@ -85,6 +89,11 @@ module File_type_specification = struct
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
+  let get_mhc_alleles : [ `MHC_alleles ] t -> single_file workflow_node =
+    function
+    | MHC_alleles v -> v
+    | o -> fail_get o "Topiary_result"
+
   let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
@@ -122,6 +131,7 @@ module File_type_specification = struct
     | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
+    | MHC_alleles wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
     | other -> fail_get other "as_dependency_edges"
@@ -280,6 +290,51 @@ module Make (Config : Compiler_configuration)
       dealt_with
     )
 
+  let mhc_alleles how =
+    match how with
+    | `File path ->
+      MHC_alleles (
+        let open KEDSL in
+        let host = Machine.as_host Config.machine in
+        let make_product path = single_file ~host path in
+        let input =
+          workflow_node (make_product path)
+            ~name:(sprintf "Input-MHC-alleles: %s" (Filename.basename path)) in
+        let dealt_with =
+          deal_with_input_file input ~make_product in
+        dealt_with
+      )
+    | `Names strlist ->
+      let path =
+        let saninitize =
+          String.map
+            ~f:(function
+              | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '-') as c -> c
+              | other -> '_')
+        in
+        Config.work_dir // sprintf "MHC_allelles_%s.txt"
+          (List.map strlist ~f:saninitize |> String.concat ~sep:"_")
+      in
+      let open KEDSL in
+      let host = Machine.as_host Config.machine in
+      let product = single_file ~host path in
+      let node =
+        workflow_node product
+          ~name:(sprintf "Inline-MHC-alleles: %s"
+                   (String.concat ~sep:", " strlist))
+          ~make:(
+            Machine.quick_run_program Config.machine Program.(
+                let line s =
+                  shf "echo %s >> %s" (Filename.quote s) (Filename.quote path) in
+                shf "mkdir -p %s" (Filename.dirname path)
+                && shf "rm -f %s" (Filename.quote path)
+                && chain (List.map ~f:line strlist)
+              )
+          )
+      in
+      MHC_alleles node
+
+
   let make_aligner
       name ~make_workflow ~config_name
       ~configuration ~reference_build fastq =
@@ -433,7 +488,7 @@ module Make (Config : Compiler_configuration)
         Filename.chop_extension one#product#path
         ^ sprintf "-merged-%s.bam"
           (List.map bams ~f:(fun bam -> bam#product#path)
-           |> String.concat ""
+           |> String.concat ~sep:""
            |> Digest.string |> Digest.to_hex)
       in
       Bam (Tools.Samtools.merge_bams ~run_with bams output_path)
@@ -556,18 +611,22 @@ module Make (Config : Compiler_configuration)
       Tools.Isovar.run ~configuration ~run_with ~reference_build ~vcf:v ~bam:b ~output_file
     )
 
-  let topiary ?(configuration=Tools.Topiary.Configuration.default) reference_build vcf predictor alleles =
+  let topiary ?(configuration=Tools.Topiary.Configuration.default)
+      reference_build vcf predictor alleles =
     let v = get_vcf vcf in
-    let out_filename = sprintf "%s_%s_%s_topiary_result.csv"
+    let mhc = get_mhc_alleles alleles in
+    let out_filename =
+      sprintf "%s_%s_%s_topiary_result.csv"
       (Filename.chop_extension (Filename.basename v#product#path))
       (Tools.Topiary.predictor_to_string predictor)
-      (Filename.chop_extension (Filename.basename alleles))
+      (Filename.chop_extension (Filename.basename mhc#product#path))
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
       Tools.Topiary.run 
         ~configuration ~run_with 
-        ~reference_build ~variants_vcf:v ~predictor ~alleles_file:alleles 
+        ~reference_build ~variants_vcf:v ~predictor
+        ~alleles_file:mhc 
         ~output:(`CSV output_file)
     )
 

@@ -79,6 +79,13 @@ module Make_serializer (How : sig
       "reference_build", reference_build;
     ]
 
+  let mhc_alleles how =
+    input_value "mhc_alleles" [
+      match how with
+      | `File p -> "path", p
+      | `Names sl -> "inline", (String.concat ", " sl)
+      ]
+
   let pair a b ~(var_count : int) =
     function_call "make-pair" [
       "first", a ~var_count;
@@ -189,7 +196,7 @@ module Make_serializer (How : sig
       let vcf_compiled = vcf ~var_count in
       function_call "topiary" [
         "configuration", string Tools.Topiary.Configuration.(name configuration);
-        "alleles", string alleles;
+        "alleles", alleles ~var_count;
         "reference_build", string reference_build;
         "predictor", string Tools.Topiary.(predictor_to_string predictor);
         "vcf", vcf_compiled;
