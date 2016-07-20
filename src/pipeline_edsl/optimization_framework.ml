@@ -75,6 +75,8 @@ module Generic_optimizer
   let bam ~path ?sorting ~reference_build () =
     fwd (Input.bam ~path ?sorting ~reference_build ())
 
+  let mhc_alleles how = fwd (Input.mhc_alleles how)
+
   let bwa_aln ?configuration ~reference_build fq =
     fwd (Input.bwa_aln ?configuration ~reference_build (bwd fq))
 
@@ -154,6 +156,7 @@ module Generic_optimizer
   let isovar ?configuration reference_build vcf bam =
     fwd (Input.isovar ?configuration reference_build (bwd vcf) (bwd bam))
   let topiary ?configuration reference_build vcf predictor alleles = 
-    fwd (Input.topiary ?configuration reference_build (bwd vcf) predictor alleles)
+    fwd (Input.topiary
+           ?configuration reference_build (bwd vcf) predictor (bwd alleles))
 
 end

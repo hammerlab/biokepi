@@ -49,7 +49,8 @@ module type Bioinformatics_base = sig
     reference_build: string ->
     unit -> [ `Bam ] repr
 
-
+  (** Input a file containing HLA allelles for Topiary  *)
+  val mhc_alleles: [ `File of string | `Names of string list] -> [ `MHC_alleles ] repr
 
   val gunzip: [ `Gz of 'a] repr -> 'a repr
 
@@ -203,7 +204,7 @@ module type Bioinformatics_base = sig
     Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     Topiary.predictor_type ->
-    string ->
+    [ `MHC_alleles ] repr ->
     [ `Topiary ] repr
 
 end

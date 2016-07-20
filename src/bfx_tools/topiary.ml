@@ -138,7 +138,7 @@ let run ~(run_with: Machine.t)
   in
   let var_arg = ["--vcf"; variants_vcf#product#path] in
   let predictor_arg = ["--mhc-predictor"; (predictor_to_string predictor)] in
-  let allele_arg = ["--mhc-alleles-file"; alleles_file] in
+  let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
   let (output_arg, output_path) = 
     match output with
     | `HTML html_file -> ["--output-html"; html_file], html_file
@@ -182,6 +182,7 @@ let run ~(run_with: Machine.t)
       depends_on Machine.Tool.(ensure topiary);
       depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
       depends_on variants_vcf;
+      depends_on alleles_file;
     ]
     ~make:(
       Machine.run_program run_with ~name
