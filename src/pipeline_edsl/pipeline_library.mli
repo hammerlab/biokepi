@@ -2,8 +2,18 @@
 
 module Input : sig
 
-  type t
-  type fastq_fragment
+  type t =
+    | Fastq of fastq
+  and fastq_fragment = (string option * fastq_data)
+  and fastq = {
+    sample_name : string;
+    files : fastq_fragment list;
+  }
+  and fastq_data =
+    | PE of string * string
+    | SE of string
+    | Of_bam of [ `PE | `SE ] * [ `Coordinate | `Read_name ] option * string * string
+  
 
   val pp : Format.formatter -> t -> unit
   val show : t -> string
