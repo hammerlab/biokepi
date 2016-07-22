@@ -15,6 +15,7 @@ let create
   let open KEDSL in
   let host = Host.parse (uri // "ketrew_playground") in
   let meta_playground = Uri.of_string uri |> Uri.path in
+  let reference_genome_dir = meta_playground // "reference-genome" in
   let run_program =
     match run_program with
     | None -> default_run_program ~host
@@ -29,13 +30,14 @@ let create
   in
   Machine.create (sprintf "ssh-box-%s" uri)
     ~max_processors
+    ~reference_genome_dir
     ~get_reference_genome:(fun name ->
         match name, b37 with
         | name, Some some37 when name = Reference_genome.name some37 -> some37
         | name, _ ->        
           Download_reference_genomes.get_reference_genome name
             ~toolkit ~host ~run_program
-            ~destination_path:(meta_playground // "reference-genome"))
+            ~destination_path:reference_genome_dir)
     ~host
     ~toolkit
     ~run_program
