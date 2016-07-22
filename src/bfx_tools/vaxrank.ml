@@ -84,6 +84,13 @@ module Configuration = struct
   let name t = t.name
 end
 
+type product = <
+  is_done : Ketrew_pure.Target.Condition.t option ;
+  text_report_path : string;
+  csv_report_path: string;
+  output_folder_path: string >
+
+
 let run ~(run_with: Machine.t)
   ~configuration 
   ~reference_build
@@ -131,8 +138,21 @@ let run ~(run_with: Machine.t)
     @ Configuration.render configuration
   in
   let name = "Vaxrank run" in
+  let host = Machine.(as_host run_with) in
+  let product =
+    let text_report = KEDSL.single_file ~host ascii_file in
+    let csv_report = KEDSL.single_file ~host csv_file in
+    object
+      method is_done =
+        Some (`And
+                (List.filter_map ~f:(fun f -> f#is_done) [text_report; csv_report]))
+      method text_report_path = ascii_file
+      method csv_report_path = csv_file
+      method output_folder_path = output_folder
+    end
+  in
   workflow_node
-    (list_of_files [csv_file; ascii_file] ~host:(Machine.as_host run_with))
+    product
     ~name
     ~edges:[
       depends_on Machine.Tool.(ensure vaxrank);

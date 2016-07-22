@@ -21,7 +21,7 @@ module File_type_specification = struct
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
-    | Vaxrank_result: list_of_files workflow_node -> [ `Vaxrank ] t
+    | Vaxrank_result: Vaxrank.product workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
@@ -91,10 +91,10 @@ module File_type_specification = struct
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_vaxrank_result : [ `Vaxrank ] t -> list_of_files workflow_node =
+  let get_vaxrank_result : [ `Vaxrank ] t -> Vaxrank.product workflow_node =
     function
     | Vaxrank_result v -> v
-    | o -> fail_get o "Topiary_result"
+    | o -> fail_get o "Vaxrank_result"
 
   let get_mhc_alleles : [ `MHC_alleles ] t -> single_file workflow_node =
     function
