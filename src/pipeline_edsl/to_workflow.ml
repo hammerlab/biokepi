@@ -21,6 +21,7 @@ module File_type_specification = struct
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
+    | Vaxrank_result: list_of_files workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
@@ -38,6 +39,7 @@ module File_type_specification = struct
     | Fastqc_result _ -> "Fastqc_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
+    | Vaxrank_result _ -> "Vaxrank_result"
     | Optitype_result _ -> "Optitype_result"
     | MHC_alleles _ -> "MHC_alleles"
     | Gz a -> sprintf "(gz %s)" (to_string a)
@@ -89,6 +91,11 @@ module File_type_specification = struct
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
+  let get_vaxrank_result : [ `Vaxrank ] t -> list_of_files workflow_node =
+    function
+    | Vaxrank_result v -> v
+    | o -> fail_get o "Topiary_result"
+
   let get_mhc_alleles : [ `MHC_alleles ] t -> single_file workflow_node =
     function
     | MHC_alleles v -> v
@@ -127,10 +134,11 @@ module File_type_specification = struct
     | Vcf wf ->   one_depends_on wf
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
-    | Fastqc_result wf -> one_depends_on wf
+    | Fastqc_result wf -> one_depends_on wf    
     | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
+    | Vaxrank_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
@@ -628,6 +636,20 @@ module Make (Config : Compiler_configuration)
         ~reference_build ~variants_vcf:v ~predictor
         ~alleles_file:mhc 
         ~output:(`CSV output_file)
+    )
+
+  let vaxrank ?(configuration=Tools.Vaxrank.Configuration.default)
+      reference_build vcf bam predictor alleles =
+    let v = get_vcf vcf in
+    let b = get_bam bam in
+    let mhc = get_mhc_alleles alleles in
+    let outdir = Config.work_dir in
+    Vaxrank_result (
+      Tools.Vaxrank.run 
+        ~configuration ~run_with 
+        ~reference_build ~vcf:v ~bam:b ~predictor
+        ~alleles_file:mhc 
+        ~output_folder:outdir
     )
 
   let optitype how fq =
