@@ -164,6 +164,7 @@ end
 type t = {
   name: string;
   host: Host.t;
+  reference_genome_dir: string;
   get_reference_genome: string -> Reference_genome.t;
   toolkit: Tool.Kit.t;
   run_program: Make_fun.t;
@@ -171,13 +172,14 @@ type t = {
   max_processors: int;
 }
 let create
-    ~host ~get_reference_genome ~toolkit
+    ~host ~reference_genome_dir ~get_reference_genome ~toolkit
     ~run_program ~work_dir ~max_processors  name =
-  {name; toolkit; get_reference_genome; host;
-   run_program; work_dir; max_processors}
+  {name; toolkit; reference_genome_dir; get_reference_genome;
+   host; run_program; work_dir; max_processors}
 
 let name t = t.name
 let as_host t = t.host
+let get_reference_genome_dir t = t.reference_genome_dir
 let get_reference_genome t = t.get_reference_genome
 let get_tool t tool =
   match t.toolkit tool with
