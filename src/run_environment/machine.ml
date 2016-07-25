@@ -172,7 +172,7 @@ type t = {
   max_processors: int;
 }
 let create
-    ~host ~pyensembl_cache_dir ~get_reference_genome ~toolkit
+    ~host ?pyensembl_cache_dir ~get_reference_genome ~toolkit
     ~run_program ~work_dir ~max_processors  name =
   {name; toolkit; pyensembl_cache_dir; get_reference_genome;
    host; run_program; work_dir; max_processors}

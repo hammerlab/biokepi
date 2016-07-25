@@ -11,7 +11,7 @@ let create
     ?(max_processors = 1)
     ?gatk_jar_location
     ?mutect_jar_location
-    ?(pyensembl_cache_dir = None)
+    ?pyensembl_cache_dir
     ?run_program ?toolkit ?b37 uri =
   let open KEDSL in
   let host = Host.parse (uri // "ketrew_playground") in
@@ -30,7 +30,7 @@ let create
   in
   Machine.create (sprintf "ssh-box-%s" uri)
     ~max_processors
-    ~pyensembl_cache_dir
+    ?pyensembl_cache_dir
     ~get_reference_genome:(fun name ->
         match name, b37 with
         | name, Some some37 when name = Reference_genome.name some37 -> some37
