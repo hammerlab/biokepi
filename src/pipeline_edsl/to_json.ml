@@ -109,12 +109,12 @@ module Make_serializer (How : sig
         "reference_build", string reference_build;
         "input", fq_compiled;
       ]
-  let one_to_one name conf_name bam =
+  let one_to_one name conf_name input_file =
     fun ~(var_count : int) ->
-      let bamc = bam ~var_count in
+      let input_file_compiled = input_file ~var_count in
       function_call name [
         "configuration", string conf_name;
-        "input", bamc;
+        "input", input_file_compiled;
       ]
 
   let bwa_aln
@@ -182,6 +182,9 @@ module Make_serializer (How : sig
 
   let fastqc =
     one_to_one "fastqc" "default"
+
+  let flagstat =
+    one_to_one "flagstat" "default"
 
   let vcf_annotate_polyphen reference_build =
     one_to_one "vcf_annotate_polyphen" "default"
