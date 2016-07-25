@@ -21,7 +21,8 @@ module File_type_specification = struct
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
-    | Vaxrank_result: Vaxrank.product workflow_node -> [ `Vaxrank ] t
+    | Vaxrank_result: 
+        Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t

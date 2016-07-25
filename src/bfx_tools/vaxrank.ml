@@ -79,22 +79,23 @@ module Configuration = struct
     mhc_epitope_lengths;
     parameters} 
     =
-    sprintf "--vaccine-peptide-length %d" vaccine_peptide_length ::
-    sprintf "--padding-around-mutation %d" padding_around_mutation ::
-    sprintf "--max-vaccine-peptides-per-mutation %d" 
-      max_vaccine_peptides_per_mutation ::
-    sprintf "--max-mutations-in-report %d" max_mutations_in_report ::
-    sprintf "--min-mapping-quality %d" min_mapping_quality ::
-    sprintf "--min-reads-supporting-variant-sequence %d" 
-      min_reads_supporting_variant_sequence ::
+    let soi = string_of_int in
+    ["--vaccine-peptide-length"; soi vaccine_peptide_length] @
+    ["--padding-around-mutation"; soi padding_around_mutation] @
+    ["--max-vaccine-peptides-per-mutation"; 
+      soi max_vaccine_peptides_per_mutation] @
+    ["--max-mutations-in-report"; soi max_mutations_in_report] @
+    ["--min-mapping-quality"; soi min_mapping_quality] @
+    ["--min-reads-supporting-variant-sequence"; 
+      soi min_reads_supporting_variant_sequence] @
     (if use_duplicate_reads
-      then "--use-duplicate-reads" else "") ::
+      then ["--use-duplicate-reads"] else [""]) @
     (if drop_secondary_alignments
-      then "--drop_secondary_alignments" else "") ::
-    sprintf "--mhc_epitope_lengths %s"
+      then ["--drop_secondary_alignments"] else [""]) @
+    ["--mhc-epitope-lengths"; 
       (mhc_epitope_lengths
         |> List.map ~f:string_of_int
-        |> String.concat ~sep:",") ::
+        |> String.concat ~sep:",")] @
     (List.concat_map parameters ~f:(fun (a,b) -> [a; b]))
     |> List.filter ~f:(fun s -> not (String.is_empty s))
 
