@@ -19,6 +19,7 @@ module File_type_specification = struct
       [ `Seq2hla_result ] t
     | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
+    | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
@@ -36,6 +37,7 @@ module File_type_specification = struct
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
     | Fastqc_result _ -> "Fastqc_result"
+    | Flagstat_result _ -> "Flagstat_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
     | Optitype_result _ -> "Optitype_result"
@@ -78,6 +80,11 @@ module File_type_specification = struct
     function
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
+
+  let get_flagstat_result : [ `Flagstat ] t -> single_file workflow_node =
+    function
+    | Flagstat_result v -> v
+    | o -> fail_get o "Flagstat_result"
 
   let get_isovar_result : [ `Isovar ] t -> single_file workflow_node =
     function
@@ -128,6 +135,7 @@ module File_type_specification = struct
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
     | Fastqc_result wf -> one_depends_on wf
+    | Flagstat_result wf -> one_depends_on wf
     | Isovar_result wf -> one_depends_on wf
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
@@ -591,6 +599,10 @@ module Make (Config : Compiler_configuration)
         fastq#product#fragment_id_forced
     in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
+
+  let flagstat bam =
+    let bam = get_bam bam in
+    Flagstat_result (Tools.Samtools.flagstat ~run_with bam)
 
   let vcf_annotate_polyphen reference_build vcf =
     let v = get_vcf vcf in

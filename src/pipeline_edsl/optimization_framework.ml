@@ -150,6 +150,8 @@ module Generic_optimizer
 
   let fastqc fq =
     fwd (Input.fastqc (bwd fq))
+  let flagstat bam =
+    fwd (Input.flagstat (bwd bam))
 
   let vcf_annotate_polyphen reference_build vcf =
     fwd (Input.vcf_annotate_polyphen reference_build (bwd vcf))

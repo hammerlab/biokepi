@@ -125,7 +125,7 @@ module type Bioinformatics_base = sig
     [ `Fastq ] repr ->
     [ `Seq2hla_result ] repr
 
-  val optitype: 
+  val optitype:
     [`DNA | `RNA] ->
     [ `Fastq ] repr ->
     [ `Optitype_result ] repr
@@ -162,7 +162,7 @@ module type Bioinformatics_base = sig
     unit ->
     [ `Vcf ] repr
 
-  val strelka: 
+  val strelka:
     ?configuration: Strelka.Configuration.t ->
     normal: [ `Bam ] repr ->
     tumor: [ `Bam ] repr ->
@@ -186,6 +186,8 @@ module type Bioinformatics_base = sig
   val fastqc: [ `Fastq ] repr -> [ `Fastqc ] repr
   (** Call the FASTQC tool (the result is an output directory custom to the
       tool). *)
+
+  val flagstat: [ `Bam ] repr -> [ `Flagstat ] repr
 
   val vcf_annotate_polyphen:
     Biokepi_run_environment.Reference_genome.name ->
