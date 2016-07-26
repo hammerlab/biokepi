@@ -168,8 +168,8 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
           | SE r ->
             fastq_of_files ~sample_name ?fragment_id ~r1:r  ()
           | Of_bam (how, sorting, reference_build, path) ->
-            let bam = Bfx.bam ~path ?sorting ~reference_build () in
-            Bfx.bam_to_fastq ~sample_name ?fragment_id how bam
+            let bam = Bfx.bam ~path ~sample_name ?sorting ~reference_build () in
+            Bfx.bam_to_fastq ?fragment_id how bam
         )
       |> Bfx.list
 

@@ -31,6 +31,7 @@ let bamtofastq
   let sorted_bam =
     Samtools.sort_bam_if_necessary
       ~run_with ~by:`Read_name input_bam in
+  let sample_name = input_bam#product#sample_name in
   let fastq_output_options, r1, r2opt =
     match sample_type with
     | `Paired_end ->
@@ -66,7 +67,7 @@ let bamtofastq
     end
   in
   workflow_node
-    (fastq_reads ~host:(Machine.as_host run_with) r1 r2opt)
+    (fastq_reads ~name:sample_name ~host:(Machine.as_host run_with) r1 r2opt)
     ~edges ~name ~make
 
 

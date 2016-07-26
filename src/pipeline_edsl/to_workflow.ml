@@ -285,12 +285,12 @@ module Make (Config : Compiler_configuration)
         ~sample_name ?fragment_id ~r1 ?r2 ()
     )
 
-  let bam ~path ?sorting ~reference_build () =
+  let bam ~path ~sample_name ?sorting ~reference_build () =
     Bam (
       let open KEDSL in
       let host = Machine.as_host Config.machine in
       let make_product path =
-        bam_file ~host ?sorting ~reference_build path in
+        bam_file ~host ~name:sample_name ?sorting ~reference_build path in
       let input =
         workflow_node (make_product path)
           ~name:(sprintf "Input-bam: %s" (Filename.basename path)) in
@@ -678,7 +678,7 @@ module Make (Config : Compiler_configuration)
         ~input_bam ~result_prefix `Map_reduce
     )
 
-  let bam_to_fastq ~sample_name ?fragment_id how bam =
+  let bam_to_fastq ?fragment_id how bam =
     let input_bam = get_bam bam in
     let sample_type = match how with `SE -> `Single_end | `PE -> `Paired_end in
     let output_prefix =
@@ -689,7 +689,7 @@ module Make (Config : Compiler_configuration)
     in
     Fastq (
       Tools.Picard.bam_to_fastq ~run_with ~sample_type
-        ~sample_name ~output_prefix input_bam
+        ~output_prefix input_bam
     )
 
   let somatic_vc
