@@ -650,7 +650,7 @@ module Make (Config : Compiler_configuration)
     let mhc = get_mhc_alleles alleles in
     let outdir =
       Config.work_dir
-      // sprintf "%s_%s_%s_vaxrank_%s_result.csv"
+      // sprintf "%s_%s_%s_vaxrank_%s_result"
         (Filename.chop_extension (Filename.basename v#product#path))
         (Tools.Topiary.predictor_to_string predictor)
         (Filename.chop_extension (Filename.basename mhc#product#path))
