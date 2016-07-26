@@ -611,9 +611,11 @@ module Make (Config : Compiler_configuration)
   let isovar ?(configuration=Tools.Isovar.Configuration.default) reference_build vcf bam =
     let v = get_vcf vcf in
     let b = get_bam bam in
-    let out_filename = sprintf "%s_%s_isovar_result.csv"
-      (Filename.chop_extension (Filename.basename v#product#path))
-      (Filename.chop_extension (Filename.basename b#product#path))
+    let out_filename =
+      sprintf "%s_%s_isovar_%s_result.csv"
+        (Filename.chop_extension (Filename.basename v#product#path))
+        (Filename.chop_extension (Filename.basename b#product#path))
+        (Tools.Isovar.Configuration.name configuration)
     in
     let output_file = Config.work_dir // out_filename in 
     Isovar_result (
@@ -625,10 +627,11 @@ module Make (Config : Compiler_configuration)
     let v = get_vcf vcf in
     let mhc = get_mhc_alleles alleles in
     let out_filename =
-      sprintf "%s_%s_%s_topiary_result.csv"
-      (Filename.chop_extension (Filename.basename v#product#path))
-      (Tools.Topiary.predictor_to_string predictor)
-      (Filename.chop_extension (Filename.basename mhc#product#path))
+      sprintf "%s_%s_%s_topiary_%s_result.csv"
+        (Filename.chop_extension (Filename.basename v#product#path))
+        (Tools.Topiary.predictor_to_string predictor)
+        (Filename.chop_extension (Filename.basename mhc#product#path))
+        (Tools.Topiary.Configuration.name configuration)
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
@@ -639,12 +642,20 @@ module Make (Config : Compiler_configuration)
         ~output:(`CSV output_file)
     )
 
-  let vaxrank ?(configuration=Tools.Vaxrank.Configuration.default)
+  let vaxrank
+      ?(configuration=Tools.Vaxrank.Configuration.default)
       reference_build vcf bam predictor alleles =
     let v = get_vcf vcf in
     let b = get_bam bam in
     let mhc = get_mhc_alleles alleles in
-    let outdir = Config.work_dir in
+    let outdir =
+      Config.work_dir
+      // sprintf "%s_%s_%s_vaxrank_%s_result.csv"
+        (Filename.chop_extension (Filename.basename v#product#path))
+        (Tools.Topiary.predictor_to_string predictor)
+        (Filename.chop_extension (Filename.basename mhc#product#path))
+        (Tools.Vaxrank.Configuration.name configuration)
+    in
     Vaxrank_result (
       Tools.Vaxrank.run 
         ~configuration ~run_with 
