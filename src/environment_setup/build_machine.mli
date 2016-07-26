@@ -23,6 +23,7 @@ val create :
   ?max_processors : int ->
   ?gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
   ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
+  ?pyensembl_cache_dir:string ->
   ?run_program:Machine.Make_fun.t ->
   ?toolkit:Machine.Tool.Kit.t ->
   ?b37:Reference_genome.t ->

@@ -188,6 +188,7 @@ let run ~(run_with: Machine.t)
       Machine.run_program run_with ~name
         Program.(
           Machine.Tool.(init topiary)
+          && Pyensembl.(set_cache_dir_command ~run_with)
           && exec (["topiary"] @ arguments)
         )
     )
