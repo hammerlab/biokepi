@@ -45,6 +45,7 @@ module type Bioinformatics_base = sig
 
   val bam :
     path : string ->
+    sample_name : string ->
     ?sorting: [ `Coordinate | `Read_name ] ->
     reference_build: string ->
     unit -> [ `Bam ] repr
@@ -61,7 +62,6 @@ module type Bioinformatics_base = sig
   val merge_bams: ([ `Bam ] list) repr -> [ `Bam ] repr
 
   val bam_to_fastq:
-    sample_name : string ->
     ?fragment_id : string ->
     [ `SE | `PE ] ->
     [ `Bam ] repr ->

@@ -150,12 +150,12 @@ let mark_duplicates
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
 
-let bam_to_fastq
-    ?sample_name ~run_with ~sample_type ~output_prefix input_bam =
+let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
   let open KEDSL in
   let sorted_bam =
     Samtools.sort_bam_if_necessary
       ~run_with ~by:`Read_name input_bam in
+  let sample_name = input_bam#product#sample_name in
   let fastq_output_options, r1, r2opt =
     match sample_type with
     | `Paired_end ->
@@ -194,5 +194,5 @@ let bam_to_fastq
       ]
   in
   workflow_node
-    (fastq_reads ?name:sample_name ~host:(Machine.as_host run_with) r1 r2opt)
+    (fastq_reads ~name:sample_name ~host:(Machine.as_host run_with) r1 r2opt)
     ~name ~make ~edges

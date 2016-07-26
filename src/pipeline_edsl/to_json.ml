@@ -70,9 +70,10 @@ module Make_serializer (How : sig
       "R2", Option.value ~default:"NONE" r2;
     ]
 
-  let bam ~path ?sorting ~reference_build () =
+  let bam ~path ~sample_name ?sorting ~reference_build () =
     input_value "bam" [
       "path", path;
+      "sample_name", sample_name;
       "sorting",
       Option.value_map ~default:"NONE" sorting
         ~f:(function `Coordinate -> "Coordinate" | `Read_name -> "Read-name");
@@ -208,11 +209,10 @@ module Make_serializer (How : sig
   let gatk_haplotype_caller =
     one_to_one "gatk_haplotype_caller" "default"
 
-  let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
+  let bam_to_fastq ?fragment_id se_or_pe bam =
     fun ~(var_count : int) ->
       let bamc = bam ~var_count in
       function_call "bam_to_fastq" [
-        "sample_name", string sample_name;
         "fragment_id",
         Option.value_map ~f:string ~default:(string "N/A") fragment_id;
         "endness", string (

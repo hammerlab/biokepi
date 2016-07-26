@@ -72,8 +72,8 @@ module Generic_optimizer
   let fastq_gz ~sample_name ?fragment_id ~r1 ?r2 () =
     fwd (Input.fastq_gz ~sample_name ?fragment_id ~r1 ?r2 ())
 
-  let bam ~path ?sorting ~reference_build () =
-    fwd (Input.bam ~path ?sorting ~reference_build ())
+  let bam ~path ~sample_name ?sorting ~reference_build () =
+    fwd (Input.bam ~path ~sample_name ?sorting ~reference_build ())
 
   let mhc_alleles how = fwd (Input.mhc_alleles how)
 
@@ -129,8 +129,8 @@ module Generic_optimizer
   let merge_bams bl =
     fwd (Input.merge_bams (bwd bl))
 
-  let bam_to_fastq ~sample_name ?fragment_id se_or_pe bam =
-    fwd (Input.bam_to_fastq ~sample_name ?fragment_id se_or_pe (bwd bam))
+  let bam_to_fastq ?fragment_id se_or_pe bam =
+    fwd (Input.bam_to_fastq ?fragment_id se_or_pe (bwd bam))
 
   let mutect ?configuration ~normal ~tumor () =
     fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())

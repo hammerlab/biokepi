@@ -151,13 +151,21 @@ module KEDSL = struct
     is_done: Ketrew_pure.Target.Condition.t option;
     host: Host.t;
     path : string;
+    sample_name: string;
+    escaped_sample_name: string;
     sorting: [ `Coordinate | `Read_name ] option;
     reference_build: string;
   >
-  let bam_file ~host ?sorting ~reference_build path : bam_file =
-    object
+  let bam_file ~host ?name ?sorting ~reference_build path : bam_file =
+    object (self)
       val file = single_file ~host path
       method host = host
+      method sample_name =
+        Option.value name ~default:(Filename.chop_extension (Filename.basename path))
+      method escaped_sample_name =
+        String.map self#sample_name ~f:(function
+          | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
+          | other -> '_')
       method path = file#path
       method is_done = file#is_done
       method sorting = sorting

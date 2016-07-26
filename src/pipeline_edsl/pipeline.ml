@@ -77,7 +77,7 @@ type _ t =
   | Fastq: File.t -> fastq  t
   (* | List: 'a t list -> 'a list t *)
   | Bam_sample: string * bam -> bam t
-  | Bam_to_fastq: fastq_sample_info option * [ `Single | `Paired ] * bam t -> fastq_sample t
+  | Bam_to_fastq: [ `Single | `Paired ] * bam t -> fastq_sample t
   | Paired_end_sample: fastq_sample_info * fastq t * fastq t -> fastq_sample t
   | Single_end_sample: fastq_sample_info * fastq t -> fastq_sample t
   | Gunzip_concat: fastq_gz t list -> fastq t
@@ -137,7 +137,7 @@ module Construct = struct
 
   let bam ~dataset bam = Bam_sample (dataset, bam)
 
-  let bam_to_fastq ?sample_name how bam = Bam_to_fastq (sample_name, how, bam)
+  let bam_to_fastq how bam = Bam_to_fastq (how, bam)
 
   let bwa ?(configuration = Bwa.Configuration.Aln.default) fastq =
     Bwa (configuration, fastq)
@@ -346,7 +346,7 @@ let rec to_file_prefix:
       end
     | Concat_text _ -> failwith "TODO"
     | Bam_sample (name, _) -> Filename.basename name
-    | Bam_to_fastq (_, how, bam) ->
+    | Bam_to_fastq (how, bam) ->
       sprintf "%s-b2fq-%s"
         (to_file_prefix bam)
         (match how with `Paired -> "PE" | `Single -> "SE")
@@ -413,7 +413,7 @@ let rec to_json: type a. a t -> json =
     | Fastq file -> call "Fastq" [`String file#product#path]
     | Bam_sample (name, file) ->
       call "Bam-sample" [`String name; `String file#product#path]
-    | Bam_to_fastq (name, how, bam) ->
+    | Bam_to_fastq (how, bam) ->
       let how_string =
         match how with `Paired -> "Paired" | `Single -> "Single" in
       call "Bam-to-fastq" [`String how_string; to_json bam]
@@ -579,15 +579,13 @@ module Compiler = struct
     let {work_dir; machine ; _ } = compiler in
 
       match fs with
-      | Bam_to_fastq (info_opt, how, what) ->
+      | Bam_to_fastq (how, what) ->
         let bam = compile_aligner_step ~compiler what in
         let sample_type =
           match how with `Single -> `Single_end | `Paired -> `Paired_end in
         let fastq_pair =
           let output_prefix = work_dir // to_file_prefix ?read:None what in
-          let sample_name = Option.map info_opt (fun x -> x.sample_name) in
           Picard.bam_to_fastq ~run_with:machine ~sample_type
-            ?sample_name
             ~output_prefix bam
         in
         fastq_pair
