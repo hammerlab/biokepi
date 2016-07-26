@@ -121,13 +121,13 @@ type product = <
   output_folder_path: string >
 
 let run ~(run_with: Machine.t)
-  ~configuration 
-  ~reference_build
-  ~vcf
-  ~bam
-  ~predictor 
-  ~alleles_file
-  ~output_folder
+    ~configuration 
+    ~reference_build
+    ~vcf
+    ~bam
+    ~predictor 
+    ~alleles_file
+    ~output_folder
   =
   let open KEDSL in
   let vaxrank =
@@ -177,6 +177,7 @@ let run ~(run_with: Machine.t)
         Program.(
           Machine.Tool.(init vaxrank)
           && Pyensembl.(set_cache_dir_command ~run_with)
+          && shf "mkdir -p %s" (Filename.quote output_folder)
           && exec (["vaxrank"] @ arguments)
         )
     )

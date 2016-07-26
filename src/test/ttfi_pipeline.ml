@@ -160,7 +160,7 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
         aligner @@ Bfx.mosaik;
         aligner @@ (fun ~reference_build fastq ->
             Bfx.bwa_aln ~reference_build fastq
-            |> Bfx.bam_to_fastq ~sample_name:"realigned" `PE
+            |> Bfx.bam_to_fastq `PE
             |> Bfx.bwa_mem ?configuration: None ~reference_build
           );
       ] in
