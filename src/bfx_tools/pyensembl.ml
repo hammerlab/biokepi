@@ -3,15 +3,17 @@ open Common
 
 let pyensembl_env_key = "PYENSEMBL_CACHE_DIR"
 
-let set_cache_dir_command ~(run_with: Machine.t) =
+let get_cache_dir ~(run_with: Machine.t) = 
   let open KEDSL in
   let cache_dir = Machine.(get_pyensembl_cache_dir run_with) in
-  let cache_dir_value = 
-    match cache_dir with
-      | Some d -> d
-      | None -> failwith "Tool depends on PyEnsembl, but the cache directory \
-                          has not been set!"
-  in
+  match cache_dir with
+    | Some path -> path
+    | None -> failwith "Tool depends on PyEnsembl, but the cache directory \
+                        has not been set!"
+
+let set_cache_dir_command ~(run_with: Machine.t) =
+  let open KEDSL in
+  let cache_dir_value = get_cache_dir ~run_with in
   Program.(shf "export %s='%s'" pyensembl_env_key cache_dir_value)
 
 let cache_genome ~(run_with: Machine.t) ~reference_build =
@@ -23,7 +25,7 @@ let cache_genome ~(run_with: Machine.t) ~reference_build =
   let ensembl_release = genome |> Reference_genome.ensembl in
   let species = genome |> Reference_genome.species in
   let witness_file_path = 
-    sprintf "${%s}/%s.cached" pyensembl_env_key reference_build
+    sprintf "%s/%s.cached" (get_cache_dir ~run_with) reference_build
   in
   let name = sprintf "pyensembl_cache-%d-%s" ensembl_release species in
   workflow_node
