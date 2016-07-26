@@ -202,6 +202,21 @@ module Make_serializer (How : sig
         "vcf", vcf_compiled;
       ]
 
+  let vaxrank 
+    ?(configuration = Tools.Vaxrank.Configuration.default)
+    reference_build vcf bam predictor alleles =
+    fun ~(var_count : int) ->
+      let vcf_compiled = vcf ~var_count in
+      let bam_compiled = bam ~var_count in
+      function_call "vaxrank" [
+        "configuration", string Tools.Vaxrank.Configuration.(name configuration);
+        "alleles", alleles ~var_count;
+        "reference_build", string reference_build;
+        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "vcf", vcf_compiled;
+        "bam", bam_compiled;
+      ]
+
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
 

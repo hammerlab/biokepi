@@ -158,5 +158,7 @@ module Generic_optimizer
   let topiary ?configuration reference_build vcf predictor alleles = 
     fwd (Input.topiary
            ?configuration reference_build (bwd vcf) predictor (bwd alleles))
-
+  let vaxrank ?configuration reference_build vcf bam predictor alleles =
+    fwd (Input.vaxrank ?configuration reference_build
+          (bwd vcf) (bwd bam) predictor (bwd alleles))
 end
