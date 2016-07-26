@@ -1,9 +1,10 @@
 open Biokepi_run_environment
 open Common
 
+let pyensembl_env_key = "PYENSEMBL_CACHE_DIR"
+
 let set_cache_dir_command ~(run_with: Machine.t) =
   let open KEDSL in
-  let env_var = "PYENSEMBL_CACHE_DIR" in
   let cache_dir = Machine.(get_pyensembl_cache_dir run_with) in
   let cache_dir_value = 
     match cache_dir with
@@ -11,7 +12,7 @@ let set_cache_dir_command ~(run_with: Machine.t) =
       | None -> failwith "Tool depends on PyEnsembl, but the cache directory \
                           has not been set!"
   in
-  Program.(shf "export %s='%s'" env_var cache_dir_value)
+  Program.(shf "export %s='%s'" pyensembl_env_key cache_dir_value)
 
 let cache_genome ~(run_with: Machine.t) ~reference_build =
   let open KEDSL in
@@ -21,9 +22,12 @@ let cache_genome ~(run_with: Machine.t) ~reference_build =
   let genome = Machine.(get_reference_genome run_with reference_build) in
   let ensembl_release = genome |> Reference_genome.ensembl in
   let species = genome |> Reference_genome.species in
+  let witness_file_path = 
+    sprintf "${%s}/%s.cached" pyensembl_env_key reference_build
+  in
   let name = sprintf "pyensembl_cache-%d-%s" ensembl_release species in
   workflow_node
-    without_product
+    (single_file witness_file_path ~host:(Machine.as_host run_with))
     ~name
     ~edges:[
       depends_on Machine.Tool.(ensure pyensembl);
@@ -38,5 +42,6 @@ let cache_genome ~(run_with: Machine.t) ~reference_build =
           && shf "pyensembl install --release %d --species \"%s\""
              ensembl_release
              species
+          && exec ["touch"; witness_file_path]
         )
     )
