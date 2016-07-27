@@ -144,11 +144,9 @@ module Default = struct
   let b38 =
     (* Release 79 *)
     let b38_url =
-      "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/\
-       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.fasta.gz" in
     let dbsnp_b38 =
-      "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/\
-       VCF/00-All.vcf.gz" in
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/dbsnp_144.hg38.vcf.gz" in
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.79.gtf.gz" in
@@ -159,7 +157,7 @@ module Default = struct
       ~species:human
       ~ensembl:79
       ~metadata:"Provided by the Biokepi library"
-      ~major_contigs:major_contigs_b37
+      ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url b38_url|> gunzip)
       ~dbsnp:Location.(url dbsnp_b38 |> gunzip)
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
