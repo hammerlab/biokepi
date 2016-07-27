@@ -17,6 +17,7 @@ let of_specification
     metadata;
     fasta;
     dbsnp;
+    known_indels;
     cosmic;
     exome_gtf; (* maybe desrves a better name? *)
     cdna;
@@ -60,6 +61,7 @@ let of_specification
     (compile_location (name ^ ".fasta") fasta)
     ?cosmic:(compile_location_opt "cosmic.vcf" cosmic)
     ?dbsnp:(compile_location_opt "dbsnp.vcf" dbsnp)
+    ?known_indels:(compile_location_opt "known_indels.vcf" dbsnp)
     ?gtf:(compile_location_opt "transcripts.gtf" exome_gtf)
     ?cdna:(compile_location_opt "cdns-all.fa" cdna)
     ?whess:(compile_location_opt "whess.sqlite" whess)

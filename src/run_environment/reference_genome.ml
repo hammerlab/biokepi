@@ -27,6 +27,7 @@ module Specification = struct
     metadata: string option;
     fasta: Location.t;
     dbsnp: Location.t option;
+    known_indels: Location.t option;
     cosmic: Location.t option;
     exome_gtf: Location.t option; (* maybe desrves a better name? *)
     cdna: Location.t option;
@@ -40,6 +41,7 @@ module Specification = struct
       ~ensembl
       ~species
       ?dbsnp
+      ?known_indels
       ?cosmic
       ?exome_gtf
       ?cdna
@@ -52,6 +54,7 @@ module Specification = struct
     metadata;
     fasta;
     dbsnp;
+    known_indels;
     cosmic;
     exome_gtf;
     cdna;
@@ -79,6 +82,7 @@ module Default = struct
     let b37 = "b37"
     let b37decoy = "b37decoy"
     let b38 = "b38"
+    let hg38 = "hg38"
     let hg18 = "hg18"
     let hg19 = "hg19"
     let mm10 = "mm10"
@@ -102,6 +106,11 @@ module Default = struct
     "ftp://genetics.bwh.harvard.edu/pph2/whess/\
      polyphen-2.2.2-whess-2011_12.sqlite.bz2"
 
+  let b37_known_indels_url = 
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+      b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
+
+
   let human = "homo sapiens"
   let mouse = "mus musculus"
 
@@ -119,6 +128,7 @@ module Default = struct
       (* Alternate?
          "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606/VCF/v4.0/00-All.vcf.gz"
       *)
+      ~known_indels:Location.(url b37_known_indels_url |> gunzip)
       ~cosmic:Location.(url b37_cosmic_url)
       ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
@@ -136,19 +146,33 @@ module Default = struct
              phase2_reference_assembly_sequence/hs37d5.fa.gz"
           |> gunzip)
       ~dbsnp:Location.(url b37_dbsnp_url |> gunzip)
+      ~known_indels:Location.(url b37_known_indels_url |> gunzip)
       ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cosmic:Location.(url b37_cosmic_url)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
+  
+  let hg38 =
+    (* Release 79 *)
+    let hg38_url =
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.fasta.gz" in
+    let dbsnp_hg38 =
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/dbsnp_144.hg38.vcf.gz" in
+    let known_indels_hg38 = 
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.known_indels.vcf.gz" in
+    create Name.hg38
+      ~species:human
+      ~ensembl:79
+      ~metadata:"Provided by the Biokepi library"
+      ~major_contigs:major_contigs_hg_family
+      ~fasta:Location.(url hg38_url|> gunzip)
+      ~dbsnp:Location.(url dbsnp_hg38 |> gunzip)
+      ~known_indels:Location.(url known_indels_hg38 |> gunzip)
 
   let b38 =
     (* Release 79 *)
     let b38_url =
-      "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/\
-       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
-    let dbsnp_b38 =
-      "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b142_GRCh38/\
-       VCF/00-All.vcf.gz" in
+      "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.79.gtf.gz" in
@@ -161,7 +185,6 @@ module Default = struct
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(url b38_url|> gunzip)
-      ~dbsnp:Location.(url dbsnp_b38 |> gunzip)
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
       ~cdna:Location.(url cdna_b38_url |> gunzip)
 
@@ -179,6 +202,7 @@ module Default = struct
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg18_url|> gunzip)
       ~dbsnp:Location.(url dbsnp_hg18_url |> gunzip)
+
   let hg19 =
     let hg19_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
@@ -186,6 +210,9 @@ module Default = struct
     let dbsnp_hg19_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg19/dbsnp_138.hg19.vcf.gz" in
+    let known_indels_hg19_url = 
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+        hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz" in
     create Name.hg19
       ~ensembl:75
       ~species:human
@@ -193,6 +220,7 @@ module Default = struct
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg19_url|> gunzip)
       ~dbsnp:Location.(url dbsnp_hg19_url |> gunzip)
+      ~known_indels:Location.(url known_indels_hg19_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
 
   let mm10 =
@@ -235,13 +263,14 @@ type t = {
   location: KEDSL.file_workflow;
   cosmic:  KEDSL.file_workflow option;
   dbsnp:  KEDSL.file_workflow option;
+  known_indels:  KEDSL.file_workflow option;
   gtf:  KEDSL.file_workflow option;
   cdna: KEDSL.file_workflow option;
   whess: KEDSL.file_workflow option;
 }
 
-let create ?cosmic ?dbsnp ?gtf ?cdna ?whess specification location =
-  {specification; location; cosmic; dbsnp; gtf; cdna; whess}
+let create ?cosmic ?dbsnp ?known_indels ?gtf ?cdna ?whess specification location =
+  {specification; location; cosmic; dbsnp; known_indels; gtf; cdna; whess}
 
 let name t = t.specification.Specification.name
 let ensembl t = t.specification.Specification.ensembl
@@ -255,6 +284,11 @@ let cosmic_path_exn t =
 let dbsnp_path_exn t =
   let msg = sprintf "dbsnp_path_exn of %s" (name t) in
   let trgt = Option.value_exn ~msg t.dbsnp in
+  trgt#product#path
+
+let known_indels_path_exn t =
+  let msg = sprintf "known_indels_path_exn of %s" (name t) in
+  let trgt = Option.value_exn ~msg t.known_indels in
   trgt#product#path
 
 let gtf_path_exn t =
@@ -277,6 +311,10 @@ let cosmic_exn t =
   Option.value_exn ~msg:(sprintf "%s: no COSMIC" (name t)) t.cosmic
 let dbsnp_exn t =
   Option.value_exn ~msg:(sprintf "%s: no DBSNP" (name t)) t.dbsnp
+
+let known_indels_exn t =
+  Option.value_exn ~msg:(sprintf "%s: no Known Indels" (name t)) t.known_indels
+
 let gtf_exn t =
   Option.value_exn ~msg:(sprintf "%s: no GTF" (name t)) t.gtf
 let gtf t = t.gtf
