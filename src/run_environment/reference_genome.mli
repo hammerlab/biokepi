@@ -46,6 +46,7 @@ module Specification : sig
     metadata : string option;
     fasta : Location.t;
     dbsnp : Location.t option;
+    known_indels : Location.t option;
     cosmic : Location.t option;
     exome_gtf : Location.t option;
     cdna : Location.t option;
@@ -58,6 +59,7 @@ module Specification : sig
     ensembl:int ->
     species:string ->
     ?dbsnp:Location.t ->
+    ?known_indels:Location.t ->
     ?cosmic:Location.t ->
     ?exome_gtf:Location.t ->
     ?cdna:Location.t ->
@@ -92,6 +94,7 @@ type t = private {
   location : KEDSL.file_workflow;
   cosmic :  KEDSL.file_workflow option;
   dbsnp :  KEDSL.file_workflow option;
+  known_indels : KEDSL.file_workflow option;
   gtf : KEDSL.file_workflow option;
   cdna : KEDSL.file_workflow option;
   whess : KEDSL.file_workflow option;
@@ -105,6 +108,7 @@ type t = private {
 val create :
   ?cosmic:KEDSL.file_workflow ->
   ?dbsnp:KEDSL.file_workflow ->
+  ?known_indels:KEDSL.file_workflow ->
   ?gtf:KEDSL.file_workflow ->
   ?cdna:KEDSL.file_workflow ->
   ?whess:KEDSL.file_workflow ->
@@ -119,6 +123,7 @@ val species : t -> string
 val path : t -> string
 val cosmic_path_exn : t -> string
 val dbsnp_path_exn : t -> string
+val known_indels_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
 val whess_path_exn : t -> string
@@ -129,6 +134,7 @@ val major_contigs : t -> Region.t list
 val fasta: t -> KEDSL.file_workflow
 val cosmic_exn: t -> KEDSL.file_workflow
 val dbsnp_exn: t -> KEDSL.file_workflow
+val known_indels_exn: t -> KEDSL.file_workflow
 val gtf_exn: t -> KEDSL.file_workflow
 val gtf: t -> KEDSL.file_workflow option
 val cdna_exn: t -> KEDSL.file_workflow
