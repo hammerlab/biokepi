@@ -85,6 +85,10 @@ let pull_b38 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_pat
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.b38
 
+let pull_hg38 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
+  of_specification ~toolkit ~host ~run_program ~destination_path
+    Reference_genome.Specification.Default.hg38
+
 let pull_hg19 ~toolkit ~host ~(run_program : Machine.Make_fun.t) ~destination_path =
   of_specification ~toolkit ~host ~run_program ~destination_path
     Reference_genome.Specification.Default.hg19
@@ -101,6 +105,7 @@ let default_genome_providers = [
   Reference_genome.Specification.Default.Name.b37, pull_b37;
   Reference_genome.Specification.Default.Name.b37decoy, pull_b37decoy;
   Reference_genome.Specification.Default.Name.b38, pull_b38;
+  Reference_genome.Specification.Default.Name.hg38, pull_hg38;
   Reference_genome.Specification.Default.Name.hg18, pull_hg18;
   Reference_genome.Specification.Default.Name.hg19, pull_hg19;
   Reference_genome.Specification.Default.Name.mm10, pull_mm10;
