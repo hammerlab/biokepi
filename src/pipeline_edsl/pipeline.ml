@@ -720,7 +720,7 @@ module Compiler = struct
           ~make_workflow:(fun fastq ->
               Bwa.mem_align_to_sam ~reference_build
                 ~configuration:bwa_mem_config
-                ~fastq ~result_prefix ~run_with:machine ()
+                ~input_reads:(`Fastq fastq) ~result_prefix ~run_with:machine ()
               |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
       | Bwa (bwa_config, what) ->
         perform_aligner_parallelization
