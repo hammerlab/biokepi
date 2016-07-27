@@ -78,6 +78,7 @@ section # Executable tests
     OCamlProgramOfFile(biokepi-test-all-downloads, $(file src/test/all_downloads.ml))
     OCamlProgramOfFile(biokepi-test-ttfi-pipeline, $(file src/test/ttfi_pipeline.ml))
     OCamlProgramOfFile(biokepi-hla-typer, $(file src/app/hla_typer.ml))
+    OCamlProgramOfFile(biokepi-input-generator, $(file src/app/input_gen.ml))
     OCamlProgramOfFile(biokepi-edsl-input-json, $(file src/test/edsl_input_json.ml))
 
 
@@ -88,7 +89,8 @@ install: install-lib-biokepi_run_environment \
          install-lib-biokepi_bfx_tools \
          install-lib-biokepi_pipeline_edsl \
          install-lib-biokepi \
-         install-app-biokepi-demo
+         install-app-biokepi-demo \
+         install-app-biokepi-input-generator
 uninstall: uninstall-lib-biokepi_run_environment \
            uninstall-lib-biokepi_environment_setup \
            uninstall-lib-biokepi_bfx_tools \
@@ -103,6 +105,7 @@ build-all: lib-biokepi_run_environment \
            lib-biokepi_pipeline_edsl \
            lib-biokepi \
            app-biokepi-demo \
+           app-biokepi-input-generator \
            app-biokepi-tests app-biokepi-test-all-downloads \
            app-biokepi-hla-typer  app-biokepi-test-ttfi-pipeline \
            app-biokepi-edsl-input-json
