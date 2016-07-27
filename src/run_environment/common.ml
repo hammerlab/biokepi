@@ -218,11 +218,6 @@ module KEDSL = struct
 
 end
 
-(** and then we forbid any other access to Ketrew, to force everything
-    to throught the above module. *)
-module Ketrew = struct end
-
-
 (** An attempt at standardizing “tags.” *)
 module Target_tags = struct
   let aligner = "aligner"
