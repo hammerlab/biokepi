@@ -76,6 +76,7 @@ module Specification : sig
       val b37 : name
       val b37decoy : name
       val b38 : name
+      val hg38: name
       val hg18 : name
       val hg19 : name
       val mm10 : name
@@ -83,6 +84,7 @@ module Specification : sig
     val b37 : t
     val b37decoy : t
     val b38 : t
+    val hg38 : t
     val hg18 : t
     val hg19 : t
     val mm10 : t
