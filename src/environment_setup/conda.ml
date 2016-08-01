@@ -58,7 +58,7 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
   let conda_exec  = single_file ~host (bin ~conda_env) in
   let install_dir = main_dir ~conda_env in
   workflow_node conda_exec
-    ~name:"Install conda"
+    ~name:(sprintf "Install conda: %s" conda_env.name)
     ~make:(
       run_program
         ~requirements:[
@@ -66,9 +66,12 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
         ]
         Program.(
           exec ["mkdir"; "-p"; conda_env.install_path]
+          && exec ["rm";"-fr"; install_dir]
           && exec ["cd"; conda_env.install_path]
           && Workflow_utilities.Download.wget_program url
-          && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir))
+          && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir
+        )
+    )
 
 
 let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
@@ -106,7 +109,10 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let product =
     (single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda")
      :> < is_done : Common.KEDSL.Condition.t option >)  in
-  workflow_node product ~make ~name:"Conda is configured." ~edges
+  let name =
+    sprintf "Configure conda: %s" conda_env.name in
+  workflow_node product ~make ~name ~edges
+
 
 let init_env ~conda_env () =
   KEDSL.Program.(
