@@ -86,7 +86,7 @@ type _ t =
   | Hisat: Hisat.Configuration.t * fastq_sample t -> bam t
   | Stringtie: Stringtie.Configuration.t * bam t -> gtf t
   | Bwa: Bwa.Configuration.Aln.t * fastq_sample t -> bam t
-  | Bwa_mem: Bwa.Configuration.Mem.t * fastq_sample t -> bam t
+  | Bwa_mem: Bwa.Configuration.Mem.t * [`Fastq of fastq_sample t | `Bam of bam t] -> bam t
   | Mosaik: fastq_sample t -> bam t
   | Gatk_indel_realigner: Gatk.Configuration.indel_realigner * bam t -> bam t
   | Picard_mark_duplicates: Picard.Mark_duplicates_settings.t * bam t -> bam t
@@ -144,8 +144,8 @@ module Construct = struct
 
   let bwa_aln = bwa
 
-  let bwa_mem ?(configuration = Bwa.Configuration.Mem.default) fastq =
-    Bwa_mem (configuration, fastq)
+  let bwa_mem ?(configuration = Bwa.Configuration.Mem.default) input =
+    Bwa_mem (configuration, input)
 
   let mosaik fastq = Mosaik fastq
 
@@ -354,9 +354,14 @@ let rec to_file_prefix:
     | Bwa (configuration, sample) ->
       sprintf "%s-bwa-%s"
         (to_file_prefix sample) (Bwa.Configuration.Aln.name configuration)
-    | Bwa_mem (configuration, sample) ->
+    | Bwa_mem (configuration, input) ->
+      let sample_prefix = 
+        match input with
+        | `Fastq fq -> to_file_prefix fq
+        | `Bam bam -> to_file_prefix bam
+      in
       sprintf "%s-bwa-mem-%s"
-        (to_file_prefix sample) (Bwa.Configuration.Mem.name configuration)
+        sample_prefix (Bwa.Configuration.Mem.name configuration)
     | Star (configuration, sample) ->
       sprintf "%s-%s-star-aligned"
         (to_file_prefix sample)
@@ -432,7 +437,11 @@ let rec to_json: type a. a t -> json =
         to_json input
       ]
     | Bwa_mem (params, input) ->
-      let input_json = to_json input in
+      let input_json = 
+        match input with
+        | `Fastq fq -> to_json fq
+        | `Bam bam -> to_json bam
+      in
       call "BWA-MEM" [
         `Assoc ["configuration", Bwa.Configuration.Mem.to_json params];
         input_json
@@ -713,15 +722,26 @@ module Compiler = struct
         let output_bam = result_prefix ^ ".bam" in
         Picard.mark_duplicates ~settings
           ~run_with:machine ~input_bam output_bam
-      | Bwa_mem (bwa_mem_config, fq_sample) ->
-        perform_aligner_parallelization
-          `Bwa_mem ~make_aligner:(fun pe -> Bwa_mem (bwa_mem_config, pe))
-          fq_sample
-          ~make_workflow:(fun fastq ->
-              Bwa.mem_align_to_sam ~reference_build
-                ~configuration:bwa_mem_config
-                ~fastq ~result_prefix ~run_with:machine ()
-              |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
+      | Bwa_mem (bwa_mem_config, input) ->
+        let result = 
+          match input with
+          | `Fastq fq_sample ->
+            perform_aligner_parallelization
+              `Bwa_mem ~make_aligner:(fun pe -> Bwa_mem (bwa_mem_config, `Fastq pe))
+              fq_sample
+              ~make_workflow:(fun fastq ->
+                  Bwa.mem_align_to_sam ~reference_build
+                    ~configuration:bwa_mem_config
+                    ~input_reads:(`Fastq fastq) ~result_prefix ~run_with:machine ()
+                  |> Samtools.sam_to_bam ~reference_build ~run_with:machine)
+          | `Bam bam ->
+            let input_bam = compile_aligner_step ~compiler bam in
+            Bwa.mem_align_to_sam ~reference_build
+                    ~configuration:bwa_mem_config
+                    ~input_reads:(`Bam input_bam) ~result_prefix ~run_with:machine ()
+                  |> Samtools.sam_to_bam ~reference_build ~run_with:machine
+        in
+        result
       | Bwa (bwa_config, what) ->
         perform_aligner_parallelization
           `Bwa ~make_aligner:(fun pe -> Bwa (bwa_config, pe)) what

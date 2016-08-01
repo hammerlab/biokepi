@@ -32,7 +32,6 @@ module Configuration = struct
 
 end
 
-
 let index
     ~reference_build
     ~(run_with : Machine.t) =
@@ -76,10 +75,14 @@ let read_group_header_option algorithm ~sample_name ~read_group_id =
   |`Aln ->
     sprintf "-r '@RG\\tID:%s\\tSM:%s\\tLB:ga\\tPL:Illumina'" read_group_id sample_name
 
+type fastq_workflow_node = KEDSL.fastq_reads KEDSL.workflow_node
+type bam_workflow_node = KEDSL.bam_file KEDSL.workflow_node
+type input_reads = [ `Fastq of fastq_workflow_node  | `Bam of bam_workflow_node]
+
 let mem_align_to_sam
     ~reference_build
     ?(configuration = Configuration.Mem.default)
-    ~fastq
+    ~(input_reads:input_reads)
     (* ~(r1: KEDSL.single_file KEDSL.workflow_node) *)
     (* ?(r2: KEDSL.single_file KEDSL.workflow_node option) *)
     ~(result_prefix:string)
@@ -97,29 +100,25 @@ let mem_align_to_sam
   let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
   let bwa_index = index ~reference_build ~run_with in
   let result = sprintf "%s.sam" result_prefix in
-  let r1_path, r2_path_opt = fastq#product#paths in
-  let name = sprintf "bwa-mem-%s" (Filename.basename r1_path) in
+  let task_name ~sample_name = sprintf "bwa-mem-%s" sample_name in
   let processors = Machine.max_processors run_with in
-  let bwa_base_command =
+  let bwa_base_command ?read_group_arg () =
     String.concat ~sep:" " [
       "bwa mem";
-      (read_group_header_option `Mem 
-         ~sample_name:fastq#product#escaped_sample_name
-         ~read_group_id:(Filename.basename r1_path));
+      Option.value ~default:"" read_group_arg;
       "-t"; Int.to_string processors;
       "-O"; Int.to_string configuration.Configuration.Mem.gap_open_penalty;
       "-E"; Int.to_string configuration.Configuration.Mem.gap_extension_penalty;
       (Filename.quote reference_fasta#product#path);
-      (Filename.quote r1_path);
     ] in
-  let bwa_base_target ~bwa_command  = 
+  let bwa_base_target ~name ~bwa_command ~source  = 
     workflow_node
       (single_file result ~host:Machine.(as_host run_with))
       ~name
       ~edges:(
         depends_on Machine.Tool.(ensure bwa_tool)
         :: depends_on bwa_index
-        :: depends_on fastq
+        :: depends_on source
         :: on_failure_activate (Remove.file ~run_with result)
         :: [])
       ~tags:[Target_tags.aligner]
@@ -130,22 +129,42 @@ let mem_align_to_sam
                  && in_work_dir
                  && sh bwa_command))
   in
-  match r2_path_opt with
-  | Some read2 -> 
+  match input_reads with
+  | `Bam bam_file ->
+    let name = task_name bam_file#product#escaped_sample_name in
     let bwa_command =
       String.concat ~sep:" " [
-        bwa_base_command;
-        (Filename.quote read2);
+        bwa_base_command ();
+        "-B"; (Filename.quote bam_file#product#path);
         ">"; (Filename.quote result);
       ] in
-    bwa_base_target ~bwa_command
-  | None -> 
-    let bwa_command =
-      String.concat ~sep:" " [
-        bwa_base_command;
-        ">"; (Filename.quote result);
-      ] in
-    bwa_base_target ~bwa_command
+    bwa_base_target ~name ~source:bam_file ~bwa_command
+  | `Fastq fastq ->
+    let r1_path, r2_path_opt = fastq#product#paths in
+    let read_group_arg = 
+      (read_group_header_option `Mem 
+         ~sample_name:fastq#product#escaped_sample_name
+         ~read_group_id:(Filename.basename r1_path));
+    in
+    let name = task_name fastq#product#escaped_sample_name in 
+    match r2_path_opt with
+    | Some read2 -> 
+      let bwa_command =
+        String.concat ~sep:" " [
+          bwa_base_command ~read_group_arg ();
+          (Filename.quote r1_path);
+          (Filename.quote read2);
+          ">"; (Filename.quote result);
+        ] in
+      bwa_base_target ~name ~bwa_command ~source:fastq
+    | None -> 
+      let bwa_command =
+        String.concat ~sep:" " [
+          bwa_base_command ~read_group_arg ();
+          (Filename.quote r1_path);
+          ">"; (Filename.quote result);
+        ] in
+      bwa_base_target ~name ~bwa_command ~source:fastq
 
 
 

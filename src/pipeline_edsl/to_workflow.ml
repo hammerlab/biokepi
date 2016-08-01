@@ -392,7 +392,7 @@ module Make (Config : Compiler_configuration)
           ~reference_build
           ~configuration ~result_prefix ~run_with freads ->
           Tools.Bwa.mem_align_to_sam
-            ~reference_build ~configuration ~fastq:freads
+            ~reference_build ~configuration ~input_reads:(`Fastq freads)
             ~result_prefix ~run_with ()
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )

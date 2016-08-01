@@ -76,8 +76,8 @@ module Somatic = struct
   let from_fastqs_with_variant_caller
       ~variant_caller ~normal_fastqs ~tumor_fastqs ~dataset =
     let open Pipeline.Construct in
-    let normal = input_fastq ~dataset normal_fastqs in
-    let tumor = input_fastq ~dataset tumor_fastqs in
+    let normal = `Fastq (input_fastq ~dataset normal_fastqs) in
+    let tumor = `Fastq (input_fastq ~dataset tumor_fastqs) in
     let make_bam data =
       data |> bwa_mem |> gatk_indel_realigner |> picard_mark_duplicates |> gatk_bqsr
     in
