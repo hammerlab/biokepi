@@ -157,7 +157,7 @@ module Default = struct
     let hg38_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.fasta.gz" in
     let dbsnp_hg38 =
-      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/dbsnp_144.hg38.vcf.gz" in
+      "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.dbsnp.vcf.gz" in
     let known_indels_hg38 = 
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.known_indels.vcf.gz" in
     create Name.hg38
