@@ -308,6 +308,14 @@ let optitype =
             (Opam.bin ~install_path)
       )
 
+let igvxml =
+  install_target
+    ~witness:"igvxml" ~test:test_version
+    ~repository:`Opam
+    ~compiler:"4.02.3"
+    Machine.Tool.Default.igvxml
+
+
 let default :
   run_program: Machine.Make_fun.t ->
   host: Common.KEDSL.Host.t ->
@@ -320,5 +328,6 @@ let default :
     bowtie;
     seq2hla;
     optitype;
+    igvxml;
   ])
 
