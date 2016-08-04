@@ -55,6 +55,7 @@ module Tool = struct
     let seq2hla = create "seq2hla" ~version:"2.2"
     let fastqc = create "fastqc" ~version:"0.11.5"
     let igvxml = create "igvxml" ~version:"0.0.6"
+    let hlarp = create "hlarp" ~version:"0.0.1"
   end
 
   type t = {

@@ -315,6 +315,12 @@ let igvxml =
     ~compiler:"4.02.3"
     Machine.Tool.Default.igvxml
 
+let hlarp =
+  install_target
+    ~witness:"hlarp" ~test:test_version
+    ~repository:`Opam
+    ~compiler:"4.02.3"
+    Machine.Tool.Default.hlarp
 
 let default :
   run_program: Machine.Make_fun.t ->
@@ -329,5 +335,6 @@ let default :
     seq2hla;
     optitype;
     igvxml;
+    hlarp;
   ])
 
