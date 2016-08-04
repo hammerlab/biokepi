@@ -113,6 +113,9 @@ module Generic_optimizer
   let optitype how fq =
     fwd (Input.optitype how (bwd fq))
 
+  let hlarp hla =
+    fwd (Input.hlarp (bwd hla))
+
   let gatk_haplotype_caller bam =
     fwd (Input.gatk_haplotype_caller (bwd bam))
 

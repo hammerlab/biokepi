@@ -22,7 +22,7 @@ module File_type_specification = struct
     | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
-    | Vaxrank_result: 
+    | Vaxrank_result:
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
@@ -38,12 +38,12 @@ module File_type_specification = struct
     | Vcf _ -> "Vcf"
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
+    | Optitype_result _ -> "Optitype_result"
     | Fastqc_result _ -> "Fastqc_result"
     | Flagstat_result _ -> "Flagstat_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
-    | Optitype_result _ -> "Optitype_result"
     | MHC_alleles _ -> "MHC_alleles"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
@@ -598,6 +598,22 @@ module Make (Config : Compiler_configuration)
       Tools.Seq2HLA.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
+
+  let hlarp : type a. a t -> 'b  = fun hla_result ->
+    let out o = Config.work_dir // sprintf "hlarp-%s" o in
+    let hlarp = Tools.Hlarp.run ~run_with in
+    let r =
+      match hla_result with
+      | Seq2hla_result v ->
+        let d = v#product#work_dir_path in
+        hlarp ~hla_typer:`Seq2hla ~hla_result_directory:d ~output_path:(out d)
+      | Optitype_result v ->
+        let d = "" in
+        hlarp ~hla_typer:`Optitype ~hla_result_directory:d ~output_path:(out d)
+      | _ -> failwith "Hlarp requires Seq2Hla_result or Optitype_result"
+    in
+    MHC_alleles (r ())
+
 
   let fastqc fq =
     let fastq = get_fastq fq in

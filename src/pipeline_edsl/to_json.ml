@@ -180,6 +180,9 @@ module Make_serializer (How : sig
   let seq2hla =
     one_to_one "seq2hla" "default"
 
+  let hlarp =
+    one_to_one "hlarp" "default"
+
   let fastqc =
     one_to_one "fastqc" "default"
 

@@ -130,6 +130,10 @@ module type Bioinformatics_base = sig
     [ `Fastq ] repr ->
     [ `Optitype_result ] repr
 
+  val hlarp:
+    [`Optitype_result | `Seq2hla_result] repr ->
+    [ `MHC_alleles ] repr
+
   val gatk_haplotype_caller:
     [ `Bam ] repr ->
     [ `Vcf ] repr
