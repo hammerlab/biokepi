@@ -29,7 +29,8 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
   in
   let main_subdir = name ^ "_conda_dir" in
   let conda_env = 
-    Conda.setup_environment ~python_version ~main_subdir install_path name
+    Conda.setup_environment ~python_version ~main_subdir install_path
+      (name ^ Option.value_map ~default:"" version ~f:(sprintf ".%s"))
   in
   let single_file_check id =
     single_file ~host (bin_in_conda_environment ~conda_env id)
