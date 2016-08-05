@@ -103,7 +103,7 @@ let mem_align_to_sam
   let bwa_base_command =
     String.concat ~sep:" " [
       "bwa mem";
-      (read_group_header_option `Mem 
+      (read_group_header_option `Mem
          ~sample_name:fastq#product#escaped_sample_name
          ~read_group_id:(Filename.basename r1_path));
       "-t"; Int.to_string processors;
@@ -112,7 +112,7 @@ let mem_align_to_sam
       (Filename.quote reference_fasta#product#path);
       (Filename.quote r1_path);
     ] in
-  let bwa_base_target ~bwa_command  = 
+  let bwa_base_target ~bwa_command  =
     workflow_node
       (single_file result ~host:Machine.(as_host run_with))
       ~name
@@ -131,7 +131,7 @@ let mem_align_to_sam
                  && sh bwa_command))
   in
   match r2_path_opt with
-  | Some read2 -> 
+  | Some read2 ->
     let bwa_command =
       String.concat ~sep:" " [
         bwa_base_command;
@@ -139,7 +139,7 @@ let mem_align_to_sam
         ">"; (Filename.quote result);
       ] in
     bwa_base_target ~bwa_command
-  | None -> 
+  | None ->
     let bwa_command =
       String.concat ~sep:" " [
         bwa_base_command;
@@ -219,7 +219,7 @@ let align_to_sam
           Machine.Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa sampe %s %s %s %s %s %s > %s"
-            (read_group_header_option `Aln 
+            (read_group_header_option `Aln
                ~sample_name:fastq#product#escaped_sample_name
                ~read_group_id:(Filename.basename r1_path))
             (Filename.quote reference_fasta#product#path)
@@ -234,7 +234,7 @@ let align_to_sam
           Machine.Tool.(init bwa_tool)
           && in_work_dir
           && shf "bwa samse %s %s %s > %s"
-            (read_group_header_option `Aln 
+            (read_group_header_option `Aln
                ~sample_name:fastq#product#escaped_sample_name
                ~read_group_id:(Filename.basename r1_path))
             (Filename.quote reference_fasta#product#path)
@@ -250,3 +250,124 @@ let align_to_sam
                ~self_ids:["bwa"; "sampe"])
   in
   sam
+
+module Input_reads = struct
+  type t = [
+    | `Fastq of KEDSL.fastq_reads KEDSL.workflow_node
+    | `Bam of KEDSL.bam_file KEDSL.workflow_node * [ `PE | `SE ]
+  ]
+  let prepare ~run_with =
+    function
+    | `Fastq _ as f -> f
+    | `Bam (b, p) ->
+      `Bam (Samtools.sort_bam_if_necessary ~run_with ~by:`Read_name b, p)
+
+  let name =
+    function
+    | `Fastq f -> f#product#paths |> fst |> Filename.basename
+    | `Bam (b, _) ->
+      b#product#path  |> Filename.basename
+
+  let sample_name =
+    function
+    | `Fastq f -> f#product#escaped_sample_name
+    | `Bam (b, _) -> b#product#escaped_sample_name
+  let read_group_id =
+    name (* Temporary? this is the backwards compatible choice *)
+
+  let as_dependencies =
+    function
+    | `Fastq f -> [KEDSL.depends_on f]
+    | `Bam (b, _) -> [KEDSL.depends_on b]
+
+end
+
+(**
+   Call ["bwa_mem"] with potentially a bam of a FASTQ (pair).
+
+   In the case of bams the command looks like
+   ["samtools bam2fq | bwa mem ... | samtools view -b | samtools sort"].
+
+
+   It is considered an experimental optimization.
+
+   Cf. also this {{:https://sourceforge.net/p/bio-bwa/mailman/message/30527151/}message}.
+*)
+let mem_align_to_bam
+    ~reference_build
+    ?(configuration = Configuration.Mem.default)
+    ~(result_prefix:string)
+    ~(run_with : Machine.t)
+    (raw_input : Input_reads.t) =
+  let open KEDSL in
+  let reference_fasta =
+    Machine.get_reference_genome run_with reference_build
+    |> Reference_genome.fasta in
+  let in_work_dir =
+    Program.shf "cd %s" Filename.(quote (dirname result_prefix)) in
+  let bwa_tool = Machine.get_tool run_with Machine.Tool.Default.bwa in
+  let samtools = Machine.get_tool run_with Machine.Tool.Default.samtools in
+  let bwa_index = index ~reference_build ~run_with in
+  let result = sprintf "%s.bam" result_prefix in
+  let input = Input_reads.prepare ~run_with raw_input in
+  let name = sprintf "bwa-mem-%s" (Input_reads.name input) in
+  let processors = Machine.max_processors run_with in
+  let bwa_base_command =
+    String.concat ~sep:" " [
+      "bwa mem";
+      (read_group_header_option `Mem
+         ~sample_name:(Input_reads.sample_name input)
+         ~read_group_id:(Input_reads.read_group_id input));
+      "-t"; Int.to_string processors;
+      "-O"; Int.to_string configuration.Configuration.Mem.gap_open_penalty;
+      "-E"; Int.to_string configuration.Configuration.Mem.gap_extension_penalty;
+      (Filename.quote reference_fasta#product#path);
+    ] in
+  let command_to_stdout =
+    match input with
+    | `Fastq fastq ->
+      let r1_path, r2_path_opt = fastq#product#paths in
+      String.concat ~sep:" " [
+        bwa_base_command;
+        Filename.quote r1_path;
+        Option.value_map ~default:"" r2_path_opt ~f:Filename.quote;
+      ]
+    | `Bam (b, pairedness) ->
+      String.concat ~sep:" " [
+        "samtools bam2fq"; Filename.quote b#product#path;
+        "|";
+        bwa_base_command; (match pairedness with `PE -> "-p" | `SE -> "");
+        "-";
+      ]
+  in
+  let command =
+    String.concat ~sep:" " [
+      command_to_stdout; "|";
+      "samtools"; "view"; "-b"; "|";
+      "samtools"; "sort";
+      "-@"; Int.to_string processors; "-T"; Filename.chop_extension result ^ "-tmp";
+      "-o"; Filename.quote result;
+    ] in
+  let product =
+    bam_file ~host:Machine.(as_host run_with)
+      ~name:(Input_reads.sample_name input)
+      ~sorting:`Coordinate
+      ~reference_build result in
+  workflow_node product
+    ~name
+    ~edges:(
+      depends_on Machine.Tool.(ensure bwa_tool)
+      :: depends_on Machine.Tool.(ensure samtools)
+      :: depends_on bwa_index
+      :: on_failure_activate (Remove.file ~run_with result)
+      :: Input_reads.as_dependencies input
+    )
+    ~tags:[Target_tags.aligner]
+    ~make:(Machine.run_big_program run_with ~processors ~name
+             ~self_ids:["bwa"; "mem"]
+             Program.(
+               Machine.Tool.(init bwa_tool)
+               && Machine.Tool.(init samtools)
+               && in_work_dir
+               && sh "set -o pipefail"
+               && sh command))

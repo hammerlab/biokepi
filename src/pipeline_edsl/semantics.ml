@@ -79,6 +79,17 @@ module type Bioinformatics_base = sig
     [ `Fastq ] repr ->
     [ `Bam ] repr
 
+  (** Optimized version of bwa-mem. *)
+  val bwa_mem_opt:
+    ?configuration: Biokepi_bfx_tools.Bwa.Configuration.Mem.t ->
+    reference_build: Biokepi_run_environment.Reference_genome.name ->
+    [
+      | `Fastq of [ `Fastq ] repr
+      | `Fastq_gz of [ `Gz of [ `Fastq ] ] repr
+      | `Bam of [ `Bam ] repr * [ `PE | `SE ]
+    ] ->
+    [ `Bam ] repr
+
   val star:
     ?configuration: Star.Configuration.Align.t ->
     reference_build: Biokepi_run_environment.Reference_genome.name ->
