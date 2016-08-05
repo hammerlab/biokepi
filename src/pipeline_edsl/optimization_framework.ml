@@ -83,6 +83,13 @@ module Generic_optimizer
   let bwa_mem ?configuration ~reference_build fq =
     fwd (Input.bwa_mem ?configuration ~reference_build (bwd fq))
 
+  let bwa_mem_opt ?configuration ~reference_build input =
+    fwd (Input.bwa_mem_opt ?configuration ~reference_build
+           (match input with
+           | `Fastq f -> `Fastq (bwd f)
+           | `Fastq_gz f -> `Fastq_gz (bwd f)
+           | `Bam b -> `Bam (bwd b)))
+
   let star ?configuration ~reference_build fq =
     fwd (Input.star ?configuration ~reference_build (bwd fq))
 
