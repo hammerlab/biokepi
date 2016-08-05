@@ -1,6 +1,6 @@
 
 module type Lambda_calculus = sig
-  type 'a repr  (* representation type *)
+  type +'a repr  (* representation type *)
 
   (* lambda abstract *)
   val lambda : ('a repr -> 'b repr) -> ('a -> 'b) repr
@@ -76,7 +76,7 @@ module type Bioinformatics_base = sig
   val bwa_mem:
     ?configuration: Biokepi_bfx_tools.Bwa.Configuration.Mem.t ->
     reference_build: Biokepi_run_environment.Reference_genome.name ->
-    [ `Fastq ] repr ->
+    [ `Fastq | `Gz of [ `Fastq ] | `Bam ] repr ->
     [ `Bam ] repr
 
   val star:

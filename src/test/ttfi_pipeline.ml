@@ -148,12 +148,15 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
   let every_vc_on_fastqs ~reference_build ~normal ~tumor =
     let aligner which_one =
       Bfx.lambda (fun fq -> which_one ~reference_build fq) in
-    let align_list how (list_of_fastqs : [ `Fastq ] list Bfx.repr) =
+    let align_list how (list_of_fastqs : [> `Fastq ] list Bfx.repr) =
       Bfx.list_map list_of_fastqs ~f:how |> Bfx.merge_bams
     in
+    let bwa_mem_simple: reference_build: string -> [`Fastq] Bfx.repr -> [`Bam] Bfx.repr =
+      fun ~reference_build x ->
+        Bfx.bwa_mem ~reference_build ?configuration:None (x :> [ `Fastq | `Bam | `Gz of [ `Fastq ]] Bfx.repr) in
     let aligners = Bfx.list [
         aligner @@ Bfx.bwa_aln ?configuration: None;
-        aligner @@ Bfx.bwa_mem ?configuration: None;
+        aligner @@ bwa_mem_simple;
         aligner @@ Bfx.hisat ~configuration:Biokepi.Tools.Hisat.Configuration.default_v1;
         aligner @@ Bfx.hisat ~configuration:Biokepi.Tools.Hisat.Configuration.default_v2;
         aligner @@ Bfx.star ~configuration:Biokepi.Tools.Star.Configuration.Align.default;

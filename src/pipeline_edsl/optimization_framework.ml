@@ -11,8 +11,8 @@
 *)
 
 module type Trans_base = sig
-  type 'a from
-  type 'a term
+  type +'a from
+  type +'a term
   val fwd : 'a from -> 'a term (* reflection *)
   val bwd : 'a term -> 'a from (* reification *)
 end
@@ -42,12 +42,12 @@ module Generic_optimizer
     (X: Transformation)
     (Input: Semantics.Bioinformatics_base with type 'a repr = 'a X.from)
   : Semantics.Bioinformatics_base
-    with type 'a repr = 'a X.term
-     and type 'a observation = 'a Input.observation
+    with type +'a repr = 'a X.term
+     and type +'a observation = 'a Input.observation
 = struct
   module Tools = Biokepi_bfx_tools
   open X
-  type 'a repr = 'a term
+  type +'a repr = 'a term
   type 'a observation  = 'a Input.observation
 
   let lambda f = fwd (Input.lambda (fun x -> bwd (f (fwd x))))

@@ -29,8 +29,8 @@ module Apply_optimization_framework
   *)
 
   module Transformation_types = struct
-    type 'a from = 'a Input.repr
-    type 'a term = 
+    type +'a from = 'a Input.repr
+    type +'a term = 
       | Unknown : 'a from -> 'a term
       | Apply : ('a -> 'b) term * 'a term -> 'b term
       | Lambda : ('a term -> 'b term) -> ('a -> 'b) term

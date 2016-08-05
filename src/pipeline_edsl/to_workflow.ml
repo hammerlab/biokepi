@@ -7,30 +7,30 @@ let (//) = Filename.concat
 module File_type_specification = struct
   open Biokepi_run_environment.Common.KEDSL
 
-  type 'a t = ..
-  type 'a t +=
-    | To_unit: 'a t -> unit t
-    | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
-    | Bam: bam_file workflow_node -> [ `Bam ] t
-    | Vcf: single_file workflow_node -> [ `Vcf ] t
-    | Gtf: single_file workflow_node -> [ `Gtf ] t
+  type t = ..
+  type t +=
+    | To_unit: t -> t
+    | Fastq: fastq_reads workflow_node -> t
+    | Bam: bam_file workflow_node -> t
+    | Vcf: single_file workflow_node -> t
+    | Gtf: single_file workflow_node -> t
     | Seq2hla_result:
         Seq2HLA.product workflow_node ->
-      [ `Seq2hla_result ] t
-    | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
-    | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
-    | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
-    | Isovar_result: single_file workflow_node -> [ `Isovar ] t
-    | Topiary_result: single_file workflow_node -> [ `Topiary ] t
+      t
+    | Optitype_result: unknown_product workflow_node -> t
+    | Fastqc_result: list_of_files workflow_node -> t
+    | Flagstat_result: single_file workflow_node -> t
+    | Isovar_result: single_file workflow_node -> t
+    | Topiary_result: single_file workflow_node -> t
     | Vaxrank_result: 
-        Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
-    | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
-    | Gz: 'a t -> [ `Gz of 'a ] t
-    | List: 'a t list -> 'a list t
-    | Pair: 'a t * 'b t -> ('a * 'b) t
-    | Lambda: ('a t -> 'b t) -> ('a -> 'b) t
+        Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
+    | MHC_alleles: single_file workflow_node -> t
+    | Gz: t -> t
+    | List: t list -> t
+    | Pair: t * t -> t
+    | Lambda: (t -> t) -> t
 
-  let rec to_string : type a. a  t -> string =
+  let rec to_string : t -> string =
     function
     | To_unit a -> sprintf "(to_unit %s)" (to_string a)
     | Fastq _ -> "Fastq"
@@ -57,68 +57,68 @@ module File_type_specification = struct
                        (%s case, in %s), this usually means that the type \
                        has been wrongly extended" (to_string other) name
 
-  let get_fastq : [ `Fastq ] t -> fastq_reads workflow_node = function
+  let get_fastq : t -> fastq_reads workflow_node = function
   | Fastq b -> b
   | o -> fail_get o "Fastq"
 
-  let get_bam : [ `Bam ] t -> bam_file workflow_node = function
+  let get_bam : t -> bam_file workflow_node = function
   | Bam b -> b
   | o -> fail_get o "Bam"
 
-  let get_vcf : [ `Vcf ] t -> single_file workflow_node = function
+  let get_vcf : t -> single_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
 
-  let get_gtf : [ `Gtf ] t -> single_file workflow_node = function
+  let get_gtf : t -> single_file workflow_node = function
   | Gtf v -> v
   | o -> fail_get o "Gtf"
 
-  let get_seq2hla_result : [ `Seq2hla_result ] t ->
+  let get_seq2hla_result : t ->
     Seq2HLA.product workflow_node =
     function
     | Seq2hla_result v -> v
     | o -> fail_get o "Seq2hla_result"
 
-  let get_fastqc_result : [ `Fastqc ] t -> list_of_files workflow_node =
+  let get_fastqc_result : t -> list_of_files workflow_node =
     function
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
 
-  let get_flagstat_result : [ `Flagstat ] t -> single_file workflow_node =
+  let get_flagstat_result : t -> single_file workflow_node =
     function
     | Flagstat_result v -> v
     | o -> fail_get o "Flagstat_result"
 
-  let get_isovar_result : [ `Isovar ] t -> single_file workflow_node =
+  let get_isovar_result : t -> single_file workflow_node =
     function
     | Isovar_result v -> v
     | o -> fail_get o "Isovar_result"
 
-  let get_topiary_result : [ `Topiary ] t -> single_file workflow_node =
+  let get_topiary_result : t -> single_file workflow_node =
     function
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_vaxrank_result : [ `Vaxrank ] t -> Vaxrank.product workflow_node =
+  let get_vaxrank_result : t -> Vaxrank.product workflow_node =
     function
     | Vaxrank_result v -> v
     | o -> fail_get o "Vaxrank_result"
 
-  let get_mhc_alleles : [ `MHC_alleles ] t -> single_file workflow_node =
+  let get_mhc_alleles : t -> single_file workflow_node =
     function
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
+  let get_optitype_result : t -> unknown_product workflow_node =
     function
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
 
-  let get_gz : [ `Gz of 'a ] t -> 'a t = function
+  let get_gz : t -> t = function
   | Gz v -> v
   | o -> fail_get o "Gz"
 
-  let get_list :  'a list  t -> 'a t list = function
+  let get_list : t -> t list = function
   | List v -> v
   | o -> fail_get o "List"
 
@@ -133,7 +133,7 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get other "Pair"
 
-  let rec as_dependency_edges : type a. a t -> workflow_edge list =
+  let rec as_dependency_edges : t -> workflow_edge list =
     let one_depends_on wf = [depends_on wf] in
     function
     | To_unit v -> as_dependency_edges v
@@ -155,7 +155,7 @@ module File_type_specification = struct
 
   let get_unit_workflow :
     name: string ->
-    unit t ->
+    t ->
     unknown_product workflow_node =
     fun ~name f ->
       match f with
@@ -177,19 +177,22 @@ module type Compiler_configuration = sig
       do nothing. Doing nothing means letting some tools like ["samtools sort"]
       write in the input-file's directory. *)
   val input_files: [ `Copy | `Link | `Do_nothing ]
+
+  val legacy_bwa_mem : bool
 end
 
 
 module Defaults = struct
   let map_reduce_gatk_indel_realigner = true
   let input_files = `Link
+  let legacy_bwa_mem = false
 end
 
 
 module Make (Config : Compiler_configuration)
     : Semantics.Bioinformatics_base
-    with type 'a repr = 'a File_type_specification.t and
-    type 'a observation = 'a File_type_specification.t
+    with type +'a repr = File_type_specification.t and
+    type 'a observation = File_type_specification.t
 = struct
   include File_type_specification
   module Tools = Biokepi_bfx_tools
@@ -198,7 +201,7 @@ module Make (Config : Compiler_configuration)
   let failf fmt =
     ksprintf failwith fmt
 
-  type 'a repr = 'a t
+  type 'a repr = t
   type 'a observation = 'a repr
 
   let observe : (unit -> 'a repr) -> 'a observation = fun f -> f ()
@@ -384,18 +387,45 @@ module Make (Config : Compiler_configuration)
       )
 
   let bwa_mem
-      ?(configuration = Tools.Bwa.Configuration.Mem.default) =
-    make_aligner "bwamem" ~configuration
-      ~config_name:Tools.Bwa.Configuration.Mem.name
-      ~make_workflow:(
-        fun
+      ?(configuration = Tools.Bwa.Configuration.Mem.default)
+      ~reference_build
+      input =
+    let bwa_mem_opt input =
+      let sample_name = Tools.Bwa.Input_reads.sample_name input in
+      let read_group_id = Tools.Bwa.Input_reads.read_group_id input in
+      let result_prefix =
+        Config.work_dir //
+        sprintf "%s-%s_bwamem-%s" sample_name read_group_id
+          (Tools.Bwa.Configuration.Mem.name configuration)
+      in
+      Bam (
+        Tools.Bwa.mem_align_to_bam
+          ~configuration ~reference_build ~run_with ~result_prefix input
+      ) in
+    let of_input =
+      function
+      | Fastq fastq when Config.legacy_bwa_mem ->
+        make_aligner "bwamem" ~configuration (Fastq fastq)
           ~reference_build
-          ~configuration ~result_prefix ~run_with freads ->
-          Tools.Bwa.mem_align_to_sam
-            ~reference_build ~configuration ~fastq:freads
-            ~result_prefix ~run_with ()
-          |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
-      )
+          ~config_name:Tools.Bwa.Configuration.Mem.name
+          ~make_workflow:(
+            fun
+              ~reference_build
+              ~configuration ~result_prefix ~run_with freads ->
+              Tools.Bwa.mem_align_to_sam
+                ~reference_build ~configuration ~fastq:freads
+                ~result_prefix ~run_with ()
+              |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
+          )
+      | Gz (Fastq fq) ->
+        bwa_mem_opt (`Fastq fq)
+      | Fastq fq ->
+        bwa_mem_opt (`Fastq fq)
+      | Bam b ->
+        bwa_mem_opt (`Bam (b, `PE))
+      | other -> assert false
+    in
+    of_input input
 
   let star
       ?(configuration = Tools.Star.Configuration.Align.default) =
@@ -429,7 +459,7 @@ module Make (Config : Compiler_configuration)
           Tools.Mosaik.align ~reference_build
             ~fastq ~result_prefix ~run_with ())
 
-  let gunzip: type a. [ `Gz of a ] t -> a t = fun gz ->
+  let gunzip gz =
     let inside = get_gz gz in
     begin match inside with
     | Fastq f ->
@@ -464,38 +494,37 @@ module Make (Config : Compiler_configuration)
   let gunzip_concat gzl =
     ksprintf failwith "To_workflow.gunzip_concat: not implemented"
 
-  let concat : type a. a list t -> a t =
-    fun l ->
-      let l = get_list l in
-      begin match l with
-      | Fastq first_fastq :: _ as lfq ->
-        let fqs = List.map lfq ~f:get_fastq in
-        let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
-        let r2s = List.filter_map fqs ~f:KEDSL.read_2_file_node in
-        (* TODO add some verifications that they have the same number of files?
-           i.e. that we are not mixing SE and PE fastqs
-        *)
-        let concat_files ~read l =
-          let result_path =
-            Config.work_dir //
-            sprintf "%s-Read%d-Concat.fastq"
-              first_fastq#product#escaped_sample_name read in
-          Workflow_utilities.Cat.concat ~run_with l ~result_path in
-        let read_1 = concat_files r1s ~read:1 in
-        let read_2 =
-          match r2s with [] -> None | more -> Some (concat_files more ~read:2)
-        in
-        Fastq (
-          KEDSL.fastq_node_of_single_file_nodes ~host
-            ~name:first_fastq#product#sample_name
-            ~fragment_id:"edsl-concat"
-            read_1 read_2
-        )
-      | other ->
-        ksprintf failwith "To_workflow.concat: not implemented"
-      end
+  let concat l =
+    let l = get_list l in
+    begin match l with
+    | Fastq first_fastq :: _ as lfq ->
+      let fqs = List.map lfq ~f:get_fastq in
+      let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
+      let r2s = List.filter_map fqs ~f:KEDSL.read_2_file_node in
+      (* TODO add some verifications that they have the same number of files?
+         i.e. that we are not mixing SE and PE fastqs
+      *)
+      let concat_files ~read l =
+        let result_path =
+          Config.work_dir //
+          sprintf "%s-Read%d-Concat.fastq"
+            first_fastq#product#escaped_sample_name read in
+        Workflow_utilities.Cat.concat ~run_with l ~result_path in
+      let read_1 = concat_files r1s ~read:1 in
+      let read_2 =
+        match r2s with [] -> None | more -> Some (concat_files more ~read:2)
+      in
+      Fastq (
+        KEDSL.fastq_node_of_single_file_nodes ~host
+          ~name:first_fastq#product#sample_name
+          ~fragment_id:"edsl-concat"
+          read_1 read_2
+      )
+    | other ->
+      ksprintf failwith "To_workflow.concat: not implemented"
+    end
 
-  let merge_bams: [ `Bam ] list t -> [ `Bam ] t =
+  let merge_bams =
     function
     | List [ one_bam ] -> one_bam
     | List bam_files ->
