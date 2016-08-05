@@ -397,6 +397,36 @@ module Make (Config : Compiler_configuration)
           |> Tools.Samtools.sam_to_bam ~reference_build ~run_with
       )
 
+  let bwa_mem_opt
+      ?(configuration = Tools.Bwa.Configuration.Mem.default)
+      ~reference_build
+      input =
+    let bwa_mem_opt input =
+      let sample_name = Tools.Bwa.Input_reads.sample_name input in
+      let read_group_id = Tools.Bwa.Input_reads.read_group_id input in
+      let result_prefix =
+        Config.work_dir //
+        sprintf "%s-%s_bwamem-%s" sample_name read_group_id
+          (Tools.Bwa.Configuration.Mem.name configuration)
+      in
+      Bam (
+        Tools.Bwa.mem_align_to_bam
+          ~configuration ~reference_build ~run_with ~result_prefix input
+      ) in
+    let of_input =
+      function
+      | `Fastq fastq ->
+        let fq = get_fastq fastq in
+        bwa_mem_opt (`Fastq fq)
+      | `Fastq_gz fqz ->
+        let fq = get_gz fqz |> get_fastq in
+        bwa_mem_opt (`Fastq fq)
+      | `Bam (b, p) ->
+        let bam = get_bam b in
+        bwa_mem_opt (`Bam (bam, `PE))
+    in
+    of_input input
+
   let star
       ?(configuration = Tools.Star.Configuration.Align.default) =
     make_aligner "star"

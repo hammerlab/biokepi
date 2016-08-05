@@ -125,6 +125,22 @@ module Make_serializer (How : sig
       ?(configuration = Tools.Bwa.Configuration.Mem.default) =
     aligner "bwa-mem" (Tools.Bwa.Configuration.Mem.name configuration)
 
+  let bwa_mem_opt
+      ?(configuration = Tools.Bwa.Configuration.Mem.default)
+      ~reference_build
+      input =
+    match input with
+    | `Fastq f ->
+      aligner "bwa-mem-opt-fq" (Tools.Bwa.Configuration.Mem.name configuration)
+        ~reference_build f
+    | `Fastq_gz f ->
+      aligner "bwa-mem-opt-fqz" (Tools.Bwa.Configuration.Mem.name configuration)
+        ~reference_build f
+    | `Bam (f, _) ->
+      aligner "bwa-mem-opt-bam" (Tools.Bwa.Configuration.Mem.name configuration)
+        ~reference_build f
+
+
   let gunzip gz ~(var_count : int) =
     function_call "gunzip" ["input", gz ~var_count]
 

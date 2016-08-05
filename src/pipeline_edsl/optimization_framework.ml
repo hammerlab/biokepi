@@ -88,7 +88,7 @@ module Generic_optimizer
            (match input with
            | `Fastq f -> `Fastq (bwd f)
            | `Fastq_gz f -> `Fastq_gz (bwd f)
-           | `Bam b -> `Bam (bwd b)))
+           | `Bam (b, p) -> `Bam (bwd b, p)))
 
   let star ?configuration ~reference_build fq =
     fwd (Input.star ?configuration ~reference_build (bwd fq))

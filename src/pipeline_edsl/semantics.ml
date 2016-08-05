@@ -86,7 +86,7 @@ module type Bioinformatics_base = sig
     [
       | `Fastq of [ `Fastq ] repr
       | `Fastq_gz of [ `Gz of [ `Fastq ] ] repr
-      | `Bam of [ `Bam ] repr
+      | `Bam of [ `Bam ] repr * [ `PE | `SE ]
     ] ->
     [ `Bam ] repr
 
