@@ -47,6 +47,7 @@ module Generic_optimizer
 = struct
   module Tools = Biokepi_bfx_tools
   open X
+
   type 'a repr = 'a term
   type 'a observation  = 'a Input.observation
 
@@ -113,12 +114,13 @@ module Generic_optimizer
   let optitype how fq =
     fwd (Input.optitype how (bwd fq))
 
-  let hlarp hla =
-    fwd (Input.hlarp (bwd hla))
+  let hlarp input =
+    fwd (Input.hlarp (match input with
+      | `Seq2hla f -> `Seq2hla (bwd f)
+      | `Optitype f -> `Optitype (bwd f)))
 
   let gatk_haplotype_caller bam =
     fwd (Input.gatk_haplotype_caller (bwd bam))
-
 
   let gunzip gz =
     fwd (Input.gunzip (bwd gz))

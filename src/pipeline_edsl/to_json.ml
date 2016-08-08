@@ -180,8 +180,12 @@ module Make_serializer (How : sig
   let seq2hla =
     one_to_one "seq2hla" "default"
 
-  let hlarp =
-    one_to_one "hlarp" "default"
+  let hlarp input =
+    let name, v = match input with
+    | `Seq2hla f -> "hlarp-seq2hla", f
+    | `Optitype f -> "hlarp-optitype", f
+    in
+    one_to_one name "default" v
 
   let fastqc =
     one_to_one "fastqc" "default"

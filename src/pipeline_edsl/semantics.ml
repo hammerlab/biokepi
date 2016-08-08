@@ -131,7 +131,8 @@ module type Bioinformatics_base = sig
     [ `Optitype_result ] repr
 
   val hlarp:
-    [`Optitype_result | `Seq2hla_result] repr ->
+    [ `Optitype of [`Optitype_result] repr
+    | `Seq2hla of [`Seq2hla_result] repr] ->
     [ `MHC_alleles ] repr
 
   val gatk_haplotype_caller:

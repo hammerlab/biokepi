@@ -17,7 +17,8 @@ module File_type_specification = struct
     | Seq2hla_result:
         Seq2HLA.product workflow_node ->
       [ `Seq2hla_result ] t
-    | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
+    | Optitype_result:
+        Optitype.product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
@@ -109,7 +110,9 @@ module File_type_specification = struct
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
+  let get_optitype_result :
+    [ `Optitype_result ] t -> Optitype.product workflow_node
+    =
     function
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
@@ -599,16 +602,18 @@ module Make (Config : Compiler_configuration)
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
 
-  let hlarp : type a. a t -> 'b  = fun hla_result ->
+  let hlarp input =
     let out o = Config.work_dir // sprintf "hlarp-%s" o in
     let hlarp = Tools.Hlarp.run ~run_with in
     let r =
-      match hla_result with
-      | Seq2hla_result v ->
+      match input with
+      | `Seq2hla v ->
+        let v = get_seq2hla_result v in
         let d = v#product#work_dir_path in
         hlarp ~hla_typer:`Seq2hla ~hla_result_directory:d ~output_path:(out d)
-      | Optitype_result v ->
-        let d = "" in
+      | `Optitype v ->
+        let v = get_optitype_result v in
+        let d = v#product#path in
         hlarp ~hla_typer:`Optitype ~hla_result_directory:d ~output_path:(out d)
       | _ -> failwith "Hlarp requires Seq2Hla_result or Optitype_result"
     in
@@ -645,7 +650,7 @@ module Make (Config : Compiler_configuration)
         (Filename.chop_extension (Filename.basename b#product#path))
         (Tools.Isovar.Configuration.name configuration)
     in
-    let output_file = Config.work_dir // out_filename in 
+    let output_file = Config.work_dir // out_filename in
     Isovar_result (
       Tools.Isovar.run ~configuration ~run_with ~reference_build ~vcf:v ~bam:b ~output_file
     )
@@ -663,10 +668,10 @@ module Make (Config : Compiler_configuration)
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
-      Tools.Topiary.run 
-        ~configuration ~run_with 
+      Tools.Topiary.run
+        ~configuration ~run_with
         ~reference_build ~variants_vcf:v ~predictor
-        ~alleles_file:mhc 
+        ~alleles_file:mhc
         ~output:(`CSV output_file)
     )
 
@@ -685,10 +690,10 @@ module Make (Config : Compiler_configuration)
         (Tools.Vaxrank.Configuration.name configuration)
     in
     Vaxrank_result (
-      Tools.Vaxrank.run 
-        ~configuration ~run_with 
+      Tools.Vaxrank.run
+        ~configuration ~run_with
         ~reference_build ~vcf:v ~bam:b ~predictor
-        ~alleles_file:mhc 
+        ~alleles_file:mhc
         ~output_folder:outdir
     )
 
@@ -705,7 +710,7 @@ module Make (Config : Compiler_configuration)
       Tools.Optitype.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
-      :> KEDSL.unknown_product KEDSL.workflow_node
+      :> Optitype.product KEDSL.workflow_node
     )
 
   let gatk_haplotype_caller bam =
