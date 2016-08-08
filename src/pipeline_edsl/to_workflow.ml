@@ -603,7 +603,8 @@ module Make (Config : Compiler_configuration)
     )
 
   let hlarp input =
-    let out o = Config.work_dir // sprintf "hlarp-%s" o in
+    let out o =
+      Config.work_dir // sprintf "hlarp-%s.csv" (Filename.basename o) in
     let hlarp = Tools.Hlarp.run ~run_with in
     let r =
       match input with
@@ -611,10 +612,12 @@ module Make (Config : Compiler_configuration)
         let v = get_seq2hla_result v in
         let d = v#product#work_dir_path in
         hlarp ~hla_typer:`Seq2hla ~hla_result_directory:d ~output_path:(out d)
+          ~extract_alleles:true
       | `Optitype v ->
         let v = get_optitype_result v in
         let d = v#product#path in
         hlarp ~hla_typer:`Optitype ~hla_result_directory:d ~output_path:(out d)
+          ~extract_alleles:true
       | _ -> failwith "Hlarp requires Seq2Hla_result or Optitype_result"
     in
     MHC_alleles (r ())
