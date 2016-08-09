@@ -82,4 +82,9 @@ module Make:
 
     val fastq_of_input : Input.t -> [ `Fastq ] list Bfx.repr
 
+    val bwa_mem_opt_inputs:
+      Input.t ->
+      [ `Bam of [ `Bam ] Bfx.repr * [ `PE | `SE ]
+      | `Fastq of [ `Fastq ] Bfx.repr
+      | `Fastq_gz of [ `Gz of [ `Fastq ] ] Bfx.repr ] list
   end
