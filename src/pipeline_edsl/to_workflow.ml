@@ -284,6 +284,21 @@ module Make (Config : Compiler_configuration)
           ~name:(sprintf "Input file: %s" url)
       in
       Raw_file (deal_with_input_file raw_file (single_file ~host))
+    | Some "http" | Some "https" ->
+      let path =
+        let basename =
+          match Uri.get_query_param uri "filename" with
+          | Some f -> f
+          | None ->
+            Digest.(string url |> to_hex) ^ (Uri.path uri |> Filename.basename)
+        in
+        Config.work_dir // basename
+      in
+      Raw_file Biokepi_run_environment.(
+          Workflow_utilities.Download.wget
+            ~host
+            ~run_program:(Machine.run_download_program Config.machine) url path
+        )
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
     end
