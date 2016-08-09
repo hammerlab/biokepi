@@ -116,6 +116,10 @@ module Configuration = struct
     ]
 
     let default = create "default" []
+    
+    let default_without_cosmic =
+      create ~use_cosmic:false ~use_dbsnp:true
+      "default_without_cosmic" []
 
     let compile ~reference {name; use_dbsnp; use_cosmic; additional_arguments} =
       let with_db use opt_name get_exn =
