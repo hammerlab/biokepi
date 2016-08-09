@@ -25,6 +25,7 @@ module File_type_specification = struct
     | Vaxrank_result: 
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
+    | Raw_file: single_file workflow_node -> [ `Raw_file ] t
     | Gz: 'a t -> [ `Gz of 'a ] t
     | List: 'a t list -> 'a list t
     | Pair: 'a t * 'b t -> ('a * 'b) t
@@ -45,6 +46,7 @@ module File_type_specification = struct
     | Vaxrank_result _ -> "Vaxrank_result"
     | Optitype_result _ -> "Optitype_result"
     | MHC_alleles _ -> "MHC_alleles"
+    | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
       sprintf "[%s]" (List.map l ~f:to_string |> String.concat ~sep:"; ")
@@ -72,6 +74,10 @@ module File_type_specification = struct
   let get_gtf : [ `Gtf ] t -> single_file workflow_node = function
   | Gtf v -> v
   | o -> fail_get o "Gtf"
+
+  let get_raw_file : [ `Raw_file ] t -> single_file workflow_node = function
+  | Raw_file v -> v
+  | o -> fail_get o "Raw_file"
 
   let get_seq2hla_result : [ `Seq2hla_result ] t ->
     Seq2HLA.product workflow_node =
@@ -149,6 +155,7 @@ module File_type_specification = struct
     | Topiary_result wf -> one_depends_on wf
     | Vaxrank_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
+    | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
     | other -> fail_get other "as_dependency_edges"
@@ -267,23 +274,29 @@ module Make (Config : Compiler_configuration)
     workflow_node product ~ensures ~name ~make
       ~edges:[depends_on ifile]
 
+  let input_url url =
+    let open KEDSL in
+    let uri = Uri.of_string url in
+    begin match Uri.scheme uri with
+    | None | Some "file" ->
+      let raw_file =
+        workflow_node (Uri.path uri |> single_file ~host)
+          ~name:(sprintf "Input file: %s" url)
+      in
+      Raw_file (deal_with_input_file raw_file (single_file ~host))
+    | Some other ->
+      ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
+    end
+
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =
     Fastq (
       let open KEDSL in
-      let read n path =
-        workflow_node (single_file ~host path)
-          ~name:(sprintf "Input: Read%d of %s (%s)" n
-                   sample_name (Filename.basename path)) in
-      let read1 = read 1 r1 in
-      let read2 = Option.map r2 (read 2) in
-      let linked_r1 =
-        deal_with_input_file read1 ~make_product:(single_file ~host) in
-      let linked_r2 =
-        Option.map read2 (fun read ->
-            deal_with_input_file read ~make_product:(single_file ~host)) in
+      let read1 = get_raw_file r1 in
+      let read2 = Option.map r2 ~f:get_raw_file in
       fastq_node_of_single_file_nodes
-        ?fragment_id ~host ~name:sample_name linked_r1 linked_r2
+        ?fragment_id ~host ~name:sample_name
+        read1 read2
     )
 
   let fastq_gz
@@ -293,34 +306,24 @@ module Make (Config : Compiler_configuration)
         ~sample_name ?fragment_id ~r1 ?r2 ()
     )
 
-  let bam ~path ~sample_name ?sorting ~reference_build () =
+  let bam ~sample_name ?sorting ~reference_build input =
     Bam (
       let open KEDSL in
       let host = Machine.as_host Config.machine in
-      let make_product path =
-        bam_file ~host ~name:sample_name ?sorting ~reference_build path in
-      let input =
-        workflow_node (make_product path)
-          ~name:(sprintf "Input-bam: %s" (Filename.basename path)) in
-      let dealt_with =
-        deal_with_input_file input ~make_product in
-      dealt_with
+      let f = get_raw_file input in
+      let bam =
+        bam_file ~host ~name:sample_name
+          ?sorting ~reference_build f#product#path in
+      workflow_node bam
+        ~equivalence:`None
+        ~name:(sprintf "Input-bam: %s" sample_name)
+        ~edges:[depends_on f]
     )
 
   let mhc_alleles how =
     match how with
-    | `File path ->
-      MHC_alleles (
-        let open KEDSL in
-        let host = Machine.as_host Config.machine in
-        let make_product path = single_file ~host path in
-        let input =
-          workflow_node (make_product path)
-            ~name:(sprintf "Input-MHC-alleles: %s" (Filename.basename path)) in
-        let dealt_with =
-          deal_with_input_file input ~make_product in
-        dealt_with
-      )
+    | `File raw ->
+      MHC_alleles (get_raw_file raw)
     | `Names strlist ->
       let path =
         let saninitize =

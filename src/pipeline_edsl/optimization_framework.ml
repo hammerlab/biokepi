@@ -1,3 +1,4 @@
+open Nonstd
 
 (**
    QueL-like Compiler Optimization Framework
@@ -56,7 +57,7 @@ module Generic_optimizer
     Input.observe (fun () -> bwd (f ()))
 
   let list l =
-    fwd (Input.list (List.map bwd l))
+    fwd (Input.list (List.map ~f:bwd l))
   let list_map l ~f =
     fwd (Input.list_map (bwd l) (bwd f))
 
@@ -66,16 +67,24 @@ module Generic_optimizer
   let pair_first x = fwd (Input.pair_first (bwd x))
   let pair_second x = fwd (Input.pair_second (bwd x))
 
+  let input_url u = fwd (Input.input_url u)
+
   let fastq ~sample_name ?fragment_id ~r1 ?r2 () =
-    fwd (Input.fastq ~sample_name ?fragment_id ~r1 ?r2 ())
+    let r2 = Option.map ~f:bwd r2 in
+    fwd (Input.fastq ~sample_name ?fragment_id ~r1:(bwd r1) ?r2 ())
 
   let fastq_gz ~sample_name ?fragment_id ~r1 ?r2 () =
+    let r1 = bwd r1 in
+    let r2 = Option.map ~f:bwd r2 in
     fwd (Input.fastq_gz ~sample_name ?fragment_id ~r1 ?r2 ())
 
-  let bam ~path ~sample_name ?sorting ~reference_build () =
-    fwd (Input.bam ~path ~sample_name ?sorting ~reference_build ())
+  let bam ~sample_name ?sorting ~reference_build input =
+    fwd (Input.bam ~sample_name ?sorting ~reference_build (bwd input))
 
-  let mhc_alleles how = fwd (Input.mhc_alleles how)
+  let mhc_alleles =
+    function
+    | `File f -> fwd (Input.mhc_alleles (`File (bwd f)))
+    | `Names _ as m -> fwd (Input.mhc_alleles m)
 
   let bwa_aln ?configuration ~reference_build fq =
     fwd (Input.bwa_aln ?configuration ~reference_build (bwd fq))

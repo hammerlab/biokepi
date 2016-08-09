@@ -208,8 +208,12 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
     in
     match is_gz r1, is_gz r2 with
     | true, true ->
+      let r1 = Bfx.input_url r1 in
+      let r2 = Option.map ~f:Bfx.input_url r2 in
       Bfx.(fastq_gz ~sample_name ?fragment_id ~r1 ?r2 () |> gunzip)
     | false, false ->
+      let r1 = Bfx.input_url r1 in
+      let r2 = Option.map ~f:Bfx.input_url r2 in
       Bfx.(fastq ~sample_name ?fragment_id ~r1 ?r2 ())
     | _ ->
       failwithf "fastq_of_files: cannot handle mixed gzipped \
@@ -228,7 +232,8 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
           | SE r ->
             fastq_of_files ~sample_name ?fragment_id ~r1:r  ()
           | Of_bam (how, sorting, reference_build, path) ->
-            let bam = Bfx.bam ~path ~sample_name ?sorting ~reference_build () in
+            let f = Bfx.input_url path in
+            let bam = Bfx.bam  ~sample_name ?sorting ~reference_build f in
             Bfx.bam_to_fastq ?fragment_id how bam
         )
       |> Bfx.list
