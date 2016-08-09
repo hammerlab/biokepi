@@ -223,7 +223,7 @@ module type Bioinformatics_base = sig
   val vaxrank:
     ?configuration: Vaxrank.Configuration.t ->
     Biokepi_run_environment.Reference_genome.name ->
-    [ `Vcf ] repr ->
+    [ `Vcf ] repr list ->
     [ `Bam ] repr ->
     Topiary.predictor_type ->
     [ `MHC_alleles ] repr ->

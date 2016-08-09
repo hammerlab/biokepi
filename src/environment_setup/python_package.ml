@@ -11,7 +11,7 @@ type install_source_type =
 let bin_in_conda_environment ~conda_env command =
   Conda.(environment_path ~conda_env) // "bin" // command
 
-let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path 
+let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
     ?check_bin ?version ?(python_version=`Python3)
     (installation:install_tool_type * install_source_type) =
   let open KEDSL in
@@ -28,15 +28,15 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
     | _ -> failwith "Installation type not supported."
   in
   let main_subdir = name ^ "_conda_dir" in
-  let conda_env = 
+  let conda_env =
     Conda.setup_environment ~python_version ~main_subdir install_path
       (name ^ Option.value_map ~default:"" version ~f:(sprintf ".%s"))
   in
   let single_file_check id =
     single_file ~host (bin_in_conda_environment ~conda_env id)
   in
-  let exec_check = 
-    match check_bin with 
+  let exec_check =
+    match check_bin with
     | None -> single_file_check name
     | Some s -> single_file_check s
   in
@@ -58,15 +58,15 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
 
 let default ~host ~run_program ~install_path () =
    Machine.Tool.Kit.of_list [
-    create_python_tool ~host ~run_program ~install_path 
+    create_python_tool ~host ~run_program ~install_path
       ~version:"0.9.4" (Pip, Package_PyPI "pyensembl");
-    create_python_tool ~host ~run_program ~install_path 
+    create_python_tool ~host ~run_program ~install_path
       ~version:"0.1.2" (Pip, Package_PyPI "vcf-annotate-polyphen");
-    create_python_tool ~host ~run_program ~install_path 
+    create_python_tool ~host ~run_program ~install_path
       ~version:"0.1.3" ~check_bin:"isovar-protein-sequences.py"
       (Pip, Package_PyPI "isovar");
-    create_python_tool ~host ~run_program ~install_path 
+    create_python_tool ~host ~run_program ~install_path
       ~version:"0.0.21" (Pip, Package_PyPI "topiary");
-    create_python_tool ~host ~run_program ~install_path 
-      ~version:"0.0.1" (Pip, Package_PyPI "vaxrank");
+    create_python_tool ~host ~run_program ~install_path
+      ~version:"0.0.2" (Pip, Package_PyPI "vaxrank");
    ]

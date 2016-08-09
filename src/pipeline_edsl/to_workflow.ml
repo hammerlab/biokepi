@@ -686,23 +686,25 @@ module Make (Config : Compiler_configuration)
 
   let vaxrank
       ?(configuration=Tools.Vaxrank.Configuration.default)
-      reference_build vcf bam predictor alleles =
-    let v = get_vcf vcf in
+      reference_build vcfs bam predictor alleles =
+    let vcfs = List.map ~f:get_vcf vcfs in
     let b = get_bam bam in
     let mhc = get_mhc_alleles alleles in
     let outdir =
       Config.work_dir
       // sprintf "%s_%s_%s_vaxrank_%s_result"
-        (Filename.chop_extension (Filename.basename v#product#path))
+        (String.concat ~sep:"-"
+           (List.map vcfs ~f:(fun v ->
+                (Filename.chop_extension (Filename.basename v#product#path)))))
         (Tools.Topiary.predictor_to_string predictor)
         (Filename.chop_extension (Filename.basename mhc#product#path))
         (Tools.Vaxrank.Configuration.name configuration)
     in
     Vaxrank_result (
-      Tools.Vaxrank.run 
-        ~configuration ~run_with 
-        ~reference_build ~vcf:v ~bam:b ~predictor
-        ~alleles_file:mhc 
+      Tools.Vaxrank.run
+        ~configuration ~run_with
+        ~reference_build ~vcfs ~bam:b ~predictor
+        ~alleles_file:mhc
         ~output_folder:outdir
     )
 
