@@ -12,10 +12,12 @@ let cmd () =
     `Noblank;
     `P "the FASTQs found therein.";
   ] in
-  let name' =
-    let doc = "Name of the dataset; should be unique."
+  let sample_name =
+    let doc = "Name of the sample_name being generated; \
+               should be unique to the dataset and to the sample \
+               e.g. PT112-normal."
     in
-    Arg.(required & opt (some string) None & info ["name"; "N"] ~doc)
+    Arg.(required & opt (some string) None & info ["sample-name"; "N"] ~doc)
   in
   let host =
     let doc = "Host where the files are stored, e.g. ssh://dev1,\
@@ -31,7 +33,7 @@ let cmd () =
     let doc = "Pass if the reads aren't paired." in
     Arg.(value & flag & info ["single-ended"] ~doc)
   in
-  Term.(pure (fun name host directory single_ended ->
+  Term.(pure (fun sample_name host directory single_ended ->
       let host = match Ketrew_pure.Host.of_string host with
       | `Ok host -> host
       | `Error msg -> printf "Error parsing host.\n%!"; exit 1
@@ -39,8 +41,8 @@ let cmd () =
       let open Pvem_lwt_unix.Deferred_result in
       Derive.fastqs ~paired_end:(not single_ended) ~host:host directory
       >>= fun fqs ->
-      return (fastq_sample ~sample_name:name fqs)
-    ) $ name' $ host $ fastqs_directory $ single_ended),
+      return (fastq_sample ~sample_name fqs)
+    ) $ sample_name $ host $ fastqs_directory $ single_ended),
   Term.info "Generate Input.t" ~version ~doc ~man
 
 let () =
