@@ -204,14 +204,16 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
   *)
   let fastq_of_files  ~sample_name ?fragment_id ~r1 ?r2 () =
     let is_gz r =
-      Filename.check_suffix r1 ".gz" || Filename.check_suffix r1 ".fqz"
+      Filename.check_suffix r ".gz" || Filename.check_suffix r ".fqz"
     in
-    match is_gz r1, is_gz r2 with
-    | true, true ->
+    match is_gz r1, Option.map ~f:is_gz r2 with
+    | true, None
+    | true, Some true ->
       let r1 = Bfx.input_url r1 in
       let r2 = Option.map ~f:Bfx.input_url r2 in
       Bfx.(fastq_gz ~sample_name ?fragment_id ~r1 ?r2 () |> gunzip)
-    | false, false ->
+    | false, None
+    | false, Some false ->
       let r1 = Bfx.input_url r1 in
       let r2 = Option.map ~f:Bfx.input_url r2 in
       Bfx.(fastq ~sample_name ?fragment_id ~r1 ?r2 ())
@@ -238,5 +240,46 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
         )
       |> Bfx.list
 
+  let bwa_mem_opt_inputs inp =
+    let open Input in
+    let is_gz r =
+      Filename.check_suffix r ".gz" || Filename.check_suffix r ".fqz" in
+    let inputs =
+      match inp with
+      | Fastq {sample_name; files} ->
+        List.map files ~f:(fun (fragment_id, source) ->
+            match source with
+            | PE (r1, r2) when is_gz r1 && is_gz r2 ->
+              `Fastq_gz Bfx.(
+                  let r1 = input_url r1 in
+                  let r2 = input_url r2 in
+                  Bfx.fastq_gz ~sample_name ?fragment_id ~r1 ~r2 ()
+                )
+            | PE (r1, r2) when not (is_gz r1 || is_gz r2) ->
+              `Fastq Bfx.(
+                  let r1 = input_url r1 in
+                  let r2 = input_url r2 in
+                  Bfx.fastq ~sample_name ?fragment_id ~r1 ~r2 ()
+                )
+            | PE _ (* heterogeneous *) ->
+              failwithf "Heterogeneous gzipped / non-gzipped input paired-end \
+                         FASTQs not implemented"
+            | SE r when is_gz r ->
+              `Fastq_gz Bfx.(
+                  let r1 = input_url r in
+                  Bfx.fastq_gz ~sample_name ?fragment_id ~r1 ()
+                )
+            | SE r (* when not (is_gz r) *) ->
+              `Fastq_gz Bfx.(
+                  let r1 = input_url r in
+                  Bfx.fastq_gz ~sample_name ?fragment_id ~r1 ()
+                )
+            | Of_bam (how, sorting, reference_build, path) ->
+              let f = Bfx.input_url path in
+              let bam = Bfx.bam  ~sample_name ?sorting ~reference_build f in
+              `Bam (bam, how)
+          )
+    in
+    inputs
 
 end
