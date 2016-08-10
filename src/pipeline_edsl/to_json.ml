@@ -52,40 +52,57 @@ module Make_serializer (How : sig
   end) = struct
   open How
 
+  let input_url u =
+    input_value "Input" [
+      "URL", u;
+    ]
+
+  let fastq_or_gz
+      name
+      ~sample_name ?fragment_id ~r1 ?r2 () =
+    fun ~var_count ->
+      function_call name (
+        [
+          "sample_name", string sample_name;
+          "fragment_id", string (Option.value ~default:"NONE" fragment_id);
+          "R1", r1 ~var_count;
+        ]
+        @ Option.value_map ~default:[] ~f:(fun r2 ->
+            ["R2", r2 ~var_count]) r2
+      )
+
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =
-    input_value "fastq" [
-      "sample_name", sample_name;
-      "fragment_id", Option.value ~default:"NONE" fragment_id;
-      "R1", r1;
-      "R2", Option.value ~default:"NONE" r2;
-    ]
+    fastq_or_gz "fastq" ~sample_name ?fragment_id ~r1 ?r2 ()
 
   let fastq_gz
       ~sample_name ?fragment_id ~r1 ?r2 () =
-    input_value "fastq.gz" [
-      "sample_name", sample_name;
-      "fragment_id", Option.value ~default:"NONE" fragment_id;
-      "R1", r1;
-      "R2", Option.value ~default:"NONE" r2;
-    ]
+    fastq_or_gz "fastq-gz" ~sample_name ?fragment_id ~r1 ?r2 ()
 
-  let bam ~path ~sample_name ?sorting ~reference_build () =
-    input_value "bam" [
-      "path", path;
-      "sample_name", sample_name;
-      "sorting",
-      Option.value_map ~default:"NONE" sorting
-        ~f:(function `Coordinate -> "Coordinate" | `Read_name -> "Read-name");
-      "reference_build", reference_build;
-    ]
-
-  let mhc_alleles how =
-    input_value "mhc_alleles" [
-      match how with
-      | `File p -> "path", p
-      | `Names sl -> "inline", (String.concat ", " sl)
+  let bam ~sample_name ?sorting ~reference_build input =
+    fun ~var_count ->
+      function_call "bam" [
+        "sample_name", string sample_name;
+        "sorting",
+        string (
+          Option.value_map ~default:"NONE" sorting
+            ~f:(function `Coordinate -> "Coordinate" | `Read_name -> "Read-name")
+        );
+        "reference_build", string reference_build;
+        "file", input ~var_count;
       ]
+
+  let mhc_alleles =
+    function
+    | `Names sl ->
+      input_value "mhc_alleles" [
+        "inline", (String.concat ", " sl)
+      ]
+    | `File p ->
+      fun ~var_count ->
+        function_call "mhc_alleles" [
+          "file", p ~var_count;
+        ]
 
   let pair a b ~(var_count : int) =
     function_call "make-pair" [

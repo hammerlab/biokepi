@@ -136,11 +136,13 @@ module Pipeline_insane (Bfx : Biokepi.EDSL.Semantics) = struct
     List.map files ~f:begin function
     | `Pair (r1, r2) ->
       if Filename.check_suffix r1 ".gz"
-     || Filename.check_suffix r1 ".fqz"
+      || Filename.check_suffix r1 ".fqz"
       then
-        Bfx.(fastq_gz ~sample_name:dataset ~r1 ~r2 () |> gunzip)
+        Bfx.(fastq_gz ~sample_name:dataset
+               ~r1:(input_url r1) ~r2:(input_url r2) () |> gunzip)
       else
-        Bfx.(fastq ~sample_name:dataset ~r1 ~r2 ())
+        Bfx.(fastq ~sample_name:dataset
+               ~r1:(input_url r1) ~r2:(input_url r2) ())
     end
     |> Bfx.list
 

@@ -30,28 +30,44 @@ module type Bioinformatics_base = sig
   (** This is used to opacify the type of the expression. *)
   val to_unit: 'a repr -> unit repr
 
+  val input_url: string -> [ `Raw_file ] repr
+  (** 
+     Decrlare an URL as a input to a a pipeline.
+
+     - If the URL has the scheme ["file://"] or no scheme it will be
+       treated as a “local file” (i.e. local to the {!Biokepi.Machine.t}).
+     - If the URL has the schemes ["http://"] or ["https://"] the file
+       will be downloaded into the work-directory.
+       One can override the local filename, by adding a ["filename"]
+       argument to the query part of the
+       URL. E.g. ["https://data.example.com/my-sample.bam?filename=sample-from-example.bam"].
+  *)
+
   val fastq :
     sample_name : string ->
     ?fragment_id : string ->
-    r1: string ->
-    ?r2: string ->
+    r1: [ `Raw_file ] repr ->
+    ?r2: [ `Raw_file ] repr ->
     unit -> [ `Fastq ] repr
 
   val fastq_gz:
     sample_name : string ->
     ?fragment_id : string ->
-    r1: string -> ?r2: string ->
+    r1: [ `Raw_file ] repr ->
+    ?r2: [ `Raw_file ] repr ->
     unit -> [ `Gz of [ `Fastq ] ] repr
 
   val bam :
-    path : string ->
     sample_name : string ->
     ?sorting: [ `Coordinate | `Read_name ] ->
     reference_build: string ->
-    unit -> [ `Bam ] repr
+    [ `Raw_file ] repr ->
+    [ `Bam ] repr
 
   (** Input a file containing HLA allelles for Topiary  *)
-  val mhc_alleles: [ `File of string | `Names of string list] -> [ `MHC_alleles ] repr
+  val mhc_alleles:
+    [ `File of [ `Raw_file ] repr | `Names of string list] ->
+    [ `MHC_alleles ] repr
 
   val gunzip: [ `Gz of 'a] repr -> 'a repr
 
