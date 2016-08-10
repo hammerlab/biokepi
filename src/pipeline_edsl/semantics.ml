@@ -31,6 +31,17 @@ module type Bioinformatics_base = sig
   val to_unit: 'a repr -> unit repr
 
   val input_url: string -> [ `Raw_file ] repr
+  (** 
+     Decrlare an URL as a input to a a pipeline.
+
+     - If the URL has the scheme ["file://"] or no scheme it will be
+       treated as a “local file” (i.e. local to the {!Biokepi.Machine.t}).
+     - If the URL has the schemes ["http://"] or ["https://"] the file
+       will be downloaded into the work-directory.
+       One can override the local filename, by adding a ["filename"]
+       argument to the query part of the
+       URL. E.g. ["https://data.example.com/my-sample.bam?filename=sample-from-example.bam"].
+  *)
 
   val fastq :
     sample_name : string ->
