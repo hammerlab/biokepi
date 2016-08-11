@@ -23,14 +23,36 @@ module Tree = struct
     | `Node of box * arrow list
   ]
   let node_count = ref 0
-  let id_style = `Hash
+  let id_style = `Structural
+
+  module Index_anything = struct
+    (** This an implementation of an almost bijection: 'a -> int
+        It compares values structurally (with [(=)]), and assigns an
+        integer, unique over the execution of the program.
+        
+        It replaces [Hashtbl.hash] for which we were hitting annoying
+        collisions.
+    *)
+
+    type e = E: 'a -> e
+    let count = ref 0
+    let nodes : (e * int) list ref = ref []
+    let get v =
+      match List.find !nodes ~f:(fun (ee, _) -> ee = E v) with
+      | Some (_, i) -> i
+      | None ->
+        incr count;
+        nodes := (E v, !count) :: !nodes;
+        !count
+  end
+
   let make_id a =
     match a, id_style with
     | _, `Unique
     | `Unique, _ ->
       incr node_count; sprintf "node%03d" !node_count
-    | `Of v, `Hash ->
-      Hashtbl.hash v |> sprintf "id%d"
+    | `Of v, `Structural ->
+      Index_anything.get v |> sprintf "id%d"
 
   let arrow label points_to = {label; points_to}
 
