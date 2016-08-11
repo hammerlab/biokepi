@@ -606,21 +606,19 @@ module Make (Config : Compiler_configuration)
     let out o =
       Config.work_dir // sprintf "hlarp-%s.csv" (Filename.basename o) in
     let hlarp = Tools.Hlarp.run ~run_with in
-    let r =
+    let hla_result, output_path =
       match input with
       | `Seq2hla v ->
         let v = get_seq2hla_result v in
-        let d = v#product#work_dir_path in
-        hlarp ~hla_typer:`Seq2hla ~hla_result_directory:d ~output_path:(out d)
-          ~extract_alleles:true
+        `Seq2hla v, out v#product#work_dir_path
       | `Optitype v ->
         let v = get_optitype_result v in
-        let d = v#product#path in
-        hlarp ~hla_typer:`Optitype ~hla_result_directory:d ~output_path:(out d)
-          ~extract_alleles:true
-      | _ -> failwith "Hlarp requires Seq2Hla_result or Optitype_result"
+        `Optitype v, out v#product#path
     in
-    MHC_alleles (r ())
+    let res =
+      hlarp ~hla_result ~output_path ~extract_alleles:true
+    in
+    MHC_alleles (res ())
 
 
   let fastqc fq =
