@@ -690,15 +690,18 @@ module Make (Config : Compiler_configuration)
     let vcfs = List.map ~f:get_vcf vcfs in
     let b = get_bam bam in
     let mhc = get_mhc_alleles alleles in
+    let vcfs_hashed =
+      (List.map vcfs ~f:(fun v ->
+           (Filename.chop_extension (Filename.basename v#product#path))))
+      |> String.concat ~sep:"" |> Digest.string |> Digest.to_hex
+    in
     let outdir =
       Config.work_dir
-      // sprintf "%s_%s_%s_vaxrank_%s_result"
-        (String.concat ~sep:"-"
-           (List.map vcfs ~f:(fun v ->
-                (Filename.chop_extension (Filename.basename v#product#path)))))
+      // sprintf "vaxrank_%s_%s_%s_%s"
+        (Tools.Vaxrank.Configuration.name configuration)
         (Tools.Topiary.predictor_to_string predictor)
         (Filename.chop_extension (Filename.basename mhc#product#path))
-        (Tools.Vaxrank.Configuration.name configuration)
+        vcfs_hashed
     in
     Vaxrank_result (
       Tools.Vaxrank.run
