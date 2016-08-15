@@ -16,8 +16,8 @@ let run ~(run_with:Machine.t)
   let hlarp = Machine.get_tool run_with Machine.Tool.Default.hlarp in
   let subcommand, hla_result_directory, hla_result_dep =
     match hla_result with
-    | `Optitype v -> "seq2HLA", v#product#path, depends_on v
-    | `Seq2hla v -> "optitype", v#product#work_dir_path, depends_on v
+    | `Optitype v -> "optitype", v#product#path, depends_on v
+    | `Seq2hla v -> "seq2HLA", v#product#work_dir_path, depends_on v
   in
   let name = sprintf "Hlarp on %s @ %s" subcommand hla_result_directory in
   let make = Machine.quick_run_program run_with
@@ -29,8 +29,9 @@ let run ~(run_with:Machine.t)
         && sh (if extract_alleles
                then sprintf
                    "awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\
-                    \"\", $2); print $2} %s' > %s"
-                   output_path output_path
+                    \"\", $2); print $2}' %s | tail -n +2 > %s.tmp \
+                   && mv %s.tmp %s"
+                   output_path output_path output_path output_path
                else "")
       )
   in
