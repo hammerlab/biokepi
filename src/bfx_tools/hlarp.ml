@@ -26,15 +26,15 @@ let run ~(run_with:Machine.t)
       Program.(
         Machine.Tool.init hlarp
         && shf "hlarp %s %s > %s" subcommand hla_result_directory output_path
-        && sh (if extract_alleles
-               then sprintf
-                   "awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\
-                    \"\", $2); print $2}' %s | tail -n +2 > %s.tmp \
-                   && mv %s.tmp %s"
-                   output_path output_path output_path output_path
-               else "")
-      )
-  in
+        && sh
+          (if extract_alleles
+           then sprintf
+               "awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\"\", $2); print $2}' %s \
+                | tail -n +2 \
+                | sed \"s/'//\" > %s.tmp \
+                && mv %s.tmp %s"
+               output_path output_path output_path output_path
+           else "")) in
   let edges = hla_result_dep :: edges @ [
       depends_on (Machine.Tool.ensure hlarp);
       on_failure_activate
