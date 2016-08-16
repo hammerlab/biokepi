@@ -233,7 +233,7 @@ module Make_serializer (How : sig
       ?(configuration = Tools.Isovar.Configuration.default) reference_build vcf =
     one_to_one "isovar" Tools.Isovar.Configuration.(name configuration)
 
-  let topiary 
+  let topiary
     ?(configuration = Tools.Topiary.Configuration.default)
     reference_build vcf predictor alleles =
     fun ~(var_count : int) ->
@@ -246,20 +246,19 @@ module Make_serializer (How : sig
         "vcf", vcf_compiled;
       ]
 
-  let vaxrank 
+  let vaxrank
     ?(configuration = Tools.Vaxrank.Configuration.default)
-    reference_build vcf bam predictor alleles =
+    reference_build vcfs bam predictor alleles =
     fun ~(var_count : int) ->
-      let vcf_compiled = vcf ~var_count in
+      let vcfs_compiled = List.map vcfs ~f:(fun v -> v ~var_count) in
       let bam_compiled = bam ~var_count in
-      function_call "vaxrank" [
+      function_call "vaxrank" ([
         "configuration", string Tools.Vaxrank.Configuration.(name configuration);
         "alleles", alleles ~var_count;
         "reference_build", string reference_build;
         "predictor", string Tools.Topiary.(predictor_to_string predictor);
-        "vcf", vcf_compiled;
         "bam", bam_compiled;
-      ]
+      ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 
   let optitype how =
     one_to_one "optitype" (match how with `DNA -> "DNA" | `RNA -> "RNA")
