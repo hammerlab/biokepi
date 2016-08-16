@@ -159,7 +159,7 @@ module Opam = struct
          default
        - OPAMYES: answer `y` to all questions (i.e. batch mode)
        - OPAMROOT: our per-package replacement for `~/.opam/`
-    *) 
+    *)
     ksprintf k
       ("PATH=%s:$PATH OCAMLRUNPARAM=b OPAMLOCKRETRIES=20000 OPAMBASEPACKAGES= \
         OPAMYES=true OPAMROOT=%s %s " ^^ fmt)
@@ -315,6 +315,14 @@ let igvxml =
     ~compiler:"4.02.3"
     Machine.Tool.Default.igvxml
 
+let hlarp =
+  install_target
+    ~tool_type:`Application
+    ~witness:"hlarp" ~test:test_version
+    ~repository:`Opam
+    ~compiler:"4.03.0"
+    ~pin:"https://github.com/hammerlab/hlarp.git#biokepi-tracker"
+    Machine.Tool.Default.hlarp
 
 let default :
   run_program: Machine.Make_fun.t ->
@@ -329,5 +337,5 @@ let default :
     seq2hla;
     optitype;
     igvxml;
+    hlarp;
   ])
-

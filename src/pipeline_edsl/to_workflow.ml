@@ -17,12 +17,13 @@ module File_type_specification = struct
     | Seq2hla_result:
         Seq2HLA.product workflow_node ->
       [ `Seq2hla_result ] t
-    | Optitype_result: unknown_product workflow_node -> [ `Optitype_result ] t
+    | Optitype_result:
+        Optitype.product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
     | Topiary_result: single_file workflow_node -> [ `Topiary ] t
-    | Vaxrank_result: 
+    | Vaxrank_result:
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
     | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
     | Raw_file: single_file workflow_node -> [ `Raw_file ] t
@@ -39,12 +40,12 @@ module File_type_specification = struct
     | Vcf _ -> "Vcf"
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
+    | Optitype_result _ -> "Optitype_result"
     | Fastqc_result _ -> "Fastqc_result"
     | Flagstat_result _ -> "Flagstat_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
-    | Optitype_result _ -> "Optitype_result"
     | MHC_alleles _ -> "MHC_alleles"
     | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
@@ -115,7 +116,9 @@ module File_type_specification = struct
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_optitype_result : [ `Optitype_result ] t -> unknown_product workflow_node =
+  let get_optitype_result :
+    [ `Optitype_result ] t -> Optitype.product workflow_node
+    =
     function
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
@@ -647,6 +650,25 @@ module Make (Config : Compiler_configuration)
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
 
+  let hlarp input =
+    let out o =
+      Config.work_dir // sprintf "hlarp-%s.csv" (Filename.basename o) in
+    let hlarp = Tools.Hlarp.run ~run_with in
+    let hla_result, output_path =
+      match input with
+      | `Seq2hla v ->
+        let v = get_seq2hla_result v in
+        `Seq2hla v, out v#product#work_dir_path
+      | `Optitype v ->
+        let v = get_optitype_result v in
+        `Optitype v, out v#product#path
+    in
+    let res =
+      hlarp ~hla_result ~output_path ~extract_alleles:true
+    in
+    MHC_alleles (res ())
+
+
   let fastqc fq =
     let fastq = get_fastq fq in
     let output_folder =
@@ -677,7 +699,7 @@ module Make (Config : Compiler_configuration)
         (Filename.chop_extension (Filename.basename b#product#path))
         (Tools.Isovar.Configuration.name configuration)
     in
-    let output_file = Config.work_dir // out_filename in 
+    let output_file = Config.work_dir // out_filename in
     Isovar_result (
       Tools.Isovar.run ~configuration ~run_with ~reference_build ~vcf:v ~bam:b ~output_file
     )
@@ -695,10 +717,10 @@ module Make (Config : Compiler_configuration)
     in
     let output_file = Config.work_dir // out_filename in
     Topiary_result (
-      Tools.Topiary.run 
-        ~configuration ~run_with 
+      Tools.Topiary.run
+        ~configuration ~run_with
         ~reference_build ~variants_vcf:v ~predictor
-        ~alleles_file:mhc 
+        ~alleles_file:mhc
         ~output:(`CSV output_file)
     )
 
@@ -717,10 +739,10 @@ module Make (Config : Compiler_configuration)
         (Tools.Vaxrank.Configuration.name configuration)
     in
     Vaxrank_result (
-      Tools.Vaxrank.run 
-        ~configuration ~run_with 
+      Tools.Vaxrank.run
+        ~configuration ~run_with
         ~reference_build ~vcf:v ~bam:b ~predictor
-        ~alleles_file:mhc 
+        ~alleles_file:mhc
         ~output_folder:outdir
     )
 
@@ -737,7 +759,7 @@ module Make (Config : Compiler_configuration)
       Tools.Optitype.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
-      :> KEDSL.unknown_product KEDSL.workflow_node
+      :> Optitype.product KEDSL.workflow_node
     )
 
   let gatk_haplotype_caller bam =
