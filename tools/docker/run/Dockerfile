@@ -1,4 +1,4 @@
-# We pull form `ketrew-server` beause the user management has been done right
+# We pull from `ketrew-server` because the user management has been done right
 # in https://github.com/ocaml/opam-dockerfiles
 # and we trust the people who did it (@avsm).
 FROM hammerlab/ketrew-server
