@@ -1,6 +1,7 @@
-# We pull from `ketrew-server` because the user management has been done right
+# We pull from `ketrew-server` because a bunch of stuff has been done right
 # in https://github.com/ocaml/opam-dockerfiles
 # and we trust the people who did it (@avsm).
+# And we get `aspcud` on the way.
 FROM hammerlab/ketrew-server
 # Installing easy Biokepi dependencies:
 RUN sudo apt-get update
@@ -15,4 +16,14 @@ RUN sudo apt-get update
 RUN sudo bash -c "echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections"
 RUN sudo bash -c "echo debconf shared/accepted-oracle-license-v1-1 seen true |  debconf-set-selections"
 RUN sudo bash -c "DEBIAN_FRONTEND=noninteractive apt-get install --yes --allow-unauthenticated oracle-java7-installer"
+
+# Now a fresh non-sudo user:
+
+RUN sudo  bash -c "\
+  adduser --uid 20042 --disabled-password --gecos '' biokepi && \
+  passwd -l biokepi && \
+  chown -R biokepi:biokepi /home/biokepi"
+USER biokepi
+ENV HOME /home/biokepi
+WORKDIR /home/biokepi
 
