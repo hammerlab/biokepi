@@ -43,7 +43,7 @@ let bamtofastq
       (["-fq"; r1], r1, None)
   in
   let bedtools = Machine.get_tool run_with Machine.Tool.Default.bedtools in
-  let src_bam = input_bam#product#path in
+  let src_bam = sorted_bam#product#path in
   let program =
     Program.(Machine.Tool.(init bedtools)
              && exec ["mkdir"; "-p"; Filename.dirname r1]
@@ -57,6 +57,7 @@ let bamtofastq
   let edges = [
     depends_on Machine.Tool.(ensure bedtools);
     depends_on input_bam;
+    depends_on sorted_bam;
     on_failure_activate (Remove.file ~run_with r1);
     on_success_activate (Remove.file ~run_with sorted_bam#product#path);
   ] |> fun list ->
