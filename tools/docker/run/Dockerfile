@@ -26,4 +26,4 @@ RUN sudo  bash -c "\
 USER biokepi
 ENV HOME /home/biokepi
 WORKDIR /home/biokepi
-RUN opam init -a --yes
+RUN opam init -a --yes --comp 4.02.3
