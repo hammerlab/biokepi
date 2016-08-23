@@ -56,6 +56,7 @@ module Tool = struct
     let fastqc = create "fastqc" ~version:"0.11.5"
     let igvxml = create "igvxml" ~version:"0.0.6"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
+    let samblaster = create "samblaster" ~version:"v.0.1.22"
   end
 
   type t = {
