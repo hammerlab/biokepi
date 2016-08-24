@@ -414,6 +414,16 @@ let fastqc =
     ~init_program
     ~unarchived_directory:"FastQC"
 
+  let samblaster = 
+    let binary = "samblaster" in
+    installable_tool
+      Machine.Tool.Default.samblaster
+      ~url:"https://github.com/GregoryFaust/samblaster/releases/download/v.0.1.22/samblaster-v.0.1.22.tar.gz"
+      ~install_program:(make_and_copy_bin binary)
+      ~init_program:add_to_dollar_path
+      ~witness:(witness_file binary)
+
+
 let default_jar_location msg (): broad_jar_location =
   `Fail (sprintf "No location provided for %s" msg)
 
@@ -448,6 +458,7 @@ let default_toolkit
       install mosaik;
       install kallisto;
       install fastqc;
+      install samblaster;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
