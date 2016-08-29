@@ -135,6 +135,9 @@ module Generic_optimizer
       | `Seq2hla f -> `Seq2hla (bwd f)
       | `Optitype f -> `Optitype (bwd f)))
 
+  let filter_to_region vcf bed =
+    fwd (Input.filter_to_region (bwd vcf) (bwd bed))
+
   let gatk_haplotype_caller bam =
     fwd (Input.gatk_haplotype_caller (bwd bam))
 

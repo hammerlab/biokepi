@@ -220,6 +220,12 @@ module Make_serializer (How : sig
     in
     one_to_one name "default" v
 
+  let filter_to_region vcf bed =
+    fun ~(var_count: int) ->
+      function_call "filter_to_region"
+        ["bed", bed ~var_count;
+         "vcf", vcf ~var_count]
+
   let fastqc =
     one_to_one "fastqc" "default"
 

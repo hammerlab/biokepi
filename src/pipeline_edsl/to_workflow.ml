@@ -13,6 +13,7 @@ module File_type_specification = struct
     | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
     | Bam: bam_file workflow_node -> [ `Bam ] t
     | Vcf: single_file workflow_node -> [ `Vcf ] t
+    | Bed: single_file workflow_node -> [ `Bed ] t
     | Gtf: single_file workflow_node -> [ `Gtf ] t
     | Seq2hla_result:
         Seq2HLA.product workflow_node ->
@@ -38,6 +39,7 @@ module File_type_specification = struct
     | Fastq _ -> "Fastq"
     | Bam _ -> "Bam"
     | Vcf _ -> "Vcf"
+    | Bed _ -> "Bed"
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
     | Optitype_result _ -> "Optitype_result"
@@ -71,6 +73,10 @@ module File_type_specification = struct
   let get_vcf : [ `Vcf ] t -> single_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
+
+  let get_bed : [ `Bed ] t -> single_file workflow_node = function
+  | Bed v -> v
+  | o -> fail_get o "Bed"
 
   let get_gtf : [ `Gtf ] t -> single_file workflow_node = function
   | Gtf v -> v
@@ -337,6 +343,9 @@ module Make (Config : Compiler_configuration)
         ~name:(sprintf "Input-bam: %s" sample_name)
         ~edges:[depends_on f]
     )
+
+  let bed path =
+    Bed KEDSL.(workflow_node (single_file path))
 
   let mhc_alleles how =
     match how with
@@ -668,6 +677,18 @@ module Make (Config : Compiler_configuration)
     in
     MHC_alleles (res ())
 
+  let filter_to_region vcf bed =
+    let vcf = get_vcf vcf in
+    let bed = get_bed bed in
+    let output =
+      let shorten f = Filename.basename f |> Filename.chop_extension in
+      let vcf_part = shorten vcf#product#path in
+      let bed_part = shorten bed#product#path in
+      sprintf "intersect-%s-%s.vcf" vcf_part bed_part
+    in
+    Vcf (Tools.Bedtools.intersect
+           ~primary:vcf ~intersect_with:[bed]
+           ~run_with output)
 
   let fastqc fq =
     let fastq = get_fastq fq in

@@ -21,10 +21,14 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
   in
   let install_command, name =
     match installation with
-    | (Pip, Package_PyPI pname) -> ["pip"; "install"; versionize ?version ~sep:"==" pname], pname
-    | (Pip, Package_Source (pname, source)) -> ["pip"; "install"; source], pname
-    | (Conda, Package_Conda pname) -> ["conda"; "install"; "-y"; versionize ?version ~sep:"=" pname], pname
-    | (Conda, Package_PyPI pname) -> ["conda"; "skeleton"; "pypi"; pname], pname
+    | (Pip, Package_PyPI pname) ->
+      ["pip"; "install"; versionize ?version ~sep:"==" pname], pname
+    | (Pip, Package_Source (pname, source)) ->
+      ["pip"; "install"; source], pname
+    | (Conda, Package_Conda pname) ->
+      ["conda"; "install"; "-y"; versionize ?version ~sep:"=" pname], pname
+    | (Conda, Package_PyPI pname) ->
+      ["conda"; "skeleton"; "pypi"; pname], pname
     | _ -> failwith "Installation type not supported."
   in
   let main_subdir = name ^ "_conda_dir" in
