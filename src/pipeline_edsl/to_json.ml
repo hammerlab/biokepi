@@ -92,6 +92,10 @@ module Make_serializer (How : sig
         "file", input ~var_count;
       ]
 
+  let bed file =
+    fun ~var_count ->
+      function_call "bed" ["path", file ~var_count]
+
   let mhc_alleles =
     function
     | `Names sl ->

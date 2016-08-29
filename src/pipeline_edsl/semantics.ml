@@ -64,6 +64,10 @@ module type Bioinformatics_base = sig
     [ `Raw_file ] repr ->
     [ `Bam ] repr
 
+  val bed :
+    [ `Raw_file ] repr ->
+    [ `Bed ] repr
+
   (** Input a file containing HLA allelles for Topiary  *)
   val mhc_alleles:
     [ `File of [ `Raw_file ] repr | `Names of string list] ->

@@ -344,8 +344,8 @@ module Make (Config : Compiler_configuration)
         ~edges:[depends_on f]
     )
 
-  let bed path =
-    Bed KEDSL.(workflow_node (single_file path))
+  let bed file =
+    Bed (get_raw_file file)
 
   let mhc_alleles how =
     match how with

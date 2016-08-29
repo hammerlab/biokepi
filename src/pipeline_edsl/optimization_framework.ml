@@ -82,6 +82,9 @@ module Generic_optimizer
   let bam ~sample_name ?sorting ~reference_build input =
     fwd (Input.bam ~sample_name ?sorting ~reference_build (bwd input))
 
+  let bed file =
+    fwd (Input.bed (bwd file))
+
   let mhc_alleles =
     function
     | `File f -> fwd (Input.mhc_alleles (`File (bwd f)))
