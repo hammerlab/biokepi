@@ -82,6 +82,9 @@ module Generic_optimizer
   let bam ~sample_name ?sorting ~reference_build input =
     fwd (Input.bam ~sample_name ?sorting ~reference_build (bwd input))
 
+  let bed file =
+    fwd (Input.bed (bwd file))
+
   let mhc_alleles =
     function
     | `File f -> fwd (Input.mhc_alleles (`File (bwd f)))
@@ -134,6 +137,9 @@ module Generic_optimizer
     fwd (Input.hlarp (match input with
       | `Seq2hla f -> `Seq2hla (bwd f)
       | `Optitype f -> `Optitype (bwd f)))
+
+  let filter_to_region vcf bed =
+    fwd (Input.filter_to_region (bwd vcf) (bwd bed))
 
   let gatk_haplotype_caller bam =
     fwd (Input.gatk_haplotype_caller (bwd bam))

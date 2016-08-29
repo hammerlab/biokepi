@@ -64,6 +64,10 @@ module type Bioinformatics_base = sig
     [ `Raw_file ] repr ->
     [ `Bam ] repr
 
+  val bed :
+    [ `Raw_file ] repr ->
+    [ `Bed ] repr
+
   (** Input a file containing HLA allelles for Topiary  *)
   val mhc_alleles:
     [ `File of [ `Raw_file ] repr | `Names of string list] ->
@@ -161,6 +165,11 @@ module type Bioinformatics_base = sig
     [ `Optitype of [`Optitype_result] repr
     | `Seq2hla of [`Seq2hla_result] repr] ->
     [ `MHC_alleles ] repr
+
+  val filter_to_region:
+    [ `Vcf ] repr ->
+    [ `Bed ] repr ->
+    [ `Vcf ] repr
 
   val gatk_haplotype_caller:
     [ `Bam ] repr ->

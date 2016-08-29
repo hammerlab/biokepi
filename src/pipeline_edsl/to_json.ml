@@ -92,6 +92,10 @@ module Make_serializer (How : sig
         "file", input ~var_count;
       ]
 
+  let bed file =
+    fun ~var_count ->
+      function_call "bed" ["path", file ~var_count]
+
   let mhc_alleles =
     function
     | `Names sl ->
@@ -219,6 +223,12 @@ module Make_serializer (How : sig
     | `Optitype f -> "hlarp-optitype", f
     in
     one_to_one name "default" v
+
+  let filter_to_region vcf bed =
+    fun ~(var_count: int) ->
+      function_call "filter_to_region"
+        ["bed", bed ~var_count;
+         "vcf", vcf ~var_count]
 
   let fastqc =
     one_to_one "fastqc" "default"
