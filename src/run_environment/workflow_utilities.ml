@@ -241,6 +241,12 @@ module Download = struct
               zip_flags
               (Filename.quote wgot#product#path)
               (Filename.quote destination_folder)))
+      
+  type tool_file_location = [
+    | `Scp of string
+    | `Wget of string
+    | `Fail of string
+  ]
 
   let get_tool_file
       ~identifier

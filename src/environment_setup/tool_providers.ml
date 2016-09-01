@@ -282,11 +282,6 @@ let picard =
   installable_tool Machine.Tool.Default.picard ~url ~init_program
     ~witness:(witness_file jar)
 
-type tool_file_location = [
-  | `Scp of string
-  | `Wget of string
-  | `Fail of string
-]
 (**
    Mutect (and some other tools) are behind some web-login annoying thing:
    c.f. <http://www.broadinstitute.org/cancer/cga/mutect_download>
@@ -295,7 +290,7 @@ type tool_file_location = [
 *)
 
 let get_broad_jar = 
-  Worflow_utilities.Download.get_tool_file ~identifier:"broad-jar"
+  Workflow_utilities.Download.get_tool_file ~identifier:"broad-jar"
 
 let mutect_tool
     ~(run_program : Machine.Make_fun.t)
@@ -380,7 +375,6 @@ let fastqc =
     ~init_program
     ~unarchived_directory:"FastQC"
 
-<<<<<<< HEAD
   let samblaster = 
     let binary = "samblaster" in
     installable_tool
@@ -391,17 +385,22 @@ let fastqc =
       ~witness:(witness_file binary)
 
 
-let default_jar_location msg (): broad_jar_location =
-=======
-let default_tool_location msg (): tool_file_location =
->>>>>>> 3117d3e... make broad jar fetch generic for other tools
+let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
   `Fail (sprintf "No location provided for %s" msg)
+
+let default_netmhc_locations (): Netmhc.netmhc_file_locations = {
+  netmhc=(default_tool_location "NetMHC" ());
+  netmhcpan=(default_tool_location "NetMHCpan" ());
+  pickpocket=(default_tool_location "PickPocket" ());
+  netmhccons=(default_tool_location "NetMHCcons" ());
+}
 
 let default_toolkit
     ~run_program
     ~host ~install_tools_path
     ?(mutect_jar_location = default_tool_location "Mutect")
     ?(gatk_jar_location = default_tool_location "GATK")
+    ?(netmhc_tool_locations = default_netmhc_locations)
     () =
   let install installable =
     render_installable_tool ~host installable ~install_tools_path ~run_program
@@ -434,4 +433,7 @@ let default_toolkit
       ~install_path:(install_tools_path // "biopam-kit") ();
     Python_package.default ~run_program ~host 
       ~install_path: (install_tools_path // "python-tools") ();
+    Netmhc.default ~run_program ~host
+      ~install_path: (install_tools_path // "netmhc-tools") 
+      ~files:(netmhc_tool_locations ()) ();
   ]
