@@ -242,6 +242,43 @@ module Download = struct
               (Filename.quote wgot#product#path)
               (Filename.quote destination_folder)))
 
+  let get_tool_file
+      ~identifier
+      ~(run_program : Machine.Make_fun.t)
+      ~host ~install_path
+      loc =
+    let open KEDSL in
+    let rm_path = Remove.path_on_host in
+    let jar_name =
+      match loc with
+      | `Fail s -> sprintf "cannot-get-%s.file" identifier
+      | `Scp s -> Filename.basename s
+      | `Wget s -> Filename.basename s in
+    let local_box_path = install_path // jar_name in
+    workflow_node (single_file local_box_path ~host)
+      ~name:(sprintf "get-%s" jar_name)
+      ~edges:[
+        on_failure_activate (rm_path ~host local_box_path)
+      ]
+      ~make:(
+        run_program
+          ~requirements:[
+            `Internet_access;
+            `Self_identification [identifier ^ "-instalation"; jar_name];
+          ]
+          Program.(
+            shf "mkdir -p %s" install_path
+            && begin match loc with
+            | `Fail msg ->
+              shf "echo 'Cannot download file for %s: %s'" identifier msg
+              && sh "exit 4"
+            | `Scp s ->
+              shf "scp %s %s"
+                (Filename.quote s) (Filename.quote local_box_path)
+            | `Wget s ->
+              shf "wget %s -O %s"
+                (Filename.quote s) (Filename.quote local_box_path)
+            end))
 end
 
 module Vcftools = struct
