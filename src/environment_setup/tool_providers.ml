@@ -282,7 +282,7 @@ let picard =
   installable_tool Machine.Tool.Default.picard ~url ~init_program
     ~witness:(witness_file jar)
 
-type broad_jar_location = [
+type tool_file_location = [
   | `Scp of string
   | `Wget of string
   | `Fail of string
@@ -294,14 +294,15 @@ type broad_jar_location = [
    reimplement the `Tool.t` is some other way).
 *)
 
-let get_broad_jar
+let get_tool_file
+    ~identifier
     ~(run_program : Machine.Make_fun.t)
     ~host ~install_path
     loc =
   let open KEDSL in
   let jar_name =
     match loc with
-    | `Fail s -> "cannot-get-broad-jar.jar"
+    | `Fail s -> sprintf "cannot-get-%s.file" identifier
     | `Scp s -> Filename.basename s
     | `Wget s -> Filename.basename s in
   let local_box_path = install_path // jar_name in
@@ -315,13 +316,13 @@ let get_broad_jar
       run_program
         ~requirements:[
           `Internet_access;
-          `Self_identification ["broad-jar-instalation"; jar_name];
+          `Self_identification [identifier ^ "-instalation"; jar_name];
         ]
         Program.(
           shf "mkdir -p %s" install_path
           && begin match loc with
           | `Fail msg ->
-            shf "echo 'Cannot download Broad JAR: %s'" msg
+            shf "echo 'Cannot download file for %s: %s'" identifier msg
             && sh "exit 4"
           | `Scp s ->
             shf "scp %s %s"
@@ -330,6 +331,8 @@ let get_broad_jar
             shf "wget %s -O %s"
               (Filename.quote s) (Filename.quote local_box_path)
           end))
+
+let get_broad_jar = get_tool_file ~identifier:"broad-jar"
 
 let mutect_tool
     ~(run_program : Machine.Make_fun.t)
@@ -414,6 +417,7 @@ let fastqc =
     ~init_program
     ~unarchived_directory:"FastQC"
 
+<<<<<<< HEAD
   let samblaster = 
     let binary = "samblaster" in
     installable_tool
@@ -425,13 +429,16 @@ let fastqc =
 
 
 let default_jar_location msg (): broad_jar_location =
+=======
+let default_tool_location msg (): tool_file_location =
+>>>>>>> 3117d3e... make broad jar fetch generic for other tools
   `Fail (sprintf "No location provided for %s" msg)
 
 let default_toolkit
     ~run_program
     ~host ~install_tools_path
-    ?(mutect_jar_location = default_jar_location "Mutect")
-    ?(gatk_jar_location = default_jar_location "GATK")
+    ?(mutect_jar_location = default_tool_location "Mutect")
+    ?(gatk_jar_location = default_tool_location "GATK")
     () =
   let install installable =
     render_installable_tool ~host installable ~install_tools_path ~run_program
