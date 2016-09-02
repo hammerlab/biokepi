@@ -1,6 +1,20 @@
 open Biokepi_run_environment
 open Common
 
+(* 
+  Tested against:
+
+    netMHC-4.0a.Linux.tar.gz
+    pickpocket-1.1a.Linux.tar.gz
+    netMHCpan-3.0a.Linux.tar.gz
+    netMHCcons-1.1a.Linux.tar.gz
+
+  Do not use custom named archives
+  and keep them as they are after you
+  download (i.e. no need to insert the
+  data folder in them or customize the
+  binaries)
+*)
 type netmhc_file_locations = {
   netmhc: Workflow_utilities.Download.tool_file_location;
   netmhcpan: Workflow_utilities.Download.tool_file_location;
@@ -8,6 +22,12 @@ type netmhc_file_locations = {
   netmhccons: Workflow_utilities.Download.tool_file_location;
 }
 
+(*
+  The standard netMHC installation requires
+  customizing some of the environment variables
+  defined in their main binary files. The following
+  function handles these replacements.
+*)
 let replace_env_value file envname newvalue =
   let escape_slash txt =
     let escfun c = if c = '/' then ['\\'; c] else [c] in
@@ -25,7 +45,15 @@ let replace_env_value file envname newvalue =
     shf "rm -f %s" file_bak
   )
 
-(* /path/to/netMHC-3.4a.Linux.tar.gz -> netMHC-3.4 *)
+(* 
+  e.g. input: /path/to/netMHC-3.4a.Linux.tar.gz
+  e.g. output: netMHC-3.4
+
+  This guessing game is necessary to build the URL
+  for the data files required for a complete installation
+  and also for to know what folder gets extracted from the
+  archives.
+*)
 let guess_folder_name tool_file_loc =
   let loc = match tool_file_loc with
     | `Scp l -> l
@@ -45,6 +73,10 @@ let guess_folder_name tool_file_loc =
     |> Filename.chop_extension (* netMHC-3.4a *)
     |> chop_final_char (* netMHC-3.4 *)
 
+(* 
+  netMHC tools will be populating this folder,
+  so this is an important "tmp" folder!
+*)
 let tmp_dir install_path = install_path // "tmp"
 
 let default_netmhc_install
