@@ -49,7 +49,8 @@ let tmp_dir install_path = install_path // "tmp"
 
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
-    ~tool_file_loc ~binary_name ~example_data_file ~env_setup =
+    ~tool_file_loc ~binary_name ~example_data_file ~env_setup 
+    ?(depends=[]) () =
   let open KEDSL in
   let tool_name = binary_name in
   let downloaded_file =
@@ -81,8 +82,9 @@ let default_netmhc_install
     workflow_node (single_file ~host binary_path)
       ~name:("Installing NetMHC tool: " ^ tool_name)
       ~edges:(
-        [ depends_on downloaded_file; ] @
-        (if with_data then [ depends_on downloaded_data_file; ] else [])
+        [ depends_on downloaded_file; ]
+        @ (if with_data then [ depends_on downloaded_data_file; ] else [])
+        @ (List.map depends ~f:(fun d -> depends_on d))
       )
       ~make:(run_program
         ~requirements:[
@@ -109,7 +111,7 @@ let default_netmhc_install
   in
   (Machine.Tool.create
     Machine.Tool.Definition.(create binary_name)
-    ~ensure ~init, tool_path)
+    ~ensure ~init, tool_path, ensure)
 
 let guess_env_setup
     ~install_path
@@ -123,23 +125,23 @@ let guess_env_setup
   ]
 
 let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
-  let (netmhc, netmhc_path) =
+  let (netmhc, netmhc_path, netmhc_install) =
     default_netmhc_install ~run_program ~host ~install_path
       ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
       ~example_data_file:(Some "version") 
-      ~env_setup:(guess_env_setup ~install_path files.netmhc)
+      ~env_setup:(guess_env_setup ~install_path files.netmhc) ()
   in
-  let (netmhcpan, netmhcpan_path) =
+  let (netmhcpan, netmhcpan_path, netmhcpan_install) =
     default_netmhc_install ~run_program ~host ~install_path
       ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCpan"
       ~example_data_file:(Some "version")
-      ~env_setup:(guess_env_setup ~install_path files.netmhcpan)
+      ~env_setup:(guess_env_setup ~install_path files.netmhcpan) ()
   in
-  let (pickpocket, pickpocket_path) =
+  let (pickpocket, pickpocket_path, pickpocket_install) =
     default_netmhc_install ~run_program ~host ~install_path
       ~tool_file_loc:files.pickpocket ~binary_name:"netMHC"
       ~example_data_file:None
-      ~env_setup:(guess_env_setup ~install_path files.pickpocket)
+      ~env_setup:(guess_env_setup ~install_path files.pickpocket) ()
   in
   let cons_env =
     [("NETMHC_env", netmhc_path);
@@ -150,10 +152,12 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
       ~home_env:"NCHOME" ~install_path files.netmhccons
     )
   in
-  let (netmhccons, _) =
+  let (netmhccons, _, _) =
     default_netmhc_install ~run_program ~host ~install_path
       ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCpan"
       ~example_data_file:(Some "BLOSUM50")
       ~env_setup:cons_env
+      ~depends:[netmhc_install; netmhcpan_install; pickpocket_install]
+      ()
   in
   Machine.Tool.Kit.of_list [netmhc; netmhcpan; pickpocket; netmhccons]
