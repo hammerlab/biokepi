@@ -384,7 +384,6 @@ let fastqc =
       ~init_program:add_to_dollar_path
       ~witness:(witness_file binary)
 
-
 let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
   `Fail (sprintf "No location provided for %s" msg)
 
