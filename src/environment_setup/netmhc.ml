@@ -139,7 +139,7 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
   in
   let (pickpocket, pickpocket_path, pickpocket_install) =
     default_netmhc_install ~run_program ~host ~install_path
-      ~tool_file_loc:files.pickpocket ~binary_name:"netMHC"
+      ~tool_file_loc:files.pickpocket ~binary_name:"PickPocket"
       ~example_data_file:None
       ~env_setup:(guess_env_setup ~install_path files.pickpocket) ()
   in
@@ -154,7 +154,7 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
   in
   let (netmhccons, _, _) =
     default_netmhc_install ~run_program ~host ~install_path
-      ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCpan"
+      ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCcons"
       ~example_data_file:(Some "BLOSUM50")
       ~env_setup:cons_env
       ~depends:[netmhc_install; netmhcpan_install; pickpocket_install]
