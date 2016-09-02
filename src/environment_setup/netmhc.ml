@@ -101,7 +101,12 @@ let default_netmhc_install
         )
       )
   in
-  let init = Program.(shf "export PATH=%s:$PATH" tool_path) in
+  let init = 
+    Program.(
+      shf "export PATH=%s:$PATH" tool_path &&
+      shf "export TMPDIR=%s" (tmp_dir install_path)
+    )
+  in
   (Machine.Tool.create
     Machine.Tool.Definition.(create binary_name)
     ~ensure ~init, tool_path)
@@ -113,7 +118,7 @@ let guess_env_setup
     tool_file_loc =
   let folder_name = guess_folder_name tool_file_loc in
   [
-    (home_env, folder_name);
+    (home_env, install_path // folder_name);
     ("TMPDIR", install_path // tmp_dirname);
   ]
 
