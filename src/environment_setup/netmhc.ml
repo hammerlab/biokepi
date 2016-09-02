@@ -93,11 +93,6 @@ let default_netmhc_install
           shf "cd %s" install_path &&
           shf "tar zxf %s" downloaded_file#product#path &&
           shf "cd %s" tool_path &&
-          (if with_data
-           then (shf "mv %s ./data"
-                  (Filename.dirname downloaded_data_file#product#path)) 
-           else (sh "echo 'No data file for this install")
-          ) &&
           chain (
             List.map
               ~f:(fun (e, v) -> replace_env_value binary_name e v)
