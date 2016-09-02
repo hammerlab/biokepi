@@ -388,12 +388,12 @@ let fastqc =
 let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
   `Fail (sprintf "No location provided for %s" msg)
 
-let default_netmhc_locations (): Netmhc.netmhc_file_locations = {
+let default_netmhc_locations (): Netmhc.netmhc_file_locations = Netmhc.({
   netmhc=(default_tool_location "NetMHC" ());
   netmhcpan=(default_tool_location "NetMHCpan" ());
   pickpocket=(default_tool_location "PickPocket" ());
   netmhccons=(default_tool_location "NetMHCcons" ());
-}
+})
 
 let default_toolkit
     ~run_program
