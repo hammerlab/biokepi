@@ -30,7 +30,7 @@ let guess_folder_name tool_file_loc =
   let loc = match tool_file_loc with
     | `Scp l -> l
     | `Wget l -> l
-    | `Fail l -> l
+    | `Fail l -> failwithf "Can't fetch the NetMHC file: %s" l
   in
   let chop_final_char s =
     let ssub = String.sub s 0 ((String.length s) - 1) in
