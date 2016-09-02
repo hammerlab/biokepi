@@ -154,7 +154,7 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
   in
   let (netmhccons, _, _) =
     default_netmhc_install ~run_program ~host ~install_path
-      ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCcons"
+      ~tool_file_loc:files.netmhccons ~binary_name:"netMHCcons"
       ~example_data_file:(Some "BLOSUM50")
       ~env_setup:cons_env
       ~depends:[netmhc_install; netmhcpan_install; pickpocket_install]
