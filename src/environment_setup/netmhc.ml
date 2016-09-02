@@ -25,26 +25,25 @@ let replace_env_value file envname newvalue =
     shf "rm -f %s" file_bak
   )
 
+(* /path/to/netMHC-3.4a.Linux.tar.gz -> netMHC-3.4 *)
 let guess_folder_name tool_file_loc =
   let loc = match tool_file_loc with
     | `Scp l -> l
     | `Wget l -> l
     | `Fail l -> l
   in
-  let filename = Filename.basename loc in
-  let first_dot = String.find filename ~f:(fun c -> c = '.') in
-  let foldername =
-    String.sub
-      filename
-      0
-      ((match first_dot with
-        | Some i -> i
-        | None -> String.length filename
-      ) - 1) (* minus one to get rid of the additional char version *)
+  let chop_final_char s =
+    let ssub = String.sub s 0 ((String.length s) - 1) in
+    match ssub with
+    | Some txt -> txt
+    | None -> s
   in
-  match foldername with
-  | Some fn -> fn
-  | None -> filename
+  loc (* /path/to/netMHC-3.4a.Linux.tar.gz *)
+    |> Filename.basename (* netMHC-3.4a.Linux.tar.gz *)
+    |> Filename.chop_extension (* netMHC-3.4a.Linux.tar *)
+    |> Filename.chop_extension (* netMHC-3.4a.Linux *)
+    |> Filename.chop_extension (* netMHC-3.4a *)
+    |> chop_final_char (* netMHC-3.4 *)
 
 let tmp_dir install_path = install_path // "tmp"
 
