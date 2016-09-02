@@ -59,8 +59,10 @@ let default_netmhc_install
       tool_file_loc
   in
   let folder_name = guess_folder_name tool_file_loc in
+  let cap_name = String.set folder_name 0 'N' in
+  let folder_in_url = match cap_name with Some s -> s | None -> folder_name in
   let data_url =
-    "http://www.cbs.dtu.dk/services/" ^ folder_name ^ "/data.tar.gz"
+    "http://www.cbs.dtu.dk/services/" ^ folder_in_url ^ "/data.tar.gz"
   in
   let (one_data_file, with_data) =
     match example_data_file with
