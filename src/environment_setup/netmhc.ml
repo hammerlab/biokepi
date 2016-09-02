@@ -30,7 +30,7 @@ let guess_folder_name tool_file_loc =
   let loc = match tool_file_loc with
     | `Scp l -> l
     | `Wget l -> l
-    | `Fail l -> failwithf "Can't fetch the NetMHC file: %s" l
+    | `Fail _ -> "NoFile-0.0b.Linux.tar.gz"
   in
   let chop_final_char s =
     let ssub = String.sub s 0 ((String.length s) - 1) in
@@ -62,10 +62,10 @@ let default_netmhc_install
   let data_url =
     "http://www.cbs.dtu.dk/services/" ^ folder_name ^ "/data.tar.gz"
   in
-  let one_data_file = "data" //
+  let (one_data_file, with_data) =
     match example_data_file with
-    | Some df -> df
-    | None -> ""
+    | Some df -> ("data" // df, true)
+    | None -> ("", false)
   in
   let downloaded_data_file =
     Workflow_utilities.Download.wget_untar
@@ -78,7 +78,10 @@ let default_netmhc_install
   let ensure =
     workflow_node (single_file ~host binary_path)
       ~name:("Installing NetMHC tool: " ^ tool_name)
-      ~edges:[ depends_on downloaded_file; depends_on downloaded_data_file; ]
+      ~edges:(
+        [ depends_on downloaded_file; ] @
+        (if with_data then [ depends_on downloaded_data_file; ] else [])
+      )
       ~make:(run_program
         ~requirements:[
           `Internet_access; 
@@ -88,8 +91,11 @@ let default_netmhc_install
           shf "cd %s" install_path &&
           shf "tar zxf %s" downloaded_file#product#path &&
           shf "cd %s" tool_path &&
-          shf "mv %s ./data"
-            (Filename.dirname downloaded_data_file#product#path) &&
+          (if with_data
+           then (shf "mv %s ./data"
+                  (Filename.dirname downloaded_data_file#product#path)) 
+           else (sh "echo 'No data file for this install")
+          ) &&
           chain (
             List.map
               ~f:(fun (e, v) -> replace_env_value binary_name e v)
