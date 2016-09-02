@@ -20,7 +20,7 @@ let replace_env_value file envname newvalue =
   let file_bak = file_org ^ ".bak" in
   KEDSL.Program.(
     shf "mv %s %s" file_org file_bak &&
-    shf "sed -e 's/setenv %s .*/setenv  %s %s/g' %s > %s"
+    shf "sed -e 's/setenv\t%s\t.*/setenv\t%s\t%s/g' %s > %s"
       envname envname (escape_slash newvalue) file_bak file_org &&
     shf "rm -f %s" file_bak
   )
