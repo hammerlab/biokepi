@@ -131,7 +131,8 @@ let default_netmhc_install
             List.map
               ~f:(fun (e, v) -> replace_env_value binary_name e v)
               env_setup
-          )
+          ) &&
+          shf "chmod +x %s" binary_path
         )
       )
   in
