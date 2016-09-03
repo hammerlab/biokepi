@@ -112,7 +112,7 @@ let default_netmhc_install
   let binary_path = tool_path // binary_name in
   let ensure =
     workflow_node (single_file ~host binary_path)
-      ~name:("Installing NetMHC tool: " ^ tool_name)
+      ~name:("Install NetMHC tool: " ^ tool_name)
       ~edges:(
         [ depends_on downloaded_file; ]
         @ (if with_data then [ depends_on downloaded_data_file; ] else [])
