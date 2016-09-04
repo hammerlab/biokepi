@@ -120,7 +120,6 @@ let default_netmhc_install
       )
       ~make:(run_program
         ~requirements:[
-          `Internet_access; 
           `Self_identification ["netmhc"; tool_name; "installation"];
         ]
         Program.(
