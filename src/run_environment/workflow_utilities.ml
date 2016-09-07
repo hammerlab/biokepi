@@ -221,7 +221,7 @@ module Download = struct
       let is_bzip = Filename.check_suffix url ".bz2" in
       if is_gz then "z" else if is_bzip then "j" else ""
     in
-    let tar_filename = (destination_folder ^ ".tar") in
+    let tar_filename = (destination_folder // "archive.tar") in
     let name = "untar-" ^ tar_filename in
     let wgot = wget ~host ~run_program url tar_filename in
     let file_in_tar = (destination_folder // tar_contains) in
