@@ -33,6 +33,23 @@ let predictor_to_string = function
   | `SMM_IEDB -> "smm-iedb"
   | `SMM_PMBEC_IEDB -> "smm-pmbec-iedb"
 
+let predictor_to_tool ~run_with predictor =
+  let get_tool t = 
+    let tool = 
+      Machine.get_tool
+        run_with
+        Machine.Tool.Definition.(create t) 
+    in
+    let ensure = Machine.Tool.(ensure tool) in
+    let init = Machine.Tool.(init tool) in
+    (ensure, init)
+  in
+  match predictor with
+  | `NetMHC -> Some (get_tool "netMHC")
+  | `NetMHCpan -> Some (get_tool "netMHCpan")
+  | `NetMHCIIpan -> Some (get_tool "netMHCIIpan")
+  | `NetMHCcons -> Some (get_tool "netMHCcons")
+  | _ -> None
 
 module Configuration = struct
 
@@ -136,6 +153,12 @@ let run ~(run_with: Machine.t)
   let topiary =
     Machine.get_tool run_with Machine.Tool.Definition.(create "topiary")
   in
+  let predictor_tool = predictor_to_tool ~run_with predictor in
+  let (predictor_edges, predictor_init) =
+    match predictor_tool with
+    | Some (e, i) -> ([depends_on e;], i)
+    | None -> ([], Program.(sh "echo 'No external prediction tool required'"))
+  in
   let var_arg = ["--vcf"; variants_vcf#product#path] in
   let predictor_arg = ["--mhc-predictor"; (predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
@@ -178,16 +201,17 @@ let run ~(run_with: Machine.t)
   workflow_node
     (single_file output_path ~host:Machine.(as_host run_with))
     ~name
-    ~edges:[
+    ~edges:([
       depends_on Machine.Tool.(ensure topiary);
       depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
       depends_on variants_vcf;
       depends_on alleles_file;
-    ]
+    ] @ predictor_edges)
     ~make:(
       Machine.run_program run_with ~name
         Program.(
           Machine.Tool.(init topiary)
+          && predictor_init
           && Pyensembl.(set_cache_dir_command ~run_with)
           && exec (["topiary"] @ arguments)
         )

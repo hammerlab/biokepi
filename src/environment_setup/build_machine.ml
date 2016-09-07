@@ -11,6 +11,7 @@ let create
     ?(max_processors = 1)
     ?gatk_jar_location
     ?mutect_jar_location
+    ?netmhc_tool_locations
     ?pyensembl_cache_dir
     ?run_program ?toolkit ?b37 uri =
   let open KEDSL in
@@ -26,7 +27,8 @@ let create
       ~default:(Tool_providers.default_toolkit ()
                   ~run_program
                   ~host ~install_tools_path:(meta_playground // "install-tools")
-                  ?gatk_jar_location ?mutect_jar_location)
+                  ?gatk_jar_location ?mutect_jar_location
+                  ?netmhc_tool_locations)
   in
   Machine.create (sprintf "ssh-box-%s" uri)
     ~max_processors

@@ -133,6 +133,12 @@ let run ~(run_with: Machine.t)
   let vaxrank =
     Machine.get_tool run_with Machine.Tool.Definition.(create "vaxrank")
   in
+  let predictor_tool = Topiary.(predictor_to_tool ~run_with predictor) in
+  let (predictor_edges, predictor_init) =
+    match predictor_tool with
+    | Some (e, i) -> ([depends_on e;], i)
+    | None -> ([], Program.(sh "echo 'No external prediction tool required'"))
+  in
   let vcfs_arg = List.concat_map vcfs ~f:(fun v -> ["--vcf"; v#product#path]) in
   let bam_arg = ["--bam"; bam#product#path] in
   let predictor_arg =
@@ -170,11 +176,13 @@ let run ~(run_with: Machine.t)
       depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
       depends_on bam;
       depends_on alleles_file;
-    ] @ (List.map ~f:depends_on vcfs))
+    ] @ (List.map ~f:depends_on vcfs)
+      @ predictor_edges)
     ~make:(
       Machine.run_program run_with ~name
         Program.(
           Machine.Tool.(init vaxrank)
+          && predictor_init
           && Pyensembl.(set_cache_dir_command ~run_with)
           && shf "mkdir -p %s" (Filename.quote output_folder)
           && exec (["vaxrank"] @ arguments)

@@ -282,11 +282,6 @@ let picard =
   installable_tool Machine.Tool.Default.picard ~url ~init_program
     ~witness:(witness_file jar)
 
-type broad_jar_location = [
-  | `Scp of string
-  | `Wget of string
-  | `Fail of string
-]
 (**
    Mutect (and some other tools) are behind some web-login annoying thing:
    c.f. <http://www.broadinstitute.org/cancer/cga/mutect_download>
@@ -294,42 +289,8 @@ type broad_jar_location = [
    reimplement the `Tool.t` is some other way).
 *)
 
-let get_broad_jar
-    ~(run_program : Machine.Make_fun.t)
-    ~host ~install_path
-    loc =
-  let open KEDSL in
-  let jar_name =
-    match loc with
-    | `Fail s -> "cannot-get-broad-jar.jar"
-    | `Scp s -> Filename.basename s
-    | `Wget s -> Filename.basename s in
-  let local_box_path = install_path // jar_name in
-  let open KEDSL in
-  workflow_node (single_file local_box_path ~host)
-    ~name:(sprintf "get-%s" jar_name)
-    ~edges:[
-      on_failure_activate (rm_path ~host local_box_path)
-    ]
-    ~make:(
-      run_program
-        ~requirements:[
-          `Internet_access;
-          `Self_identification ["broad-jar-instalation"; jar_name];
-        ]
-        Program.(
-          shf "mkdir -p %s" install_path
-          && begin match loc with
-          | `Fail msg ->
-            shf "echo 'Cannot download Broad JAR: %s'" msg
-            && sh "exit 4"
-          | `Scp s ->
-            shf "scp %s %s"
-              (Filename.quote s) (Filename.quote local_box_path)
-          | `Wget s ->
-            shf "wget %s -O %s"
-              (Filename.quote s) (Filename.quote local_box_path)
-          end))
+let get_broad_jar = 
+  Workflow_utilities.Download.get_tool_file ~identifier:"broad-jar"
 
 let mutect_tool
     ~(run_program : Machine.Make_fun.t)
@@ -423,15 +384,22 @@ let fastqc =
       ~init_program:add_to_dollar_path
       ~witness:(witness_file binary)
 
-
-let default_jar_location msg (): broad_jar_location =
+let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
   `Fail (sprintf "No location provided for %s" msg)
+
+let default_netmhc_locations (): Netmhc.netmhc_file_locations = Netmhc.({
+  netmhc=(default_tool_location "NetMHC" ());
+  netmhcpan=(default_tool_location "NetMHCpan" ());
+  pickpocket=(default_tool_location "PickPocket" ());
+  netmhccons=(default_tool_location "NetMHCcons" ());
+})
 
 let default_toolkit
     ~run_program
     ~host ~install_tools_path
-    ?(mutect_jar_location = default_jar_location "Mutect")
-    ?(gatk_jar_location = default_jar_location "GATK")
+    ?(mutect_jar_location = default_tool_location "Mutect")
+    ?(gatk_jar_location = default_tool_location "GATK")
+    ?(netmhc_tool_locations = default_netmhc_locations)
     () =
   let install installable =
     render_installable_tool ~host installable ~install_tools_path ~run_program
@@ -464,4 +432,7 @@ let default_toolkit
       ~install_path:(install_tools_path // "biopam-kit") ();
     Python_package.default ~run_program ~host 
       ~install_path: (install_tools_path // "python-tools") ();
+    Netmhc.default ~run_program ~host
+      ~install_path: (install_tools_path // "netmhc-tools") 
+      ~files:(netmhc_tool_locations ()) ();
   ]

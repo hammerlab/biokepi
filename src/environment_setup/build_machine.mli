@@ -21,8 +21,9 @@ open Common
 *)
 val create :
   ?max_processors : int ->
-  ?gatk_jar_location:(unit -> Tool_providers.broad_jar_location) ->
-  ?mutect_jar_location:(unit -> Tool_providers.broad_jar_location) ->
+  ?gatk_jar_location:(unit -> Workflow_utilities.Download.tool_file_location) ->
+  ?mutect_jar_location:(unit -> Workflow_utilities.Download.tool_file_location) ->
+  ?netmhc_tool_locations:(unit -> Netmhc.netmhc_file_locations) ->
   ?pyensembl_cache_dir:string ->
   ?run_program:Machine.Make_fun.t ->
   ?toolkit:Machine.Tool.Kit.t ->
