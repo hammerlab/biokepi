@@ -66,12 +66,18 @@ let guess_folder_name tool_file_loc =
     | Some txt -> txt
     | None -> s
   in
-  loc (* /path/to/netMHC-3.4a.Linux.tar.gz *)
-    |> Filename.basename (* netMHC-3.4a.Linux.tar.gz *)
-    |> Filename.chop_extension (* netMHC-3.4a.Linux.tar *)
-    |> Filename.chop_extension (* netMHC-3.4a.Linux *)
-    |> Filename.chop_extension (* netMHC-3.4a *)
-    |> chop_final_char (* netMHC-3.4 *)
+  try
+    loc (* /path/to/netMHC-3.4a.Linux.tar.gz *)
+      |> Filename.basename (* netMHC-3.4a.Linux.tar.gz *)
+      |> Filename.chop_extension (* netMHC-3.4a.Linux.tar *)
+      |> Filename.chop_extension (* netMHC-3.4a.Linux *)
+      |> Filename.chop_extension (* netMHC-3.4a *)
+      |> chop_final_char (* netMHC-3.4 *)
+  with _ ->
+    ksprintf 
+      failwith
+      "Error while guessing NetMHC folder name from %s"
+      loc
 
 (* 
   netMHC tools will be populating this folder,
