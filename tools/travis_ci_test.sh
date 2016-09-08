@@ -4,21 +4,7 @@
 
 travis_install_on_linux () {
     # Install OCaml and OPAM PPAs
-    case "$OCAML_VERSION,$OPAM_VERSION" in
-        3.12.1,1.0.0) ppa=avsm/ocaml312+opam10 ;;
-        3.12.1,1.1.0) ppa=avsm/ocaml312+opam11 ;;
-        4.00.1,1.0.0) ppa=avsm/ocaml40+opam10 ;;
-        4.00.1,1.1.0) ppa=avsm/ocaml40+opam11 ;;
-        4.01.0,1.0.0) ppa=avsm/ocaml41+opam10 ;;
-        4.01.0,1.1.0) ppa=avsm/ocaml41+opam11 ;;
-        4.01.0,1.2.0) ppa=avsm/ocaml41+opam12 ;;
-        4.02.0,1.1.0) ppa=avsm/ocaml42+opam11 ;;
-        4.02.0,1.2.0) ppa=avsm/ocaml42+opam12 ;;
-        4.02.2,1.1.0) ppa=avsm/ocaml42+opam11 ;;
-        4.02.2,1.2.0) ppa=avsm/ocaml42+opam12 ;;
-        4.02.3,1.2.1) ppa=avsm/ocaml42+opam12 ;;
-      *) echo Unknown $OCAML_VERSION,$OPAM_VERSION; exit 1 ;;
-    esac
+    export ppa=avsm/ocaml42+opam12
 
     echo "yes" | sudo add-apt-repository ppa:$ppa
     sudo apt-get update -qq
@@ -35,7 +21,6 @@ travis_install_on_osx () {
     brew update
     brew install opam
     export opam_init_options="--comp=$OCAML_VERSION"
-    export opam_pin_add="add"
 }
 
 
@@ -59,6 +44,9 @@ opam init $opam_init_options
 eval `opam config env`
 
 opam update
+
+# Cf. https://github.com/mirleft/ocaml-nocrypto/issues/104
+opam pin add oasis 0.4.6
 
 opam pin add ketrew https://github.com/hammerlab/ketrew.git
 
