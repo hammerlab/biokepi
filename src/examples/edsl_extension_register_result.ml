@@ -305,7 +305,7 @@ let () = printf "Let's Gooo!\n%!";;
 
 Import my infrastructure:
 M*)
-#use "my_cluster.ml";;
+#use "./my_cluster.ml";;
 (*M
 The above script has to provide the following API:
 
