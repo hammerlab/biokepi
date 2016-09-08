@@ -175,13 +175,17 @@ module Input = struct
         else return files
       in
       let as_fragments read1s_filenames =
-        List.map read1s_filenames
-          ~f:(fun r1 ->
+        List.mapi read1s_filenames
+          ~f:(fun i r1 ->
               if paired_end then
-                let r2 = r1_to_r2 r1 in
-                pe (dir // r1) (dir // r2)
+                let r2 = dir // (r1_to_r2 r1) in
+                let r1 = dir // r1 in
+                let fragment_id = sprintf "fragment-%d" i in
+                pe ~fragment_id r1 r2
               else
-                se (dir // r1))
+                let r1 = dir // r1 in
+                let fragment_id = sprintf "fragment-%d" i in
+                se ~fragment_id r1)
         |> return
       in
       let cmd = (sprintf "ls '%s' | sort" dir) in
