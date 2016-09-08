@@ -72,4 +72,6 @@ module My_cluster = struct
     Biokepi.Setup.Build_machine.create "ssh://example.com/tmp/KT/"
 end
 EOCAML
+ls -la my_cluster.ml
+cat my_cluster.ml
 ocaml src/examples/edsl_extension_register_result.ml
