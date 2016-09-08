@@ -4,7 +4,7 @@ open Common
 (* 
   Tested against:
 
-    netMHC-4.0a.Linux.tar.gz
+    netMHC-4.0a.Linux.tar.gz // netMHC-3.4a.Linux.tar.gz
     pickpocket-1.1a.Linux.tar.gz
     netMHCpan-3.0a.Linux.tar.gz
     netMHCcons-1.1a.Linux.tar.gz
@@ -45,6 +45,30 @@ let replace_env_value file envname newvalue =
     shf "rm -f %s" file_bak
   )
 
+let extract_location location =
+  match location with
+  | `Scp l -> l
+  | `Wget l -> l
+  | `Fail _ -> "NoFile-0.0b.Linux.tar.gz"
+
+(* 
+  e.g. input: /path/to/netMHC-3.4a.Linux.tar.gz
+  e.g. output: 3
+*)
+let guess_major_version tool_file_loc =
+  let loc = extract_location tool_file_loc in
+  try
+    let basename = Filename.basename loc in
+    let dash_idx = String.find basename ~f:(fun c -> c ='-') in
+    match dash_idx with
+    | Some i -> String.get basename (i + 1)
+    | None -> None
+  with _ ->
+    ksprintf 
+    failwith
+    "Error while guessing NetMHC major version from %s"
+    loc
+
 (* 
   e.g. input: /path/to/netMHC-3.4a.Linux.tar.gz
   e.g. output: netMHC-3.4
@@ -55,11 +79,7 @@ let replace_env_value file envname newvalue =
   archives.
 *)
 let guess_folder_name tool_file_loc =
-  let loc = match tool_file_loc with
-    | `Scp l -> l
-    | `Wget l -> l
-    | `Fail _ -> "NoFile-0.0b.Linux.tar.gz"
-  in
+  let loc = extract_location tool_file_loc in
   let chop_final_char s =
     let ssub = String.sub s 0 ((String.length s) - 1) in
     match ssub with
@@ -88,7 +108,10 @@ let tmp_dir install_path = install_path // "tmp"
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ~tool_file_loc ~binary_name ~example_data_file ~env_setup 
-    ?(depends=[]) () =
+    ?(depends=[]) 
+    ?(data_folder_name="data") 
+    ?(data_folder_dest=".") (* relative to the netMHC folder *)
+    () =
   let open KEDSL in
   let tool_name = binary_name in
   let downloaded_file =
@@ -101,17 +124,20 @@ let default_netmhc_install
   let cap_name = String.set folder_name 0 'N' in
   let folder_in_url = match cap_name with Some s -> s | None -> folder_name in
   let data_url =
-    "http://www.cbs.dtu.dk/services/" ^ folder_in_url ^ "/data.tar.gz"
+    sprintf
+      "http://www.cbs.dtu.dk/services/%s/%s.tar.gz"
+      folder_in_url
+      data_folder_name
   in
   let (one_data_file, with_data) =
     match example_data_file with
-    | Some df -> ("data" // df, true)
+    | Some df -> (data_folder_name // df, true)
     | None -> ("", false)
   in
   let downloaded_data_file =
     Workflow_utilities.Download.wget_untar
     ~run_program ~host 
-    ~destination_folder:(install_path // folder_name)
+    ~destination_folder:(install_path // folder_name // data_folder_dest)
     ~tar_contains:one_data_file data_url
   in
   let tool_path = install_path // folder_name in
@@ -149,7 +175,7 @@ let default_netmhc_install
   in
   (Machine.Tool.create
     Machine.Tool.Definition.(create binary_name)
-    ~ensure ~init, tool_path, ensure)
+    ~ensure ~init, binary_path, ensure)
 
 let guess_env_setup
     ~install_path
@@ -163,12 +189,33 @@ let guess_env_setup
   ]
 
 let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
-  let (netmhc, netmhc_path, netmhc_install) =
-    default_netmhc_install ~run_program ~host ~install_path
-      ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
-      ~example_data_file:(Some "version") 
-      ~env_setup:(guess_env_setup ~install_path files.netmhc) ()
+  let netmhc_mj = guess_major_version files.netmhc in
+  let is_old_netmhc =
+    match netmhc_mj with
+    (* 4 and above uses the default name *)
+    | Some v -> (int_of_string (Char.escaped v)) < 4 
+    | None -> true
   in
+  let older_netmhc =
+    default_netmhc_install ~run_program ~host ~install_path
+    ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
+    ~example_data_file:(Some "SLA-10401/bl50/synlist") 
+    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~data_folder_name:"net"
+    ~data_folder_dest:"etc"
+  in
+  let newer_netmhc = 
+    default_netmhc_install ~run_program ~host ~install_path
+    ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
+    ~example_data_file:(Some "version") 
+    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~data_folder_name:"data"
+    ~data_folder_dest:"."
+  in
+  let netmhc_install_func = 
+    if is_old_netmhc then older_netmhc else newer_netmhc
+  in
+  let (netmhc, netmhc_path, netmhc_install) = netmhc_install_func () in
   let (netmhcpan, netmhcpan_path, netmhcpan_install) =
     default_netmhc_install ~run_program ~host ~install_path
       ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCpan"
