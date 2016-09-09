@@ -46,6 +46,87 @@ module Unique_id = struct
   include Ketrew_pure.Internal_pervasives.Unique_id
 end
 
+(** 
+
+Generate unique filenames for a given set of uniquely identifying properties.
+
+The module generates names that remain (way) under 255 bytes because they
+are the most common
+{{:https://en.wikipedia.org/wiki/Comparison_of_file_systems#Limits}file-system limits}
+in 2016.
+
+*)
+module Name_file = struct
+  (* Additional safety: we check that there are no hash-duplicates
+     within a given execution of a program linking with Biokepi. *)
+  let db : (string, string list) Hashtbl.t = Hashtbl.create 42
+
+  let path ~readable_suffix ~from high_level_components =
+    let sanitize =
+      String.map
+        ~f:(function
+          | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '-') as c -> c
+          | other -> '_') in
+    let components =
+      begin match from with
+      | `Path p ->
+        let b = Filename.basename p in
+        (try [Filename.chop_extension b] with _ -> [b])
+      | `In_dir d -> []
+      end
+      @
+      List.map high_level_components ~f:sanitize
+    in
+    let hash =
+      String.concat ~sep:"-" (readable_suffix :: components)
+      |> Digest.string |> Digest.to_hex
+    in
+    let max_length = 220 in
+    let buf = Buffer.create max_length in
+    Buffer.add_string buf hash;
+    let rec append_components =
+      function
+      | [] -> ()
+      | one :: more ->
+        if
+          Buffer.length buf + String.length readable_suffix
+          + String.length one < max_length
+        then (Buffer.add_string buf one; append_components more)
+        else ()
+    in
+    append_components components;
+    Buffer.add_string buf readable_suffix;
+    let name = Buffer.contents buf in
+    begin if String.length name > max_length then
+        ksprintf failwith "Name_file: filename too long %s (max: %d)"
+          name max_length
+    end;
+    begin match Hashtbl.find db name with
+    | some when List.sort some = List.sort components -> ()
+    | some ->
+      ksprintf failwith "Duplicate filename for different components\n\
+                         Filename: %s\n\
+                         Previous: [%s]\n\
+                         New: [%s]\n\
+                        "
+        name (String.concat ~sep:", " some) (String.concat ~sep:", " components)
+    | exception _ ->
+      Hashtbl.add db name components
+    end;
+    begin match from with
+    | `In_dir s -> s // name
+    | `Path p -> Filename.dirname p // name
+    end
+
+  let from_path ~readable_suffix p c =
+    path ~readable_suffix ~from:(`Path p) c
+
+  let in_directory ~readable_suffix p c =
+    path ~readable_suffix ~from:(`In_dir p) c
+
+end
+
+
 (**
 
    This is an experimental extension of Ketrew's EDSL. If we're happy

@@ -2,6 +2,7 @@
 open Nonstd
 module String = Sosa.Native_string
 let (//) = Filename.concat
+module Name_file = Biokepi_run_environment.Common.Name_file
 
 (** The link between {!Biokepi.KEDSL} values and EDSL expression types. *)
 module File_type_specification = struct
@@ -353,15 +354,8 @@ module Make (Config : Compiler_configuration)
       MHC_alleles (get_raw_file raw)
     | `Names strlist ->
       let path =
-        let saninitize =
-          String.map
-            ~f:(function
-              | ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '-') as c -> c
-              | other -> '_')
-        in
-        Config.work_dir // sprintf "MHC_allelles_%s.txt"
-          (List.map strlist ~f:saninitize |> String.concat ~sep:"_")
-      in
+        Name_file.in_directory ~readable_suffix:"MHC_allleles.txt"
+          Config.work_dir strlist in
       let open KEDSL in
       let host = Machine.as_host Config.machine in
       let product = single_file ~host path in
@@ -387,13 +381,12 @@ module Make (Config : Compiler_configuration)
       ~configuration ~reference_build fastq =
     let freads = get_fastq fastq in
     let result_prefix =
-      Config.work_dir //
-      sprintf "%s-%s_%s-%s"
-        freads#product#escaped_sample_name
-        (Option.value freads#product#fragment_id ~default:"")
-        name
-        (config_name configuration)
-    in
+      Name_file.in_directory ~readable_suffix:name Config.work_dir [
+        config_name configuration;
+        freads#product#escaped_sample_name;
+        freads#product#fragment_id_forced;
+        name;
+      ] in
     Bam (
       make_workflow
         ~reference_build ~configuration ~result_prefix ~run_with freads
@@ -432,13 +425,12 @@ module Make (Config : Compiler_configuration)
       ~reference_build
       input =
     let bwa_mem_opt input =
-      let sample_name = Tools.Bwa.Input_reads.sample_name input in
-      let read_group_id = Tools.Bwa.Input_reads.read_group_id input in
       let result_prefix =
-        Config.work_dir //
-        sprintf "%s-%s_bwamem-%s" sample_name read_group_id
-          (Tools.Bwa.Configuration.Mem.name configuration)
-      in
+        Name_file.in_directory ~readable_suffix:"bwamemopt" Config.work_dir [
+          Tools.Bwa.Configuration.Mem.name configuration;
+          Tools.Bwa.Input_reads.sample_name input;
+          Tools.Bwa.Input_reads.read_group_id input;
+        ] in
       Bam (
         Tools.Bwa.mem_align_to_bam
           ~configuration ~reference_build ~run_with ~result_prefix input
@@ -561,12 +553,9 @@ module Make (Config : Compiler_configuration)
     | List bam_files ->
       let bams = List.map bam_files ~f:get_bam in
       let output_path =
-        let one = List.hd_exn bams in
-        Filename.chop_extension one#product#path
-        ^ sprintf "-merged-%s.bam"
-          (List.map bams ~f:(fun bam -> bam#product#path)
-           |> String.concat ~sep:""
-           |> Digest.string |> Digest.to_hex)
+        Name_file.in_directory ~readable_suffix:"samtoolsmerge.bam"
+          Config.work_dir 
+          (List.map bams ~f:(fun bam -> bam#product#path))
       in
       Bam (Tools.Samtools.merge_bams ~run_with bams output_path)
     | other ->
@@ -575,10 +564,9 @@ module Make (Config : Compiler_configuration)
   let stringtie ?(configuration = Tools.Stringtie.Configuration.default) bamt =
     let bam = get_bam bamt in
     let result_prefix =
-      Filename.chop_extension bam#product#path
-      ^ sprintf "_stringtie-%s"
-        (configuration.Tools.Stringtie.Configuration.name)
-    in
+      Name_file.from_path bam#product#path ~readable_suffix:"stringtie" [
+        configuration.Tools.Stringtie.Configuration.name;
+      ] in
     Gtf (Tools.Stringtie.run ~configuration ~bam ~result_prefix ~run_with ())
 
   let indel_realigner_function:
@@ -619,7 +607,8 @@ module Make (Config : Compiler_configuration)
     let input_bam = get_bam bam in
     let output_bam =
       (* We assume that the settings do not impact the actual result. *)
-      Filename.chop_extension input_bam#product#path ^ "_markdup.bam" in
+      Name_file.from_path input_bam#product#path
+        ~readable_suffix:"mark_dups.bam" [] in
     Bam (
       Tools.Picard.mark_duplicates ~settings:configuration
         ~run_with ~input_bam output_bam
@@ -629,11 +618,11 @@ module Make (Config : Compiler_configuration)
     let input_bam = get_bam bam in
     let output_bam =
       let (bqsr, preads) = configuration in
-      Filename.chop_extension input_bam#product#path
-      ^ sprintf "_bqsr-B%sP%s.bam"
-        bqsr.Tools.Gatk.Configuration.Bqsr.name
-        preads.Tools.Gatk.Configuration.Print_reads.name
-    in
+      Name_file.from_path input_bam#product#path
+        ~readable_suffix:"gatk_bqsr.bam" [
+        bqsr.Tools.Gatk.Configuration.Bqsr.name;
+        preads.Tools.Gatk.Configuration.Print_reads.name;
+      ] in
     Bam (
       Tools.Gatk.base_quality_score_recalibrator ~configuration
         ~run_with ~input_bam ~output_bam
@@ -649,10 +638,11 @@ module Make (Config : Compiler_configuration)
         failf "Seq2HLA doesn't support Single_end_sample(s)."
     in
     let work_dir =
-      Config.work_dir //
-      sprintf "%s-%s_seq2hla-workdir"
-        fastq#product#escaped_sample_name
-        fastq#product#fragment_id_forced
+      Name_file.in_directory Config.work_dir
+        ~readable_suffix:"seq2hla-workdir" [
+        fastq#product#escaped_sample_name;
+        fastq#product#fragment_id_forced;
+      ]
     in
     Seq2hla_result (
       Tools.Seq2HLA.hla_type
@@ -661,7 +651,7 @@ module Make (Config : Compiler_configuration)
 
   let hlarp input =
     let out o =
-      Config.work_dir // sprintf "hlarp-%s.csv" (Filename.basename o) in
+      Name_file.from_path o ~readable_suffix:"hlarp.csv" [] in
     let hlarp = Tools.Hlarp.run ~run_with in
     let hla_result, output_path =
       match input with
@@ -681,10 +671,8 @@ module Make (Config : Compiler_configuration)
     let vcf = get_vcf vcf in
     let bed = get_bed bed in
     let output =
-      let shorten f = Filename.basename f |> Filename.chop_extension in
-      let vcf_part = shorten vcf#product#path in
-      let bed_part = shorten bed#product#path in
-      sprintf "intersect-%s-%s.vcf" vcf_part bed_part
+      Name_file.from_path bed#product#path ~readable_suffix:"btls_intersect.vcf"
+        [Filename.basename bed#product#path |> Filename.chop_extension]
     in
     Vcf (Tools.Bedtools.intersect
            ~primary:vcf ~intersect_with:[bed]
@@ -693,11 +681,10 @@ module Make (Config : Compiler_configuration)
   let fastqc fq =
     let fastq = get_fastq fq in
     let output_folder =
-      Config.work_dir //
-      sprintf "%s-%s_fastqc-result"
-        fastq#product#escaped_sample_name
-        fastq#product#fragment_id_forced
-    in
+      Name_file.in_directory ~readable_suffix:"fastqc_result" Config.work_dir [
+        fastq#product#escaped_sample_name;
+        fastq#product#fragment_id_forced;
+      ] in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
 
   let flagstat bam =
@@ -711,32 +698,33 @@ module Make (Config : Compiler_configuration)
       Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
     )
 
-  let isovar ?(configuration=Tools.Isovar.Configuration.default) reference_build vcf bam =
+  let isovar
+      ?(configuration=Tools.Isovar.Configuration.default)
+      reference_build vcf bam =
     let v = get_vcf vcf in
     let b = get_bam bam in
-    let out_filename =
-      sprintf "%s_%s_isovar_%s_result.csv"
-        (Filename.chop_extension (Filename.basename v#product#path))
-        (Filename.chop_extension (Filename.basename b#product#path))
-        (Tools.Isovar.Configuration.name configuration)
-    in
-    let output_file = Config.work_dir // out_filename in
+    let output_file =
+      Name_file.in_directory ~readable_suffix:"isovar.csv" Config.work_dir [
+        Tools.Isovar.Configuration.name configuration;
+        reference_build;
+        (Filename.chop_extension (Filename.basename v#product#path));
+        (Filename.chop_extension (Filename.basename b#product#path));
+      ] in
     Isovar_result (
-      Tools.Isovar.run ~configuration ~run_with ~reference_build ~vcf:v ~bam:b ~output_file
+      Tools.Isovar.run ~configuration ~run_with ~reference_build
+        ~vcf:v ~bam:b ~output_file
     )
 
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
       reference_build vcf predictor alleles =
     let v = get_vcf vcf in
     let mhc = get_mhc_alleles alleles in
-    let out_filename =
-      sprintf "%s_%s_%s_topiary_%s_result.csv"
-        (Filename.chop_extension (Filename.basename v#product#path))
-        (Tools.Topiary.predictor_to_string predictor)
-        (Filename.chop_extension (Filename.basename mhc#product#path))
-        (Tools.Topiary.Configuration.name configuration)
-    in
-    let output_file = Config.work_dir // out_filename in
+    let output_file =
+      Name_file.from_path v#product#path ~readable_suffix:"topiary.csv" [
+        Tools.Topiary.predictor_to_string predictor;
+        Tools.Topiary.Configuration.name configuration;
+        Filename.chop_extension (Filename.basename mhc#product#path);
+      ] in
     Topiary_result (
       Tools.Topiary.run
         ~configuration ~run_with
@@ -751,18 +739,16 @@ module Make (Config : Compiler_configuration)
     let vcfs = List.map ~f:get_vcf vcfs in
     let b = get_bam bam in
     let mhc = get_mhc_alleles alleles in
-    let vcfs_hashed =
-      (List.map vcfs ~f:(fun v ->
-           (Filename.chop_extension (Filename.basename v#product#path))))
-      |> String.concat ~sep:"" |> Digest.string |> Digest.to_hex
-    in
     let outdir =
-      Config.work_dir
-      // sprintf "vaxrank_%s_%s_%s_%s"
-        (Tools.Vaxrank.Configuration.name configuration)
-        (Tools.Topiary.predictor_to_string predictor)
-        (Filename.chop_extension (Filename.basename mhc#product#path))
-        vcfs_hashed
+      Name_file.in_directory ~readable_suffix:"vaxrank" Config.work_dir
+        ([
+          Tools.Vaxrank.Configuration.name configuration;
+          Tools.Topiary.predictor_to_string predictor;
+          (Filename.chop_extension (Filename.basename mhc#product#path));
+        ] @ 
+          (List.map vcfs ~f:(fun v ->
+               (Filename.chop_extension (Filename.basename v#product#path))))
+        )
     in
     Vaxrank_result (
       Tools.Vaxrank.run
@@ -775,17 +761,16 @@ module Make (Config : Compiler_configuration)
   let optitype how fq =
     let fastq = get_fastq fq in
     let work_dir =
-      Config.work_dir //
-      sprintf "%s-%s_optitype-%s-workdir"
-        fastq#product#escaped_sample_name
-        (match how with `RNA -> "RNA" | `DNA -> "DNA")
-        fastq#product#fragment_id_forced
+      Name_file.in_directory Config.work_dir ~readable_suffix:"optitype.d" [
+        fastq#product#escaped_sample_name;
+        (match how with `RNA -> "RNA" | `DNA -> "DNA");
+        fastq#product#fragment_id_forced;
+      ]
     in
     Optitype_result (
       Tools.Optitype.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
-      :> Optitype.product KEDSL.workflow_node
     )
 
   let gatk_haplotype_caller bam =
@@ -818,8 +803,12 @@ module Make (Config : Compiler_configuration)
     let tumor_bam = get_bam tumor in
     let configuration = Option.value configuration ~default:default_conf in
     let result_prefix =
-      Filename.chop_extension tumor_bam#product#path
-      ^ sprintf "_%s-%s" name (confname configuration)
+      Name_file.from_path tumor_bam#product#path
+        ~readable_suffix:(sprintf "_%s-%s" name (confname configuration))
+        [
+          normal_bam#product#path |> Filename.basename
+          |> Filename.chop_extension;
+        ]
     in
     Vcf (
       runfun
