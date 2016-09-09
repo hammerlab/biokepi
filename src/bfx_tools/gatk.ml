@@ -467,8 +467,8 @@ let base_quality_score_recalibrator
       ~run_with ~by:`Coordinate input_bam in
   let input_bam = `Please_use_the_sorted_one in ignore input_bam;
   let recal_data_table =
-    Filename.chop_suffix sorted_bam#product#path ".bam" ^ "-recal_data.table"
-  in
+    Name_file.from_path ~readable_suffix:"bqsr_recal.table"
+      sorted_bam#product#path [] in
   let processors = Machine.max_processors run_with in
   let make =
     Machine.run_big_program run_with ~name ~processors
