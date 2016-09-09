@@ -84,17 +84,17 @@ module Name_file = struct
     let max_length = 220 in
     let buf = Buffer.create max_length in
     Buffer.add_string buf hash;
-    let rec loop =
+    let rec append_components =
       function
       | [] -> ()
       | one :: more ->
         if
           Buffer.length buf + String.length readable_suffix
           + String.length one < max_length
-        then (Buffer.add_string buf one; loop more)
+        then (Buffer.add_string buf one; append_components more)
         else ()
     in
-    loop components;
+    append_components components;
     Buffer.add_string buf readable_suffix;
     let name = Buffer.contents buf in
     begin if String.length name > max_length then
