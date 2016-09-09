@@ -98,7 +98,8 @@ module Name_file = struct
     Buffer.add_string buf readable_suffix;
     let name = Buffer.contents buf in
     begin if String.length name > max_length then
-        ksprintf failwith "Trying to make filename too long: %s" name
+        ksprintf failwith "Name_file: filename too long %s (max: %d)"
+          name max_length
     end;
     begin match Hashtbl.find db name with
     | some when List.sort some = List.sort components -> ()
