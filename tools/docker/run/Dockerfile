@@ -5,7 +5,7 @@
 FROM hammerlab/ketrew-server
 # Installing easy Biokepi dependencies:
 RUN sudo apt-get update
-RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget
+RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk
 
 # The hard-one Oracle's Java 7
 
