@@ -17,10 +17,10 @@ module File_type_specification = struct
     | Bed: single_file workflow_node -> [ `Bed ] t
     | Gtf: single_file workflow_node -> [ `Gtf ] t
     | Seq2hla_result:
-        Seq2HLA.product workflow_node ->
+        Biokepi_bfx_tools.Seq2HLA.product workflow_node ->
       [ `Seq2hla_result ] t
     | Optitype_result:
-        Optitype.product workflow_node -> [ `Optitype_result ] t
+        Biokepi_bfx_tools.Optitype.product workflow_node -> [ `Optitype_result ] t
     | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
     | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
     | Isovar_result: single_file workflow_node -> [ `Isovar ] t
@@ -88,7 +88,7 @@ module File_type_specification = struct
   | o -> fail_get o "Raw_file"
 
   let get_seq2hla_result : [ `Seq2hla_result ] t ->
-    Seq2HLA.product workflow_node =
+    Biokepi_bfx_tools.Seq2HLA.product workflow_node =
     function
     | Seq2hla_result v -> v
     | o -> fail_get o "Seq2hla_result"
@@ -113,7 +113,7 @@ module File_type_specification = struct
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_vaxrank_result : [ `Vaxrank ] t -> Vaxrank.product workflow_node =
+  let get_vaxrank_result : [ `Vaxrank ] t -> Biokepi_bfx_tools.Vaxrank.product workflow_node =
     function
     | Vaxrank_result v -> v
     | o -> fail_get o "Vaxrank_result"
@@ -124,7 +124,7 @@ module File_type_specification = struct
     | o -> fail_get o "Topiary_result"
 
   let get_optitype_result :
-    [ `Optitype_result ] t -> Optitype.product workflow_node
+    [ `Optitype_result ] t -> Biokepi_bfx_tools.Optitype.product workflow_node
     =
     function
     | Optitype_result v -> v
