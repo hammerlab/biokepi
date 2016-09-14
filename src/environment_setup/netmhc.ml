@@ -1,6 +1,8 @@
 open Biokepi_run_environment
 open Common
 
+let rm_path = Workflow_utilities.Remove.path_on_host
+
 (* 
   Tested against:
 
@@ -176,7 +178,8 @@ let default_netmhc_install
       ~name:("Install NetMHC tool: " ^ tool_name)
       ~edges:(
         [ depends_on downloaded_file; 
-          depends_on Conda.(configured ~run_program ~host ~conda_env) ]
+          depends_on Conda.(configured ~run_program ~host ~conda_env);
+          on_failure_activate (rm_path ~host install_path); ]
         @ (if with_data then [ depends_on downloaded_data_file; ] else [])
         @ (List.map depends ~f:(fun d -> depends_on d))
       )
