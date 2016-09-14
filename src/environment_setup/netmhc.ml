@@ -6,7 +6,7 @@ open Common
 
     netMHC-4.0a.Linux.tar.gz // netMHC-3.4a.Linux.tar.gz
     pickpocket-1.1a.Linux.tar.gz
-    netMHCpan-3.0a.Linux.tar.gz
+    netMHCpan-3.0a.Linux.tar.gz // netMHCpan-2.8a.Linux.tar.gz
     netMHCcons-1.1a.Linux.tar.gz
 
   Do not use custom named archives
@@ -26,9 +26,9 @@ type netmhc_file_locations = {
   The standard netMHC installation requires
   customizing some of the environment variables
   defined in their main binary files. The following
-  function handles these replacements.
+  functions handle these replacements.
 *)
-let replace_env_value file envname newvalue =
+let replace_value file oldvalue newvalue =
   let escape_slash txt =
     let escfun c = if c = '/' then ['\\'; c] else [c] in
     String.rev txt
@@ -40,10 +40,15 @@ let replace_env_value file envname newvalue =
   let file_bak = file_org ^ ".bak" in
   KEDSL.Program.(
     shf "mv %s %s" file_org file_bak &&
-    shf "sed -e 's/setenv\t%s\t.*/setenv\t%s\t%s/g' %s > %s"
-      envname envname (escape_slash newvalue) file_bak file_org &&
+    shf "sed -e 's/%s/%s/g' %s > %s"
+      (escape_slash oldvalue) (escape_slash newvalue) file_bak file_org &&
     shf "rm -f %s" file_bak
   )
+
+let replace_env_value file envname newvalue =
+  let oldvalue = sprintf "setenv\t%s\t.*" envname in
+  let newvalue = sprintf "setenv\t%s\t%s" envname newvalue in
+  replace_value file oldvalue newvalue
 
 let extract_location location =
   match location with
@@ -107,7 +112,7 @@ let tmp_dir install_path = install_path // "tmp"
 
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
-    ~tool_file_loc ~binary_name ~example_data_file ~env_setup 
+    ~tool_file_loc ~binary_name ~example_data_file ~env_setup
     ?(depends=[]) 
     ?(data_folder_name="data") 
     ?(data_folder_dest=".") (* relative to the netMHC folder *)
@@ -142,6 +147,11 @@ let default_netmhc_install
   in
   let tool_path = install_path // folder_name in
   let binary_path = tool_path // binary_name in
+  let fix_script replacement = 
+    match replacement with
+    | `ENV (e, v) -> replace_env_value binary_name e v
+    | `GENERIC (o, n) -> replace_value binary_name o n
+  in
   let ensure =
     workflow_node (single_file ~host binary_path)
       ~name:("Install NetMHC tool: " ^ tool_name)
@@ -158,11 +168,7 @@ let default_netmhc_install
           shf "cd %s" install_path &&
           shf "tar zxf %s" downloaded_file#product#path &&
           shf "cd %s" tool_path &&
-          chain (
-            List.map
-              ~f:(fun (e, v) -> replace_env_value binary_name e v)
-              env_setup
-          ) &&
+          chain (List.map ~f:fix_script env_setup) &&
           shf "chmod +x %s" binary_path
         )
       )
@@ -184,8 +190,8 @@ let guess_env_setup
     tool_file_loc =
   let folder_name = guess_folder_name tool_file_loc in
   [
-    (home_env, install_path // folder_name);
-    ("TMPDIR", install_path // tmp_dirname);
+    `ENV (home_env, install_path // folder_name);
+    `ENV ("TMPDIR", install_path // tmp_dirname);
   ]
 
 let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
@@ -196,11 +202,15 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     | Some v -> (int_of_string (Char.escaped v)) < 4 
     | None -> true
   in
+  let netmhc_env = guess_env_setup ~install_path files.netmhc in
   let older_netmhc =
     default_netmhc_install ~run_program ~host ~install_path
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "SLA-10401/bl50/synlist") 
-    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~env_setup:(
+      [ `GENERIC ("/usr/local/bin/python2.5", "`which python`") ] 
+      @ netmhc_env
+    )
     ~data_folder_name:"net"
     ~data_folder_dest:"etc"
   in
@@ -208,7 +218,7 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     default_netmhc_install ~run_program ~host ~install_path
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "version") 
-    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~env_setup:netmhc_env
     ~data_folder_name:"data"
     ~data_folder_dest:"."
   in
@@ -229,9 +239,9 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
       ~env_setup:(guess_env_setup ~install_path files.pickpocket) ()
   in
   let cons_env =
-    [("NETMHC_env", netmhc_path);
-     ("NETMHCpan_env", netmhcpan_path);
-     ("PICKPOCKET_env", pickpocket_path);
+    [`ENV ("NETMHC_env", netmhc_path);
+     `ENV ("NETMHCpan_env", netmhcpan_path);
+     `ENV ("PICKPOCKET_env", pickpocket_path);
     ] @ 
     (guess_env_setup
       ~home_env:"NCHOME" ~install_path files.netmhccons
