@@ -110,6 +110,24 @@ let guess_folder_name tool_file_loc =
 *)
 let tmp_dir install_path = install_path // "tmp"
 
+(* 
+  NetMHC tools play nicely against Python 2.x
+  and are known to be problematic against Python 3.x.
+  For better control, we are using a Conda environment
+  where we can ask for specific versions of the python
+  to be used. 
+
+  In the (far) future, NetMHC tools might start asking
+  for Python 3 and we will make the switch from this
+  configuration.
+*)
+
+let netmhc_conda_env install_path =
+  Conda.(setup_environment
+    ~python_version:`Python2
+    install_path
+    "netmhc_conda")
+
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ~tool_file_loc ~binary_name ~example_data_file ~env_setup
@@ -152,11 +170,13 @@ let default_netmhc_install
     | `ENV (e, v) -> replace_env_value binary_name e v
     | `GENERIC (o, n) -> replace_value binary_name o n
   in
+  let conda_env = netmhc_conda_env install_path in
   let ensure =
     workflow_node (single_file ~host binary_path)
       ~name:("Install NetMHC tool: " ^ tool_name)
       ~edges:(
-        [ depends_on downloaded_file; ]
+        [ depends_on downloaded_file; 
+          depends_on Conda.(configured ~run_program ~host ~conda_env) ]
         @ (if with_data then [ depends_on downloaded_data_file; ] else [])
         @ (List.map depends ~f:(fun d -> depends_on d))
       )
@@ -175,6 +195,7 @@ let default_netmhc_install
   in
   let init = 
     Program.(
+      Conda.init_env ~conda_env () &&
       shf "export PATH=%s:$PATH" tool_path &&
       shf "export TMPDIR=%s" (tmp_dir install_path)
     )
@@ -208,7 +229,8 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "SLA-10401/bl50/synlist") 
     ~env_setup:(
-      [ `GENERIC ("/usr/local/bin/python2.5", "`which python`") ] 
+      [ `GENERIC ("/usr/local/bin/python2.5", "`which python`") ]
+      (* ^ -> to force netMHC binary use whatever python we have *)
       @ netmhc_env
     )
     ~data_folder_name:"net"
