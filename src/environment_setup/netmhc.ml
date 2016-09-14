@@ -1,12 +1,14 @@
 open Biokepi_run_environment
 open Common
 
+let rm_path = Workflow_utilities.Remove.path_on_host
+
 (* 
   Tested against:
 
     netMHC-4.0a.Linux.tar.gz // netMHC-3.4a.Linux.tar.gz
     pickpocket-1.1a.Linux.tar.gz
-    netMHCpan-3.0a.Linux.tar.gz
+    netMHCpan-3.0a.Linux.tar.gz // netMHCpan-2.8a.Linux.tar.gz
     netMHCcons-1.1a.Linux.tar.gz
 
   Do not use custom named archives
@@ -26,9 +28,9 @@ type netmhc_file_locations = {
   The standard netMHC installation requires
   customizing some of the environment variables
   defined in their main binary files. The following
-  function handles these replacements.
+  functions handle these replacements.
 *)
-let replace_env_value file envname newvalue =
+let replace_value file oldvalue newvalue =
   let escape_slash txt =
     let escfun c = if c = '/' then ['\\'; c] else [c] in
     String.rev txt
@@ -40,10 +42,15 @@ let replace_env_value file envname newvalue =
   let file_bak = file_org ^ ".bak" in
   KEDSL.Program.(
     shf "mv %s %s" file_org file_bak &&
-    shf "sed -e 's/setenv\t%s\t.*/setenv\t%s\t%s/g' %s > %s"
-      envname envname (escape_slash newvalue) file_bak file_org &&
+    shf "sed -e 's/%s/%s/g' %s > %s"
+      (escape_slash oldvalue) (escape_slash newvalue) file_bak file_org &&
     shf "rm -f %s" file_bak
   )
+
+let replace_env_value file envname newvalue =
+  let oldvalue = sprintf "setenv\t%s\t.*" envname in
+  let newvalue = sprintf "setenv\t%s\t%s" envname newvalue in
+  replace_value file oldvalue newvalue
 
 let extract_location location =
   match location with
@@ -105,9 +112,27 @@ let guess_folder_name tool_file_loc =
 *)
 let tmp_dir install_path = install_path // "tmp"
 
+(* 
+  NetMHC tools play nicely against Python 2.x
+  and are known to be problematic against Python 3.x.
+  For better control, we are using a Conda environment
+  where we can ask for specific versions of the python
+  to be used. 
+
+  In the (far) future, NetMHC tools might start asking
+  for Python 3 and we will make the switch from this
+  configuration.
+*)
+
+let netmhc_conda_env install_path =
+  Conda.(setup_environment
+    ~python_version:`Python2
+    install_path
+    "netmhc_conda")
+
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
-    ~tool_file_loc ~binary_name ~example_data_file ~env_setup 
+    ~tool_file_loc ~binary_name ~example_data_file ~env_setup
     ?(depends=[]) 
     ?(data_folder_name="data") 
     ?(data_folder_dest=".") (* relative to the netMHC folder *)
@@ -142,11 +167,19 @@ let default_netmhc_install
   in
   let tool_path = install_path // folder_name in
   let binary_path = tool_path // binary_name in
+  let fix_script replacement = 
+    match replacement with
+    | `ENV (e, v) -> replace_env_value binary_name e v
+    | `GENERIC (o, n) -> replace_value binary_name o n
+  in
+  let conda_env = netmhc_conda_env install_path in
   let ensure =
     workflow_node (single_file ~host binary_path)
       ~name:("Install NetMHC tool: " ^ tool_name)
       ~edges:(
-        [ depends_on downloaded_file; ]
+        [ depends_on downloaded_file; 
+          depends_on Conda.(configured ~run_program ~host ~conda_env);
+          on_failure_activate (rm_path ~host install_path); ]
         @ (if with_data then [ depends_on downloaded_data_file; ] else [])
         @ (List.map depends ~f:(fun d -> depends_on d))
       )
@@ -158,17 +191,15 @@ let default_netmhc_install
           shf "cd %s" install_path &&
           shf "tar zxf %s" downloaded_file#product#path &&
           shf "cd %s" tool_path &&
-          chain (
-            List.map
-              ~f:(fun (e, v) -> replace_env_value binary_name e v)
-              env_setup
-          ) &&
-          shf "chmod +x %s" binary_path
+          chain (List.map ~f:fix_script env_setup) &&
+          shf "chmod +x %s" binary_path &&
+          shf "mkdir -p %s" (tmp_dir install_path)
         )
       )
   in
   let init = 
     Program.(
+      Conda.init_env ~conda_env () &&
       shf "export PATH=%s:$PATH" tool_path &&
       shf "export TMPDIR=%s" (tmp_dir install_path)
     )
@@ -184,8 +215,8 @@ let guess_env_setup
     tool_file_loc =
   let folder_name = guess_folder_name tool_file_loc in
   [
-    (home_env, install_path // folder_name);
-    ("TMPDIR", install_path // tmp_dirname);
+    `ENV (home_env, install_path // folder_name);
+    `ENV ("TMPDIR", install_path // tmp_dirname);
   ]
 
 let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
@@ -196,11 +227,16 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     | Some v -> (int_of_string (Char.escaped v)) < 4 
     | None -> true
   in
+  let netmhc_env = guess_env_setup ~install_path files.netmhc in
   let older_netmhc =
     default_netmhc_install ~run_program ~host ~install_path
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "SLA-10401/bl50/synlist") 
-    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~env_setup:(
+      [ `GENERIC ("/usr/local/bin/python2.5", "`which python`") ]
+      (* ^ -> to force netMHC binary use whatever python we have *)
+      @ netmhc_env
+    )
     ~data_folder_name:"net"
     ~data_folder_dest:"etc"
   in
@@ -208,7 +244,7 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     default_netmhc_install ~run_program ~host ~install_path
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "version") 
-    ~env_setup:(guess_env_setup ~install_path files.netmhc)
+    ~env_setup:netmhc_env
     ~data_folder_name:"data"
     ~data_folder_dest:"."
   in
@@ -229,9 +265,9 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
       ~env_setup:(guess_env_setup ~install_path files.pickpocket) ()
   in
   let cons_env =
-    [("NETMHC_env", netmhc_path);
-     ("NETMHCpan_env", netmhcpan_path);
-     ("PICKPOCKET_env", pickpocket_path);
+    [`ENV ("NETMHC_env", netmhc_path);
+     `ENV ("NETMHCpan_env", netmhcpan_path);
+     `ENV ("PICKPOCKET_env", pickpocket_path);
     ] @ 
     (guess_env_setup
       ~home_env:"NCHOME" ~install_path files.netmhccons
