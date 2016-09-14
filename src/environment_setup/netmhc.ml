@@ -189,7 +189,8 @@ let default_netmhc_install
           shf "tar zxf %s" downloaded_file#product#path &&
           shf "cd %s" tool_path &&
           chain (List.map ~f:fix_script env_setup) &&
-          shf "chmod +x %s" binary_path
+          shf "chmod +x %s" binary_path &&
+          shf "mkdir -p %s" (tmp_dir install_path)
         )
       )
   in
