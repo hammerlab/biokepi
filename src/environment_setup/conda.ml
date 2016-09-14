@@ -119,8 +119,8 @@ let init_env ~conda_env () =
   (* if we are already within the conda environment we want, do nothing;
      otherwise, activate the new one *)
   KEDSL.Program.(
-    shf "[ ${CONDA_PREFIX-none} != \"%s\" ] && source %s %s"
-      prefix
-      (activate ~conda_env)
-      prefix
+    shf "[ ${CONDA_PREFIX-none} != \"%s\" ] \
+         && source %s %s \
+         || echo 'Already in conda env: %s'"
+      prefix (activate ~conda_env) prefix prefix
   )
