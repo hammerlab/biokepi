@@ -30,14 +30,15 @@ type netmhc_file_locations = {
   defined in their main binary files. The following
   functions handle these replacements.
 *)
+let escape_char ~needle haystack =
+  let escfun c = if c = needle then ['\\'; c] else [c] in
+  String.rev haystack
+  |> String.fold ~init:[] ~f:(fun x c -> (escfun c) @ x)
+  |> List.map ~f:String.of_character
+  |> String.concat
+
 let replace_value file oldvalue newvalue =
-  let escape_slash txt =
-    let escfun c = if c = '/' then ['\\'; c] else [c] in
-    String.rev txt
-    |> String.fold ~init:[] ~f:(fun x c -> (escfun c) @ x)
-    |> List.map ~f:String.of_character
-    |> String.concat
-  in
+  let escape_slash = escape_char ~needle:'/' in
   let file_org = file in
   let file_bak = file_org ^ ".bak" in
   KEDSL.Program.(
@@ -178,7 +179,7 @@ let create_netmhc_runner_cmd
        EOF\
       "
       dest
-      script_contents
+      (escape_char ~needle:'$' script_contents)
   in
   KEDSL.Program.(sh cmd)
 (* end of runner_script logic *)
@@ -258,7 +259,7 @@ let default_netmhc_install
   in
   let init = 
     Program.(
-      Conda.init_env ~conda_env () &&
+      (* no need to init conda. Runner scripts will do that for us *)
       shf "export PATH=%s:$PATH" runner_folder &&
       shf "export TMPDIR=%s" (tmp_dir install_path)
     )
