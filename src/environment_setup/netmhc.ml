@@ -174,8 +174,8 @@ let create_netmhc_runner_cmd
   let cmd = 
     sprintf
       "cat << EOF > %s\
-       %s
-       EOF
+       %s\
+       EOF\
       "
       dest
       script_contents
