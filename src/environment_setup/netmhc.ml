@@ -148,24 +148,20 @@ let netmhc_conda_env install_path =
 let netmhc_runner_path install_path = install_path // "biokepi_runner"
 
 let netmhc_runner_script_contents ~binary_name ~binary_path ~conda_env =
-  let open Ketrew_pure in
-  let open Program in
-  let open Internal_pervasives in
-  let activate = Conda.init_env ~conda_env () in
-  let deactivate = Conda.deactivate_env ~conda_env () in
-  fmt {bash|
+  Ketrew_pure.Internal_pervasives.fmt {bash|
 #!/bin/bash
 
-# Activate the conda environment
-%s
+# Force use the controlled python environment
+OLD_PATH=$PATH
+export PATH=%s:$PATH
+
 # Run the netMHC* binary
 %s "$@"
-# Deactivate the conda environment
-%s
+
+export PATH=$OLD_PATH
 |bash}
-    (to_single_shell_command activate)
+    Conda.((environment_path ~conda_env) // "bin")
     binary_path
-    (to_single_shell_command deactivate)
 
 let create_netmhc_runner_cmd
     ~binary_name ~binary_path ~conda_env dest =
