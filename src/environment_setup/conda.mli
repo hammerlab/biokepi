@@ -41,6 +41,12 @@ val init_env :
   unit -> 
   Common.KEDSL.Program.t
 
+(** A transform to deactivate the conda environment if it is already active *)
+val deactivate_env : 
+  conda_env: conda_environment_type -> 
+  unit -> 
+  Common.KEDSL.Program.t
+
 (** This is the absolute path to the environment folder **)
 val environment_path : 
   conda_env: conda_environment_type -> 

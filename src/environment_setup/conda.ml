@@ -44,6 +44,7 @@ let envs_dir ~conda_env = conda_env.install_path // conda_env.envs_subdir
 let commands ~conda_env com = main_dir ~conda_env // "bin" // com
 let bin ~conda_env = commands ~conda_env "conda"
 let activate ~conda_env = commands ~conda_env "activate"
+let deactivate ~conda_env = commands ~conda_env "deactivate"
 let environment_path ~conda_env = envs_dir ~conda_env // conda_env.name
 
 (* give a conda command. *)
@@ -123,4 +124,13 @@ let init_env ~conda_env () =
          && source %s %s \
          || echo 'Already in conda env: %s'"
       prefix (activate ~conda_env) prefix prefix
+  )
+
+let deactivate_env ~conda_env () =
+  let prefix = (envs_dir ~conda_env // conda_env.name) in
+  KEDSL.Program.(
+    shf "[ ${CONDA_PREFIX-none} == \"%s\" ] \
+         && source %s \
+         || echo 'Doing nothing. The conda env is not active: %s'"
+      prefix (deactivate ~conda_env) prefix
   )

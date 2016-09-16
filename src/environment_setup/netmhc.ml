@@ -30,14 +30,15 @@ type netmhc_file_locations = {
   defined in their main binary files. The following
   functions handle these replacements.
 *)
+let escape_char ~needle haystack =
+  let escfun c = if c = needle then ['\\'; c] else [c] in
+  String.rev haystack
+  |> String.fold ~init:[] ~f:(fun x c -> (escfun c) @ x)
+  |> List.map ~f:String.of_character
+  |> String.concat
+
 let replace_value file oldvalue newvalue =
-  let escape_slash txt =
-    let escfun c = if c = '/' then ['\\'; c] else [c] in
-    String.rev txt
-    |> String.fold ~init:[] ~f:(fun x c -> (escfun c) @ x)
-    |> List.map ~f:String.of_character
-    |> String.concat
-  in
+  let escape_slash = escape_char ~needle:'/' in
   let file_org = file in
   let file_bak = file_org ^ ".bak" in
   KEDSL.Program.(
@@ -130,6 +131,55 @@ let netmhc_conda_env install_path =
     install_path
     "netmhc_conda")
 
+
+(*
+  The issue with the netMHC tools is that they specifically
+  depend on a particular Python version to be able to run.
+  And another wrapper script (e.g. vaxrank) might require another
+  version of Python and once the wrapper calls one of these binaries
+  the Python environment gets mixed up, leading to incompatability
+  issues. We would like to create a wrapper script to their own
+  wrapper script so that we can ensure the tool gets run within
+  the environment we want and not the one that the original wrapper
+  provides.
+
+  The following runner/pseudo_binary logic handles this
+*)
+let netmhc_runner_path install_path = install_path // "biokepi_runner"
+
+let netmhc_runner_script_contents ~binary_name ~binary_path ~conda_env =
+  Ketrew_pure.Internal_pervasives.fmt {bash|
+#!/bin/bash
+
+# Force use the controlled python environment
+OLD_PATH=$PATH
+export PATH=%s:$PATH
+
+# Run the netMHC* binary
+%s "$@"
+
+export PATH=$OLD_PATH
+|bash}
+    Conda.((environment_path ~conda_env) // "bin")
+    binary_path
+
+let create_netmhc_runner_cmd
+    ~binary_name ~binary_path ~conda_env dest =
+  let script_contents = 
+    netmhc_runner_script_contents ~binary_name ~binary_path ~conda_env
+  in
+  let cmd = 
+    sprintf
+      "cat << EOF > %s\
+       %s\
+       EOF\
+      "
+      dest
+      (escape_char ~needle:'$' script_contents)
+  in
+  KEDSL.Program.(sh cmd)
+(* end of runner_script logic *)
+  
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ~tool_file_loc ~binary_name ~example_data_file ~env_setup
@@ -166,6 +216,8 @@ let default_netmhc_install
     ~tar_contains:one_data_file data_url
   in
   let tool_path = install_path // folder_name in
+  let runner_folder = netmhc_runner_path install_path in
+  let runner_path = runner_folder // binary_name in
   let binary_path = tool_path // binary_name in
   let fix_script replacement = 
     match replacement with
@@ -193,14 +245,18 @@ let default_netmhc_install
           shf "cd %s" tool_path &&
           chain (List.map ~f:fix_script env_setup) &&
           shf "chmod +x %s" binary_path &&
-          shf "mkdir -p %s" (tmp_dir install_path)
+          shf "mkdir -p %s" (tmp_dir install_path) &&
+          shf "mkdir -p %s" runner_folder &&
+          create_netmhc_runner_cmd
+            ~binary_name ~binary_path ~conda_env runner_path &&
+          shf "chmod +x %s" runner_path
         )
       )
   in
   let init = 
     Program.(
-      Conda.init_env ~conda_env () &&
-      shf "export PATH=%s:$PATH" tool_path &&
+      (* no need to init conda. Runner scripts will do that for us *)
+      shf "export PATH=%s:$PATH" runner_folder &&
       shf "export TMPDIR=%s" (tmp_dir install_path)
     )
   in
