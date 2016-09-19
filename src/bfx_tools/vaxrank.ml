@@ -133,6 +133,8 @@ let run ~(run_with: Machine.t)
   let vaxrank =
     Machine.get_tool run_with Machine.Tool.Definition.(create "vaxrank")
   in
+  let sorted_bam =
+    Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
   let predictor_tool = Topiary.(predictor_to_tool ~run_with predictor) in
   let (predictor_edges, predictor_init) =
     match predictor_tool with
@@ -140,7 +142,7 @@ let run ~(run_with: Machine.t)
     | None -> ([], Program.(sh "echo 'No external prediction tool required'"))
   in
   let vcfs_arg = List.concat_map vcfs ~f:(fun v -> ["--vcf"; v#product#path]) in
-  let bam_arg = ["--bam"; bam#product#path] in
+  let bam_arg = ["--bam"; sorted_bam#product#path] in
   let predictor_arg =
     ["--mhc-predictor"; (Topiary.predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
@@ -172,12 +174,13 @@ let run ~(run_with: Machine.t)
     product
     ~name
     ~edges:([
-      depends_on Machine.Tool.(ensure vaxrank);
-      depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
-      depends_on bam;
-      depends_on alleles_file;
-    ] @ (List.map ~f:depends_on vcfs)
-      @ predictor_edges)
+        depends_on (Samtools.index_to_bai ~run_with sorted_bam);
+        depends_on Machine.Tool.(ensure vaxrank);
+        depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
+        depends_on sorted_bam;
+        depends_on alleles_file;
+      ] @ (List.map ~f:depends_on vcfs)
+        @ predictor_edges)
     ~make:(
       Machine.run_program run_with ~name
         Program.(
