@@ -172,12 +172,13 @@ let run ~(run_with: Machine.t)
     product
     ~name
     ~edges:([
-      depends_on Machine.Tool.(ensure vaxrank);
-      depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
-      depends_on bam;
-      depends_on alleles_file;
-    ] @ (List.map ~f:depends_on vcfs)
-      @ predictor_edges)
+        depends_on (Samtools.index_to_bai ~run_with bam);
+        depends_on Machine.Tool.(ensure vaxrank);
+        depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
+        depends_on bam;
+        depends_on alleles_file;
+      ] @ (List.map ~f:depends_on vcfs)
+        @ predictor_edges)
     ~make:(
       Machine.run_program run_with ~name
         Program.(
