@@ -13,7 +13,7 @@ module File_type_specification = struct
     | To_unit: 'a t -> unit t
     | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
     | Bam: bam_file workflow_node -> [ `Bam ] t
-    | Vcf: single_file workflow_node -> [ `Vcf ] t
+    | Vcf: vcf_file workflow_node -> [ `Vcf ] t
     | Bed: single_file workflow_node -> [ `Bed ] t
     | Gtf: single_file workflow_node -> [ `Gtf ] t
     | Seq2hla_result:
@@ -71,7 +71,7 @@ module File_type_specification = struct
   | Bam b -> b
   | o -> fail_get o "Bam"
 
-  let get_vcf : [ `Vcf ] t -> single_file workflow_node = function
+  let get_vcf : [ `Vcf ] t -> vcf_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
 

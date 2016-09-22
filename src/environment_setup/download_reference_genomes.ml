@@ -44,10 +44,12 @@ let of_specification
         let tmp_vcf =
           dest_file (Filename.chop_extension filename ^ "-cat.vcf") in
         Vcftools.vcf_concat_no_machine
+          ~make_product:(fun p -> KEDSL.single_file p ~host)
           ~host ~vcftools ~run_program ~final_vcf:tmp_vcf vcfs in
       let sorted =
         let final_vcf_path = dest_file filename in
         Vcftools.vcf_sort_no_machine
+          ~make_product:(fun p -> KEDSL.single_file p ~host)
           ~host ~vcftools ~run_program
           ~src:concated ~dest:final_vcf_path () in
       sorted

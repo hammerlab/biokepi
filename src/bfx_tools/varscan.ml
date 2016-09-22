@@ -95,8 +95,9 @@ let somatic_on_region
       |> Machine.run_big_program run_with ~name ~processors:1
         ~self_ids:["varscan"; "somaticfilter"]
     in
-    workflow_node ~name
-      (single_file snp_filtered ~host) ~make ~tags
+    workflow_node ~name ~make ~tags
+      (vcf_file snp_filtered
+         ~reference_build:normal#product#reference_build ~host)
       ~edges:[
         depends_on varscan_somatic;
         on_failure_activate (Remove.file ~run_with snp_filtered);

@@ -77,7 +77,9 @@ let run
           )
       in
       workflow_node ~name ~make
-        (single_file output_file ~host:Machine.(as_host run_with))
+        (vcf_file output_file
+           ~reference_build:normal#product#reference_build
+           ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller; "muse"]
         ~edges:[
           depends_on Machine.Tool.(ensure muse_tool);
@@ -113,16 +115,18 @@ let run
         )
     in
     workflow_node ~name ~make
-      (single_file vcf_output ~host:Machine.(as_host run_with))
+      (vcf_file vcf_output
+         ~reference_build:normal#product#reference_build
+         ~host:Machine.(as_host run_with))
       ~tags:[Target_tags.variant_caller; "muse"]
       ~edges:(more_edges @ [ (* muse_sump is the last step in every case *)
-        depends_on Machine.Tool.(ensure muse_tool);
-        depends_on call_file;
-        depends_on bgzipped_dbsnp;
-        depends_on
-          (Samtools.tabix ~run_with ~tabular_format:`Vcf bgzipped_dbsnp);
-        on_failure_activate (Remove.file ~run_with vcf_output);
-      ])
+          depends_on Machine.Tool.(ensure muse_tool);
+          depends_on call_file;
+          depends_on bgzipped_dbsnp;
+          depends_on
+            (Samtools.tabix ~run_with ~tabular_format:`Vcf bgzipped_dbsnp);
+          on_failure_activate (Remove.file ~run_with vcf_output);
+        ])
   in
   begin match how with
   | `Region region ->

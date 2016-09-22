@@ -110,7 +110,6 @@ let intersect
     depends_on Machine.Tool.(ensure bedtools);
     on_failure_activate (Remove.file run_with output)
   ] @ (List.map ~f:depends_on intersect_with) in
-  let host = Machine.as_host run_with in
-  let out = single_file ~host output in
+  let out = transform_vcf primary#product ~path:output in
   workflow_node out ~name ~edges ~make
-    ~ensures:(`Is_verified (out#is_bigger_than 1))
+    ~ensures:(`Is_verified (out#as_single_file#is_bigger_than 1))

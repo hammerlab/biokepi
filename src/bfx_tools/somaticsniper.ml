@@ -37,7 +37,7 @@ end
 
 let run
     ~run_with
-     ?(configuration = Configuration.default) ~normal ~tumor ~result_prefix () =
+    ?(configuration = Configuration.default) ~normal ~tumor ~result_prefix () =
   let open KEDSL in
   let result_file suffix = sprintf "%s-%s" result_prefix suffix in
   let name = sprintf "somaticsniper: %s" (result_file "") in
@@ -68,7 +68,9 @@ let run
           ))
   in
   workflow_node ~name ~make
-    (single_file output_file ~host:Machine.(as_host run_with))
+    (vcf_file output_file
+       ~reference_build:normal#product#reference_build
+       ~host:Machine.(as_host run_with))
     ~metadata:(`String name)
     ~tags:[Target_tags.variant_caller; "somaticsniper"]
     ~edges:[

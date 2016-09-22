@@ -299,6 +299,7 @@ module Vcftools = struct
       ~(run_program : Machine.Make_fun.t)
       ?(more_edges = [])
       ~vcfs
+      ~make_product
       ~final_vcf
       command_prefix
     =
@@ -315,7 +316,7 @@ module Vcftools = struct
             final_vcf
         ) in
     workflow_node ~name
-      (single_file final_vcf ~host)
+      (make_product final_vcf)
       ~make
       ~edges:(
         on_failure_activate
@@ -335,9 +336,11 @@ module Vcftools = struct
       ~vcftools
       ~(run_program : Machine.Make_fun.t)
       ?more_edges
+      ~make_product
       vcfs
       ~final_vcf =
     vcf_process_n_to_1_no_machine
+      ~make_product
       ~host ~vcftools ~run_program ?more_edges ~vcfs ~final_vcf
       "vcf-concat"
 
@@ -353,10 +356,12 @@ module Vcftools = struct
       ~vcftools
       ~(run_program : Machine.Make_fun.t)
       ?more_edges
+      ~make_product
       ~src ~dest () =
     let run_program =
       Machine.Make_fun.with_requirements run_program [`Memory `Big] in 
     vcf_process_n_to_1_no_machine
+      ~make_product:(fun p -> KEDSL.single_file p ~host)
       ~host ~vcftools ~run_program ?more_edges ~vcfs:[src] ~final_vcf:dest
       "vcf-sort -c"
 
