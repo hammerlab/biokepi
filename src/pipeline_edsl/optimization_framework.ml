@@ -180,15 +180,14 @@ module Generic_optimizer
   let flagstat bam =
     fwd (Input.flagstat (bwd bam))
 
-  let vcf_annotate_polyphen reference_build vcf =
-    fwd (Input.vcf_annotate_polyphen reference_build (bwd vcf))
-  let isovar ?configuration reference_build vcf bam =
-    fwd (Input.isovar ?configuration reference_build (bwd vcf) (bwd bam))
-  let topiary ?configuration reference_build vcf predictor alleles = 
-    fwd (Input.topiary
-           ?configuration reference_build (bwd vcf) predictor (bwd alleles))
-  let vaxrank ?configuration reference_build vcfs bam predictor alleles =
-    fwd (Input.vaxrank ?configuration reference_build
+  let vcf_annotate_polyphen vcf =
+    fwd (Input.vcf_annotate_polyphen (bwd vcf))
+  let isovar ?configuration vcf bam =
+    fwd (Input.isovar ?configuration (bwd vcf) (bwd bam))
+  let topiary ?configuration vcf predictor alleles = 
+    fwd (Input.topiary ?configuration (bwd vcf) predictor (bwd alleles))
+  let vaxrank ?configuration vcfs bam predictor alleles =
+    fwd (Input.vaxrank ?configuration
            (List.map ~f:(fun v -> (bwd v)) vcfs)
            (bwd bam) predictor (bwd alleles))
 end

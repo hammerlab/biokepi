@@ -540,7 +540,8 @@ let haplotype_caller
           )
       in
       workflow_node ~name ~make
-        (single_file output_vcf ~host:Machine.(as_host run_with))
+        (vcf_file output_vcf ~reference_build:input_bam#product#reference_build
+           ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
         ~edges:(add_edges @ [
             depends_on Machine.Tool.(ensure gatk);
@@ -618,7 +619,9 @@ let mutect2
           )
       in
       workflow_node ~name ~make
-        (single_file output_vcf ~host:Machine.(as_host run_with))
+        (vcf_file output_vcf
+           ~reference_build:input_normal_bam#product#reference_build
+           ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller]
         ~edges:(add_edges @ confg_edges @ [
             depends_on Machine.Tool.(ensure gatk);

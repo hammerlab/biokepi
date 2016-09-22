@@ -63,7 +63,7 @@ module Variant_caller = struct
       result_prefix: string ->
       ?more_edges: KEDSL.workflow_edge list ->
       unit ->
-      KEDSL.file_workflow
+      KEDSL.vcf_file KEDSL.workflow_node
   }
 end
 
@@ -527,8 +527,8 @@ module Compiler = struct
       KEDSL.bam_file KEDSL.workflow_node;
     wrap_vcf_node:
       vcf pipeline ->
-      KEDSL.single_file KEDSL.workflow_node ->
-      KEDSL.single_file KEDSL.workflow_node;
+      KEDSL.vcf_file KEDSL.workflow_node ->
+      KEDSL.vcf_file KEDSL.workflow_node;
     wrap_gtf_node:
       gtf pipeline ->
       KEDSL.single_file KEDSL.workflow_node ->

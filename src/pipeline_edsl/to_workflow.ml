@@ -13,7 +13,7 @@ module File_type_specification = struct
     | To_unit: 'a t -> unit t
     | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
     | Bam: bam_file workflow_node -> [ `Bam ] t
-    | Vcf: single_file workflow_node -> [ `Vcf ] t
+    | Vcf: vcf_file workflow_node -> [ `Vcf ] t
     | Bed: single_file workflow_node -> [ `Bed ] t
     | Gtf: single_file workflow_node -> [ `Gtf ] t
     | Seq2hla_result:
@@ -71,7 +71,7 @@ module File_type_specification = struct
   | Bam b -> b
   | o -> fail_get o "Bam"
 
-  let get_vcf : [ `Vcf ] t -> single_file workflow_node = function
+  let get_vcf : [ `Vcf ] t -> vcf_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
 
@@ -691,18 +691,27 @@ module Make (Config : Compiler_configuration)
     let bam = get_bam bam in
     Flagstat_result (Tools.Samtools.flagstat ~run_with bam)
 
-  let vcf_annotate_polyphen reference_build vcf =
+  let vcf_annotate_polyphen vcf =
     let v = get_vcf vcf in
     let output_vcf = (Filename.chop_extension v#product#path) ^ "_polyphen.vcf" in
+    let reference_build = v#product#reference_build in
     Vcf (
       Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
     )
 
   let isovar
       ?(configuration=Tools.Isovar.Configuration.default)
-      reference_build vcf bam =
+      vcf bam =
     let v = get_vcf vcf in
     let b = get_bam bam in
+    let reference_build =
+      if v#product#reference_build = b#product#reference_build
+      then v#product#reference_build
+      else
+        ksprintf failwith "VCF and Bam do not agree on their reference build: \
+                           bam: %s Vs vcf: %s"
+          b#product#reference_build v#product#reference_build
+    in
     let output_file =
       Name_file.in_directory ~readable_suffix:"isovar.csv" Config.work_dir [
         Tools.Isovar.Configuration.name configuration;
@@ -716,8 +725,9 @@ module Make (Config : Compiler_configuration)
     )
 
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
-      reference_build vcf predictor alleles =
+      vcf predictor alleles =
     let v = get_vcf vcf in
+    let reference_build = v#product#reference_build in
     let mhc = get_mhc_alleles alleles in
     let output_file =
       Name_file.from_path v#product#path ~readable_suffix:"topiary.csv" [
@@ -735,9 +745,21 @@ module Make (Config : Compiler_configuration)
 
   let vaxrank
       ?(configuration=Tools.Vaxrank.Configuration.default)
-      reference_build vcfs bam predictor alleles =
+      vcfs bam predictor alleles =
     let vcfs = List.map ~f:get_vcf vcfs in
     let b = get_bam bam in
+    let reference_build =
+      if List.exists vcfs ~f:(fun v ->
+          v#product#reference_build <> b#product#reference_build)
+      then
+        ksprintf failwith "VCFs and Bam do not agree on their reference build: \
+                           bam: %s Vs vcfs: %s"
+          b#product#reference_build
+          (List.map vcfs ~f:(fun v -> v#product#reference_build)
+           |> String.concat ~sep:", ")
+      else
+        b#product#reference_build
+    in
     let mhc = get_mhc_alleles alleles in
     let outdir =
       Name_file.in_directory ~readable_suffix:"vaxrank" Config.work_dir

@@ -76,7 +76,9 @@ let run
       )
   in
   workflow_node ~name ~make
-    (single_file output_file ~host:(Machine.as_host run_with))
+    (vcf_file output_file
+       ~reference_build:normal#product#reference_build
+       ~host:Machine.(as_host run_with))
     ~edges:(more_edges @ [
         depends_on normal;
         depends_on tumor;

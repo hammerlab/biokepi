@@ -176,17 +176,19 @@ let run
       )
   in
   workflow_node ~name ~make
-    (single_file output_file_path ~host:(Machine.as_host run_with))
+    (vcf_file output_file_path
+       ~reference_build:normal#product#reference_build
+       ~host:Machine.(as_host run_with))
     ~edges:(more_edges @ [
-      depends_on normal;
-      depends_on tumor;
-      depends_on reference_fasta;
-      depends_on (Machine.Tool.ensure strelka_tool);
-      depends_on (Machine.Tool.ensure gatk_tool);
-      depends_on sorted_normal;
-      depends_on sorted_tumor;
-      depends_on (Picard.create_dict ~run_with reference_fasta);
-      depends_on (Samtools.faidx ~run_with reference_fasta);
-      depends_on (Samtools.index_to_bai ~run_with sorted_normal);
-      depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
-    ])
+        depends_on normal;
+        depends_on tumor;
+        depends_on reference_fasta;
+        depends_on (Machine.Tool.ensure strelka_tool);
+        depends_on (Machine.Tool.ensure gatk_tool);
+        depends_on sorted_normal;
+        depends_on sorted_tumor;
+        depends_on (Picard.create_dict ~run_with reference_fasta);
+        depends_on (Samtools.faidx ~run_with reference_fasta);
+        depends_on (Samtools.index_to_bai ~run_with sorted_normal);
+        depends_on (Samtools.index_to_bai ~run_with sorted_tumor);
+      ])

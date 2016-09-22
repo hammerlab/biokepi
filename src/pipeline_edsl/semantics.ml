@@ -231,20 +231,17 @@ module type Bioinformatics_base = sig
   val flagstat: [ `Bam ] repr -> [ `Flagstat ] repr
 
   val vcf_annotate_polyphen:
-    Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     [ `Vcf ] repr
 
   val isovar:
     ?configuration: Isovar.Configuration.t ->
-    Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     [ `Bam ] repr ->
     [ `Isovar ] repr
 
   val topiary:
     ?configuration: Topiary.Configuration.t ->
-    Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr ->
     Topiary.predictor_type ->
     [ `MHC_alleles ] repr ->
@@ -252,7 +249,6 @@ module type Bioinformatics_base = sig
 
   val vaxrank:
     ?configuration: Vaxrank.Configuration.t ->
-    Biokepi_run_environment.Reference_genome.name ->
     [ `Vcf ] repr list ->
     [ `Bam ] repr ->
     Topiary.predictor_type ->

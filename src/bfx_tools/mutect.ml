@@ -109,7 +109,9 @@ let run
           on_failure_activate (Remove.file ~run_with output_file);
         ] in
       workflow_node ~name ~make
-        (single_file output_file ~host:Machine.(as_host run_with))
+        (vcf_file output_file
+           ~reference_build:normal#product#reference_build
+           ~host:Machine.(as_host run_with))
         ~tags:[Target_tags.variant_caller] ~edges
     in
     run_mutect
