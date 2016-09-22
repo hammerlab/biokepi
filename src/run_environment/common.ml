@@ -312,7 +312,7 @@ module KEDSL = struct
       method as_single_file = file
     end
   let transform_vcf vcf ~path =
-    vcf_file ~host:vcf#host ~reference_build:vcf#reference_build vcf#path
+    vcf_file ~host:vcf#host ~reference_build:vcf#reference_build path
 
   let submit w = Ketrew.Client.submit_workflow w
 
