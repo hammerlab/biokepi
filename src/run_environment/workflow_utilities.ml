@@ -361,7 +361,7 @@ module Vcftools = struct
     let run_program =
       Machine.Make_fun.with_requirements run_program [`Memory `Big] in 
     vcf_process_n_to_1_no_machine
-      ~make_product:(fun p -> KEDSL.single_file p ~host)
+      ~make_product
       ~host ~vcftools ~run_program ?more_edges ~vcfs:[src] ~final_vcf:dest
       "vcf-sort -c"
 
