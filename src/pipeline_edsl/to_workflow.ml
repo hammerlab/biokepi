@@ -554,7 +554,7 @@ module Make (Config : Compiler_configuration)
       let bams = List.map bam_files ~f:get_bam in
       let output_path =
         Name_file.in_directory ~readable_suffix:"samtoolsmerge.bam"
-          Config.work_dir 
+          Config.work_dir
           (List.map bams ~f:(fun bam -> bam#product#path))
       in
       Bam (Tools.Samtools.merge_bams ~run_with bams output_path)

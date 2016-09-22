@@ -164,31 +164,26 @@ end
      error.
 
 
-     On top of that we use the GADT `_ KEDSL.bam_or_bams` to return have 2
+     On top of that we use the GADT `_ KEDSL.bam_orf_bams` to return have 2
      possible return types:
      bam_file workflow_node or bam_list workflow_node
   *)
 open Configuration
 
+(* We limit this to 20 characters to attempt to keep the length of the resulting
+   filenames below the common maximum length of 255. *)
 let indel_realigner_output_filename_tag
     ~configuration:(ir_config, target_config)
     ?region input_bams =
-  let digest_of_input () =
-    List.map input_bams ~f:(fun o -> o#product#path)
+  let digest_of_input =
+    (List.map input_bams ~f:(fun o -> o#product#path)
+     @ [ir_config.Configuration.Indel_realigner.name;
+        target_config.Configuration.Realigner_target_creator.name;
+        Option.value_map ~f:(fun r -> "-" ^ Region.to_filename r) region ~default:""])
     |> String.concat ~sep:""
     (* we make this file “unique” with an MD5 sum of the input paths *)
     |> Digest.string |> Digest.to_hex in
-  let bam_number = List.length input_bams in
-  String.concat ~sep:"" [
-    "_indelreal-";
-    ir_config.Configuration.Indel_realigner.name;
-    "-";
-    target_config.Configuration.Realigner_target_creator.name;
-    "-";
-    sprintf "-%dx" bam_number;
-    (if bam_number = 1 then "" else "-" ^ digest_of_input ());
-    Option.value_map ~f:(fun r -> "-" ^ Region.to_filename r) region ~default:"";
-  ]
+  (String.take digest_of_input ~index:11) ^ "-indelreal"
 
 let indel_realigner :
   type a.
@@ -240,9 +235,7 @@ let indel_realigner :
     let input_bam_1 = `Use_the_sorted_ones_please in
     ignore (more_input_bams, input_bam_1);
     let name =
-      sprintf "gatk-indelrealign-%s-%dx-%s"
-        (Region.to_filename on_region)
-        (List.length more_input_sorted_bams + 1)
+      sprintf "Indel Realignment on %s"
         (Filename.basename input_sorted_bam_1#product#path)
     in
     let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
@@ -250,31 +243,16 @@ let indel_realigner :
       let reference_build = input_sorted_bam_1#product#reference_build in
       Machine.get_reference_genome run_with reference_build in
     let fasta = Reference_genome.fasta reference_genome in
-    (*
-    let digest_of_input =
-      List.map (input_sorted_bam_1 :: more_input_sorted_bams)
-        ~f:(fun o -> o#product#path)
-      |> String.concat ~sep:""
-      (* we make this file “unique” with an MD5 sum of the input paths *)
-      |> Digest.string |> Digest.to_hex in
-       *)
     let output_suffix =
       indel_realigner_output_filename_tag
         ~configuration ~region:on_region
         (input_sorted_bam_1 :: more_input_sorted_bams)
-        (* ~bam_number:(List.length more_input_sorted_bams + 1) *)
-        (* ~digest_of_input *)
-        (*
-      sprintf "_indelreal-%s-%s-%dx%s"
-        target_config.Configuration.Indel_realigner.name
-        (Region.to_filename on_region)
-        (List.length more_input_sorted_bams + 1)
-        (if more_input_sorted_bams = [] then "" else "-" ^ digest_of_input)
-           *)
     in
     let intervals_file =
       Filename.chop_suffix input_sorted_bam_1#product#path ".bam"
       ^ output_suffix ^ ".intervals" in
+    (* This function encodes how IndelRealign's nWayOut names the output BAMs,
+       including the directory it'll end up placing them in. *)
     let output_bam_path input =
       run_directory // (
         Filename.chop_extension input#product#path ^ output_suffix ^ ".bam"
