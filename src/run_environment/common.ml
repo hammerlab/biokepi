@@ -295,6 +295,25 @@ module KEDSL = struct
     | Single_bam: bam_file workflow_node -> bam_file workflow_node bam_or_bams
     | Bam_workflow_list: bam_file workflow_node list -> bam_list workflow_node bam_or_bams
 
+  type vcf_file = <
+    is_done: Ketrew_pure.Target.Condition.t option;
+    host: Host.t;
+    path : string;
+    reference_build: string;
+    as_single_file: single_file product;
+  >
+  let vcf_file ~host ~reference_build path : vcf_file =
+    object (self)
+      val file = single_file ~host path
+      method host = host
+      method path = file#path
+      method is_done = file#is_done
+      method reference_build = reference_build
+      method as_single_file = file
+    end
+  let transform_vcf vcf ~path =
+    vcf_file ~host:vcf#host ~reference_build:vcf#reference_build vcf#path
+
   let submit w = Ketrew.Client.submit_workflow w
 
 end
