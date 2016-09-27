@@ -3,7 +3,7 @@ open Common
 
 let pyensembl_env_key = "PYENSEMBL_CACHE_DIR"
 
-let get_cache_dir ~(run_with: Machine.t) = 
+let get_cache_dir ~(run_with: Machine.t) =
   let open KEDSL in
   let cache_dir = Machine.(get_pyensembl_cache_dir run_with) in
   match cache_dir with
@@ -24,7 +24,7 @@ let cache_genome ~(run_with: Machine.t) ~reference_build =
   let genome = Machine.(get_reference_genome run_with reference_build) in
   let ensembl_release = genome |> Reference_genome.ensembl in
   let species = genome |> Reference_genome.species in
-  let witness_file_path = 
+  let witness_file_path =
     sprintf "%s/%s.cached" (get_cache_dir ~run_with) reference_build
   in
   let name = sprintf "pyensembl_cache-%d-%s" ensembl_release species in
