@@ -63,7 +63,7 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
 let default ~host ~run_program ~install_path () =
    Machine.Tool.Kit.of_list [
     create_python_tool ~host ~run_program ~install_path
-      ~version:"0.9.4" (Pip, Package_PyPI "pyensembl");
+      ~version:"1.0.1" (Pip, Package_PyPI "pyensembl");
     create_python_tool ~host ~run_program ~install_path
       ~version:"0.1.2" (Pip, Package_PyPI "vcf-annotate-polyphen");
     create_python_tool ~host ~run_program ~install_path
@@ -72,5 +72,5 @@ let default ~host ~run_program ~install_path () =
     create_python_tool ~host ~run_program ~install_path
       ~version:"0.0.21" (Pip, Package_PyPI "topiary");
     create_python_tool ~host ~run_program ~install_path
-      ~version:"0.0.3" (Pip, Package_PyPI "vaxrank");
+      ~version:"0.2.0" (Pip, Package_PyPI "vaxrank");
    ]

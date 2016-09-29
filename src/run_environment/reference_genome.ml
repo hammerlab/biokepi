@@ -237,7 +237,7 @@ module Default = struct
       "ftp://ftp.ensembl.org/pub/release-84/gtf/mus_musculus/\
        Mus_musculus.GRCm38.84.gtf.gz" in
     create Name.mm10
-      ~ensembl:84
+      ~ensembl:85
       ~species:mouse
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
