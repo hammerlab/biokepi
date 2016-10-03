@@ -48,7 +48,7 @@ OCAMLDOC_DOT_OPTIONS="-dot $OCAMLDOC_OPTIONS -dot-reduce"
 mkdir -p _build/apidoc/
 SRC_CSS=./tools/ocamldoc-style.css
 ODOC_CSS=style.css
-cp $SRC_CSS _build/apidoc/$CSS
+cp $SRC_CSS _build/apidoc/$ODOC_CSS
 
 ocamlfind ocamldoc -html -css-style $ODOC_CSS -d _build/apidoc/ $OCAMLDOC_OPTIONS \
   -charset UTF-8 -t "Biokepi API" -keep-code -colorize-code
