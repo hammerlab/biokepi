@@ -18,7 +18,7 @@
 {{:http://caml.inria.fr/pub/docs/manual-ocaml/libref/Pervasives.html}Pervasives})
 for our library. *)
 
-(** A {{:http://seb.mondet.org/software/nonstd/index.html}Non-standard mini
+(** A {{:http://hammerlab.org/docs/nonstd/master/index.html}Non-standard mini
 library}. *)
 include Nonstd
 

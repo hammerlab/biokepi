@@ -2,8 +2,8 @@ Using The Demo Application
 ==========================
 
 Once all set with Ketrew's
-[mini-tutorial](http://seb.mondet.org/software/ketrew/#GettingStarted), one can
-submit a few Biokepi “example” pipelines to that same Ketrew daemon.
+[mini-tutorial](http://hammerlab.org/docs/ketrew/master/index.html#GettingStarted),
+one can submit a few Biokepi “example” pipelines to that same Ketrew daemon.
 
 
 The application is meant to show how to program with the library, especially
