@@ -8,7 +8,7 @@ bioinformatics pipelines.
 This should be considered *“alpha / preview”* software.
 
 See the documentation at 
-[`www.hammerlab.org/biokepi/`](http://www.hammerlab.org/biokepi/).
+[`www.hammerlab.org/docs/biokepi/master`](http://www.hammerlab.org/docs/biokepi/master/index.html).
 
 Build
 -----
