@@ -2,7 +2,7 @@ Biokepi: Bioinformatics Ketrew Pipelines
 ========================================
 
 This project provides a family of libraries to construct
-“[Ketrew](http://seb.mondet.org/software/ketrew/) Workflows” for
+“[Ketrew](https://github.com/hammerlab/ketrew/) Workflows” for
 bioinformatics pipelines.
 
 This should be considered *“alpha / preview”* software.
@@ -13,8 +13,9 @@ See the documentation at
 Build
 -----
 
-The main dependency is [Ketrew](http://seb.mondet.org/software/ketrew/) (which
-requires OCaml ≥ 4.02.2).
+The main dependency is
+[Ketrew](http://hammerlab.org/docs/ketrew/master/index.html) (which requires
+OCaml ≥ 4.02.2).
 
 To install the pre-release through `opam`:
 
