@@ -75,7 +75,6 @@ let get_conda_env =
       ("libxml2", `Version "2.9.2");
       ("matplotlib", `Version "1.5.1");
       ("mkl", `Version "11.3.1");
-      ("ncurses", `Version "5.9");
       ("numexpr", `Version "2.4.6");
       ("numpy", `Version "1.10.4");
       ("openssl", `Version "1.0.2g");
@@ -105,7 +104,7 @@ let get_conda_env =
       ("zlib", `Version "1.2.8");
     ]
     (* see https://github.com/ContinuumIO/anaconda-issues/issues/152#issuecomment-225214743 *)
-    ~banned_packages: [ "readline" ] 
+    ~banned_packages: [ "readline"; "ncurses" ] 
     ~python_version:`Python2
 
 (* Hide the messy logic of calling opam in here. This should not be exported
