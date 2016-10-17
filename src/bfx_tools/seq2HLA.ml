@@ -47,5 +47,7 @@ let hla_type
       KEDSL.depends_on (Machine.Tool.ensure tool);
       KEDSL.depends_on r1;
       KEDSL.depends_on r2;
+      KEDSL.on_failure_activate
+        (Workflow_utilities.Remove.directory work_dir ~run_with);
     ]
 
