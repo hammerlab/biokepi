@@ -159,6 +159,10 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get other "Pair"
 
+  let to_deps_functions : (t -> workflow_edge list option) list ref = ref []
+  let add_to_dependencies_edges_function f =
+    to_deps_functions := f :: !to_deps_functions
+
   let rec as_dependency_edges : type a. t -> workflow_edge list =
     let one_depends_on wf = [depends_on wf] in
     function
@@ -178,7 +182,14 @@ module File_type_specification = struct
     | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
-    | other -> fail_get other "as_dependency_edges"
+    | other ->
+      begin match
+        List.find_map !to_deps_functions ~f:(fun f -> f other)
+      with
+      | None ->
+        fail_get other "as_dependency_edges"
+      | Some s -> s
+      end
 
   let get_unit_workflow :
     name: string ->
