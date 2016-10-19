@@ -671,7 +671,7 @@ module Make (Config : Compiler_configuration)
     let vcf = get_vcf vcf in
     let bed = get_bed bed in
     let output =
-      Name_file.from_path bed#product#path ~readable_suffix:"btls_intersect.vcf"
+      Name_file.from_path bed#product#path ~readable_suffix:"_intersect.vcf"
         [Filename.basename bed#product#path |> Filename.chop_extension]
     in
     Vcf (Tools.Bedtools.intersect
