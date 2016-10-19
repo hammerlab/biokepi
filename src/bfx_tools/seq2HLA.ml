@@ -7,6 +7,8 @@ type product = <
     is_done : Ketrew_pure.Target.Condition.t option ;
     class1_path : string;
     class2_path: string;
+    class1_expression_path : string;
+    class2_expression_path: string;
     work_dir_path: string >
 
 
@@ -28,8 +30,14 @@ let hla_type
                      && shf "seq2HLA -1 %s -2 %s -r %s -p %d"
                        r1pt r2pt run_name processors)
   in
-  let class1_path = work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in
-  let class2_path = work_dir // (sprintf "%s-ClassII.HLAgenotype4digits" run_name) in
+  let class1_path =
+    work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in
+  let class2_path =
+    work_dir // (sprintf "%s-ClassII.HLAgenotype4digits" run_name) in
+  let class1_expression_path =
+    work_dir // (sprintf "%s-ClassI.expression" run_name) in
+  let class2_expression_path =
+    work_dir // (sprintf "%s-ClassII.expression" run_name) in
   let product =
     let class1 = KEDSL.single_file ~host class1_path in
     let class2 = KEDSL.single_file ~host class2_path in
@@ -39,6 +47,8 @@ let hla_type
                 (List.filter_map ~f:(fun f -> f#is_done) [class1; class2]))
       method class1_path = class1_path
       method class2_path = class2_path
+      method class1_expression_path = class1_expression_path
+      method class2_expression_path = class2_expression_path
       method work_dir_path = work_dir
     end
   in
