@@ -33,6 +33,10 @@ module File_type_specification = struct
     | Pair: t * t -> t
     | Lambda: (t -> t) -> t
 
+  let to_string_functions : (t -> string option) list ref = ref []
+  let add_to_string f =
+    to_string_functions := f :: !to_string_functions
+
   let rec to_string : type a. t -> string =
     function
     | To_unit a -> sprintf "(to_unit %s)" (to_string a)
@@ -55,7 +59,14 @@ module File_type_specification = struct
       sprintf "[%s]" (List.map l ~f:to_string |> String.concat ~sep:"; ")
     | Pair (a, b) -> sprintf "(%s, %s)" (to_string a) (to_string b)
     | Lambda _ -> "--LAMBDA--"
-    | _ -> "##UNKNOWN##"
+    | other ->
+      begin match
+        List.find_map !to_string_functions ~f:(fun f -> f other)
+      with
+      | None -> "##UNKNOWN##"
+      | Some s -> s
+      end
+
 
   let fail_get other name =
     ksprintf failwith "Error while extracting File_type_specification.t \
