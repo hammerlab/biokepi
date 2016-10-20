@@ -178,7 +178,7 @@ module To_workflow_with_register
 = struct
   include Biokepi.EDSL.Compile.To_workflow.Make(Config)
   open Biokepi.EDSL.Compile.To_workflow.File_type_specification
-  let register : type a . string -> a t -> a t = fun metadata x ->
+  let register : type a . string -> t -> t = fun metadata x ->
     let make_node any_node =
       let registration =
         let path = any_node#product#path in
