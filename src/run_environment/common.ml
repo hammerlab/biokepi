@@ -102,7 +102,9 @@ module Name_file = struct
           name max_length
     end;
     begin match Hashtbl.find db name with
-    | some when List.sort some = List.sort components -> ()
+    | some
+      when List.sort ~cmp:String.compare some
+           = List.sort ~cmp:String.compare components -> ()
     | some ->
       ksprintf failwith "Duplicate filename for different components\n\
                          Filename: %s\n\
