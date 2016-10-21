@@ -8,33 +8,36 @@ module Name_file = Biokepi_run_environment.Common.Name_file
 module File_type_specification = struct
   open Biokepi_run_environment.Common.KEDSL
 
-  type 'a t = ..
-  type 'a t +=
-    | To_unit: 'a t -> unit t
-    | Fastq: fastq_reads workflow_node -> [ `Fastq ] t
-    | Bam: bam_file workflow_node -> [ `Bam ] t
-    | Vcf: vcf_file workflow_node -> [ `Vcf ] t
-    | Bed: single_file workflow_node -> [ `Bed ] t
-    | Gtf: single_file workflow_node -> [ `Gtf ] t
+  type t = ..
+  type t +=
+    | To_unit: t -> t
+    | Fastq: fastq_reads workflow_node -> t
+    | Bam: bam_file workflow_node -> t
+    | Vcf: vcf_file workflow_node -> t
+    | Bed: single_file workflow_node -> t
+    | Gtf: single_file workflow_node -> t
     | Seq2hla_result:
-        Biokepi_bfx_tools.Seq2HLA.product workflow_node ->
-      [ `Seq2hla_result ] t
+        Biokepi_bfx_tools.Seq2HLA.product workflow_node -> t
     | Optitype_result:
-        Biokepi_bfx_tools.Optitype.product workflow_node -> [ `Optitype_result ] t
-    | Fastqc_result: list_of_files workflow_node -> [ `Fastqc ] t
-    | Flagstat_result: single_file workflow_node -> [ `Flagstat ] t
-    | Isovar_result: single_file workflow_node -> [ `Isovar ] t
-    | Topiary_result: single_file workflow_node -> [ `Topiary ] t
+        Biokepi_bfx_tools.Optitype.product workflow_node -> t
+    | Fastqc_result: list_of_files workflow_node -> t
+    | Flagstat_result: single_file workflow_node -> t
+    | Isovar_result: single_file workflow_node -> t
+    | Topiary_result: single_file workflow_node -> t
     | Vaxrank_result:
-        Biokepi_bfx_tools.Vaxrank.product workflow_node -> [ `Vaxrank ] t
-    | MHC_alleles: single_file workflow_node -> [ `MHC_alleles ] t
-    | Raw_file: single_file workflow_node -> [ `Raw_file ] t
-    | Gz: 'a t -> [ `Gz of 'a ] t
-    | List: 'a t list -> 'a list t
-    | Pair: 'a t * 'b t -> ('a * 'b) t
-    | Lambda: ('a t -> 'b t) -> ('a -> 'b) t
+        Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
+    | MHC_alleles: single_file workflow_node -> t
+    | Raw_file: single_file workflow_node -> t
+    | Gz: t -> t
+    | List: t list -> t
+    | Pair: t * t -> t
+    | Lambda: (t -> t) -> t
 
-  let rec to_string : type a. a  t -> string =
+  let to_string_functions : (t -> string option) list ref = ref []
+  let add_to_string f =
+    to_string_functions := f :: !to_string_functions
+
+  let rec to_string : type a. t -> string =
     function
     | To_unit a -> sprintf "(to_unit %s)" (to_string a)
     | Fastq _ -> "Fastq"
@@ -56,85 +59,92 @@ module File_type_specification = struct
       sprintf "[%s]" (List.map l ~f:to_string |> String.concat ~sep:"; ")
     | Pair (a, b) -> sprintf "(%s, %s)" (to_string a) (to_string b)
     | Lambda _ -> "--LAMBDA--"
-    | _ -> "##UNKNOWN##"
+    | other ->
+      begin match
+        List.find_map !to_string_functions ~f:(fun f -> f other)
+      with
+      | None -> "##UNKNOWN##"
+      | Some s -> s
+      end
+
 
   let fail_get other name =
     ksprintf failwith "Error while extracting File_type_specification.t \
                        (%s case, in %s), this usually means that the type \
                        has been wrongly extended" (to_string other) name
 
-  let get_fastq : [ `Fastq ] t -> fastq_reads workflow_node = function
+  let get_fastq : t -> fastq_reads workflow_node = function
   | Fastq b -> b
   | o -> fail_get o "Fastq"
 
-  let get_bam : [ `Bam ] t -> bam_file workflow_node = function
+  let get_bam : t -> bam_file workflow_node = function
   | Bam b -> b
   | o -> fail_get o "Bam"
 
-  let get_vcf : [ `Vcf ] t -> vcf_file workflow_node = function
+  let get_vcf : t -> vcf_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
 
-  let get_bed : [ `Bed ] t -> single_file workflow_node = function
+  let get_bed : t -> single_file workflow_node = function
   | Bed v -> v
   | o -> fail_get o "Bed"
 
-  let get_gtf : [ `Gtf ] t -> single_file workflow_node = function
+  let get_gtf : t -> single_file workflow_node = function
   | Gtf v -> v
   | o -> fail_get o "Gtf"
 
-  let get_raw_file : [ `Raw_file ] t -> single_file workflow_node = function
+  let get_raw_file : t -> single_file workflow_node = function
   | Raw_file v -> v
   | o -> fail_get o "Raw_file"
 
-  let get_seq2hla_result : [ `Seq2hla_result ] t ->
+  let get_seq2hla_result : t ->
     Biokepi_bfx_tools.Seq2HLA.product workflow_node =
     function
     | Seq2hla_result v -> v
     | o -> fail_get o "Seq2hla_result"
 
-  let get_fastqc_result : [ `Fastqc ] t -> list_of_files workflow_node =
+  let get_fastqc_result : t -> list_of_files workflow_node =
     function
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
 
-  let get_flagstat_result : [ `Flagstat ] t -> single_file workflow_node =
+  let get_flagstat_result : t -> single_file workflow_node =
     function
     | Flagstat_result v -> v
     | o -> fail_get o "Flagstat_result"
 
-  let get_isovar_result : [ `Isovar ] t -> single_file workflow_node =
+  let get_isovar_result : t -> single_file workflow_node =
     function
     | Isovar_result v -> v
     | o -> fail_get o "Isovar_result"
 
-  let get_topiary_result : [ `Topiary ] t -> single_file workflow_node =
+  let get_topiary_result : t -> single_file workflow_node =
     function
     | Topiary_result v -> v
     | o -> fail_get o "Topiary_result"
 
-  let get_vaxrank_result : [ `Vaxrank ] t -> Biokepi_bfx_tools.Vaxrank.product workflow_node =
+  let get_vaxrank_result : t -> Biokepi_bfx_tools.Vaxrank.product workflow_node =
     function
     | Vaxrank_result v -> v
     | o -> fail_get o "Vaxrank_result"
 
-  let get_mhc_alleles : [ `MHC_alleles ] t -> single_file workflow_node =
+  let get_mhc_alleles : t -> single_file workflow_node =
     function
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
   let get_optitype_result :
-    [ `Optitype_result ] t -> Biokepi_bfx_tools.Optitype.product workflow_node
+    t -> Biokepi_bfx_tools.Optitype.product workflow_node
     =
     function
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
 
-  let get_gz : [ `Gz of 'a ] t -> 'a t = function
+  let get_gz : t -> t = function
   | Gz v -> v
   | o -> fail_get o "Gz"
 
-  let get_list :  'a list  t -> 'a t list = function
+  let get_list : t -> t list = function
   | List v -> v
   | o -> fail_get o "List"
 
@@ -149,7 +159,11 @@ module File_type_specification = struct
     | Pair (_, b) -> b
     | other -> fail_get other "Pair"
 
-  let rec as_dependency_edges : type a. a t -> workflow_edge list =
+  let to_deps_functions : (t -> workflow_edge list option) list ref = ref []
+  let add_to_dependencies_edges_function f =
+    to_deps_functions := f :: !to_deps_functions
+
+  let rec as_dependency_edges : type a. t -> workflow_edge list =
     let one_depends_on wf = [depends_on wf] in
     function
     | To_unit v -> as_dependency_edges v
@@ -168,11 +182,18 @@ module File_type_specification = struct
     | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
     | Pair (a, b) -> as_dependency_edges a @ as_dependency_edges b
-    | other -> fail_get other "as_dependency_edges"
+    | other ->
+      begin match
+        List.find_map !to_deps_functions ~f:(fun f -> f other)
+      with
+      | None ->
+        fail_get other "as_dependency_edges"
+      | Some s -> s
+      end
 
   let get_unit_workflow :
     name: string ->
-    unit t ->
+    t ->
     unknown_product workflow_node =
     fun ~name f ->
       match f with
@@ -205,8 +226,8 @@ end
 
 module Make (Config : Compiler_configuration)
     : Semantics.Bioinformatics_base
-    with type 'a repr = 'a File_type_specification.t and
-    type 'a observation = 'a File_type_specification.t
+    with type 'a repr = File_type_specification.t and
+    type 'a observation = File_type_specification.t
 = struct
   include File_type_specification
   module Tools = Biokepi_bfx_tools
@@ -215,7 +236,7 @@ module Make (Config : Compiler_configuration)
   let failf fmt =
     ksprintf failwith fmt
 
-  type 'a repr = 'a t
+  type 'a repr = t
   type 'a observation = 'a repr
 
   let observe : (unit -> 'a repr) -> 'a observation = fun f -> f ()
@@ -481,7 +502,7 @@ module Make (Config : Compiler_configuration)
           Tools.Mosaik.align ~reference_build
             ~fastq ~result_prefix ~run_with ())
 
-  let gunzip: type a. [ `Gz of a ] t -> a t = fun gz ->
+  let gunzip:  t -> t = fun gz ->
     let inside = get_gz gz in
     begin match inside with
     | Fastq f ->
@@ -516,7 +537,7 @@ module Make (Config : Compiler_configuration)
   let gunzip_concat gzl =
     ksprintf failwith "To_workflow.gunzip_concat: not implemented"
 
-  let concat : type a. a list t -> a t =
+  let concat : t -> t =
     fun l ->
       let l = get_list l in
       begin match l with
@@ -547,7 +568,7 @@ module Make (Config : Compiler_configuration)
         ksprintf failwith "To_workflow.concat: not implemented"
       end
 
-  let merge_bams: [ `Bam ] list t -> [ `Bam ] t =
+  let merge_bams: t -> t =
     function
     | List [ one_bam ] -> one_bam
     | List bam_files ->
