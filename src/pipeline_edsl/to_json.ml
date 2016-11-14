@@ -236,6 +236,9 @@ module Make_serializer (How : sig
   let flagstat =
     one_to_one "flagstat" "default"
 
+  let samtools_stats =
+    one_to_one "samtools_stats" "default"
+
   let vcf_annotate_polyphen =
     one_to_one "vcf_annotate_polyphen" "default"
 

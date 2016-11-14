@@ -230,6 +230,8 @@ module type Bioinformatics_base = sig
 
   val flagstat: [ `Bam ] repr -> [ `Flagstat ] repr
 
+  val samtools_stats: [ `Bam ] repr -> [ `Samtools_stats_result ] repr
+
   val vcf_annotate_polyphen:
     [ `Vcf ] repr ->
     [ `Vcf ] repr

@@ -179,6 +179,8 @@ module Generic_optimizer
     fwd (Input.fastqc (bwd fq))
   let flagstat bam =
     fwd (Input.flagstat (bwd bam))
+  let samtools_stats bam =
+    fwd (Input.samtools_stats (bwd bam))
 
   let vcf_annotate_polyphen vcf =
     fwd (Input.vcf_annotate_polyphen (bwd vcf))
