@@ -232,6 +232,11 @@ module type Bioinformatics_base = sig
 
   val samtools_stats: [ `Bam ] repr -> [ `Samtools_stats_result ] repr
 
+  val multiqc: 
+    string -> (* Report title *)
+    string list -> (* List of folders for MultiQC to consider *)
+    [ `Multiqc_result ] repr
+
   val vcf_annotate_polyphen:
     [ `Vcf ] repr ->
     [ `Vcf ] repr

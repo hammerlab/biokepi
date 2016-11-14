@@ -21,6 +21,7 @@ module File_type_specification = struct
     | Optitype_result:
         Biokepi_bfx_tools.Optitype.product workflow_node -> t
     | Fastqc_result: list_of_files workflow_node -> t
+    | Multiqc_result: single_file workflow_node -> t
     | Flagstat_result: single_file workflow_node -> t
     | Samtools_stats_result: single_file workflow_node -> t
     | Isovar_result: single_file workflow_node -> t
@@ -49,6 +50,7 @@ module File_type_specification = struct
     | Seq2hla_result _ -> "Seq2hla_result"
     | Optitype_result _ -> "Optitype_result"
     | Fastqc_result _ -> "Fastqc_result"
+    | Multiqc_result _ -> "Multiqc_result"
     | Flagstat_result _ -> "Flagstat_result"
     | Samtools_stats_result _ -> "Samtools_stats_result"
     | Isovar_result _ -> "Isovar_result"
@@ -109,6 +111,11 @@ module File_type_specification = struct
     function
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
+
+  let get_multiqc_result : t -> single_file workflow_node =
+    function
+    | Multiqc_result v -> v
+    | o -> fail_get o "Multiqc_result"
 
   let get_flagstat_result : t -> single_file workflow_node =
     function
@@ -714,6 +721,20 @@ module Make (Config : Compiler_configuration)
         fastq#product#fragment_id_forced;
       ] in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
+
+  let multiqc title folders =
+    let output_folder =
+      Name_file.in_directory
+        ~readable_suffix:"multiqc_result"
+        Config.work_dir 
+        [ title; ]
+    in
+    Multiqc_result (
+      Tools.Multiqc.run ~run_with
+        ~report_title:title
+        ~input_folder_list:folders
+        ~output_folder
+    )
 
   let flagstat bam =
     let bam = get_bam bam in

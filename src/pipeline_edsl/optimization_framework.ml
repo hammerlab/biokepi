@@ -177,6 +177,8 @@ module Generic_optimizer
 
   let fastqc fq =
     fwd (Input.fastqc (bwd fq))
+  let multiqc title folders =
+    fwd (Input.multiqc title folders)
   let flagstat bam =
     fwd (Input.flagstat (bwd bam))
   let samtools_stats bam =

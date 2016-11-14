@@ -233,6 +233,15 @@ module Make_serializer (How : sig
   let fastqc =
     one_to_one "fastqc" "default"
 
+  let multiqc title folders =
+    fun ~(var_count : int) ->
+      let indexed_folders = 
+        List.mapi ~f:(fun i f -> (sprintf "folder%d" i, string f)) folders
+      in
+      function_call "multiqc" ([
+        "title", string title;
+      ] @ indexed_folders)
+
   let flagstat =
     one_to_one "flagstat" "default"
 
