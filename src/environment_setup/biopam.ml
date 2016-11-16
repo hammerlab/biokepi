@@ -68,6 +68,7 @@ let get_conda_env =
       ("distribute", `Version "0.6.45");
       ("fontconfig", `Version "2.11.1");
       ("freetype", `Version "2.5.5");
+      ("glpk", `Version "4.57");
       ("hdf5", `Version "1.8.15.1");
       ("htslib", `Version "1.3");
       ("libgcc", `Version "4.8.5");
@@ -302,7 +303,10 @@ let optitype =
     ~init_environment:KEDSL.Program.(
         fun ~install_path ->
           let name = Machine.Tool.(Default.optitype.Definition.name) in
-          shf "export OPAMROOT=%s" (Opam.root_of_package name |> Opam.root ~install_path)
+          let version = Machine.Tool.(Default.optitype.Definition.version) in
+          shf "export OPAMROOT=%s.%s"
+            (Opam.root_of_package name |> Opam.root ~install_path)
+            (match version with None -> "NOVERSION" | Some v -> v)
           && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
             (Opam.bin ~install_path)
       )
