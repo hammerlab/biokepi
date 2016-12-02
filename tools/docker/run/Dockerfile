@@ -33,5 +33,5 @@ ENV HOME /home/biokepi
 WORKDIR /home/biokepi
 RUN opam init -a --yes --comp 4.02.3
 
-COPY fonts.conf $HOME/.config/fontconfig/fonts.conf
-RUN ln -s $HOME/.config/fontconfig/fonts.conf $HOME/.fonts.conf
+# Copy local fonts config over, also needed for PDF gen
+COPY fonts.conf /etc/fonts/local.conf
