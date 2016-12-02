@@ -5,10 +5,15 @@
 FROM hammerlab/ketrew-server
 # Installing easy Biokepi dependencies:
 RUN sudo apt-get update
-RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk graphviz
+RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk graphviz xvfb
+
+# install wkhtmltopdf from source, this version comes with patched QT necessary for PDF gen
+RUN cd /tmp ; wget http://download.gna.org/wkhtmltopdf/0.12/0.12.3/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
+RUN cd /tmp && tar xvfJ wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
+RUN cd /tmp/wkhtmltox/bin && sudo chown root:root wkhtmltopdf
+RUN sudo cp /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
 
 # The hard-one Oracle's Java 7
-
 RUN sudo add-apt-repository --yes ppa:webupd8team/java
 RUN sudo apt-get update
 # On top of that we have to fight with interactive licensing questions
@@ -19,7 +24,7 @@ RUN sudo bash -c "DEBIAN_FRONTEND=noninteractive apt-get install --yes --allow-u
 
 # Now a fresh non-sudo user:
 
-RUN sudo  bash -c "\
+RUN sudo bash -c "\
   adduser --uid 20042 --disabled-password --gecos '' biokepi && \
   passwd -l biokepi && \
   chown -R biokepi:biokepi /home/biokepi"
@@ -27,3 +32,6 @@ USER biokepi
 ENV HOME /home/biokepi
 WORKDIR /home/biokepi
 RUN opam init -a --yes --comp 4.02.3
+
+COPY fonts.conf $HOME/.config/fontconfig/fonts.conf
+RUN ln -s $HOME/.config/fontconfig/fonts.conf $HOME/.fonts.conf
