@@ -19,8 +19,8 @@ module Configuration = struct
     (* topiary-like ones *)
     mhc_epitope_lengths: int list;
     (* reporting *)
-    reviewers: string list;
-    final_reviewer: string;
+    reviewers: string list option;
+    final_reviewer: string option;
     xlsx_report: bool;
     pdf_report: bool;
     ascii_report: bool;
@@ -53,21 +53,23 @@ module Configuration = struct
       "max_vaccine_peptides_per_mutation", `Int max_vaccine_peptides_per_mutation;
       "max_mutations_in_report", `Int max_mutations_in_report;
       "min_mapping_quality", `Int min_mapping_quality;
-      "min_reads_supporting_variant_sequence",
+      "min_variant_sequence_coverage",
         `Int min_variant_sequence_coverage;
       "min_alt_rna_reads", `Int min_alt_rna_reads;
       "use_duplicate_reads", `Bool use_duplicate_reads;
       "drop_secondary_alignments", `Bool drop_secondary_alignments;
       "mhc_epitope_lengths",
         `List (List.map mhc_epitope_lengths ~f:(fun i -> `Int i));
-      "reviewers", `List (List.map ~f:(fun r -> `String r) reviewers);
-      "final_reviewer", `String final_reviewer;
       "ascii_report", `Bool ascii_report;
       "pdf_report", `Bool pdf_report;
       "xlsx_report", `Bool xlsx_report;
       "parameters",
         `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
-      ])
+      ]
+      @ Option.value_map reviewers ~default:[]
+        ~f:(fun r -> ["reviewers", `List (List.map ~f:(fun r -> `String r) r)])
+      @ Option.value_map final_reviewer ~default:[]
+        ~f:(fun r -> ["final_reviewer", `String r]))
 
   let render {
     name;
@@ -99,14 +101,20 @@ module Configuration = struct
      soi min_variant_sequence_coverage] @
     ["--min-alt-rna-reads"; soi min_alt_rna_reads] @
     (if use_duplicate_reads
-      then ["--use-duplicate-reads"] else [""]) @
+      then ["--use-duplicate-reads"] else []) @
     (if drop_secondary_alignments
-      then ["--drop_secondary_alignments"] else [""]) @
+      then ["--drop_secondary_alignments"] else []) @
     ["--mhc-epitope-lengths";
       (mhc_epitope_lengths
         |> List.map ~f:string_of_int
         |> String.concat ~sep:",")] @
-    (List.concat_map parameters ~f:(fun (a,b) -> [a; b]))
+    (List.concat_map parameters ~f:(fun (a,b) -> [a; b])) @
+    (Option.value_map final_reviewer ~default:[]
+       ~f:(fun f -> ["--output-final-review"; f])) @
+    (Option.value_map reviewers ~default:[]
+       ~f:(fun rs ->
+           let reviewers = String.concat ~sep:"," rs in
+           ["--output-reviewed-by"; reviewers]))
     |> List.filter ~f:(fun s -> not (String.is_empty s))
 
   let default =
@@ -121,8 +129,8 @@ module Configuration = struct
      use_duplicate_reads = false;
      drop_secondary_alignments = false;
      mhc_epitope_lengths = [8; 9; 10; 11];
-     reviewers = [];
-     final_reviewer = "Reviewer";
+     reviewers = None;
+     final_reviewer = None;
      xlsx_report = false;
      pdf_report = false;
      ascii_report = true;
