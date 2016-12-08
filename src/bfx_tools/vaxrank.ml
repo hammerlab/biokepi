@@ -173,16 +173,16 @@ let run ~(run_with: Machine.t)
     ["--mhc-predictor"; (Topiary.predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
   let output_prefix = output_folder // "vaxrank-result" in
-  let output_of switch suffix k  =
-    let path = output_prefix ^ suffix in
+  let output_of switch kind suffix  =
+    let path = output_prefix ^ "." ^ suffix in
     let arg = if switch
-      then [sprintf "--output-%s-report" k; path] else [] in
+      then [sprintf "--output-%s-report" kind; path] else [] in
     let prod = if switch
       then Some (KEDSL.single_file ~host path) else None in
     arg, prod
   in
   let ascii_arg, ascii_product =
-    output_of configuration.Configuration.ascii_report "ascii" "text" in
+    output_of configuration.Configuration.ascii_report "ascii" "txt" in
   let xlsx_arg, xlsx_product =
     output_of configuration.Configuration.xlsx_report "xlsx" "xlsx" in
   let pdf_arg, pdf_product =
