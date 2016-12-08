@@ -12,7 +12,6 @@ VERSION = 0.0.0+master
 DESCRIPTION = Bioinformatics Ketrew Workflow-Building Library
 
 if $(test -e .git)
-    # this one works with quotes not the `None` one
     GIT_COMMIT = Some "$(shell git rev-parse HEAD)"
     export
 else
