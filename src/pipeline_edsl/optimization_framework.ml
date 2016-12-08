@@ -177,8 +177,12 @@ module Generic_optimizer
 
   let fastqc fq =
     fwd (Input.fastqc (bwd fq))
+  let multiqc title folders =
+    fwd (Input.multiqc title folders)
   let flagstat bam =
     fwd (Input.flagstat (bwd bam))
+  let samtools_stats bam =
+    fwd (Input.samtools_stats (bwd bam))
 
   let vcf_annotate_polyphen vcf =
     fwd (Input.vcf_annotate_polyphen (bwd vcf))

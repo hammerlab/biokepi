@@ -64,6 +64,27 @@ let flagstat ~(run_with:Machine.t) bam =
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
+let stats ~(run_with:Machine.t) bam =
+  let open KEDSL in
+  let samtools = Machine.get_tool run_with Machine.Tool.Default.samtools in
+  let src = bam#product#path in
+  let dest = sprintf "%s.%s" src "stats" in
+  let program =
+    Program.(
+      Machine.Tool.(init samtools) &&
+      shf "samtools stats %s > %s" (Filename.quote src) (Filename.quote dest)
+    ) in
+  let name = sprintf "samtools-stats-%s" Filename.(basename src) in
+  let make = Machine.run_program ~name run_with program in
+  let host = Machine.(as_host run_with) in
+  workflow_node
+    (single_file dest ~host) ~name ~make
+    ~edges:[
+      depends_on bam;
+      depends_on Machine.Tool.(ensure samtools);
+      on_failure_activate (Remove.file ~run_with dest);
+    ]
+
 let bgzip ~run_with input_file output_path =
   let open KEDSL in
   let samtools = Machine.get_tool run_with Machine.Tool.Default.samtools in

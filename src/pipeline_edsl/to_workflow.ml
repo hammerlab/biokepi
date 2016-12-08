@@ -21,7 +21,9 @@ module File_type_specification = struct
     | Optitype_result:
         Biokepi_bfx_tools.Optitype.product workflow_node -> t
     | Fastqc_result: list_of_files workflow_node -> t
+    | Multiqc_result: single_file workflow_node -> t
     | Flagstat_result: single_file workflow_node -> t
+    | Samtools_stats_result: single_file workflow_node -> t
     | Isovar_result: single_file workflow_node -> t
     | Topiary_result: single_file workflow_node -> t
     | Vaxrank_result:
@@ -48,7 +50,9 @@ module File_type_specification = struct
     | Seq2hla_result _ -> "Seq2hla_result"
     | Optitype_result _ -> "Optitype_result"
     | Fastqc_result _ -> "Fastqc_result"
+    | Multiqc_result _ -> "Multiqc_result"
     | Flagstat_result _ -> "Flagstat_result"
+    | Samtools_stats_result _ -> "Samtools_stats_result"
     | Isovar_result _ -> "Isovar_result"
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
@@ -108,10 +112,20 @@ module File_type_specification = struct
     | Fastqc_result v -> v
     | o -> fail_get o "Fastqc_result"
 
+  let get_multiqc_result : t -> single_file workflow_node =
+    function
+    | Multiqc_result v -> v
+    | o -> fail_get o "Multiqc_result"
+
   let get_flagstat_result : t -> single_file workflow_node =
     function
     | Flagstat_result v -> v
     | o -> fail_get o "Flagstat_result"
+
+  let get_samtools_stats_result : t -> single_file workflow_node =
+    function
+    | Samtools_stats_result v -> v
+    | o -> fail_get o "Samtools_stats_result"
 
   let get_isovar_result : t -> single_file workflow_node =
     function
@@ -708,9 +722,27 @@ module Make (Config : Compiler_configuration)
       ] in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
 
+  let multiqc title folders =
+    let output_folder =
+      Name_file.in_directory
+        ~readable_suffix:"multiqc_result"
+        Config.work_dir 
+        [ title; ]
+    in
+    Multiqc_result (
+      Tools.Multiqc.run ~run_with
+        ~report_title:title
+        ~input_folder_list:folders
+        ~output_folder
+    )
+
   let flagstat bam =
     let bam = get_bam bam in
     Flagstat_result (Tools.Samtools.flagstat ~run_with bam)
+
+  let samtools_stats bam =
+    let bam = get_bam bam in
+    Samtools_stats_result (Tools.Samtools.stats ~run_with bam)
 
   let vcf_annotate_polyphen vcf =
     let v = get_vcf vcf in
