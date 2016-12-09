@@ -31,7 +31,7 @@ module type Bioinformatics_base = sig
   val to_unit: 'a repr -> unit repr
 
   val input_url: string -> [ `Raw_file ] repr
-  (** 
+  (**
      Decrlare an URL as a input to a a pipeline.
 
      - If the URL has the scheme ["file://"] or no scheme it will be
@@ -170,6 +170,11 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr ->
     [ `Bed ] repr ->
     [ `Vcf ] repr
+
+  val bam_left_align:
+    reference_build: string ->
+    [ `Bam ] repr ->
+    [ `Bam ] repr
 
   val gatk_haplotype_caller:
     [ `Bam ] repr ->

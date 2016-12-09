@@ -159,6 +159,9 @@ module Generic_optimizer
   let bam_to_fastq ?fragment_id se_or_pe bam =
     fwd (Input.bam_to_fastq ?fragment_id se_or_pe (bwd bam))
 
+  let bam_left_align ~reference_build bam =
+    fwd (Input.bam_left_align ~reference_build (bwd bam))
+
   let mutect ?configuration ~normal ~tumor () =
     fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
   let mutect2 ?configuration ~normal ~tumor () =
