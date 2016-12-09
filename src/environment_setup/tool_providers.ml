@@ -199,7 +199,7 @@ let bwa =
 let freebayes =
   Git_installable_tool.make
     Machine.Tool.Default.freebayes
-    ~repository:"git://github.com/ekg/freebayes.git"
+    ~repository:"https://github.com/ekg/freebayes.git"
     ~recursive:true
     ~install_program:(fun ~path -> KEDSL.Program.(
         sh "make"

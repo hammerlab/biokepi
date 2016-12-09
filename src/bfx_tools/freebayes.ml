@@ -9,7 +9,9 @@ let bam_left_align ~(run_with : Machine.t) ~reference_build ~bam output_file_pat
   let reference_fasta =
     Machine.get_reference_genome run_with reference_build
     |> Reference_genome.fasta in
-  let name = sprintf "FreeBayes.bamleftalign %s" bam#product#path in
+  let name =
+    sprintf "FreeBayes.bamleftalign %s"
+      (Filename.basename bam#product#path) in
   let clean_up = Remove.file ~run_with output_file_path in
   let product =
     KEDSL.bam_file

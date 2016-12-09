@@ -13,3 +13,5 @@ the Biokepi workflows).
   (issue [`hammerlab/biokepi#287`](https://github.com/hammerlab/biokepi/issues/287))
 - `libx11-dev`, `libfreetype6-dev`, and `pkg-config` are dependencies of
   Matplotlib which is used by Python tools (`topiary`, `vaxrank`, …).
+- `git` is used to install tools from `git` repositories.
+
