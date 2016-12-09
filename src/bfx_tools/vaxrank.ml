@@ -2,23 +2,6 @@ open Biokepi_run_environment
 open Common
 
 
-(*
-  $ vaxrank --help
-  usage: vaxrank [-h] --vcf VCF [--genome GENOME] --bam BAM
-               [--min-mapping-quality MIN_MAPPING_QUALITY]
-               [--use-duplicate-reads] [--drop-secondary-alignments]
-               [--min-reads-supporting-variant-sequence MIN_READS_SUPPORTING_VARIANT_SEQUENCE]
-               --mhc-predictor
-               {netmhc,netmhccons,netmhccons-iedb,netmhciipan,netmhciipan-iedb,netmhcpan,netmhcpan-iedb,random,smm,smm-iedb,smm-pmbec,smm-pmbec-iedb}
-               [--mhc-epitope-lengths MHC_EPITOPE_LENGTHS]
-               [--mhc-alleles-file MHC_ALLELES_FILE]
-               [--mhc-alleles MHC_ALLELES] [--output-csv OUTPUT_CSV]
-               [--output-ascii-report OUTPUT_ASCII_REPORT]
-               [--vaccine-peptide-length VACCINE_PEPTIDE_LENGTH]
-               [--padding-around-mutation PADDING_AROUND_MUTATION]
-               [--max-vaccine-peptides-per-mutation MAX_VACCINE_PEPTIDES_PER_MUTATION]
-               [--max-mutations-in-report MAX_MUTATIONS_IN_REPORT]
-*)
 module Configuration = struct
   type t = {
     name: string;
@@ -29,11 +12,18 @@ module Configuration = struct
     max_mutations_in_report: int;
     (* isovar-like ones *)
     min_mapping_quality: int;
-    min_reads_supporting_variant_sequence: int;
+    min_variant_sequence_coverage: int;
+    min_alt_rna_reads: int;
     use_duplicate_reads: bool;
     drop_secondary_alignments: bool;
     (* topiary-like ones *)
     mhc_epitope_lengths: int list;
+    (* reporting *)
+    reviewers: string list option;
+    final_reviewer: string option;
+    xlsx_report: bool;
+    pdf_report: bool;
+    ascii_report: bool;
     (* the rest *)
     parameters: (string * string) list;
   }
@@ -44,28 +34,43 @@ module Configuration = struct
     max_vaccine_peptides_per_mutation;
     max_mutations_in_report;
     min_mapping_quality;
-    min_reads_supporting_variant_sequence;
+    min_variant_sequence_coverage;
+    min_alt_rna_reads;
     use_duplicate_reads;
     drop_secondary_alignments;
     mhc_epitope_lengths;
+    reviewers;
+    final_reviewer;
+    xlsx_report;
+    pdf_report;
+    ascii_report;
     parameters}: Yojson.Basic.json
     =
-    `Assoc [
+    `Assoc ([
       "name", `String name;
       "vaccine_peptide_length", `Int vaccine_peptide_length;
       "padding_around_mutation", `Int padding_around_mutation;
       "max_vaccine_peptides_per_mutation", `Int max_vaccine_peptides_per_mutation;
       "max_mutations_in_report", `Int max_mutations_in_report;
       "min_mapping_quality", `Int min_mapping_quality;
-      "min_reads_supporting_variant_sequence",
-        `Int min_reads_supporting_variant_sequence;
+      "min_variant_sequence_coverage",
+        `Int min_variant_sequence_coverage;
+      "min_alt_rna_reads", `Int min_alt_rna_reads;
       "use_duplicate_reads", `Bool use_duplicate_reads;
       "drop_secondary_alignments", `Bool drop_secondary_alignments;
       "mhc_epitope_lengths",
         `List (List.map mhc_epitope_lengths ~f:(fun i -> `Int i));
+      "ascii_report", `Bool ascii_report;
+      "pdf_report", `Bool pdf_report;
+      "xlsx_report", `Bool xlsx_report;
       "parameters",
-      `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
-    ]
+        `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
+      ]
+      @ Option.value_map reviewers ~default:[]
+        ~f:(fun r -> ["reviewers", `List (List.map ~f:(fun r -> `String r) r)])
+      @ Option.value_map final_reviewer ~default:[]
+        ~f:(fun r -> ["final_reviewer", `String r]))
+
   let render {
     name;
     vaccine_peptide_length;
@@ -73,10 +78,16 @@ module Configuration = struct
     max_vaccine_peptides_per_mutation;
     max_mutations_in_report;
     min_mapping_quality;
-    min_reads_supporting_variant_sequence;
+    min_variant_sequence_coverage;
+    min_alt_rna_reads;
     use_duplicate_reads;
     drop_secondary_alignments;
     mhc_epitope_lengths;
+    reviewers;
+    final_reviewer;
+    xlsx_report;
+    pdf_report;
+    ascii_report;
     parameters}
     =
     let soi = string_of_int in
@@ -86,17 +97,24 @@ module Configuration = struct
       soi max_vaccine_peptides_per_mutation] @
     ["--max-mutations-in-report"; soi max_mutations_in_report] @
     ["--min-mapping-quality"; soi min_mapping_quality] @
-    ["--min-reads-supporting-variant-sequence";
-      soi min_reads_supporting_variant_sequence] @
+    ["--min-variant-sequence-coverage";
+     soi min_variant_sequence_coverage] @
+    ["--min-alt-rna-reads"; soi min_alt_rna_reads] @
     (if use_duplicate_reads
-      then ["--use-duplicate-reads"] else [""]) @
+      then ["--use-duplicate-reads"] else []) @
     (if drop_secondary_alignments
-      then ["--drop_secondary_alignments"] else [""]) @
+      then ["--drop_secondary_alignments"] else []) @
     ["--mhc-epitope-lengths";
       (mhc_epitope_lengths
         |> List.map ~f:string_of_int
         |> String.concat ~sep:",")] @
-    (List.concat_map parameters ~f:(fun (a,b) -> [a; b]))
+    (List.concat_map parameters ~f:(fun (a,b) -> [a; b])) @
+    (Option.value_map final_reviewer ~default:[]
+       ~f:(fun f -> ["--output-final-review"; f])) @
+    (Option.value_map reviewers ~default:[]
+       ~f:(fun rs ->
+           let reviewers = String.concat ~sep:"," rs in
+           ["--output-reviewed-by"; reviewers]))
     |> List.filter ~f:(fun s -> not (String.is_empty s))
 
   let default =
@@ -106,18 +124,25 @@ module Configuration = struct
      max_vaccine_peptides_per_mutation = 1;
      max_mutations_in_report = 10;
      min_mapping_quality = 1;
-     min_reads_supporting_variant_sequence = 2;
+     min_variant_sequence_coverage = 1;
+     min_alt_rna_reads = 3;
      use_duplicate_reads = false;
      drop_secondary_alignments = false;
      mhc_epitope_lengths = [8; 9; 10; 11];
+     reviewers = None;
+     final_reviewer = None;
+     xlsx_report = false;
+     pdf_report = false;
+     ascii_report = true;
      parameters = []}
   let name t = t.name
 end
 
 type product = <
   is_done : Ketrew_pure.Target.Condition.t option ;
-  text_report_path : string;
-  csv_report_path: string;
+  ascii_report_path : string option;
+  xlsx_report_path: string option;
+  pdf_report_path: string option;
   output_folder_path: string >
 
 let run ~(run_with: Machine.t)
@@ -130,6 +155,7 @@ let run ~(run_with: Machine.t)
     ~output_folder
   =
   let open KEDSL in
+  let host = Machine.(as_host run_with) in
   let vaxrank =
     Machine.get_tool run_with Machine.Tool.Definition.(create "vaxrank")
   in
@@ -147,26 +173,44 @@ let run ~(run_with: Machine.t)
     ["--mhc-predictor"; (Topiary.predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
   let output_prefix = output_folder // "vaxrank-result" in
-  let csv_file = output_prefix ^ ".csv" in
-  let ascii_file = output_prefix ^ ".txt" in
-  let csv_arg = ["--output-csv"; csv_file] in
-  let ascii_arg = ["--output-ascii-report"; ascii_file] in
+  let output_of switch kind suffix  =
+    let path = output_prefix ^ "." ^ suffix in
+    let arg = if switch
+      then [sprintf "--output-%s-report" kind; path] else [] in
+    let prod = if switch
+      then Some (KEDSL.single_file ~host path) else None in
+    arg, prod
+  in
+  let ascii_arg, ascii_product =
+    output_of configuration.Configuration.ascii_report "ascii" "txt" in
+  let xlsx_arg, xlsx_product =
+    output_of configuration.Configuration.xlsx_report "xlsx" "xlsx" in
+  let pdf_arg, pdf_product =
+    output_of configuration.Configuration.pdf_report "pdf" "pdf" in
+  let () =
+    match ascii_product, xlsx_product, pdf_product with
+    | None, None, None ->
+      failwith "Vaxrank requires one or more of pdf_report, \
+                xlsx_report, or ascii_report."
+    | _, _, _ -> () in
   let arguments =
     vcfs_arg @ bam_arg @ predictor_arg @ allele_arg (* input *)
-    @ csv_arg @ ascii_arg (* output *)
+    @ xlsx_arg @ pdf_arg @ ascii_arg
     @ Configuration.render configuration (* other config *)
   in
   let name = "Vaxrank run" in
-  let host = Machine.(as_host run_with) in
   let product =
-    let text_report = KEDSL.single_file ~host ascii_file in
-    let csv_report = KEDSL.single_file ~host csv_file in
+    let path_of f = Option.map f ~f:(fun f -> f#path) in
     object
       method is_done =
         Some (`And
-                (List.filter_map ~f:(fun f -> f#is_done) [text_report; csv_report]))
-      method text_report_path = ascii_file
-      method csv_report_path = csv_file
+                (List.filter_map ~f:(fun f ->
+                     let open Option in
+                     f >>= fun f -> f#is_done)
+                   [ascii_product; xlsx_product; pdf_product]))
+      method ascii_report_path = path_of ascii_product
+      method xlsx_report_path = path_of xlsx_product
+      method pdf_report_path = path_of pdf_product
       method output_folder_path = output_folder
     end
   in
