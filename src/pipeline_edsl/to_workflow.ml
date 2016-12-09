@@ -699,6 +699,13 @@ module Make (Config : Compiler_configuration)
            ~primary:vcf ~intersect_with:[bed]
            ~run_with output)
 
+  let bam_left_align ~reference_build bam =
+    let bam = get_bam bam in
+    let output =
+      Name_file.from_path bam#product#path ~readable_suffix:"_left-aligned.bam"
+        [Filename.basename bam#product#path] in
+    Bam (Tools.Freebayes.bam_left_align ~reference_build ~bam ~run_with output)
+
   let fastqc fq =
     let fastq = get_fastq fq in
     let output_folder =

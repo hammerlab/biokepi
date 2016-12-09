@@ -31,7 +31,7 @@ module type Bioinformatics_base = sig
   val to_unit: 'a repr -> unit repr
 
   val input_url: string -> [ `Raw_file ] repr
-  (** 
+  (**
      Decrlare an URL as a input to a a pipeline.
 
      - If the URL has the scheme ["file://"] or no scheme it will be
@@ -170,6 +170,15 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr ->
     [ `Bed ] repr ->
     [ `Vcf ] repr
+
+  (** FreeBaye's bamleftalign utility, which left-normalizes indels. That is,
+      indels which could be aligned multiple ways (e.g. AAA_G_GAA is the same as
+      AAAG_G_AA) are moved to the left, as in the first example. This is so that
+      they can be treated uniformly in post-processing. *)
+  val bam_left_align:
+    reference_build: string ->
+    [ `Bam ] repr ->
+    [ `Bam ] repr
 
   val gatk_haplotype_caller:
     [ `Bam ] repr ->

@@ -5,7 +5,7 @@
 FROM hammerlab/ketrew-server
 # Installing easy Biokepi dependencies:
 RUN sudo apt-get update
-RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk graphviz xvfb
+RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk graphviz xvfb git
 
 # install wkhtmltopdf from source, this version comes with patched QT necessary for PDF gen
 RUN cd /tmp ; wget http://download.gna.org/wkhtmltopdf/0.12/0.12.3/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz

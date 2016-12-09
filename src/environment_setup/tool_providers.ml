@@ -62,20 +62,56 @@ let generic_installation
           && sh "echo Done"
         ))
 
+let git_installation
+    ~(run_program : Machine.Make_fun.t)
+    ~host ~install_path
+    ~install_program ~witness
+    ~repository ~recursive tool
+  =
+  let open KEDSL in
+  let recursive = if recursive then "--recursive" else "" in
+  let version =
+    (Option.value_exn
+       tool.Machine.Tool.Definition.version
+       ~msg:"Git_installable tool must have a verison") in
+  let name = tool.Machine.Tool.Definition.name in
+  workflow_node
+    ~name:(sprintf "Install %s %s" name version)
+    witness
+    ~edges:[
+      on_failure_activate (rm_path ~host install_path);
+    ]
+    ~make:(
+      run_program
+        ~requirements:[
+          `Internet_access;
+          `Self_identification ["git-instalation"; name];
+        ]
+        Program.(
+          shf "mkdir -p %s" install_path
+          && shf "cd %s" install_path
+          && shf "git clone %s %s" recursive repository
+          && shf "cd %s" name
+          && shf "git checkout %s" version
+          && install_program
+          && sh "echo Done"
+        ))
+
+
 module Tool_def = Machine.Tool.Definition
 
-type installable = {
-  tool_definition : Tool_def.t;
-  url : string;
-  install_program : path: string -> KEDSL.Program.t;
-  init_program : path: string -> KEDSL.Program.t;
-  witness: host: KEDSL.Host.t -> path: string -> KEDSL.unknown_product;
-  unarchived_directory : string option;
-}
-let noop = KEDSL.Program.sh "echo Nothing-done-here"
+module Installable_tool = struct
+  let noop = KEDSL.Program.sh "echo Nothing-done-here"
+  type t = {
+    tool_definition : Tool_def.t;
+    url : string;
+    install_program : path: string -> KEDSL.Program.t;
+    init_program : path: string -> KEDSL.Program.t;
+    witness: host: KEDSL.Host.t -> path: string -> KEDSL.unknown_product;
+    unarchived_directory : string option;
+  }
 
-
-let installable_tool ~url
+  let make ~url
     ?(install_program = fun ~path -> noop)
     ?(init_program = fun ~path -> noop)
     ~witness
@@ -84,28 +120,65 @@ let installable_tool ~url
   {tool_definition; url; install_program;
    init_program; witness; unarchived_directory}
 
-let render_installable_tool ~run_program ~host ~install_tools_path tool =
-  let path =
-    install_tools_path // Tool_def.to_directory_name tool.tool_definition in
-  let  ensure =
-    generic_installation
-      ?unarchived_directory:tool.unarchived_directory
-      ~run_program ~host
-      ~install_path:path
-      ~install_program:(tool.install_program ~path)
-      ~witness:(tool.witness ~host ~path)
-      ~url:tool.url
-      (tool.tool_definition.Tool_def.name)
-  in
-  Machine.Tool.create tool.tool_definition ~ensure
-    ~init:(tool.init_program path)
+  let render ~run_program ~host ~install_tools_path tool =
+    let path =
+      install_tools_path // Tool_def.to_directory_name tool.tool_definition in
+    let ensure =
+      generic_installation
+        ?unarchived_directory:tool.unarchived_directory
+        ~run_program ~host
+        ~install_path:path
+        ~install_program:(tool.install_program ~path)
+        ~witness:(tool.witness ~host ~path)
+        ~url:tool.url
+        (tool.tool_definition.Tool_def.name)
+    in
+    Machine.Tool.create tool.tool_definition ~ensure
+      ~init:(tool.init_program path)
+end
+
+module Git_installable_tool = struct
+  let noop = KEDSL.Program.sh "echo Nothing-done-here"
+  type t = {
+    tool_definition : Tool_def.t;
+    repository : string;
+    recursive : bool;
+    install_program : path: string -> KEDSL.Program.t;
+    init_program : path: string -> KEDSL.Program.t;
+    witness: host: KEDSL.Host.t -> path: string -> KEDSL.unknown_product;
+  }
+
+  let make ~repository
+    ?(install_program = fun ~path -> noop)
+    ?(init_program = fun ~path -> noop)
+    ?(recursive = false)
+    ~witness
+    tool_definition =
+  {tool_definition; repository; recursive; install_program;
+   init_program; witness;}
+
+  let render ~run_program ~host ~install_tools_path tool =
+    let path =
+      install_tools_path // Tool_def.to_directory_name tool.tool_definition in
+    let ensure =
+      git_installation
+        ~run_program ~host
+        ~install_path:path
+        ~install_program:(tool.install_program ~path)
+        ~witness:(tool.witness ~host ~path)
+        ~repository:tool.repository
+        ~recursive:tool.recursive
+        tool.tool_definition
+    in
+    Machine.Tool.create tool.tool_definition ~ensure
+      ~init:(tool.init_program path)
+end
 
 let add_to_dollar_path ~path = KEDSL.Program.shf "export PATH=%s:$PATH" path
 
 let make_and_copy_bin bin =
   fun ~path -> KEDSL.Program.(
-      sh "make" && shf "cp %s %s" bin path
-    )
+      sh "make" && shf "cp %s %s" bin path)
 let witness_file bin =
   fun ~host ~path ->
     let p = KEDSL.single_file ~host (path // bin) in
@@ -116,15 +189,28 @@ let witness_list l =
     |> fun p -> object method is_done = p#is_done end
 
 let bwa =
-  installable_tool
+  Installable_tool.make
     Machine.Tool.Default.bwa
     ~url:"http://downloads.sourceforge.net/project/bio-bwa/bwa-0.7.10.tar.bz2"
     ~install_program:(make_and_copy_bin "bwa")
     ~init_program:add_to_dollar_path
     ~witness:(witness_file "bwa")
 
+let freebayes =
+  Git_installable_tool.make
+    Machine.Tool.Default.freebayes
+    ~repository:"https://github.com/ekg/freebayes.git"
+    ~recursive:true
+    ~install_program:(fun ~path -> KEDSL.Program.(
+        sh "make"
+        && shf "cp -r bin %s" path
+      ))
+    ~init_program:(fun ~path ->
+        KEDSL.Program.(shf "export PATH=%s/bin/:$PATH" path))
+    ~witness:(witness_list ["bin/freebayes"; "bin/bamleftalign"])
+
 let stringtie =
-  installable_tool
+  Installable_tool.make
     Machine.Tool.Default.stringtie
     ~url:"https://github.com/gpertea/stringtie/archive/v1.2.2.tar.gz"
     ~install_program:(make_and_copy_bin "stringtie")
@@ -132,7 +218,7 @@ let stringtie =
     ~witness:(witness_file "stringtie")
 
 let vcftools =
-  installable_tool Machine.Tool.Default.vcftools
+  Installable_tool.make Machine.Tool.Default.vcftools
     ~url:"http://downloads.sourceforge.net/project/\
           vcftools/vcftools_0.1.12b.tar.gz"
     ~install_program:(fun ~path -> KEDSL.Program.(
@@ -146,7 +232,7 @@ let vcftools =
                        && shf "export PERL5LIB=$PERL5LIB:%s/site_perl/" path))
 
 let bedtools =
-  installable_tool Machine.Tool.Default.bedtools
+  Installable_tool.make Machine.Tool.Default.bedtools
     ~url:"https://github.com/arq5x/bedtools2/\
           archive/v2.23.0.tar.gz"
     ~install_program:(fun ~path -> KEDSL.Program.(
@@ -158,7 +244,7 @@ let bedtools =
 let mosaik =
   let url =
     "https://mosaik-aligner.googlecode.com/files/MOSAIK-2.2.3-source.tar" in
-  installable_tool Machine.Tool.Default.mosaik ~url
+  Installable_tool.make Machine.Tool.Default.mosaik ~url
     ~unarchived_directory:"MOSAIK*"
     ~init_program:(fun ~path ->
         KEDSL.Program.(
@@ -179,7 +265,7 @@ let star =
   let star_binary = "STAR" in
   (* TODO: there are other binaries in `bin/` *)
   let star_binary_path = sprintf "bin/Linux_x86_64/%s" star_binary in
-  installable_tool ~url Machine.Tool.Default.star
+  Installable_tool.make ~url Machine.Tool.Default.star
     ~init_program:add_to_dollar_path
     ~unarchived_directory:"STAR-*"
     ~install_program:KEDSL.Program.(fun ~path ->
@@ -200,7 +286,7 @@ let hisat tool =
     | other ->
       failwithf "Can't install Hisat version: %s" (Tool_def.to_string other)
   in
-  installable_tool tool
+  Installable_tool.make tool
     ~url
     ~witness:(witness_file hisat_binary)
     ~install_program:KEDSL.Program.(fun ~path ->
@@ -211,7 +297,7 @@ let hisat tool =
 let kallisto =
   let url = "https://github.com/pachterlab/kallisto/releases/download\
              /v0.42.3/kallisto_linux-v0.42.3.tar.gz" in
-  installable_tool Machine.Tool.Default.kallisto ~url
+  Installable_tool.make Machine.Tool.Default.kallisto ~url
     ~witness:(witness_file "kallisto")
     ~install_program:KEDSL.Program.(fun ~path ->
         shf "cp -r * %s" path
@@ -234,9 +320,8 @@ let samtools =
     && sh "echo Done"
   in
   let witness = witness_list tools in
-  installable_tool Machine.Tool.Default.samtools ~url ~install_program
+  Installable_tool.make Machine.Tool.Default.samtools ~url ~install_program
     ~init_program:add_to_dollar_path ~witness
-
 
 let cufflinks =
   let url =
@@ -244,7 +329,7 @@ let cufflinks =
      cufflinks-2.2.1.Linux_x86_64.tar.gz" in
   let witness = witness_file "cufflinks" in
   let install_program ~path = KEDSL.Program.(shf "cp * %s" path) in
-  installable_tool Machine.Tool.Default.cufflinks ~install_program ~url
+  Installable_tool.make Machine.Tool.Default.cufflinks ~install_program ~url
     ~init_program:add_to_dollar_path ~witness
 
 let somaticsniper =
@@ -258,10 +343,8 @@ let somaticsniper =
   let binary_in_deb = "usr/bin/bam-somaticsniper1.0.3" in
   let install_program ~path =
     KEDSL.Program.(shf "mv %s/%s %s/%s" path binary_in_deb path binary) in
-  installable_tool Machine.Tool.Default.somaticsniper ~install_program ~url
+  Installable_tool.make Machine.Tool.Default.somaticsniper ~install_program ~url
     ~witness:(witness_file binary) ~init_program:add_to_dollar_path
-
-
 
 let varscan =
   let url =
@@ -270,7 +353,7 @@ let varscan =
   let witness = witness_file jar in
   let init_program ~path =
     KEDSL.Program.(shf "export VARSCAN_JAR=%s/%s" path jar) in
-  installable_tool Machine.Tool.Default.varscan ~url ~init_program ~witness
+  Installable_tool.make Machine.Tool.Default.varscan ~url ~init_program ~witness
 
 let picard =
   let url =
@@ -279,7 +362,7 @@ let picard =
   in
   let jar = "picard-tools-1.127" // "picard.jar" in
   let init_program ~path = KEDSL.Program.(shf "export PICARD_JAR=%s/%s" path jar) in
-  installable_tool Machine.Tool.Default.picard ~url ~init_program
+  Installable_tool.make Machine.Tool.Default.picard ~url ~init_program
     ~witness:(witness_file jar)
 
 (**
@@ -289,7 +372,7 @@ let picard =
    reimplement the `Tool.t` is some other way).
 *)
 
-let get_broad_jar = 
+let get_broad_jar =
   Workflow_utilities.Download.get_tool_file ~identifier:"broad-jar"
 
 let mutect_tool
@@ -332,7 +415,7 @@ let strelka =
   in
   let init_program ~path =
     KEDSL.Program.(shf "export STRELKA_BIN=%s/%s" path strelka_bin) in
-  installable_tool Machine.Tool.Default.strelka ~url
+  Installable_tool.make Machine.Tool.Default.strelka ~url
     ~init_program ~install_program ~witness
 
 let virmid =
@@ -341,7 +424,7 @@ let virmid =
   let jar = "Virmid-1.1.1" // "Virmid.jar" in
   let init_program ~path =
     KEDSL.Program.(shf "export VIRMID_JAR=%s/%s" path jar) in
-  installable_tool Machine.Tool.Default.virmid ~url ~init_program
+  Installable_tool.make Machine.Tool.Default.virmid ~url ~init_program
     ~unarchived_directory:"."
     ~witness:(witness_file jar)
 
@@ -353,7 +436,7 @@ let muse =
     KEDSL.Program.( shf "chmod +x %s/%s" path binary) in
   let init_program ~path =
     KEDSL.Program.(shf "export muse_bin=%s/%s" path binary) in
-  installable_tool Machine.Tool.Default.muse ~url
+  Installable_tool.make Machine.Tool.Default.muse ~url
     ~install_program ~init_program
     ~witness:(witness_file binary)
 
@@ -366,7 +449,7 @@ let fastqc =
   let init_program ~path =
     KEDSL.Program.(shf "export FASTQC_BIN=%s" (binary_path path))
   in
-  installable_tool Machine.Tool.Default.fastqc ~url
+  Installable_tool.make Machine.Tool.Default.fastqc ~url
     ~witness:(witness_file binary)
     ~install_program:KEDSL.Program.(fun ~path ->
         shf "cp -r * %s" path
@@ -375,9 +458,9 @@ let fastqc =
     ~init_program
     ~unarchived_directory:"FastQC"
 
-  let samblaster = 
+  let samblaster =
     let binary = "samblaster" in
-    installable_tool
+    Installable_tool.make
       Machine.Tool.Default.samblaster
       ~url:"https://github.com/GregoryFaust/samblaster/releases/download/v.0.1.22/samblaster-v.0.1.22.tar.gz"
       ~install_program:(make_and_copy_bin binary)
@@ -402,7 +485,10 @@ let default_toolkit
     ?(netmhc_tool_locations = default_netmhc_locations)
     () =
   let install installable =
-    render_installable_tool ~host installable ~install_tools_path ~run_program
+    Installable_tool.render ~host installable ~install_tools_path ~run_program
+  in
+  let install_git installable =
+    Git_installable_tool.render ~host installable ~install_tools_path ~run_program
   in
   Machine.Tool.Kit.concat [
     Machine.Tool.Kit.of_list [
@@ -427,12 +513,13 @@ let default_toolkit
       install kallisto;
       install fastqc;
       install samblaster;
+      install_git freebayes;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
-    Python_package.default ~run_program ~host 
+    Python_package.default ~run_program ~host
       ~install_path: (install_tools_path // "python-tools") ();
     Netmhc.default ~run_program ~host
-      ~install_path: (install_tools_path // "netmhc-tools") 
+      ~install_path: (install_tools_path // "netmhc-tools")
       ~files:(netmhc_tool_locations ()) ();
   ]

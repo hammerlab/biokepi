@@ -161,7 +161,6 @@ module Make_serializer (How : sig
       aligner "bwa-mem-opt-bam" (Tools.Bwa.Configuration.Mem.name configuration)
         ~reference_build f
 
-
   let gunzip gz ~(var_count : int) =
     function_call "gunzip" ["input", gz ~var_count]
 
@@ -186,6 +185,8 @@ module Make_serializer (How : sig
   let stringtie ?(configuration = Tools.Stringtie.Configuration.default) =
     one_to_one "stringtie" configuration.Tools.Stringtie.Configuration.name
 
+  let bam_left_align ~reference_build =
+    one_to_one "bam_left_align" reference_build
 
   let indel_real_config (indel, target) =
     (sprintf "I%s-TC%s"
