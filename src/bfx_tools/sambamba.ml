@@ -4,6 +4,8 @@ open Common
 module Remove = Workflow_utilities.Remove
 
 
+(* Filter language syntax at
+   https://github.com/lomereiter/sambamba/wiki/%5Bsambamba-view%5D-Filter-expression-syntax *)
 let view ~(run_with : Machine.t) ~bam ~filter output_file_path =
   let open KEDSL in
   let name =
