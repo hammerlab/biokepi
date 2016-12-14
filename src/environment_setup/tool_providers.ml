@@ -209,6 +209,13 @@ let freebayes =
         KEDSL.Program.(shf "export PATH=%s/bin/:$PATH" path))
     ~witness:(witness_list ["bin/freebayes"; "bin/bamleftalign"])
 
+let sambamba =
+  Installable_tool.make
+    Machine.Tool.Default.sambamba
+    ~url:"https://github.com/lomereiter/sambamba/releases/download/v0.6.5/sambamba_v0.6.5_linux.tar.bz2"
+    ~install_program:add_to_dollar_path
+    ~witness:(witness_file "sambamba")
+
 let stringtie =
   Installable_tool.make
     Machine.Tool.Default.stringtie
