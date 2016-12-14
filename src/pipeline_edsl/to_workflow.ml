@@ -706,6 +706,13 @@ module Make (Config : Compiler_configuration)
         [Filename.basename bam#product#path] in
     Bam (Tools.Freebayes.bam_left_align ~reference_build ~bam ~run_with output)
 
+  let sambamba_filter ~filter bam =
+    let bam = get_bam bam in
+    let output =
+      Name_file.from_path bam#product#path ~readable_suffix:"_filtered.bam"
+        [Filename.basename bam#product#path; Tools.Sambamba.Filter.to_string filter] in
+    Bam (Tools.Sambamba.view ~bam ~run_with ~filter output)
+
   let fastqc fq =
     let fastq = get_fastq fq in
     let output_folder =

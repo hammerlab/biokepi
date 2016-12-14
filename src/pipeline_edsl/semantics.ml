@@ -171,12 +171,20 @@ module type Bioinformatics_base = sig
     [ `Bed ] repr ->
     [ `Vcf ] repr
 
-  (** FreeBaye's bamleftalign utility, which left-normalizes indels. That is,
+  (** FreeBayes' bamleftalign utility, which left-normalizes indels. That is,
       indels which could be aligned multiple ways (e.g. AAA_G_GAA is the same as
       AAAG_G_AA) are moved to the left, as in the first example. This is so that
       they can be treated uniformly in post-processing. *)
   val bam_left_align:
     reference_build: string ->
+    [ `Bam ] repr ->
+    [ `Bam ] repr
+
+  (** Sambamba's view filter tool, used to filter down a BAM to one with reads
+      matching some predicate (filter language at https://github.com/lomereiter/sambamba/wiki/%5Bsambamba-view%5D-Filter-expression-syntax).
+  *)
+  val sambamba_filter:
+    filter: Sambamba.Filter.t ->
     [ `Bam ] repr ->
     [ `Bam ] repr
 

@@ -188,6 +188,9 @@ module Make_serializer (How : sig
   let bam_left_align ~reference_build =
     one_to_one "bam_left_align" reference_build
 
+  let sambamba_filter ~filter =
+    one_to_one "filter" (Tools.Sambamba.Filter.to_string filter)
+
   let indel_real_config (indel, target) =
     (sprintf "I%s-TC%s"
        indel.Tools.Gatk.Configuration.Indel_realigner.name
@@ -196,7 +199,6 @@ module Make_serializer (How : sig
   let gatk_indel_realigner
       ?(configuration = Tools.Gatk.Configuration.default_indel_realigner) =
     one_to_one "gatk_indel_realigner" (indel_real_config configuration)
-
 
   let gatk_indel_realigner_joint
       ?(configuration = Tools.Gatk.Configuration.default_indel_realigner) =
