@@ -162,8 +162,8 @@ module Generic_optimizer
   let bam_left_align ~reference_build bam =
     fwd (Input.bam_left_align ~reference_build (bwd bam))
 
-  let filter ~filter bam =
-    fwd (Input.filter ~filter (bwd bam))
+  let sambamba_filter ~filter bam =
+    fwd (Input.sambamba_filter ~filter (bwd bam))
 
   let mutect ?configuration ~normal ~tumor () =
     fwd (Input.mutect ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())

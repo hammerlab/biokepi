@@ -183,8 +183,8 @@ module type Bioinformatics_base = sig
   (** Sambamba's view filter tool, used to filter down a BAM to one with reads
       matching some predicate (filter language at https://github.com/lomereiter/sambamba/wiki/%5Bsambamba-view%5D-Filter-expression-syntax).
   *)
-  val filter:
-    filter: string ->
+  val sambamba_filter:
+    filter: Sambamba.Filter.t ->
     [ `Bam ] repr ->
     [ `Bam ] repr
 

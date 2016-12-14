@@ -33,7 +33,7 @@ module Tool = struct
     open Definition
     let bwa = create "bwa" ~version:"0.7.10"
     let freebayes = create "freebayes" ~version:"1.1.0"
-    let sambamba = create "sambamba" ~version:"v0.6.5"
+    let sambamba = create "sambamba" ~version:"0.6.5"
     let samtools = create "samtools" ~version:"1.3"
     let vcftools = create "vcftools" ~version:"0.1.12b"
     let bedtools = create "bedtools" ~version:"2.23.0"

@@ -3,6 +3,27 @@ open Common
 
 module Remove = Workflow_utilities.Remove
 
+module Filter = struct
+  type t = [
+    `String of string
+  ]
+
+  let of_string s =
+    `String s
+
+  let to_string f =
+    match f with
+    | `String s -> s
+
+  module Defaults = struct
+    let only_split_reads =
+      of_string "cigar =~ /^.*N.*$/"
+
+    let drop_split_reads =
+      of_string "cigar =~ /^[0-9MIDSHPX=]*$/"
+  end
+end
+
 
 (* Filter language syntax at
    https://github.com/lomereiter/sambamba/wiki/%5Bsambamba-view%5D-Filter-expression-syntax *)
@@ -10,7 +31,7 @@ let view ~(run_with : Machine.t) ~bam ~filter output_file_path =
   let open KEDSL in
   let name =
     sprintf "Sambamba.view %s %s"
-      (Filename.basename bam#product#path) filter in
+      (Filename.basename bam#product#path) (Filter.to_string filter) in
   let clean_up = Remove.file ~run_with output_file_path in
   let reference_build = bam#product#reference_build in
   let product =
@@ -26,7 +47,7 @@ let view ~(run_with : Machine.t) ~bam ~filter output_file_path =
              Program.(
                Machine.Tool.(init sambamba)
                && shf "sambamba_v0.6.5 view -F %s %s > %s"
-                 filter
+                 (Filter.to_string filter)
                  bam#product#path
                  output_file_path
              ))
