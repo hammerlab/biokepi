@@ -508,6 +508,7 @@ let default_toolkit
       install strelka;
       install picard;
       install somaticsniper;
+      install sambamba;
       install varscan;
       install muse;
       install virmid;
