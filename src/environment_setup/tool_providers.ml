@@ -9,6 +9,7 @@ let generic_installation
     ~host ~install_path
     ~install_program ~witness ~url
     ?unarchived_directory
+    ?(archive_is_directory = true)
     tool_name =
   let archive = Filename.basename url in
   let archive_kind =
@@ -23,14 +24,16 @@ let generic_installation
   let unarchival =
     let open Program in
     let and_cd =
-      shf "cd %s" (Option.value unarchived_directory
-                     ~default:(tool_name ^ "*")) in
+      if archive_is_directory then
+        [shf "cd %s" (Option.value unarchived_directory
+                        ~default:(tool_name ^ "*"))]
+      else [] in
     match archive_kind with
     | `Tar tar_option ->
-      chain [shf "tar xvf%s %s" tar_option archive;
-             shf "rm -f %s" archive; and_cd]
+      chain ([shf "tar xvf%s %s" tar_option archive;
+              shf "rm -f %s" archive; ] @ and_cd)
     | `Zip ->
-      chain [shf "unzip %s" archive; shf "rm -f %s" archive; and_cd]
+      chain ([shf "unzip %s" archive; shf "rm -f %s" archive;] @ and_cd)
     | `Deb ->
       chain [
         exec ["ar"; "x"; archive];
@@ -109,16 +112,17 @@ module Installable_tool = struct
     init_program : path: string -> KEDSL.Program.t;
     witness: host: KEDSL.Host.t -> path: string -> KEDSL.unknown_product;
     unarchived_directory : string option;
+    archive_is_directory : bool;
   }
 
   let make ~url
     ?(install_program = fun ~path -> noop)
     ?(init_program = fun ~path -> noop)
-    ~witness
+    ~witness ?(archive_is_directory = true)
     ?unarchived_directory
     tool_definition =
   {tool_definition; url; install_program;
-   init_program; witness; unarchived_directory}
+   init_program; witness; unarchived_directory; archive_is_directory}
 
   let render ~run_program ~host ~install_tools_path tool =
     let path =
@@ -126,6 +130,7 @@ module Installable_tool = struct
     let ensure =
       generic_installation
         ?unarchived_directory:tool.unarchived_directory
+        ~archive_is_directory:tool.archive_is_directory
         ~run_program ~host
         ~install_path:path
         ~install_program:(tool.install_program ~path)
@@ -154,8 +159,7 @@ module Git_installable_tool = struct
     ?(recursive = false)
     ~witness
     tool_definition =
-  {tool_definition; repository; recursive; install_program;
-   init_program; witness;}
+  {tool_definition; repository; recursive; install_program; init_program; witness;}
 
   let render ~run_program ~host ~install_tools_path tool =
     let path =
@@ -212,9 +216,13 @@ let freebayes =
 let sambamba =
   Installable_tool.make
     Machine.Tool.Default.sambamba
+    ~archive_is_directory:false
     ~url:"https://github.com/lomereiter/sambamba/releases/download/v0.6.5/sambamba_v0.6.5_linux.tar.bz2"
-    ~install_program:add_to_dollar_path
-    ~witness:(witness_file "sambamba")
+    ~install_program:(fun ~path -> KEDSL.Program.(
+        shf "cp * %s" path
+      ))
+    ~init_program:add_to_dollar_path
+    ~witness:(witness_file "sambamba_v0.6.5")
 
 let stringtie =
   Installable_tool.make
