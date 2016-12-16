@@ -235,8 +235,9 @@ let indel_realigner :
     let input_bam_1 = `Use_the_sorted_ones_please in
     ignore (more_input_bams, input_bam_1);
     let name =
-      sprintf "Indel Realignment on %s"
-        (Filename.basename input_sorted_bam_1#product#path)
+        sprintf "Indel Realignment on %s (%s)"
+          (Filename.basename input_sorted_bam_1#product#path)
+          (Region.to_filename on_region)
     in
     let gatk = Machine.get_tool run_with Machine.Tool.Default.gatk in
     let reference_genome =
