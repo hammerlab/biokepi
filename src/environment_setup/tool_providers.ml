@@ -218,9 +218,6 @@ let sambamba =
     Machine.Tool.Default.sambamba
     ~archive_is_directory:false
     ~url:"https://github.com/lomereiter/sambamba/releases/download/v0.6.5/sambamba_v0.6.5_linux.tar.bz2"
-    ~install_program:(fun ~path -> KEDSL.Program.(
-        shf "cp * %s" path
-      ))
     ~init_program:add_to_dollar_path
     ~witness:(witness_file "sambamba_v0.6.5")
 
