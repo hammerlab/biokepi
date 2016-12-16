@@ -46,7 +46,7 @@ let view ~(run_with : Machine.t) ~bam ~filter output_file_path =
              ~self_ids:["sambamba"; "view"]
              Program.(
                Machine.Tool.(init sambamba)
-               && shf "sambamba_v0.6.5 view -F %s %s > %s"
+               && shf "sambamba_v0.6.5 view --format=bam -F '%s' %s > %s"
                  (Filter.to_string filter)
                  bam#product#path
                  output_file_path
