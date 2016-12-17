@@ -55,7 +55,7 @@ let com ~conda_env fmt =
 let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
   let open KEDSL in
   let url =
-    "https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh" in
+    "https://repo.continuum.io/miniconda/Miniconda3-4.1.11-Linux-x86_64.sh" in
   let conda_exec  = single_file ~host (bin ~conda_env) in
   let install_dir = main_dir ~conda_env in
   workflow_node conda_exec
@@ -70,7 +70,7 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
           && exec ["rm";"-fr"; install_dir]
           && exec ["cd"; conda_env.install_path]
           && Workflow_utilities.Download.wget_program url
-          && shf "bash Miniconda3-latest-Linux-x86_64.sh -b -p %s" install_dir
+          && shf "bash Miniconda3-4.1.11-Linux-x86_64.sh -b -p %s" install_dir
         )
     )
 
