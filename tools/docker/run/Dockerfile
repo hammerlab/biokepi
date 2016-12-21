@@ -2,7 +2,8 @@
 # in https://github.com/ocaml/opam-dockerfiles
 # and we trust the people who did it (@avsm).
 # And we get `aspcud` on the way.
-FROM hammerlab/ketrew-server
+FROM hammerlab/ketrew-server:doc.3.0.0
+
 # Installing easy Biokepi dependencies:
 RUN sudo apt-get update
 RUN sudo apt-get install --yes cmake r-base tcsh libx11-dev libfreetype6-dev pkg-config wget gawk graphviz xvfb git
