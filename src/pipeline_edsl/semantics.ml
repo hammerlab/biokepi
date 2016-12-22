@@ -79,7 +79,14 @@ module type Bioinformatics_base = sig
 
   val concat: ('a list) repr -> 'a repr
 
-  val merge_bams: ([ `Bam ] list) repr -> [ `Bam ] repr
+  val merge_bams:
+    ?delete_input_on_success: bool ->
+    ?attach_rg_tag: bool ->
+    ?uncompressed_bam_output: bool ->
+    ?compress_level_one: bool ->
+    ?combine_rg_headers: bool ->
+    ?combine_pg_headers: bool ->
+    ([ `Bam ] list) repr -> [ `Bam ] repr
 
   val bam_to_fastq:
     ?fragment_id : string ->

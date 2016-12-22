@@ -568,7 +568,13 @@ module Make (Config : Compiler_configuration)
         ksprintf failwith "To_workflow.concat: not implemented"
       end
 
-  let merge_bams: t -> t =
+  let merge_bams
+      ?(delete_input_on_success = true)
+      ?(attach_rg_tag = false)
+      ?(uncompressed_bam_output = false)
+      ?(compress_level_one = false)
+      ?(combine_rg_headers = false)
+      ?(combine_pg_headers = false) =
     function
     | List [ one_bam ] -> one_bam
     | List bam_files ->
@@ -578,7 +584,15 @@ module Make (Config : Compiler_configuration)
           Config.work_dir
           (List.map bams ~f:(fun bam -> bam#product#path))
       in
-      Bam (Tools.Samtools.merge_bams ~run_with bams output_path)
+      Bam (Tools.Samtools.merge_bams
+             ~delete_input_on_success
+             ~attach_rg_tag
+             ~uncompressed_bam_output
+             ~compress_level_one
+             ~combine_rg_headers
+             ~combine_pg_headers
+             ~run_with
+             bams output_path)
     | other ->
       fail_get other "To_workflow.merge_bams: not a list of bams?"
 

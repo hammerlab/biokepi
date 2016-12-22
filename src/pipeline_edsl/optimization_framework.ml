@@ -153,7 +153,14 @@ module Generic_optimizer
   let concat l =
     fwd (Input.concat (bwd l))
 
-  let merge_bams bl =
+  let merge_bams
+      ?delete_input_on_success
+      ?attach_rg_tag
+      ?uncompressed_bam_output
+      ?compress_level_one
+      ?combine_rg_headers
+      ?combine_pg_headers
+      bl =
     fwd (Input.merge_bams (bwd bl))
 
   let bam_to_fastq ?fragment_id se_or_pe bam =
