@@ -170,7 +170,14 @@ module Make_serializer (How : sig
   let concat l ~(var_count : int) =
     function_call "concat" ["input-list", l ~var_count]
 
-  let merge_bams bl ~(var_count : int) =
+  let merge_bams
+      ?delete_input_on_success
+      ?attach_rg_tag
+      ?uncompressed_bam_output
+      ?compress_level_one
+      ?combine_rg_headers
+      ?combine_pg_headers
+      bl ~(var_count : int) =
     function_call "merge-bams" ["input-list", bl ~var_count]
 
   let star ?(configuration = Tools.Star.Configuration.Align.default) =
