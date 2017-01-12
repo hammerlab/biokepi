@@ -263,7 +263,11 @@ module Make (Config : Compiler_configuration)
 
   let deal_with_input_file (ifile : _ KEDSL.workflow_node) ~make_product =
     let open KEDSL in
-    let new_path = Config.work_dir // Filename.basename ifile#product#path in
+    let new_path =
+      Name_file.in_directory
+        Config.work_dir
+        ~readable_suffix:(Filename.basename ifile#product#path)
+        [ifile#product#path] in
     let make =
       Machine.quick_run_program Config.machine Program.(
           shf "mkdir -p %s" Config.work_dir
@@ -271,7 +275,7 @@ module Make (Config : Compiler_configuration)
             match Config.input_files with
             | `Link ->
               shf "cd %s" Config.work_dir
-              && shf "ln -s %s" ifile#product#path
+              && shf "ln -s %s %s" ifile#product#path new_path
             | `Copy ->
               shf "cp %s %s" ifile#product#path new_path
             | `Do_nothing ->
