@@ -38,9 +38,13 @@ module type Bioinformatics_base = sig
        treated as a “local file” (i.e. local to the {!Biokepi.Machine.t}).
      - If the URL has the schemes ["http://"] or ["https://"] the file
        will be downloaded into the work-directory.
-       One can override the local filename, by adding a ["filename"]
-       argument to the query part of the
-       URL. E.g. ["https://data.example.com/my-sample.bam?filename=sample-from-example.bam"].
+     - If the URL has the scheme ["gs://"] the file will be fetched thanks
+       to ["gsutil"] (Google Cloud's storage buckets management tool).
+       
+     For both ["http(s)://"] and ["gs://"] schemes one can override
+     the local filename, by adding a ["filename"] argument to the
+     query part of the
+     URL. E.g. ["https://data.example.com/my-sample.bam?filename=sample-from-example.bam"].
   *)
 
   val fastq :

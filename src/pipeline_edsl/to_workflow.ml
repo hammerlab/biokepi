@@ -312,6 +312,15 @@ module Make (Config : Compiler_configuration)
   let input_url url =
     let open KEDSL in
     let uri = Uri.of_string url in
+    let path_of_uri uri =
+      let basename =
+        match Uri.get_query_param uri "filename" with
+        | Some f -> f
+        | None ->
+          Digest.(string url |> to_hex) ^ (Uri.path uri |> Filename.basename)
+      in
+      Config.work_dir // basename
+    in
     begin match Uri.scheme uri with
     | None | Some "file" ->
       let raw_file =
@@ -320,19 +329,19 @@ module Make (Config : Compiler_configuration)
       in
       Raw_file (deal_with_input_file raw_file (single_file ~host))
     | Some "http" | Some "https" ->
-      let path =
-        let basename =
-          match Uri.get_query_param uri "filename" with
-          | Some f -> f
-          | None ->
-            Digest.(string url |> to_hex) ^ (Uri.path uri |> Filename.basename)
-        in
-        Config.work_dir // basename
-      in
+      let path = path_of_uri uri in
       Raw_file Biokepi_run_environment.(
           Workflow_utilities.Download.wget
             ~host
             ~run_program:(Machine.run_download_program Config.machine) url path
+        )
+    | Some "gs" ->
+      let path = path_of_uri uri in
+      Raw_file Biokepi_run_environment.(
+          Workflow_utilities.Download.gsutil_cp
+            ~host
+            ~run_program:(Machine.run_download_program Config.machine)
+            ~url ~local_path:path
         )
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
