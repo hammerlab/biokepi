@@ -263,7 +263,11 @@ module Make (Config : Compiler_configuration)
 
   let deal_with_input_file (ifile : _ KEDSL.workflow_node) ~make_product =
     let open KEDSL in
-    let new_path = Config.work_dir // Filename.basename ifile#product#path in
+    let new_path =
+      Name_file.in_directory
+        Config.work_dir
+        ~readable_suffix:(Filename.basename ifile#product#path)
+        [ifile#product#path] in
     let make =
       Machine.quick_run_program Config.machine Program.(
           shf "mkdir -p %s" Config.work_dir
@@ -271,7 +275,7 @@ module Make (Config : Compiler_configuration)
             match Config.input_files with
             | `Link ->
               shf "cd %s" Config.work_dir
-              && shf "ln -s %s" ifile#product#path
+              && shf "ln -s %s %s" ifile#product#path new_path
             | `Copy ->
               shf "cp %s %s" ifile#product#path new_path
             | `Do_nothing ->
@@ -308,6 +312,15 @@ module Make (Config : Compiler_configuration)
   let input_url url =
     let open KEDSL in
     let uri = Uri.of_string url in
+    let path_of_uri uri =
+      let basename =
+        match Uri.get_query_param uri "filename" with
+        | Some f -> f
+        | None ->
+          Digest.(string url |> to_hex) ^ (Uri.path uri |> Filename.basename)
+      in
+      Config.work_dir // basename
+    in
     begin match Uri.scheme uri with
     | None | Some "file" ->
       let raw_file =
@@ -316,19 +329,19 @@ module Make (Config : Compiler_configuration)
       in
       Raw_file (deal_with_input_file raw_file (single_file ~host))
     | Some "http" | Some "https" ->
-      let path =
-        let basename =
-          match Uri.get_query_param uri "filename" with
-          | Some f -> f
-          | None ->
-            Digest.(string url |> to_hex) ^ (Uri.path uri |> Filename.basename)
-        in
-        Config.work_dir // basename
-      in
+      let path = path_of_uri uri in
       Raw_file Biokepi_run_environment.(
           Workflow_utilities.Download.wget
             ~host
             ~run_program:(Machine.run_download_program Config.machine) url path
+        )
+    | Some "gs" ->
+      let path = path_of_uri uri in
+      Raw_file Biokepi_run_environment.(
+          Workflow_utilities.Download.gsutil_cp
+            ~host
+            ~run_program:(Machine.run_download_program Config.machine)
+            ~url ~local_path:path
         )
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
