@@ -285,6 +285,27 @@ module Download = struct
               shf "wget %s -O %s"
                 (Filename.quote s) (Filename.quote local_box_path)
             end))
+
+  let gsutil_cp
+      ~(run_program : Machine.Make_fun.t)
+      ~host ~url ~local_path =
+    let open KEDSL in
+    workflow_node (single_file ~host local_path)
+      ~name:(sprintf "GSUtil-CP: %s" (Filename.basename local_path))
+      ~edges:[
+        on_failure_activate (Remove.path_on_host ~host local_path)
+      ]
+      ~make:(
+        run_program
+          ~requirements:[
+            `Internet_access;
+            `Self_identification ["gsutil-cp"; url];
+          ]
+          Program.(
+            shf "mkdir -p %s" (Filename.dirname local_path)
+            && exec ["gsutil"; "cp"; url; local_path]
+          )
+      )
 end
 
 module Vcftools = struct
