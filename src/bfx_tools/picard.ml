@@ -173,7 +173,7 @@ let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
     Program.(
       Machine.Tool.(init picard_jar) &&
       shf "mkdir -p %s" (r1 |> Filename.dirname |> Filename.quote)
-      && shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
+      && shf "java -jar $PICARD_JAR SamToFastq VALIDATION_STRINGENCY=LENIENT INPUT=%s %s"
         (Filename.quote sorted_bam#product#path)
         (String.concat ~sep:" " fastq_output_options)
     ) in
