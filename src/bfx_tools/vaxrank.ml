@@ -14,6 +14,7 @@ module Configuration = struct
     min_mapping_quality: int;
     min_variant_sequence_coverage: int;
     min_alt_rna_reads: int;
+    include_mismatches_after_variant: bool;
     use_duplicate_reads: bool;
     drop_secondary_alignments: bool;
     (* topiary-like ones *)
@@ -36,6 +37,7 @@ module Configuration = struct
     min_mapping_quality;
     min_variant_sequence_coverage;
     min_alt_rna_reads;
+    include_mismatches_after_variant;
     use_duplicate_reads;
     drop_secondary_alignments;
     mhc_epitope_lengths;
@@ -56,6 +58,7 @@ module Configuration = struct
       "min_variant_sequence_coverage",
         `Int min_variant_sequence_coverage;
       "min_alt_rna_reads", `Int min_alt_rna_reads;
+      "include_mismatches_after_variant", `Bool include_mismatches_after_variant;
       "use_duplicate_reads", `Bool use_duplicate_reads;
       "drop_secondary_alignments", `Bool drop_secondary_alignments;
       "mhc_epitope_lengths",
@@ -80,6 +83,7 @@ module Configuration = struct
     min_mapping_quality;
     min_variant_sequence_coverage;
     min_alt_rna_reads;
+    include_mismatches_after_variant;
     use_duplicate_reads;
     drop_secondary_alignments;
     mhc_epitope_lengths;
@@ -100,6 +104,8 @@ module Configuration = struct
     ["--min-variant-sequence-coverage";
      soi min_variant_sequence_coverage] @
     ["--min-alt-rna-reads"; soi min_alt_rna_reads] @
+    (if include_mismatches_after_variant
+      then ["--include-mismatches-after-variant"] else []) @
     (if use_duplicate_reads
       then ["--use-duplicate-reads"] else []) @
     (if drop_secondary_alignments
@@ -126,6 +132,7 @@ module Configuration = struct
      min_mapping_quality = 1;
      min_variant_sequence_coverage = 1;
      min_alt_rna_reads = 3;
+     include_mismatches_after_variant = false;
      use_duplicate_reads = false;
      drop_secondary_alignments = false;
      mhc_epitope_lengths = [8; 9; 10; 11];
