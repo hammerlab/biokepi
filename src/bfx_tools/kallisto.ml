@@ -37,9 +37,9 @@ let run
     ~reference_build
     ?(bootstrap_samples=100)
     ~(run_with:Machine.t)
-    ~processors 
-    ~fastq 
-    ~result_prefix 
+    ~processors
+    ~fastq
+    ~result_prefix
     =
   let open KEDSL in
   let name = sprintf "kallisto-%s-bootstrap_%d" (Filename.basename result_prefix) bootstrap_samples in
@@ -49,8 +49,8 @@ let run
   let kallisto_index = index ~reference_build ~run_with in
   let kallisto_tool = Machine.get_tool run_with Machine.Tool.Default.kallisto in
   let r1_path, r2_path_opt = fastq#product#paths in
-  let kallisto_quant_base_cmd = 
-      sprintf 
+  let kallisto_quant_base_cmd =
+      sprintf
         "kallisto quant \
                 -i %s \
                 -o %s \
@@ -63,7 +63,7 @@ let run
           processors
           r1_path
   in
-  let kallisto_quant = 
+  let kallisto_quant =
     match r2_path_opt with
     | Some r2_path -> sprintf "%s %s" kallisto_quant_base_cmd r2_path
     | None -> kallisto_quant_base_cmd

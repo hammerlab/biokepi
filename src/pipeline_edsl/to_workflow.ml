@@ -28,6 +28,7 @@ module File_type_specification = struct
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
     | MHC_alleles: single_file workflow_node -> t
     | Kallisto_result: single_file workflow_node -> t
+    | Cufflinks_result: single_file workflow_node -> t
     | Raw_file: single_file workflow_node -> t
     | Gz: t -> t
     | List: t list -> t
@@ -55,6 +56,7 @@ module File_type_specification = struct
     | Vaxrank_result _ -> "Vaxrank_result"
     | MHC_alleles _ -> "MHC_alleles"
     | Kallisto_result _ -> "Kallisto_result"
+    | Cufflinks_result _ -> "Cufflinks_result"
     | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
@@ -139,6 +141,11 @@ module File_type_specification = struct
     function
     | Kallisto_result v -> v
     | o -> fail_get o "Kallisto_result"
+
+  let get_cufflinks_result : t -> single_file workflow_node =
+    function
+    | Cufflinks_result v -> v
+    | o -> fail_get o "Cufflinks_result"
 
   let get_optitype_result :
     t -> Biokepi_bfx_tools.Optitype.product workflow_node
@@ -416,8 +423,35 @@ module Make (Config : Compiler_configuration)
       in
       MHC_alleles node
 
-  let kallisto ~reference_build fastq =
-    Kallisto.
+
+  let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
+    let result_prefix =
+      Name_file.in_directory ~readable_suffix:"kallisto" Config.work_dir [
+        fastq#product#escaped_sample_name;
+        sprintf "%d" bootstrap_samples;
+        reference_build;
+      ] in
+    Kallisto_result (
+      Tools.Kallisto.run
+        ~reference_build ~processors:1
+        ~fastq ~run_with ~result_prefix ~bootstrap_samples
+    )
+
+
+  let cufflinks ?reference_build bam =
+    let reference_build =
+      match reference_build with
+      | None -> bam#product#reference_build
+      | Some r -> r in
+    let result_prefix =
+      Name_file.in_directory ~readable_suffix:"cufflinks" Config.work_dir [
+        bam#product#escaped_sample_name;
+        reference_build
+      ] in
+    Cufflinks_result (
+      Tools.Cufflinks.run
+        ~reference_build ~bam ~run_with ~result_prefix ~processors:1
+    )
 
 
   let make_aligner

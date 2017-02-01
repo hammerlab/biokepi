@@ -4,8 +4,8 @@ open Common
 
 let run ~reference_build
     ~(run_with:Machine.t)
-    ~processors 
-    ~bam 
+    ~processors
+    ~bam
     ~result_prefix =
   let open KEDSL in
   let name = sprintf "cufflinks-%s" (Filename.basename result_prefix) in
