@@ -27,6 +27,7 @@ module File_type_specification = struct
     | Vaxrank_result:
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
     | MHC_alleles: single_file workflow_node -> t
+    | Kallisto_result: single_file workflow_node -> t
     | Raw_file: single_file workflow_node -> t
     | Gz: t -> t
     | List: t list -> t
@@ -53,6 +54,7 @@ module File_type_specification = struct
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
     | MHC_alleles _ -> "MHC_alleles"
+    | Kallisto_result _ -> "Kallisto_result"
     | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
@@ -132,6 +134,11 @@ module File_type_specification = struct
     function
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
+
+  let get_kallisto_result : t -> single_file workflow_node =
+    function
+    | Kallisto_result v -> v
+    | o -> fail_get o "Kallisto_result"
 
   let get_optitype_result :
     t -> Biokepi_bfx_tools.Optitype.product workflow_node
@@ -408,6 +415,9 @@ module Make (Config : Compiler_configuration)
           )
       in
       MHC_alleles node
+
+  let kallisto ~reference_build fastq =
+    Kallisto.
 
 
   let make_aligner
