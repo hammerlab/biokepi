@@ -7,22 +7,34 @@ open Biokepi_run_environment.Common
 module Input = struct
   type t =
     | Fastq of fastq
-  and fastq_fragment = (string option * fastq_data)
+    | Bam of bam
   and fastq = {
-    sample_name : string;
-    files : fastq_fragment list; (* TODO: rename to “fragments” *)
+    fastq_sample_name : string;
+    files : fastq_fragment list;
   }
+  and bam = {
+    bam_sample_name: string;
+    path: string;
+    how: how;
+    sorting: sorting option;
+    reference_build: string;
+  }
+  and fastq_fragment = (string option * fastq_data)
   and fastq_data =
     | PE of string * string
     | SE of string
-    | Of_bam of [ `PE | `SE ] * [ `Coordinate | `Read_name ] option * string * string
+    | Of_bam of how * sorting option * string * string
+  and sorting = [ `Coordinate | `Read_name ]
+  and how = [ `PE | `SE ]
     [@@deriving show,yojson]
 
   let pe ?fragment_id a b = (fragment_id, PE (a, b))
   let se ?fragment_id a = (fragment_id, SE a)
   let of_bam ?fragment_id ?sorted ~reference_build how s =
     (fragment_id, Of_bam (how, sorted, reference_build,  s))
-  let fastq_sample ~sample_name files = Fastq {sample_name; files}
+  let fastq_sample ~sample_name files = Fastq {fastq_sample_name = sample_name; files}
+  let bam_sample ~sample_name ?sorting ~reference_build ~how path =
+    Bam {bam_sample_name = sample_name; path; how; reference_build; sorting }
 
   let tag_v0 = "biokepi-input-v0"
   let current_version_tag = tag_v0
@@ -56,12 +68,15 @@ module Input = struct
     ] in
     let files_to_yojson files = `List (List.map ~f:file_to_yojson files) in
     function
-    | Fastq {sample_name; files} ->
+    | Fastq {fastq_sample_name; files} ->
       `Assoc [current_version_tag,
               `Assoc ["fastq", `Assoc [
-                  "sample-name", string sample_name;
+                  "sample-name", string fastq_sample_name;
                   "fragments", files_to_yojson files;
                 ]]]
+    | Bam bam ->
+      `Assoc [current_version_tag,
+              `Assoc ["bam", bam_to_yojson bam]]
 
   let of_yojson j =
     let open Pvem.Result in
@@ -127,9 +142,16 @@ module Input = struct
             >>= fun more ->
             return (more :: p))
         >>= fun l ->
-        return (Fastq { sample_name = sample; files = List.rev l })
+        return (Fastq { fastq_sample_name = sample; files = List.rev l })
+      | `Assoc ["bam", bam] ->
+        begin match bam_of_yojson bam with
+        | Result.Ok ok -> return ok
+        | Result.Error err -> fail err
+        end
+        >>= fun bam ->
+        return (Bam bam)
       | other ->
-        error ~json:other "Expecting Fastq"
+        error ~json:other "Expecting Fastq or Bam"
       end
     | other ->
       error ~json:other "Expecting Biokepi_input_v0"
@@ -225,23 +247,15 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
       failwithf "fastq_of_files: cannot handle mixed gzipped \
                  and non-gzipped fastq pairs (for a given same fragment)"
 
-  (** Transform a value of type {!Input.t} into a list of BAMs.
 
-      Only works on Input.t BAMs; will throw an exception if used on FASTQ
-      Input.t. *)
+  (** Transform a value of type {!Input.t} into a list of BAMs. *)
   let bam_of_input_exn u =
     let open Input in
     match u with
-    | Fastq {sample_name; files} ->
-      List.map files ~f:(fun (fragment_id, source) ->
-          match source with
-          | Of_bam (how, sorting, reference_build, path) ->
-            let f = Bfx.input_url path in
-            let bam = Bfx.bam  ~sample_name ?sorting ~reference_build f in
-            bam
-          | _ -> failwith "Can't transform a Input.t FASTQ directly into a BAM."
-        )
-      |> Bfx.list
+    | Fastq _ -> failwith "Can't pass Input.t Fastq."
+    | Bam {bam_sample_name; path; how; sorting; reference_build} ->
+      let f = Bfx.input_url path in
+      Bfx.bam ~sample_name:bam_sample_name ?sorting ~reference_build f
 
 
   (** Transform a value of type {!Input.t} into a pipeline returning FASTQ data,
@@ -249,7 +263,9 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
   let fastq_of_input u =
     let open Input in
     match u with
-    | Fastq {sample_name; files} ->
+    | Bam _ -> failwith "Can't pass Input.t Bam "
+    | Fastq {fastq_sample_name; files} ->
+      let sample_name = fastq_sample_name in
       List.map files ~f:(fun (fragment_id, source) ->
           match source with
           | PE (r1, r2) ->
@@ -269,7 +285,9 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
       Filename.check_suffix r ".gz" || Filename.check_suffix r ".fqz" in
     let inputs =
       match inp with
-      | Fastq {sample_name; files} ->
+      | Bam _ -> failwith "Can't pass Input.t Bam "
+      | Fastq {fastq_sample_name; files} ->
+        let sample_name = fastq_sample_name in
         List.map files ~f:(fun (fragment_id, source) ->
             match source with
             | PE (r1, r2) when is_gz r1 && is_gz r2 ->
