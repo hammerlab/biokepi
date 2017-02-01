@@ -225,8 +225,27 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
       failwithf "fastq_of_files: cannot handle mixed gzipped \
                  and non-gzipped fastq pairs (for a given same fragment)"
 
-(** Transform a value of type {!Input.t} into a pipeline returning FASTQ data,
-    providing the necessary intermediary steps. *)
+  (** Transform a value of type {!Input.t} into a list of BAMs.
+
+      Only works on Input.t BAMs; will throw an exception if used on FASTQ
+      Input.t. *)
+  let bam_of_input_exn u =
+    let open Input in
+    match u with
+    | Fastq {sample_name; files} ->
+      List.map files ~f:(fun (fragment_id, source) ->
+          match source with
+          | Of_bam (how, sorting, reference_build, path) ->
+            let f = Bfx.input_url path in
+            let bam = Bfx.bam  ~sample_name ?sorting ~reference_build f in
+            bam
+          | _ -> failwith "Can't transform a Input.t FASTQ directly into a BAM."
+        )
+      |> Bfx.list
+
+
+  (** Transform a value of type {!Input.t} into a pipeline returning FASTQ data,
+      providing the necessary intermediary steps. *)
   let fastq_of_input u =
     let open Input in
     match u with
