@@ -4,7 +4,6 @@ open Common
 
 let run ~reference_build
     ~(run_with:Machine.t)
-    ~processors
     ~bam
     ~result_prefix =
   let open KEDSL in

@@ -433,7 +433,7 @@ module Make (Config : Compiler_configuration)
       ] in
     Kallisto_result (
       Tools.Kallisto.run
-        ~reference_build ~processors:1
+        ~reference_build
         ~fastq ~run_with ~result_prefix ~bootstrap_samples
     )
 
@@ -450,7 +450,7 @@ module Make (Config : Compiler_configuration)
       ] in
     Cufflinks_result (
       Tools.Cufflinks.run
-        ~reference_build ~bam ~run_with ~result_prefix ~processors:1
+        ~reference_build ~bam ~run_with ~result_prefix
     )
 
 
