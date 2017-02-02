@@ -4,15 +4,25 @@ module Input : sig
 
   type t =
     | Fastq of fastq
+    | Bam of bam
   and fastq_fragment = (string option * fastq_data)
   and fastq = {
-    sample_name : string;
+    fastq_sample_name : string;
     files : fastq_fragment list;
+  }
+  and bam = {
+    bam_sample_name: string;
+    path: string;
+    how: how;
+    sorting: sorting option;
+    reference_build: string;
   }
   and fastq_data =
     | PE of string * string
     | SE of string
-    | Of_bam of [ `PE | `SE ] * [ `Coordinate | `Read_name ] option * string * string
+    | Of_bam of how * sorting option * string * string
+  and sorting = [ `Coordinate | `Read_name ]
+  and how = [ `PE | `SE ]
 
   val pp : Format.formatter -> t -> unit
   val show : t -> string
@@ -81,6 +91,8 @@ module Make:
       r1:string -> ?r2:string -> unit -> [ `Fastq ] Bfx.repr
 
     val fastq_of_input : Input.t -> [ `Fastq ] list Bfx.repr
+
+    val bam_of_input_exn : Input.t -> [ `Bam ] Bfx.repr
 
     val bwa_mem_opt_inputs:
       Input.t ->
