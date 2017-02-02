@@ -39,6 +39,13 @@ module Input : sig
 
   val fastq_sample :
     sample_name:string -> fastq_fragment list -> t
+  val bam_sample :
+    sample_name:string ->
+    ?sorting:sorting ->
+    reference_build:string ->
+    how:how ->
+    string ->
+    t
 
   val to_yojson : t -> Yojson.Safe.json
   val of_yojson : Yojson.Safe.json -> (t, string) Pvem.Result.t
