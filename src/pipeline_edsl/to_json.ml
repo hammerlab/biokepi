@@ -232,13 +232,27 @@ module Make_serializer (How : sig
     | `Seq2hla f -> "hlarp-seq2hla", f
     | `Optitype f -> "hlarp-optitype", f
     in
-    one_to_one name "default" v
+    one_to_one name "hlarp" v
 
   let filter_to_region vcf bed =
     fun ~(var_count: int) ->
       function_call "filter_to_region"
         ["bed", bed ~var_count;
          "vcf", vcf ~var_count]
+
+  let kallisto ~reference_build ?bootstrap_samples  =
+    let samples =
+      match bootstrap_samples with
+      |  None -> "default"
+      | Some s -> sprintf "%d" s in
+    one_to_one "kallisto" (sprintf "%s-samples:%s" reference_build samples)
+
+  let cufflinks ?reference_build =
+    let build =
+      match reference_build with
+      | None -> "bam's build"
+      | Some s -> s in
+    one_to_one "cufflinks" (sprintf "build:%s" build)
 
   let fastqc =
     one_to_one "fastqc" "default"

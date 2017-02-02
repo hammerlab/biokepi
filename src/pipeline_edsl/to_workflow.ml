@@ -192,6 +192,8 @@ module File_type_specification = struct
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
     | Vaxrank_result wf -> one_depends_on wf
+    | Cufflinks_result wf -> one_depends_on wf
+    | Kallisto_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
@@ -425,6 +427,7 @@ module Make (Config : Compiler_configuration)
 
 
   let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
+    let fastq = get_fastq fastq in
     let result_prefix =
       Name_file.in_directory ~readable_suffix:"kallisto" Config.work_dir [
         fastq#product#escaped_sample_name;
@@ -439,6 +442,7 @@ module Make (Config : Compiler_configuration)
 
 
   let cufflinks ?reference_build bam =
+    let bam = get_bam bam in
     let reference_build =
       match reference_build with
       | None -> bam#product#reference_build
@@ -873,7 +877,7 @@ module Make (Config : Compiler_configuration)
           Tools.Vaxrank.Configuration.name configuration;
           Tools.Topiary.predictor_to_string predictor;
           (Filename.chop_extension (Filename.basename mhc#product#path));
-        ] @ 
+        ] @
           (List.map vcfs ~f:(fun v ->
                (Filename.chop_extension (Filename.basename v#product#path))))
         )
