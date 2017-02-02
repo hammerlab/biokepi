@@ -40,7 +40,7 @@ module type Bioinformatics_base = sig
        will be downloaded into the work-directory.
      - If the URL has the scheme ["gs://"] the file will be fetched thanks
        to ["gsutil"] (Google Cloud's storage buckets management tool).
-       
+
      For both ["http(s)://"] and ["gs://"] schemes one can override
      the local filename, by adding a ["filename"] argument to the
      query part of the
@@ -76,6 +76,17 @@ module type Bioinformatics_base = sig
   val mhc_alleles:
     [ `File of [ `Raw_file ] repr | `Names of string list] ->
     [ `MHC_alleles ] repr
+
+  val kallisto:
+    reference_build: string ->
+    ?bootstrap_samples: int ->
+    [ `Fastq ] repr ->
+    [ `Kallisto_result ] repr
+
+  val cufflinks:
+    ?reference_build: string ->
+    [ `Bam ] repr ->
+    [ `Cufflinks_result ] repr
 
   val gunzip: [ `Gz of 'a] repr -> 'a repr
 

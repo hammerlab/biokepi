@@ -27,6 +27,8 @@ module File_type_specification = struct
     | Vaxrank_result:
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
     | MHC_alleles: single_file workflow_node -> t
+    | Kallisto_result: single_file workflow_node -> t
+    | Cufflinks_result: single_file workflow_node -> t
     | Raw_file: single_file workflow_node -> t
     | Gz: t -> t
     | List: t list -> t
@@ -53,6 +55,8 @@ module File_type_specification = struct
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
     | MHC_alleles _ -> "MHC_alleles"
+    | Kallisto_result _ -> "Kallisto_result"
+    | Cufflinks_result _ -> "Cufflinks_result"
     | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
@@ -133,6 +137,16 @@ module File_type_specification = struct
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
+  let get_kallisto_result : t -> single_file workflow_node =
+    function
+    | Kallisto_result v -> v
+    | o -> fail_get o "Kallisto_result"
+
+  let get_cufflinks_result : t -> single_file workflow_node =
+    function
+    | Cufflinks_result v -> v
+    | o -> fail_get o "Cufflinks_result"
+
   let get_optitype_result :
     t -> Biokepi_bfx_tools.Optitype.product workflow_node
     =
@@ -178,6 +192,8 @@ module File_type_specification = struct
     | Optitype_result wf -> one_depends_on wf
     | Topiary_result wf -> one_depends_on wf
     | Vaxrank_result wf -> one_depends_on wf
+    | Cufflinks_result wf -> one_depends_on wf
+    | Kallisto_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
@@ -408,6 +424,38 @@ module Make (Config : Compiler_configuration)
           )
       in
       MHC_alleles node
+
+
+  let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
+    let fastq = get_fastq fastq in
+    let result_prefix =
+      Name_file.in_directory ~readable_suffix:"kallisto" Config.work_dir [
+        fastq#product#escaped_sample_name;
+        sprintf "%d" bootstrap_samples;
+        reference_build;
+      ] in
+    Kallisto_result (
+      Tools.Kallisto.run
+        ~reference_build
+        ~fastq ~run_with ~result_prefix ~bootstrap_samples
+    )
+
+
+  let cufflinks ?reference_build bam =
+    let bam = get_bam bam in
+    let reference_build =
+      match reference_build with
+      | None -> bam#product#reference_build
+      | Some r -> r in
+    let result_prefix =
+      Name_file.in_directory ~readable_suffix:"cufflinks" Config.work_dir [
+        bam#product#escaped_sample_name;
+        reference_build
+      ] in
+    Cufflinks_result (
+      Tools.Cufflinks.run
+        ~reference_build ~bam ~run_with ~result_prefix
+    )
 
 
   let make_aligner
@@ -829,7 +877,7 @@ module Make (Config : Compiler_configuration)
           Tools.Vaxrank.Configuration.name configuration;
           Tools.Topiary.predictor_to_string predictor;
           (Filename.chop_extension (Filename.basename mhc#product#path));
-        ] @ 
+        ] @
           (List.map vcfs ~f:(fun v ->
                (Filename.chop_extension (Filename.basename v#product#path))))
         )
