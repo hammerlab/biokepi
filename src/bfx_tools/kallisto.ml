@@ -82,5 +82,6 @@ let run
         on_failure_activate
           (Workflow_utilities.Remove.directory ~run_with output_dir);
         depends_on kallisto_index;
+        depends_on fastq;
         depends_on (Machine.Tool.ensure kallisto_tool);
       ]
