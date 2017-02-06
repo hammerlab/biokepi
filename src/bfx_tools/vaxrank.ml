@@ -203,6 +203,7 @@ let run ~(run_with: Machine.t)
   let arguments =
     vcfs_arg @ bam_arg @ predictor_arg @ allele_arg (* input *)
     @ xlsx_arg @ pdf_arg @ ascii_arg
+    @ ["--genome"; reference_build]
     @ Configuration.render configuration (* other config *)
   in
   let name = "Vaxrank run" in
