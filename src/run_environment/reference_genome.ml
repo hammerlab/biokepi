@@ -210,7 +210,7 @@ module Default = struct
     let dbsnp_hg19_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
        hg19/dbsnp_138.hg19.vcf.gz" in
-    let known_indels_hg19_url = 
+    let known_indels_hg19_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
         hg19/Mills_and_1000G_gold_standard.indels.hg19.sites.vcf.gz" in
     create Name.hg19
@@ -225,8 +225,8 @@ module Default = struct
 
   let mm10 =
     let mm10_url =
-      "ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/dna/\
-       Mus_musculus.GRCm38.dna_sm.primary_assembly.fa.gz" in
+      "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/\
+       mm10.GRCm38.dna_sm.fa" in
     let dbsnp_mm10_snps_url =
       "ftp://ftp-mouse.sanger.ac.uk/REL-1303-SNPs_Indels-GRCm38/\
        mgp.v3.snps.rsIDdbSNPv137.vcf.gz" in
