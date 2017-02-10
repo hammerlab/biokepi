@@ -475,6 +475,7 @@ let base_quality_score_recalibrator
       depends_on Machine.Tool.(ensure gatk);
       depends_on fasta; depends_on db_snp;
       depends_on sorted_bam;
+      depends_on (Samtools.faidx ~run_with fasta);
       depends_on (Samtools.index_to_bai ~run_with sorted_bam);
       on_failure_activate (Remove.file ~run_with output_bam);
       on_failure_activate (Remove.file ~run_with recal_data_table);
