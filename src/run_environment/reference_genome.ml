@@ -179,6 +179,8 @@ module Default = struct
     let cdna_b38_url =
       "http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
+    let dbsnp_url =
+      "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b149_GRCh38p7/VCF/common_all_20161122.vcf.gz" in
     create Name.b38
       ~species:human
       ~ensembl:79
@@ -186,6 +188,7 @@ module Default = struct
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(url b38_url|> gunzip)
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
+      ~dbsnp:Location.(url dbsnp_url |> gunzip)
       ~cdna:Location.(url cdna_b38_url |> gunzip)
 
   let hg18 =
