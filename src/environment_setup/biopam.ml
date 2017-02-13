@@ -315,7 +315,8 @@ let igvxml =
   install_target
     ~witness:"igvxml" ~test:test_version
     ~repository:`Opam
-    ~compiler:"4.02.3"
+    ~compiler:"4.03.0"
+    ~pin:"https://github.com/hammerlab/igvxml.git#0.1.0"
     Machine.Tool.Default.igvxml
 
 let hlarp =

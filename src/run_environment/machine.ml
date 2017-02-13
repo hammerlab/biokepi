@@ -56,7 +56,7 @@ module Tool = struct
     let optitype = create "optitype" ~version:"1.0.0"
     let seq2hla = create "seq2hla" ~version:"2.2"
     let fastqc = create "fastqc" ~version:"0.11.5"
-    let igvxml = create "igvxml" ~version:"0.0.6"
+    let igvxml = create "igvxml" ~version:"0.1.0"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
     let samblaster = create "samblaster" ~version:"v.0.1.22"
   end
