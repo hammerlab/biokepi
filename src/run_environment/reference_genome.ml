@@ -106,7 +106,7 @@ module Default = struct
     "ftp://genetics.bwh.harvard.edu/pph2/whess/\
      polyphen-2.2.2-whess-2011_12.sqlite.bz2"
 
-  let b37_known_indels_url = 
+  let b37_known_indels_url =
     "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
       b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
 
@@ -151,14 +151,14 @@ module Default = struct
       ~cosmic:Location.(url b37_cosmic_url)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
-  
+
   let hg38 =
     (* Release 79 *)
     let hg38_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.fasta.gz" in
     let dbsnp_hg38 =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.dbsnp.vcf.gz" in
-    let known_indels_hg38 = 
+    let known_indels_hg38 =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.known_indels.vcf.gz" in
     create Name.hg38
       ~species:human
@@ -172,7 +172,7 @@ module Default = struct
   let b38 =
     (* Release 79 *)
     let b38_url =
-      "ftp://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
+      "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/b38.fasta" in
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.79.gtf.gz" in
@@ -331,4 +331,3 @@ let major_contigs t : Region.t list =
   | None ->
     failwithf "Reference %S does have major-contigs/chromosomes defined" (name t)
   | Some l -> List.map l ~f:(fun s -> `Chromosome s)
-
