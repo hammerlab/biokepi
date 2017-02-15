@@ -78,7 +78,6 @@ module type Bioinformatics_base = sig
     [ `MHC_alleles ] repr
 
   val bai:
-    ?check_sorted: bool ->
     [ `Bam ] repr ->
     [ `Bai ] repr
 

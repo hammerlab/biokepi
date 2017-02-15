@@ -433,15 +433,12 @@ module Make (Config : Compiler_configuration)
       in
       MHC_alleles node
 
-  let bai ?check_sorted bam =
+  let bai bam =
     let input_bam = get_bam bam in
-    let check_sorted =
-      match check_sorted with
-      | None -> true
-      | Some r -> r in
+    let sorted_bam = Tools.Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate input_bam in
     Bai (
       Tools.Samtools.index_to_bai
-        ~run_with ~check_sorted input_bam
+        ~run_with ~check_sorted:true sorted_bam
     )
 
   let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
