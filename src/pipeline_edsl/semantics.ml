@@ -77,7 +77,7 @@ module type Bioinformatics_base = sig
     [ `File of [ `Raw_file ] repr | `Names of string list] ->
     [ `MHC_alleles ] repr
 
-  val bai:
+  val index_bam:
     [ `Bam ] repr ->
     [ `Bai ] repr
 

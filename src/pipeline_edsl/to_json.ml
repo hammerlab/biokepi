@@ -240,8 +240,8 @@ module Make_serializer (How : sig
         ["bed", bed ~var_count;
          "vcf", vcf ~var_count]
 
-  let bai =
-    one_to_one "bai" "default"
+  let index_bam =
+    one_to_one "index_bam" "default"
 
   let kallisto ~reference_build ?bootstrap_samples  =
     let samples =

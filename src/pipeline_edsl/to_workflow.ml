@@ -433,7 +433,7 @@ module Make (Config : Compiler_configuration)
       in
       MHC_alleles node
 
-  let bai bam =
+  let index_bam bam =
     let input_bam = get_bam bam in
     let sorted_bam = Tools.Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate input_bam in
     Bai (

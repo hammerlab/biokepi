@@ -90,8 +90,8 @@ module Generic_optimizer
     | `File f -> fwd (Input.mhc_alleles (`File (bwd f)))
     | `Names _ as m -> fwd (Input.mhc_alleles m)
 
-  let bai bam =
-    fwd (Input.bai (bwd bam))
+  let index_bam bam =
+    fwd (Input.index_bam (bwd bam))
 
   let kallisto ~reference_build ?bootstrap_samples fq =
     fwd (Input.kallisto ?bootstrap_samples ~reference_build (bwd fq))
