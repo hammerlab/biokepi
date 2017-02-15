@@ -602,6 +602,7 @@ module Make (Config : Compiler_configuration)
     fun l ->
       let l = get_list l in
       begin match l with
+      | Fastq one :: [] -> Fastq one
       | Fastq first_fastq :: _ as lfq ->
         let fqs = List.map lfq ~f:get_fastq in
         let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
