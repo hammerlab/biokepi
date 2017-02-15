@@ -602,6 +602,7 @@ module Make (Config : Compiler_configuration)
     fun l ->
       let l = get_list l in
       begin match l with
+      | Fastq one :: [] -> Fastq one
       | Fastq first_fastq :: _ as lfq ->
         let fqs = List.map lfq ~f:get_fastq in
         let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
@@ -611,9 +612,16 @@ module Make (Config : Compiler_configuration)
         *)
         let concat_files ~read l =
           let result_path =
-            Config.work_dir //
-            sprintf "%s-Read%d-Concat.fastq"
-              first_fastq#product#escaped_sample_name read in
+            Name_file.in_directory
+              Config.work_dir 
+              ~readable_suffix:(
+                sprintf "%s-Read%d-Concat.fastq"
+                  first_fastq#product#escaped_sample_name read) (
+              first_fastq#product#escaped_sample_name
+              :: first_fastq#product#fragment_id_forced
+              :: List.map l ~f:(fun wf -> wf#product#path)
+            )
+          in
           Workflow_utilities.Cat.concat ~run_with l ~result_path in
         let read_1 = concat_files r1s ~read:1 in
         let read_2 =
