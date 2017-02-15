@@ -27,6 +27,7 @@ module File_type_specification = struct
     | Vaxrank_result:
         Biokepi_bfx_tools.Vaxrank.product workflow_node -> t
     | MHC_alleles: single_file workflow_node -> t
+    | Bai: single_file workflow_node -> t
     | Kallisto_result: single_file workflow_node -> t
     | Cufflinks_result: single_file workflow_node -> t
     | Raw_file: single_file workflow_node -> t
@@ -55,6 +56,7 @@ module File_type_specification = struct
     | Topiary_result _ -> "Topiary_result"
     | Vaxrank_result _ -> "Vaxrank_result"
     | MHC_alleles _ -> "MHC_alleles"
+    | Bai _ -> "Bai"
     | Kallisto_result _ -> "Kallisto_result"
     | Cufflinks_result _ -> "Cufflinks_result"
     | Raw_file _ -> "Input_url"
@@ -137,6 +139,11 @@ module File_type_specification = struct
     | MHC_alleles v -> v
     | o -> fail_get o "Topiary_result"
 
+  let get_bai : t -> single_file workflow_node =
+    function
+    | Bai v -> v
+    | o -> fail_get o "Bai"
+
   let get_kallisto_result : t -> single_file workflow_node =
     function
     | Kallisto_result v -> v
@@ -193,6 +200,7 @@ module File_type_specification = struct
     | Topiary_result wf -> one_depends_on wf
     | Vaxrank_result wf -> one_depends_on wf
     | Cufflinks_result wf -> one_depends_on wf
+    | Bai wf ->   one_depends_on wf
     | Kallisto_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | Raw_file w -> one_depends_on w
@@ -425,6 +433,16 @@ module Make (Config : Compiler_configuration)
       in
       MHC_alleles node
 
+  let bai ?check_sorted bam =
+    let input_bam = get_bam bam in
+    let check_sorted =
+      match check_sorted with
+      | None -> true
+      | Some r -> r in
+    Bai (
+      Tools.Samtools.index_to_bai
+        ~run_with ~check_sorted input_bam
+    )
 
   let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
     let fastq = get_fastq fastq in
@@ -439,7 +457,6 @@ module Make (Config : Compiler_configuration)
         ~reference_build
         ~fastq ~run_with ~result_prefix ~bootstrap_samples
     )
-
 
   let cufflinks ?reference_build bam =
     let bam = get_bam bam in
@@ -456,7 +473,6 @@ module Make (Config : Compiler_configuration)
       Tools.Cufflinks.run
         ~reference_build ~bam ~run_with ~result_prefix
     )
-
 
   let make_aligner
       name ~make_workflow ~config_name

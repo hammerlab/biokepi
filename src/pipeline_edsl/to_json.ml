@@ -240,10 +240,17 @@ module Make_serializer (How : sig
         ["bed", bed ~var_count;
          "vcf", vcf ~var_count]
 
+  let bai ?check_sorted =
+    let check =
+      match check_sorted with
+      | None -> "true"
+      | Some b -> sprintf "%B" b in
+    one_to_one "bai" (sprintf "check:%s" check)
+
   let kallisto ~reference_build ?bootstrap_samples  =
     let samples =
       match bootstrap_samples with
-      |  None -> "default"
+      | None -> "default"
       | Some s -> sprintf "%d" s in
     one_to_one "kallisto" (sprintf "%s-samples:%s" reference_build samples)
 
