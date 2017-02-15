@@ -33,7 +33,7 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
     protected.local_deps = $(file $(addprefix _build/,$(addsuffix .cmi, $(OCAML_LOCAL_LIBS))))
     .PHONY: $(targetname)
     .SUBDIRS: _build/$(directory)
-        OCAMLFLAGS += -for-pack $(packname)
+        OCAMLFLAGS += -bin-annot -for-pack $(packname)
         OCAMLINCLUDES += $(dirname $(local_deps))
         %.ml: $(local_deps)
         %.mli: $(local_deps)
@@ -52,9 +52,9 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
         echo "      DEPS: $(local_deps)"
         echo "      INCLUDES: $(OCAMLINCLUDES)"
         $(libname).cmo $(libname).cmi: $(LIB_CMOS) $(LIB_CMIS)
-            ocamlc -pack -o $(libname).cmo $(OCamlLinkSort $(LIB_CMOS))
+            ocamlc -bin-annot -pack -o $(libname).cmo $(OCamlLinkSort $(LIB_CMOS))
         $(libname).cmx $(libname).o: $(LIB_CMXS) $(LIB_OS) $(LIB_CMIS)
-            ocamlopt -pack -o $(libname).cmx $(OCamlLinkSort $(LIB_CMXS))
+            ocamlopt -bin-annot -pack -o $(libname).cmx $(OCamlLinkSort $(LIB_CMXS))
         $(libname).cmxs: $(libname).cmx
             ocamlopt -shared -o $@ $(libname).cmx
         $(targetname): $(OCamlLibrary $(libname), $(libname)) $(libname).cmxs $(libname).cma
@@ -71,7 +71,7 @@ public.OCamlPackedLibraryOfDir(libname, directory) =
         .PHONY: install-$(targetname) uninstall-$(targetname)
         protected.ADD_TO_INSTALL=$(glob i, *.mli) $(glob i, *.ml) $(glob i, *.cmt) $(glob i, *.cmti)
         install-$(targetname): META $(targetname)
-            ocamlfind install $(libname) META $(libname).cm[aix] $(libname).cmx[as] $(libname).a \
+            ocamlfind install $(libname) META $(libname).cm[taix] $(libname).cmx[as] $(libname).a \
                                $(LIB_CMXS) $(LIB_OS) $(LIB_FILES) $(ADD_TO_INSTALL)
         uninstall-$(targetname):
             ocamlfind remove $(libname)
