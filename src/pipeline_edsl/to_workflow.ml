@@ -200,7 +200,7 @@ module File_type_specification = struct
     | Topiary_result wf -> one_depends_on wf
     | Vaxrank_result wf -> one_depends_on wf
     | Cufflinks_result wf -> one_depends_on wf
-    | Bai wf ->   one_depends_on wf
+    | Bai wf -> one_depends_on wf
     | Kallisto_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | Raw_file w -> one_depends_on w
