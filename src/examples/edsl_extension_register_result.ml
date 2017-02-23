@@ -330,13 +330,13 @@ M*)
 let normal =
   Biokepi.EDSL.Library.Input.(
     fastq_sample "normal-1" [
-      of_bam `PE training_normal_bam ~reference_build:"b37";
+      fastq_of_bam `PE training_normal_bam ~reference_build:"b37";
     ]
   )
 let tumor =
   Biokepi.EDSL.Library.Input.(
     fastq_sample "tumor-1" [
-      of_bam `PE training_tumor_bam ~reference_build:"b37";
+      fastq_of_bam `PE training_tumor_bam ~reference_build:"b37";
     ]
   )
 (*M
