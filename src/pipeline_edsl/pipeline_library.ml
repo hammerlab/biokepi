@@ -30,7 +30,7 @@ module Input = struct
 
   let pe ?fragment_id a b = (fragment_id, PE (a, b))
   let se ?fragment_id a = (fragment_id, SE a)
-  let of_bam ?fragment_id ?sorted ~reference_build how s =
+  let fastq_of_bam ?fragment_id ?sorted ~reference_build how s =
     (fragment_id, Of_bam (how, sorted, reference_build,  s))
   let fastq_sample ~sample_name files = Fastq {fastq_sample_name = sample_name; files}
   let bam_sample ~sample_name ?sorting ~reference_build ~how path =
@@ -252,7 +252,7 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
   let bam_of_input_exn u =
     let open Input in
     match u with
-    | Fastq _ -> failwith "Can't pass Input.t Fastq."
+    | Fastq _ -> failwith "Can't pass Input.t Fastq to bam_of_input_exn"
     | Bam {bam_sample_name; path; how; sorting; reference_build} ->
       let f = Bfx.input_url path in
       Bfx.bam ~sample_name:bam_sample_name ?sorting ~reference_build f
@@ -263,7 +263,11 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
   let fastq_of_input u =
     let open Input in
     match u with
-    | Bam _ -> failwith "Can't pass Input.t Bam "
+    | Bam {bam_sample_name; path; how; sorting; reference_build} ->
+      let f = Bfx.input_url path in
+      let bam =
+        Bfx.bam  ~sample_name:bam_sample_name ?sorting ~reference_build f in
+      Bfx.list [Bfx.bam_to_fastq how bam]
     | Fastq {fastq_sample_name; files} ->
       let sample_name = fastq_sample_name in
       List.map files ~f:(fun (fragment_id, source) ->
@@ -276,16 +280,15 @@ module Make (Bfx : Semantics.Bioinformatics_base) = struct
             let f = Bfx.input_url path in
             let bam = Bfx.bam  ~sample_name ?sorting ~reference_build f in
             Bfx.bam_to_fastq ?fragment_id how bam
-        )
-      |> Bfx.list
+        ) |> Bfx.list
 
-  let bwa_mem_opt_inputs inp =
+  let bwa_mem_opt_inputs_exn inp =
     let open Input in
     let is_gz r =
       Filename.check_suffix r ".gz" || Filename.check_suffix r ".fqz" in
     let inputs =
       match inp with
-      | Bam _ -> failwith "Can't pass Input.t Bam "
+      | Bam _ -> failwith "Can't pass Input.t Bam to bwa_mem_opt_inputs"
       | Fastq {fastq_sample_name; files} ->
         let sample_name = fastq_sample_name in
         List.map files ~f:(fun (fragment_id, source) ->
