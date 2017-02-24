@@ -31,7 +31,7 @@ module Input : sig
 
   val se : ?fragment_id:string -> string -> fastq_fragment
 
-  val of_bam :
+  val fastq_of_bam :
     ?fragment_id: string ->
     ?sorted:[ `Coordinate | `Read_name ] ->
     reference_build:string ->
@@ -101,7 +101,7 @@ module Make:
 
     val bam_of_input_exn : Input.t -> [ `Bam ] Bfx.repr
 
-    val bwa_mem_opt_inputs:
+    val bwa_mem_opt_inputs_exn:
       Input.t ->
       [ `Bam of [ `Bam ] Bfx.repr * [ `PE | `SE ]
       | `Fastq of [ `Fastq ] Bfx.repr
