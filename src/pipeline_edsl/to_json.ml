@@ -279,15 +279,14 @@ module Make_serializer (How : sig
 
   let topiary
       ?(configuration = Tools.Topiary.Configuration.default)
-      vcf predictor alleles =
+      vcfs predictor alleles =
     fun ~(var_count : int) ->
-      let vcf_compiled = vcf ~var_count in
-      function_call "topiary" [
+      let vcfs_compiled = List.map vcfs ~f:(fun v -> v ~var_count) in
+      function_call "topiary" ([
         "configuration", string Tools.Topiary.Configuration.(name configuration);
         "alleles", alleles ~var_count;
         "predictor", string Tools.Topiary.(predictor_to_string predictor);
-        "vcf", vcf_compiled;
-      ]
+      ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 
   let vaxrank
     ?(configuration = Tools.Vaxrank.Configuration.default)

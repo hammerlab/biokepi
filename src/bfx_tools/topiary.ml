@@ -145,7 +145,7 @@ end
 let run ~(run_with: Machine.t)
   ~configuration 
   ~reference_build
-  ~variants_vcf
+  ~vcfs
   ~predictor
   ~alleles_file
   ~output =
@@ -159,7 +159,7 @@ let run ~(run_with: Machine.t)
     | Some (e, i) -> ([depends_on e;], i)
     | None -> ([], Program.(sh "echo 'No external prediction tool required'"))
   in
-  let var_arg = ["--vcf"; variants_vcf#product#path] in
+  let var_arg = List.concat_map vcfs ~f:(fun v -> ["--vcf"; v#product#path]) in
   let predictor_arg = ["--mhc-predictor"; (predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
   let (output_arg, output_path) = 
@@ -204,9 +204,9 @@ let run ~(run_with: Machine.t)
     ~edges:([
       depends_on Machine.Tool.(ensure topiary);
       depends_on (Pyensembl.cache_genome ~run_with ~reference_build);
-      depends_on variants_vcf;
       depends_on alleles_file;
-    ] @ predictor_edges)
+    ] @ (List.map ~f:depends_on vcfs)
+      @ predictor_edges)
     ~make:(
       Machine.run_program run_with ~name
         Program.(
