@@ -868,20 +868,17 @@ module Make (Config : Compiler_configuration)
         ksprintf failwith "VCFs do not agree on their reference build: %s"
           (String.concat ~sep:", " refs)
       else
-        List.nth_exn refs
+        List.nth_exn refs 0
     in
     let mhc = get_mhc_alleles alleles in
-    let output_dir =
-      Name_file.in_directory ~readable_suffix:"topiary" Config.work_dir 
+    let output_file =
+      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
         ([
           Tools.Topiary.predictor_to_string predictor;
           Tools.Topiary.Configuration.name configuration;
           Filename.chop_extension (Filename.basename mhc#product#path);
-        ] @
-          (List.map vs ~f:(fun v -> v#product#path))
-        )
+        ] @ (List.map vs ~f:(fun v -> v#product#path)))
     in
-    let output_file = output_dir // "results.csv" in
     Topiary_result (
       Tools.Topiary.run
         ~configuration ~run_with
