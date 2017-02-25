@@ -858,15 +858,17 @@ module Make (Config : Compiler_configuration)
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
       vcfs predictor alleles =
     let vs = List.map ~f:get_vcf vcfs in
-    let refs = List.map ~f:(fun v -> v#product#reference_build) vs in
-    let oneref = List.nth_exn refs 0 in
+    let refs = 
+      List.map ~f:(fun v -> v#product#reference_build)
+      |> List.dedup
+    in
     let reference_build =
-      if List.exists refs ~f:(fun r -> r <> oneref)
+      if List.length refs > 1
       then
         ksprintf failwith "VCFs do not agree on their reference build: %s"
           (String.concat ~sep:", " refs)
       else
-        oneref
+        List.nth_exn refs
     in
     let mhc = get_mhc_alleles alleles in
     let output_dir =
@@ -876,8 +878,7 @@ module Make (Config : Compiler_configuration)
           Tools.Topiary.Configuration.name configuration;
           Filename.chop_extension (Filename.basename mhc#product#path);
         ] @
-          (List.map vs ~f:(fun v ->
-               (Filename.chop_extension (Filename.basename v#product#path))))
+          (List.map vs ~f:(fun v -> v#product#path))
         )
     in
     let output_file = output_dir // "results.csv" in
