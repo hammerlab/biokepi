@@ -9,12 +9,12 @@ let examples = [
   "2", fastq_sample ~sample_name:"Sample2" [
     pe ~fragment_id:"frg1" "frg1R1.fastq" "frg1R2.fastq";
     se ~fragment_id:"frg2" "frg2.fastq";
-    of_bam  ~sorted:`Coordinate ~reference_build:"b37" `PE "n2.bam";
+    fastq_of_bam  ~sorted:`Coordinate ~reference_build:"b37" `PE "n2.bam";
   ];
   "3", fastq_sample ~sample_name:"Sample3" [
     pe "frg1R1.fastq" "frg1R2.fastq";
     se "frg2.fastq";
-    of_bam  ~sorted:`Read_name ~reference_build:"b37" `SE "n2.bam";
+    fastq_of_bam  ~sorted:`Read_name ~reference_build:"b37" `SE "n2.bam";
   ];
 ]
 
