@@ -20,6 +20,7 @@ let examples = [
 
 let () =
   let print_them = try Sys.argv.(1) = "print" with _ -> false in
+  let return_code = ref 0 in
   List.iter examples ~f:(fun (name, ex) ->
       let json = to_yojson ex in
       let result = of_yojson json in
@@ -28,16 +29,21 @@ let () =
           (Yojson.Safe.pretty_to_string ~std:true json)
           (match result with
           | `Ok o -> show o
-          | `Error s -> sprintf "ERROR: %s" s)
+          | `Error s ->
+            return_code := 1;
+            sprintf "ERROR: %s" s)
       in
       printf "Example %S: %s\n%!" name
         begin match result with
         | `Ok o when o = ex -> sprintf "OK and Equal"
         | `Ok o -> sprintf "OK but NOT EQUAL\n%s" (print_both ())
-        | `Error e -> sprintf "ERROR:\n%s" (print_both ())
+        | `Error e ->
+          return_code := 1;
+          sprintf "ERROR:\n%s" (print_both ())
         end;
       if print_them
       then
         printf "\n```````````````json\n%s\n```````````````\n\n%!"
           (Yojson.Safe.pretty_to_string ~std:true json);
-    )
+    );
+  exit !return_code
