@@ -859,8 +859,7 @@ module Make (Config : Compiler_configuration)
       vcfs predictor alleles =
     let vs = List.map ~f:get_vcf vcfs in
     let refs = 
-      List.map ~f:(fun v -> v#product#reference_build)
-      |> List.dedup
+      vs |> List.map ~f:(fun v -> v#product#reference_build) |> List.dedup
     in
     let reference_build =
       if List.length refs > 1
