@@ -206,8 +206,9 @@ module Generic_optimizer
     fwd (Input.vcf_annotate_polyphen (bwd vcf))
   let isovar ?configuration vcf bam =
     fwd (Input.isovar ?configuration (bwd vcf) (bwd bam))
-  let topiary ?configuration vcf predictor alleles = 
-    fwd (Input.topiary ?configuration (bwd vcf) predictor (bwd alleles))
+  let topiary ?configuration vcfs predictor alleles = 
+    fwd (Input.topiary ?configuration 
+          (List.map ~f:bwd vcfs) predictor (bwd alleles))
   let vaxrank ?configuration vcfs bam predictor alleles =
     fwd (Input.vaxrank ?configuration
            (List.map ~f:(fun v -> (bwd v)) vcfs)

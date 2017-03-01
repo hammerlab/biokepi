@@ -856,20 +856,32 @@ module Make (Config : Compiler_configuration)
     )
 
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
-      vcf predictor alleles =
-    let v = get_vcf vcf in
-    let reference_build = v#product#reference_build in
+      vcfs predictor alleles =
+    let vs = List.map ~f:get_vcf vcfs in
+    let refs = 
+      vs |> List.map ~f:(fun v -> v#product#reference_build) |> List.dedup
+    in
+    let reference_build =
+      if List.length refs > 1
+      then
+        ksprintf failwith "VCFs do not agree on their reference build: %s"
+          (String.concat ~sep:", " refs)
+      else
+        List.nth_exn refs 0
+    in
     let mhc = get_mhc_alleles alleles in
     let output_file =
-      Name_file.from_path v#product#path ~readable_suffix:"topiary.csv" [
-        Tools.Topiary.predictor_to_string predictor;
-        Tools.Topiary.Configuration.name configuration;
-        Filename.chop_extension (Filename.basename mhc#product#path);
-      ] in
+      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
+        ([
+          Tools.Topiary.predictor_to_string predictor;
+          Tools.Topiary.Configuration.name configuration;
+          Filename.chop_extension (Filename.basename mhc#product#path);
+        ] @ (List.map vs ~f:(fun v -> v#product#path)))
+    in
     Topiary_result (
       Tools.Topiary.run
         ~configuration ~run_with
-        ~reference_build ~variants_vcf:v ~predictor
+        ~reference_build ~vcfs:vs ~predictor
         ~alleles_file:mhc
         ~output:(`CSV output_file)
     )

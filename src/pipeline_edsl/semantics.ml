@@ -285,7 +285,7 @@ module type Bioinformatics_base = sig
 
   val topiary:
     ?configuration: Topiary.Configuration.t ->
-    [ `Vcf ] repr ->
+    [ `Vcf ] repr list ->
     Topiary.predictor_type ->
     [ `MHC_alleles ] repr ->
     [ `Topiary ] repr
