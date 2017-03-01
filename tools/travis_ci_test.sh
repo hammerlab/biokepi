@@ -61,6 +61,13 @@ export OCAMLPARAM="warn-error=A,_"
 opam pin add biokepi --yes .
 opam install --yes biokepi
 
+# Also build all the tests:
+omake build-all
+# and run a few:
+_build/biokepi-edsl-input-json/biokepi-edsl-input-json.opt
+DEST_PATH=/tmp KHOST=/tmp _build/biokepi-test-all-downloads/biokepi-test-all-downloads.opt view rg
+DEST_PATH=/tmp KHOST=/tmp _build/biokepi-test-all-downloads/biokepi-test-all-downloads.opt view tools
+_build/biokepi-tests/biokepi-tests.opt
 
 # We try the example
 cat > my_cluster.ml <<EOCAML
