@@ -150,6 +150,55 @@ let mark_duplicates
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
 
+let reorder_sam
+    ~(run_with: Machine.t) ?mem_param
+    ?reference_build ~input_bam output_bam_path
+  =
+  let open KEDSL in
+  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let tmp_dir =
+    Filename.chop_extension output_bam_path ^ ".tmpdir" in
+  let input_bam_path = input_bam#product#path in
+  let name =
+    sprintf "picard-reorder_sam-%s" Filename.(basename input_bam#product#path) in
+  let product = transform_bam input_bam#product output_bam_path in
+  let reference =
+    Machine.get_reference_genome run_with
+      begin match reference_build with
+      | None -> input_bam#product#reference_build
+      | Some r -> r
+      end
+  in
+  let fasta = Reference_genome.fasta reference in
+  let make =
+    let reference_path = fasta#product#path in
+    let program =
+      let mem = match mem_param with
+      | None -> ""
+      | Some m -> sprintf "-Xmx%s" m
+      in
+      Program.(
+        (Machine.Tool.init picard_jar) &&
+        shf "java %s \
+             -Djava.io.tmpdir=%s \
+             -jar $PICARD_JAR ReorderSam \
+             I=%s O=%s R=%s"
+          mem
+          tmp_dir
+          (Filename.quote input_bam_path)
+          (Filename.quote output_bam_path)
+          reference_path)
+    in
+    Machine.run_big_program ~name run_with program
+      ~self_ids:["picard"; "mark-duplicates"] in
+  workflow_node product
+    ~name ~make ~edges:[
+    depends_on input_bam;
+    depends_on fasta;
+    depends_on Machine.Tool.(ensure picard_jar);
+    on_failure_activate (Remove.file ~run_with output_bam_path);
+  ]
+
 let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
   let open KEDSL in
   let sorted_bam =

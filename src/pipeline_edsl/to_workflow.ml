@@ -731,6 +731,23 @@ module Make (Config : Compiler_configuration)
         ~run_with ~input_bam output_bam
     )
 
+  let picard_reorder_sam ?mem_param ?reference_build bam =
+    let input_bam = get_bam bam in
+    let reference_build_param =
+      match reference_build with
+      | None -> ""
+      | Some r -> r
+    in
+    let output_bam_path =
+      (* We assume that the settings do not impact the actual result. *)
+      Name_file.from_path input_bam#product#path
+        ~readable_suffix:"reorder_sam.bam" [reference_build_param] in
+    Bam (
+      Tools.Picard.reorder_sam
+        ?mem_param ?reference_build
+        ~run_with ~input_bam output_bam_path
+    )
+
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) bam =
     let input_bam = get_bam bam in
     let output_bam =
