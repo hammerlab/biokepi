@@ -159,16 +159,14 @@ let reorder_sam
   let tmp_dir =
     Filename.chop_extension output_bam_path ^ ".tmpdir" in
   let input_bam_path = input_bam#product#path in
-  let name =
-    sprintf "picard-reorder_sam-%s" Filename.(basename input_bam#product#path) in
-  let product = transform_bam input_bam#product output_bam_path in
-  let reference =
-    Machine.get_reference_genome run_with
-      begin match reference_build with
-      | None -> input_bam#product#reference_build
-      | Some r -> r
-      end
+  let reference_build = match reference_build with
+  | None -> input_bam#product#reference_build
+  | Some r -> r
   in
+  let reference = Machine.get_reference_genome run_with reference_build in
+  let name =
+    sprintf "picard-reorder_sam-%s"
+      Filename.(basename input_bam#product#path) in
   let fasta = Reference_genome.fasta reference in
   let make =
     let reference_path = fasta#product#path in
@@ -190,7 +188,12 @@ let reorder_sam
           reference_path)
     in
     Machine.run_big_program ~name run_with program
-      ~self_ids:["picard"; "mark-duplicates"] in
+      ~self_ids:["picard"; "mark-duplicates"]
+  in
+  let product =
+    bam_file ~host:(Machine.as_host run_with)
+      ~reference_build ~sorting:`Coordinate output_bam_path
+  in
   workflow_node product
     ~name ~make ~edges:[
     depends_on input_bam;

@@ -735,7 +735,7 @@ module Make (Config : Compiler_configuration)
     let input_bam = get_bam bam in
     let reference_build_param =
       match reference_build with
-      | None -> ""
+      | None -> input_bam#product#reference_build
       | Some r -> r
     in
     let output_bam_path =
