@@ -217,6 +217,12 @@ module Make_serializer (How : sig
       "picard_mark_duplicates"
       configuration.Tools.Picard.Mark_duplicates_settings.name
 
+  let picard_reorder_sam ?mem_param ?reference_build =
+    one_to_one
+      "picard_reorder_sam"
+      (sprintf "ref-%s"
+         (match reference_build with None -> "inputs" | Some r -> r))
+
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) =
     let (bqsr, preads) = configuration in
     one_to_one "gatk_bqsr"

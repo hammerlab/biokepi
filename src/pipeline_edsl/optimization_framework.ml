@@ -133,6 +133,9 @@ module Generic_optimizer
   let picard_mark_duplicates ?configuration bam =
     fwd (Input.picard_mark_duplicates ?configuration (bwd bam))
 
+  let picard_reorder_sam ?mem_param ?reference_build bam =
+    fwd (Input.picard_reorder_sam ?mem_param ?reference_build (bwd bam))
+
   let gatk_bqsr ?configuration bam =
     fwd (Input.gatk_bqsr ?configuration (bwd bam))
 
