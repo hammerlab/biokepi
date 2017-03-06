@@ -239,6 +239,9 @@ module Default = struct
     let gene_annotations_gtf =
       "ftp://ftp.ensembl.org/pub/release-84/gtf/mus_musculus/\
        Mus_musculus.GRCm38.84.gtf.gz" in
+    let cdna_mm10_url =
+      "ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/\
+       cdna/Mus_musculus.GRCm38.cdna.all.fa.gz" in
     create Name.mm10
       ~ensembl:85
       ~species:mouse
@@ -250,6 +253,7 @@ module Default = struct
                       "db_indels.vcf", url dbsnp_mm10_indels_url |> gunzip]
         )
       ~exome_gtf:Location.(url gene_annotations_gtf |> gunzip)
+      ~cdna:Location.(url cdna_mm10_url |> gunzip)
 
 end
 
