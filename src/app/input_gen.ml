@@ -34,9 +34,10 @@ let cmd () =
     Arg.(value & flag & info ["single-ended"] ~doc)
   in
   Term.(pure (fun sample_name host directory single_ended ->
-      let host = match Ketrew_pure.Host.of_string host with
-      | `Ok host -> host
-      | `Error msg -> printf "Error parsing host.\n%!"; exit 1
+      let host =
+        match Ketrew_pure.Host.of_string host with
+        | `Ok host -> host
+        | `Error msg -> printf "Error parsing host.\n%!"; Pervasives.exit 1
       in
       let open Pvem_lwt_unix.Deferred_result in
       Derive.fastqs ~paired_end:(not single_ended) ~host:host directory
