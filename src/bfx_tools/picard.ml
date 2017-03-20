@@ -202,6 +202,7 @@ let reorder_sam
     on_failure_activate (Remove.file ~run_with output_bam_path);
   ]
 
+
 let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
   let open KEDSL in
   let sorted_bam =
@@ -248,3 +249,29 @@ let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
   workflow_node
     (fastq_reads ~name:sample_name ~host:(Machine.as_host run_with) r1 r2opt)
     ~name ~make ~edges
+
+let clean_bam ~run_with input_bam output_bam_path =
+  let open KEDSL in
+  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let input_path = input_bam#product#path in
+  let name = sprintf "picard-cleansam-%s" Filename.(basename input_path) in
+  workflow_node (transform_bam input_bam#product output_bam_path)
+    ~name
+    ~edges:([
+      depends_on input_bam;
+      depends_on Machine.Tool.(ensure picard_jar);
+      on_failure_activate (Remove.file ~run_with output_bam_path);
+    ])
+    ~make:(
+      Machine.run_big_program
+        ~name
+        run_with
+        Program.(
+          Machine.Tool.(init picard_jar) &&
+          shf "java -jar $PICARD_JAR CleanSam INPUT=%s OUTPUT=%s"
+            (Filename.quote input_path)
+            (Filename.quote output_bam_path)
+        )
+    )
+
+
