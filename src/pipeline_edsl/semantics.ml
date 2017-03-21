@@ -179,6 +179,10 @@ module type Bioinformatics_base = sig
     [ `Bam ] repr ->
     [ `Bam ] repr
 
+  val picard_clean_bam:
+    [ `Bam ] repr ->
+    [ `Bam ] repr
+
   val gatk_bqsr:
     ?configuration : Gatk.Configuration.bqsr ->
     [ `Bam ] repr ->

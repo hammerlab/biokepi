@@ -748,6 +748,18 @@ module Make (Config : Compiler_configuration)
         ~run_with ~input_bam output_bam_path
     )
 
+  let picard_clean_bam bam =
+    let input_bam = get_bam bam in
+    let output_bam_path =
+      Name_file.from_path 
+        input_bam#product#path
+        ~readable_suffix:"cleaned.bam"
+        []
+    in
+    Bam (
+      Tools.Picard.clean_bam ~run_with input_bam output_bam_path
+    )
+
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) bam =
     let input_bam = get_bam bam in
     let output_bam =

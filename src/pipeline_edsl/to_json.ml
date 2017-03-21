@@ -223,6 +223,9 @@ module Make_serializer (How : sig
       (sprintf "ref-%s"
          (match reference_build with None -> "inputs" | Some r -> r))
 
+  let picard_clean_bam =
+    one_to_one "picard_clean_bam" "default"
+      
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) =
     let (bqsr, preads) = configuration in
     one_to_one "gatk_bqsr"
