@@ -243,7 +243,7 @@ module Default = struct
       "ftp://ftp.ensembl.org/pub/release-84/fasta/mus_musculus/\
        cdna/Mus_musculus.GRCm38.cdna.all.fa.gz" in
     create Name.mm10
-      ~ensembl:85
+      ~ensembl:87
       ~species:mouse
       ~metadata:"Provided by the Biokepi Library"
       ~major_contigs:major_contigs_mm10
