@@ -48,7 +48,7 @@ module Somatic = struct
       pair ~normal ~tumor in
     let bam_pairs =
       let non_default =
-        let open Bwa.Configuration.Common_config in
+        let open Bwa.Configuration.Aln in
         { name = "config42";
           gap_open_penalty = 10;
           gap_extension_penalty = 7;
