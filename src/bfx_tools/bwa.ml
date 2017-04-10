@@ -5,30 +5,50 @@ module Remove = Workflow_utilities.Remove
 
 module Configuration = struct
 
-  let default_gap_open_penalty = 11
-  let default_gap_extension_penalty = 4
-
-  module Common = struct
+  module Common_config = struct
     type t = {
       name: string;
       gap_open_penalty: int;
       gap_extension_penalty: int;
+      mismatch_penalty: int;
     }
-    let default = {
-      name = "default";
-      gap_open_penalty = default_gap_open_penalty;
-      gap_extension_penalty = default_gap_extension_penalty;
-    }
+  end
+
+  module Bwa_config (D: sig val default: Common_config.t end) = struct
+    include Common_config
+    
     let name t = t.name
-    let to_json {name; gap_open_penalty; gap_extension_penalty} =
+    let default = D.default
+    let to_json
+        {name; gap_open_penalty; gap_extension_penalty; mismatch_penalty}
+      =
       `Assoc [
         "name", `String name;
         "gap_open_penalty", `Int gap_open_penalty;
         "gap_extension_penalty", `Int gap_extension_penalty;
+        "mismatch_penalty", `Int mismatch_penalty;
       ]
   end
-  module Aln = Common
-  module Mem = Common
+
+  (* 
+    Defaults transcribed from BWA manual: 
+      http://bio-bwa.sourceforge.net/bwa.shtml
+  *)
+  let bwa_mem_default = {Common_config.
+    name = "default-bwa-mem";
+    gap_open_penalty = 6;
+    gap_extension_penalty = 1;
+    mismatch_penalty = 4;
+  }
+  module Mem = Bwa_config(struct let default = bwa_mem_default end)
+
+  let bwa_aln_default = {Common_config.
+    name = "default-bwa-aln";
+    gap_open_penalty = 11;
+    gap_extension_penalty = 4;
+    mismatch_penalty = 3;
+  }
+  module Aln = Bwa_config(struct let default = bwa_aln_default end)
 
 end
 
@@ -109,6 +129,7 @@ let mem_align_to_sam
       "-t"; Int.to_string processors;
       "-O"; Int.to_string configuration.Configuration.Mem.gap_open_penalty;
       "-E"; Int.to_string configuration.Configuration.Mem.gap_extension_penalty;
+      "-B"; Int.to_string configuration.Configuration.Mem.mismatch_penalty;
       (Filename.quote reference_fasta#product#path);
       (Filename.quote r1_path);
     ] in
@@ -177,6 +198,7 @@ let align_to_sam
         "-t"; Int.to_string processors;
         "-O"; Int.to_string configuration.Configuration.Aln.gap_open_penalty;
         "-E"; Int.to_string configuration.Configuration.Aln.gap_extension_penalty;
+        "-M"; Int.to_string configuration.Configuration.Aln.mismatch_penalty;
         (Filename.quote reference_fasta#product#path);
         (Filename.quote read);
         ">"; (Filename.quote result);
@@ -321,6 +343,7 @@ let mem_align_to_bam
       "-t"; Int.to_string processors;
       "-O"; Int.to_string configuration.Configuration.Mem.gap_open_penalty;
       "-E"; Int.to_string configuration.Configuration.Mem.gap_extension_penalty;
+      "-B"; Int.to_string configuration.Configuration.Mem.mismatch_penalty;
       (Filename.quote reference_fasta#product#path);
     ] in
   let command_to_stdout =
