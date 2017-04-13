@@ -70,7 +70,7 @@ let default ~host ~run_program ~install_path () =
       ~version:"0.1.3" ~check_bin:"isovar-protein-sequences.py"
       (Pip, Package_PyPI "isovar");
     create_python_tool ~host ~run_program ~install_path
-      ~version:"0.1.2" (Pip, Package_PyPI "topiary");
+      ~version:"1.2.0" (Pip, Package_PyPI "topiary");
     create_python_tool ~host ~run_program ~install_path
       ~version:"0.4.2" (Pip, Package_PyPI "vaxrank");
    ]
