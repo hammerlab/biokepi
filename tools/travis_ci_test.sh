@@ -46,7 +46,11 @@ eval `opam config env`
 opam update
 
 # Cf. https://github.com/mirleft/ocaml-nocrypto/issues/104
-opam pin add oasis 0.4.6
+opam pin -n add oasis 0.4.6
+
+
+opam pin add biokepi --yes .
+opam install --yes biokepi
 
 echo 'ocamlfind list | grep lwt'
 ocamlfind list | grep lwt
@@ -55,9 +59,6 @@ ocamlfind list | grep cohttp
 
 echo "Setting Warn-Error for the Travis test"
 export OCAMLPARAM="warn-error=A,_"
-
-opam pin add biokepi --yes .
-opam install --yes biokepi
 
 # Also build all the tests:
 omake build-all
