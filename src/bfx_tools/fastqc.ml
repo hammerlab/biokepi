@@ -20,7 +20,8 @@ let run ~(run_with:Machine.t) ~fastq ~output_folder =
   let output_files =
     paths
     |> List.map ~f:get_file_name
-    |> List.map ~f:(fun p -> Re.replace_string (Re_posix.compile_pat ".fastq$") "_fastqc.html" p)
+    |> List.map ~f:(fun p ->
+        Re.replace_string (Re_posix.compile_pat ".fastq$") "_fastqc.html" p)
     |> List.map ~f:(fun p -> output_folder // p)
   in
   let paths_str = String.concat paths ~sep:" " in
