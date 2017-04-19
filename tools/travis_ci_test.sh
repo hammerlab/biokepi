@@ -48,8 +48,6 @@ opam update
 # Cf. https://github.com/mirleft/ocaml-nocrypto/issues/104
 opam pin add oasis 0.4.6
 
-opam pin add ketrew https://github.com/hammerlab/ketrew.git
-
 echo 'ocamlfind list | grep lwt'
 ocamlfind list | grep lwt
 echo 'ocamlfind list | grep cohttp'
