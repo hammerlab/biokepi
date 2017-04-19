@@ -18,7 +18,15 @@ else
     GIT_COMMIT = None
     export
 
-LIB_PACKAGES = ketrew ppx_deriving.std
+if $(eq $(shell-code ocamlfind list | grep ketrew.lwt_unix), 0)
+    KETREW_PACKAGE=ketrew.lwt_unix
+    export
+else
+    KETREW_PACKAGE=ketrew
+    export
+
+
+LIB_PACKAGES = $(KETREW_PACKAGE) ppx_deriving.std
 
 OCAMLFLAGS = -bin-annot -absname -thread -short-paths -g \
              -keep-docs -keep-locs \
