@@ -47,6 +47,11 @@ module type Bioinformatics_base = sig
      URL. E.g. ["https://data.example.com/my-sample.bam?filename=sample-from-example.bam"].
   *)
 
+  val save :
+    name : string ->
+    'a repr ->
+    'a repr
+
   val fastq :
     sample_name : string ->
     ?fragment_id : string ->

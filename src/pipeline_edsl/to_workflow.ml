@@ -231,14 +231,21 @@ end
 open Biokepi_run_environment
 
 module type Compiler_configuration = sig
-  val work_dir: string
-  val machine : Machine.t
-  val map_reduce_gatk_indel_realigner : bool
+  val work_dir : string
+  (** Directory where all work product done by the TTFI end up. *)
+  val results_dir : string
+  (** Directory where `save` files will end up. *)
 
+  val machine : Machine.t
+  (** Biokepi machine used by the TTFI workflow. *)
+
+  val map_reduce_gatk_indel_realigner : bool
+  (** Whether or not to scatter-gather the indel-realigner results. *)
+
+  val input_files: [ `Copy | `Link | `Do_nothing ]
   (** What to do with input files: copy or link them to the work directory, or
       do nothing. Doing nothing means letting some tools like ["samtools sort"]
       write in the input-file's directory. *)
-  val input_files: [ `Copy | `Link | `Do_nothing ]
 end
 
 
@@ -370,6 +377,80 @@ module Make (Config : Compiler_configuration)
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
     end
+
+  let save ~name thing =
+    let open KEDSL in
+    let name = String.map name ~f:(function
+      | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
+      | other -> '_')
+    in
+    let path =
+      Config.results_dir // name
+    in
+    let move new_product old_path wf =
+      let make =
+        Machine.quick_run_program
+          Config.machine
+          Program.(
+            shf "mkdir -p %s" (Filename.dirname path)
+            && shf "cp -r %s %s" old_path path
+          )
+      in
+      let name = sprintf "Saving: %s" name in
+      workflow_node new_product ~name ~make ~edges:[depends_on wf]
+    in
+    let tf = transform_single_file ~path in
+    match thing with
+    | Bam wf ->
+      Bam (move (transform_bam ~path wf#product) wf#product#path wf)
+    | Vcf wf ->
+      Vcf (move (transform_vcf ~path wf#product) wf#product#path wf)
+    | Gtf wf ->
+      Gtf (move (tf wf#product) wf#product#path wf)
+    | Flagstat_result wf ->
+      Flagstat_result (move (tf wf#product) wf#product#path wf)
+    | Isovar_result wf ->
+      Isovar_result (move (tf wf#product) wf#product#path wf)
+    | Topiary_result wf ->
+      Topiary_result (move (tf wf#product) wf#product#path wf)
+    | Vaxrank_result wf ->
+      let vp =
+        Tools.Vaxrank.transform_vaxrank_product
+          ~output_folder_path:path wf#product
+      in
+      Vaxrank_result (move vp wf#product#output_folder_path wf)
+    | Optitype_result wf ->
+      let o =
+        Tools.Optitype.transform_optitype_product ~path wf#product
+      in
+      Optitype_result (move o wf#product#path wf)
+    | Seq2hla_result wf ->
+      let s =
+        Tools.Seq2HLA.transform_seq2hla_product ~path wf#product
+      in
+      Seq2hla_result (move s wf#product#work_dir_path wf)
+    | Fastqc_result wf ->
+      let path = (wf#product#paths |> List.hd_exn |> Filename.dirname) in
+      let fqc =
+        let paths = List.map wf#product#paths
+            ~f:(fun p -> path // (Filename.basename p)) in
+        list_of_files paths
+      in
+      Fastqc_result (move fqc path wf)
+    | Cufflinks_result wf ->
+      Cufflinks_result (move (tf wf#product) wf#product#path wf)
+    | Bai wf ->
+      Bai (move (tf wf#product) wf#product#path wf)
+    | Kallisto_result wf ->
+      Kallisto_result (move (tf wf#product) wf#product#path wf)
+    | MHC_alleles wf ->
+      MHC_alleles (move (tf wf#product) wf#product#path wf)
+    | Raw_file wf ->
+      Raw_file (move (tf wf#product) wf#product#path wf)
+    | other -> failwith
+                 (sprintf "Cannot `save` %s."
+                    (File_type_specification.to_string other))
+
 
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =

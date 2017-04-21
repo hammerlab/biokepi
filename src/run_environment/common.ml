@@ -230,6 +230,9 @@ module KEDSL = struct
                        ~default:(Filename.basename fastq_r1#product#path)))
       ~edges
 
+  let transform_single_file ~path f =
+      single_file ~host:f#host path
+
   type bam_file = <
     is_done: Ketrew_pure.Target.Condition.t option;
     host: Host.t;

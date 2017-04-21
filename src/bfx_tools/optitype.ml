@@ -4,8 +4,25 @@ open Common
 
 
 type product = <
-    is_done : Ketrew_pure.Target.Condition.t option ;
-    path: string >
+  host: Ketrew_pure.Host.t;
+  is_done : Ketrew_pure.Target.Condition.t option ;
+  path: string >
+
+let transform_optitype_product ?host ~path o =
+  let host = match host with
+  | None -> o#host
+  | Some h -> h
+  in
+  let vol =
+    let open Ketrew_pure.Target.Volume in
+    create (dir (Filename.basename path) []) ~host
+      ~root:(Ketrew_pure.Path.absolute_directory_exn (Filename.dirname path))
+  in
+  object
+    method host = host
+    method is_done = Some (`Volume_exists vol)
+    method path = path
+  end
 
 (**
    Run OptiType in [`RNA] or [`DNA] mode.
@@ -48,6 +65,7 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt
     object
       method is_done = Some (`Volume_exists vol)
       method path = work_dir
+      method host = host
     end
   in
   KEDSL.workflow_node product ~name ~make
