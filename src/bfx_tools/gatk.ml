@@ -292,10 +292,10 @@ let indel_realigner :
         Program.(
           Machine.Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
-          && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s %s"
+          && shf "java -Xmx40g -jar $GATK_JAR -T RealignerTargetCreator %s %s"
             intervals_option
             (String.concat ~sep:" " target_creation_args)
-          && sh ("java -jar $GATK_JAR -T IndelRealigner "
+          && sh ("java -Xmx40g -jar $GATK_JAR -T IndelRealigner "
                  ^ intervals_option
                  ^ (if compress then " " else " -compress 0 ")
                  ^ (String.concat ~sep:" " indel_real_args)))
