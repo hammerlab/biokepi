@@ -18,15 +18,19 @@ module Configuration = struct
          issues (such as the absence of sequence bases) that will cause the run
          to fail with an error, but these cases can be preempted by setting
          flags that cause the problem reads to also be filtered. *)
+      filter_reads_with_n_cigar: bool;
       (** Ignore reads with CIGAR containing the N operator, instead of failing
          with an error *)
-      filter_reads_with_n_cigar: bool;
+      filter_mismatching_base_and_quals: bool;
       (** Ignore reads with mismatching numbers of bases and base qualities,
          instead of failing with an error.*)
-      filter_mismatching_base_and_quals: bool;
-      (** Ignore reads with no stored bases (i.e. '*' where the sequence should
-         be), instead of failing with an error *)
       filter_bases_not_stored: bool;
+      (** Ignore reads with no stored bases (i.e. '*' where the sequence should
+          be), instead of failing with an error *)
+
+      java_heap_memory: string option;
+      (* not rendered; needs to be explicitly passed to the `java` command *)
+      (** Heap size to be passed to `java`, e.g. 8g, 256m. *)
 
       (** Other parameters: *)
       parameters: (string * string) list;
@@ -34,17 +38,23 @@ module Configuration = struct
 
     let name t = t.name
 
+    let memory_param t =
+      Option.value_map ~default:"" ~f:(fun m -> sprintf "-Xmx%s" m)
+        t.java_heap_memory
+
     let to_json t: Yojson.Basic.json =
       let {name;
            filter_reads_with_n_cigar;
            filter_mismatching_base_and_quals;
            filter_bases_not_stored;
+           java_heap_memory;
            parameters} = t in
       `Assoc [
         "name", `String name;
         "filter_reads_with_N_cigar", `Bool filter_reads_with_n_cigar;
         "filter_mismatching_base_and_quals", `Bool filter_mismatching_base_and_quals;
         "filter_bases_not_stored", `Bool filter_bases_not_stored;
+        "java_heap_memory", `String (Option.value ~default:"" java_heap_memory);
         "parameters",
         `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
       ]
@@ -53,7 +63,7 @@ module Configuration = struct
                 filter_reads_with_n_cigar;
                 filter_mismatching_base_and_quals;
                 filter_bases_not_stored;
-                parameters} =
+                parameters; _} =
       (if filter_reads_with_n_cigar
        then "--filter_reads_with_N_cigar" else "") ::
       (if filter_mismatching_base_and_quals
@@ -68,6 +78,7 @@ module Configuration = struct
        filter_reads_with_n_cigar = false;
        filter_mismatching_base_and_quals = false;
        filter_bases_not_stored = false;
+       java_heap_memory = None;
        parameters = []}
   end
 
@@ -116,7 +127,7 @@ module Configuration = struct
     ]
 
     let default = create "default" []
-    
+
     let default_without_cosmic =
       create ~use_cosmic:false ~use_dbsnp:true
       "default_without_cosmic" []
@@ -292,13 +303,15 @@ let indel_realigner :
         Program.(
           Machine.Tool.(init gatk)
           && shf "cd %s" (Filename.quote run_directory)
-          && shf "java -jar $GATK_JAR -T RealignerTargetCreator %s %s"
+          && shf "java %s -jar $GATK_JAR -T RealignerTargetCreator %s %s"
+            (Realigner_target_creator.memory_param target_config)
             intervals_option
             (String.concat ~sep:" " target_creation_args)
-          && sh ("java -jar $GATK_JAR -T IndelRealigner "
-                 ^ intervals_option
-                 ^ (if compress then " " else " -compress 0 ")
-                 ^ (String.concat ~sep:" " indel_real_args)))
+          && (shf "java %s -jar $GATK_JAR -T IndelRealigner %s %s %s"
+                    (Indel_realigner.memory_param indel_config)
+                    intervals_option
+                    (if compress then " " else " -compress 0 ")
+                    (String.concat ~sep:" " indel_real_args)))
     in
     let edges =
       let sequence_dict = (* implicit dependency *)
@@ -423,12 +436,17 @@ let indel_realigner_map_reduce :
    http://gatkforums.broadinstitute.org/discussion/44/base-quality-score-recalibrator
    https://www.broadinstitute.org/gatk/guide/tooldocs/org_broadinstitute_gatk_tools_walkers_bqsr_BaseRecalibrator.php
 *)
-let call_gatk ~analysis ?(region=`Full) args =
+let call_gatk ~analysis ?(region=`Full) ?java_heap_memory args =
   let open KEDSL.Program in
   let escaped_args = List.map ~f:Filename.quote args in
   let intervals_option = Region.to_gatk_option region in
+  let hm = match java_heap_memory with
+  | None -> ""
+  | Some m -> sprintf "-Xmx%s" m
+  in
   sh (String.concat ~sep:" "
-        ("java -jar $GATK_JAR -T " :: analysis :: intervals_option :: escaped_args))
+        ((sprintf "java %s -jar $GATK_JAR -T " hm)
+         :: analysis :: intervals_option :: escaped_args))
 
 let base_quality_score_recalibrator
     ~configuration:(bqsr_configuration, print_reads_configuration)

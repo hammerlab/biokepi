@@ -34,11 +34,11 @@ let predictor_to_string = function
   | `SMM_PMBEC_IEDB -> "smm-pmbec-iedb"
 
 let predictor_to_tool ~run_with predictor =
-  let get_tool t = 
-    let tool = 
+  let get_tool t =
+    let tool =
       Machine.get_tool
         run_with
-        Machine.Tool.Definition.(create t) 
+        Machine.Tool.Definition.(create t)
     in
     let ensure = Machine.Tool.(ensure tool) in
     let init = Machine.Tool.(init tool) in
@@ -71,7 +71,7 @@ module Configuration = struct
   }
   let to_json {
     name;
-    rna_gene_fpkm_tracking_file; 
+    rna_gene_fpkm_tracking_file;
     rna_min_gene_expression;
     rna_transcript_fpkm_tracking_file;
     rna_min_transcript_expression;
@@ -86,7 +86,7 @@ module Configuration = struct
     parameters}: Yojson.Basic.json =
     `Assoc [
       "name", `String name;
-      "rna_gene_fpkm_tracking_file", 
+      "rna_gene_fpkm_tracking_file",
         (match rna_gene_fpkm_tracking_file with
         | None -> `Null
         | Some s -> `String s);
@@ -100,7 +100,7 @@ module Configuration = struct
         (match rna_transcript_fkpm_gtf_file with
         | None -> `Null
         | Some s -> `String s);
-      "mhc_epitope_lengths", 
+      "mhc_epitope_lengths",
         `List (List.map mhc_epitope_lengths ~f:(fun i -> `Int i));
       "only_novel_epitopes", `Bool only_novel_epitopes;
       "ic50_cutoff", `Float ic50_cutoff;
@@ -143,7 +143,7 @@ end
 
 
 let run ~(run_with: Machine.t)
-  ~configuration 
+  ~configuration
   ~reference_build
   ~vcfs
   ~predictor
@@ -162,13 +162,13 @@ let run ~(run_with: Machine.t)
   let var_arg = List.concat_map vcfs ~f:(fun v -> ["--vcf"; v#product#path]) in
   let predictor_arg = ["--mhc-predictor"; (predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
-  let (output_arg, output_path) = 
+  let (output_arg, output_path) =
     match output with
     | `HTML html_file -> ["--output-html"; html_file], html_file
     | `CSV csv_file -> ["--output-csv"; csv_file], csv_file
   in
   let str_of_str a = a in
-  let maybe_argument ~f arg_name value = 
+  let maybe_argument ~f arg_name value =
     match value with
     | None -> []
     | Some arg_value -> [arg_name; f arg_value]
@@ -176,7 +176,7 @@ let run ~(run_with: Machine.t)
   let if_argument arg_name value = if value then [arg_name] else [] in
   let open Configuration in
   let c = configuration in
-  let rna_arg = 
+  let rna_arg =
       (maybe_argument ~f:str_of_str "--rna-gene-fpkm-tracking-file" c.rna_gene_fpkm_tracking_file)
     @ (maybe_argument ~f:string_of_float "--rna-min-gene-expression" (Some c.rna_min_gene_expression))
     @ (maybe_argument ~f:str_of_str "--rna-transcript-fpkm-tracking-file" c.rna_transcript_fpkm_tracking_file)
@@ -187,11 +187,11 @@ let run ~(run_with: Machine.t)
   let length_arg = maybe_argument ~f:string_of_intlist "--mhc-epitope-lengths" (Some c.mhc_epitope_lengths) in
   let ic50_arg = maybe_argument ~f:string_of_float "--ic50-cutoff" (Some c.ic50_cutoff) in
   let percentile_arg = maybe_argument ~f:string_of_float "--percentile-cutoff" (Some c.percentile_cutoff) in
-  let padding_arg = maybe_argument ~f:string_of_int "--padding-around-mutation" c.padding_around_mutation in 
+  let padding_arg = maybe_argument ~f:string_of_int "--padding-around-mutation" c.padding_around_mutation in
   let self_filter_directory = maybe_argument ~f:str_of_str "--self-filter-directory" c.self_filter_directory in
   let skip_error_arg = if_argument "--skip-variant-errors" c.skip_variant_errors in
   let novel_arg = if_argument "--only-novel-epitopes" c.only_novel_epitopes in
-  let arguments = 
+  let arguments =
       var_arg @ predictor_arg @ allele_arg @ output_arg @ rna_arg
       @ length_arg @ novel_arg @ ic50_arg @ percentile_arg @ padding_arg
       @ skip_error_arg @ self_filter_directory
