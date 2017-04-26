@@ -346,6 +346,25 @@ let samtools =
   Installable_tool.make Machine.Tool.Default.samtools ~url ~install_program
     ~init_program:add_to_dollar_path ~witness
 
+let bcftools =
+  let url = "https://github.com/samtools/bcftools/releases/download/1.4/\
+             bcftools-1.4-solo.tar.bz2" in
+  let toplevel_tools = ["bcftools"] in
+  let htslib = ["bgzip"; "tabix" ] in
+  let tools = toplevel_tools @ htslib in
+  let install_program ~path =
+    let open KEDSL.Program in
+    sh "make"
+    && shf "cp %s %s" (String.concat toplevel_tools ~sep:" ")  path
+    && sh "cd htslib*/"
+    && sh "make"
+    && shf "cp %s %s" (String.concat htslib ~sep:" ") path
+    && sh "echo Done"
+  in
+  let witness = witness_list tools in
+  Installable_tool.make Machine.Tool.Default.bcftools ~url ~install_program
+    ~init_program:add_to_dollar_path ~witness
+
 let cufflinks =
   let url =
     "http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/\

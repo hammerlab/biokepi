@@ -14,7 +14,6 @@ module File_type_specification = struct
     | Fastq: fastq_reads workflow_node -> t
     | Bam: bam_file workflow_node -> t
     | Vcf: vcf_file workflow_node -> t
-    | Bcf: single_file workflow_node -> t
     | Bed: single_file workflow_node -> t
     | Gtf: single_file workflow_node -> t
     | Seq2hla_result:
@@ -47,7 +46,6 @@ module File_type_specification = struct
     | Fastq _ -> "Fastq"
     | Bam _ -> "Bam"
     | Vcf _ -> "Vcf"
-    | Bcf _ -> "Bcf"
     | Bed _ -> "Bed"
     | Gtf _ -> "Gtf"
     | Seq2hla_result _ -> "Seq2hla_result"
@@ -92,10 +90,6 @@ module File_type_specification = struct
   let get_vcf : t -> vcf_file workflow_node = function
   | Vcf v -> v
   | o -> fail_get o "Vcf"
-
-  let get_bcf : t -> single_file workflow_node = function
-  | Bcf v -> v
-  | o -> fail_get o "Bcf"
 
   let get_bed : t -> single_file workflow_node = function
   | Bed v -> v
@@ -197,7 +191,6 @@ module File_type_specification = struct
     | Fastq wf -> one_depends_on wf
     | Bam wf ->   one_depends_on wf
     | Vcf wf ->   one_depends_on wf
-    | Bcf wf ->   one_depends_on wf
     | Gtf wf ->   one_depends_on wf
     | Seq2hla_result wf -> one_depends_on wf
     | Fastqc_result wf -> one_depends_on wf
@@ -467,13 +460,13 @@ module Make (Config : Compiler_configuration)
     let normal = get_bam normal in
     let tumor = get_bam tumor in
     let output_path =
-      Name_file.in_directory ~readable_suffix:"delly2.bcf" Config.work_dir [
+      Name_file.in_directory ~readable_suffix:"delly2.vcf" Config.work_dir [
         normal#product#path;
         tumor#product#path;
         Tools.Delly2.Configuration.name configuration;
       ]
     in
-    Bcf (
+    Vcf (
       Tools.Delly2.run_somatic
         ~configuration
         ~run_with

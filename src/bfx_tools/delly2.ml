@@ -37,6 +37,8 @@ let run_somatic
   let open KEDSL in
   let name = sprintf "Delly2: %s" (Filename.basename output_path) in
   let delly2 = Machine.get_tool run_with Machine.Tool.Default.delly2 in
+  let bcftools = Machine.get_tool run_with Machine.Tool.Default.bcftools in
+  let bcf_path = output_path ^ ".bcf" in
   let reference_genome =
     Machine.get_reference_genome run_with normal#product#reference_build
     |> Reference_genome.fasta in
@@ -50,17 +52,21 @@ let run_somatic
       ~name
       Program.(
         Machine.Tool.init delly2
+        && Machine.Tool.init bcftools
         && shf "delly2 call -t DEL -g %s -o %s %s %s"
           reference_genome#product#path
-          output_path
+          bcf_path
           sorted_tumor#product#path sorted_normal#product#path
+        && shf "bcftools view %s > %s" bcf_path output_path
       )
   in
   workflow_node ~name ~make
-    (single_file ~host:Machine.(as_host run_with) output_path)
+    (vcf_file ~reference_build:normal#product#reference_build
+       ~host:Machine.(as_host run_with) output_path)
     ~tags:["delly2"; Target_tags.variant_caller]
     ~edges:[
       depends_on (Machine.Tool.ensure delly2);
+      depends_on (Machine.Tool.ensure bcftools);
       depends_on sorted_normal;
       depends_on sorted_tumor;
       depends_on (Samtools.index_to_bai ~run_with sorted_normal);
