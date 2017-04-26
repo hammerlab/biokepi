@@ -249,6 +249,14 @@ module type Bioinformatics_base = sig
     unit ->
     [ `Vcf ] repr
 
+  val delly2:
+    ?configuration: Delly2.Configuration.t ->
+    normal: [ `Bam ] repr ->
+    tumor: [ `Bam ] repr ->
+    unit ->
+    [ `Bcf ] repr
+  (** Runs delly2. *)
+
   val varscan_somatic:
     ?adjust_mapq : int ->
     normal: [ `Bam ] repr ->

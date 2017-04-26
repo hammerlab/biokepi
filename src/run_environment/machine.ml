@@ -59,6 +59,7 @@ module Tool = struct
     let igvxml = create "igvxml" ~version:"0.1.0"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
     let samblaster = create "samblaster" ~version:"v.0.1.22"
+    let delly2 = create "delly2" ~version:"0.7.7"
   end
 
   type t = {

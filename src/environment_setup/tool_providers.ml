@@ -213,6 +213,17 @@ let freebayes =
         KEDSL.Program.(shf "export PATH=%s/bin/:$PATH" path))
     ~witness:(witness_list ["bin/freebayes"; "bin/bamleftalign"])
 
+let delly2 =
+  Installable_tool.make
+    Machine.Tool.Default.delly2
+    ~url:"https://github.com/dellytools/delly/releases/download/v0.7.7/delly_v0.7.7_parallel_linux_x86_64bit"
+    ~install_program:(fun ~path -> KEDSL.Program.(
+        sh "mv delly_v0.7.7_parallel_linux_x86_64bit delly2"
+      ))
+    ~archive_is_directory:false
+    ~init_program:add_to_dollar_path
+    ~witness:(witness_file "delly2")
+
 let sambamba =
   Installable_tool.make
     Machine.Tool.Default.sambamba
@@ -527,6 +538,7 @@ let default_toolkit
       install fastqc;
       install samblaster;
       install_git freebayes;
+      install delly2;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
