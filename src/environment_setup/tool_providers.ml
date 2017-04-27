@@ -317,8 +317,8 @@ let kallisto =
   ~init_program:add_to_dollar_path
 
 let samtools =
-  let url = "https://github.com/samtools/samtools/releases/download/1.3/\
-             samtools-1.3.tar.bz2" in
+  let url = "https://github.com/samtools/samtools/releases/download/1.4/\
+             samtools-1.4.tar.bz2" in
   let toplevel_tools = ["samtools"] in
   let htslib = ["bgzip"; "tabix" ] in
   let tools = toplevel_tools @ htslib in
