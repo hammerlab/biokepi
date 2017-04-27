@@ -55,11 +55,11 @@ ocamlfind list | grep lwt
 echo 'ocamlfind list | grep cohttp'
 ocamlfind list | grep cohttp
 
-echo "Setting Warn-Error for the Travis test"
-export OCAMLPARAM="warn-error=A,_"
-
 opam pin add biokepi --yes .
 opam install --yes biokepi
+
+echo "Setting Warn-Error for the Travis test"
+export OCAMLPARAM="warn-error=A,_"
 
 # Also build all the tests:
 omake build-all
