@@ -331,17 +331,18 @@ let kallisto =
 let samtools =
   let url = "https://github.com/samtools/samtools/releases/download/1.4/\
              samtools-1.4.tar.bz2" in
+  let samtools = "samtools" in
   let htslib = ["bgzip"; "tabix" ] in
   let install_program ~path =
     let open KEDSL.Program in
     sh "make"
-    && shf "cp samtools %s"  path
+    && shf "cp %s %s" samtools path
     && sh "cd htslib*/"
     && sh "make"
     && shf "cp %s %s" (String.concat htslib ~sep:" ") path
     && sh "echo Done"
   in
-  let witness = witness_list ("samtools" :: htslib) in
+  let witness = witness_list (samtools :: htslib) in
   Installable_tool.make Machine.Tool.Default.samtools ~url ~install_program
     ~init_program:add_to_dollar_path ~witness
 
