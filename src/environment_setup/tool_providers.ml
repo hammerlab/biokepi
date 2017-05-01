@@ -213,6 +213,18 @@ let freebayes =
         KEDSL.Program.(shf "export PATH=%s/bin/:$PATH" path))
     ~witness:(witness_list ["bin/freebayes"; "bin/bamleftalign"])
 
+let delly2 =
+  Installable_tool.make
+    Machine.Tool.Default.delly2
+    ~url:"https://github.com/dellytools/delly/releases/download/v0.7.7/delly_v0.7.7_parallel_linux_x86_64bit"
+    ~install_program:(fun ~path -> KEDSL.Program.(
+        sh "mv delly_v0.7.7_parallel_linux_x86_64bit delly2"
+        && sh "chmod 777 delly2"
+      ))
+    ~archive_is_directory:false
+    ~init_program:add_to_dollar_path
+    ~witness:(witness_file "delly2")
+
 let sambamba =
   Installable_tool.make
     Machine.Tool.Default.sambamba
@@ -319,20 +331,30 @@ let kallisto =
 let samtools =
   let url = "https://github.com/samtools/samtools/releases/download/1.4/\
              samtools-1.4.tar.bz2" in
-  let toplevel_tools = ["samtools"] in
+  let samtools = "samtools" in
   let htslib = ["bgzip"; "tabix" ] in
-  let tools = toplevel_tools @ htslib in
   let install_program ~path =
     let open KEDSL.Program in
     sh "make"
-    && shf "cp %s %s" (String.concat toplevel_tools ~sep:" ")  path
+    && shf "cp %s %s" samtools path
     && sh "cd htslib*/"
     && sh "make"
     && shf "cp %s %s" (String.concat htslib ~sep:" ") path
     && sh "echo Done"
   in
-  let witness = witness_list tools in
+  let witness = witness_list (samtools :: htslib) in
   Installable_tool.make Machine.Tool.Default.samtools ~url ~install_program
+    ~init_program:add_to_dollar_path ~witness
+
+let bcftools =
+  let url = "https://github.com/samtools/bcftools/releases/download/1.4/\
+             bcftools-1.4.tar.bz2" in
+  let install_program ~path =
+    let open KEDSL.Program in
+    sh "make" && shf "cp bcftools %s" path
+  in
+  let witness = witness_file "bcftools" in
+  Installable_tool.make Machine.Tool.Default.bcftools ~url ~install_program
     ~init_program:add_to_dollar_path ~witness
 
 let cufflinks =
@@ -508,6 +530,7 @@ let default_toolkit
       gatk_tool ~run_program ~host ~install_tools_path (gatk_jar_location ());
       install bwa;
       install samtools;
+      install bcftools;
       install bedtools;
       install vcftools;
       install strelka;
@@ -527,6 +550,7 @@ let default_toolkit
       install fastqc;
       install samblaster;
       install_git freebayes;
+      install delly2;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();

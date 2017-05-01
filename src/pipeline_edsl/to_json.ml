@@ -345,6 +345,10 @@ module Make_serializer (How : sig
     variant_caller "mutect2"
       configuration.Tools.Gatk.Configuration.Mutect2.name
 
+  let delly2 ?(configuration=Tools.Delly2.Configuration.default) =
+    variant_caller "delly2"
+      configuration.Tools.Delly2.Configuration.name
+
   let somaticsniper ?(configuration = Tools.Somaticsniper.Configuration.default) =
     variant_caller "somaticsniper"
       configuration.Tools.Somaticsniper.Configuration.name

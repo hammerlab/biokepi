@@ -35,6 +35,7 @@ module Tool = struct
     let freebayes = create "freebayes" ~version:"1.1.0"
     let sambamba = create "sambamba" ~version:"0.6.5"
     let samtools = create "samtools" ~version:"1.4"
+    let bcftools = create "bcftools" ~version:"1.4"
     let vcftools = create "vcftools" ~version:"0.1.12b"
     let bedtools = create "bedtools" ~version:"2.23.0"
     let somaticsniper = create "somaticsniper" ~version:"1.0.3"
@@ -59,6 +60,7 @@ module Tool = struct
     let igvxml = create "igvxml" ~version:"0.1.0"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
     let samblaster = create "samblaster" ~version:"v.0.1.22"
+    let delly2 = create "delly2" ~version:"0.7.7"
   end
 
   type t = {

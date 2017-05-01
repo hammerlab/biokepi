@@ -8,7 +8,6 @@ let default_prior_probability = 0.01
 let default_theta = 0.85
 
 module Configuration = struct
-
   type t = {
     name: string;
     prior_probability: float;

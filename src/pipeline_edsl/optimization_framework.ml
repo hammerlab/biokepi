@@ -96,6 +96,9 @@ module Generic_optimizer
   let kallisto ~reference_build ?bootstrap_samples fq =
     fwd (Input.kallisto ?bootstrap_samples ~reference_build (bwd fq))
 
+  let delly2 ?configuration ~normal ~tumor () =
+    fwd (Input.delly2 ?configuration ~normal:(bwd normal) ~tumor:(bwd tumor) ())
+
   let cufflinks ?reference_build bam =
     fwd (Input.cufflinks ?reference_build (bwd bam))
 

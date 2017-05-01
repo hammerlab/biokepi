@@ -455,6 +455,28 @@ module Make (Config : Compiler_configuration)
         ~fastq ~run_with ~result_prefix ~bootstrap_samples
     )
 
+  let delly2 ?(configuration=Tools.Delly2.Configuration.default)
+      ~normal ~tumor () =
+    let normal = get_bam normal in
+    let tumor = get_bam tumor in
+    let output_path =
+      Name_file.in_directory ~readable_suffix:"-delly2.vcf" Config.work_dir [
+        normal#product#path;
+        tumor#product#path;
+        Tools.Delly2.Configuration.name configuration;
+      ]
+    in
+    let bcf =
+      Tools.Delly2.run_somatic
+        ~configuration
+        ~run_with
+        ~normal ~tumor
+        ~output_path:(output_path ^ ".bcf")
+    in
+    Vcf (Tools.Bcftools.bcf_to_vcf ~run_with
+           ~reference_build:normal#product#reference_build
+           ~bcf output_path)
+
   let cufflinks ?reference_build bam =
     let bam = get_bam bam in
     let reference_build =
