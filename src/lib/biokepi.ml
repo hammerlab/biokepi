@@ -129,7 +129,7 @@ module EDSL = struct
     module To_workflow = Biokepi_pipeline_edsl.To_workflow
 
     (** Compiler to JSON ({!Yojson.Basic.t}). *)
-    module To_json : Semantics.Bioinformatics_base
+    module To_json : Biokepi_pipeline_edsl.Semantics.Bioinformatics_base
       with type 'a repr = var_count: int -> Yojson.Basic.json
        and
        type 'a observation = Yojson.Basic.json =
@@ -139,7 +139,7 @@ module EDSL = struct
         {{:https://en.wikipedia.org/wiki/DOT_(graph_description_language)}DOT}
         graph descriptions.  *)
     module To_dot : sig
-      include Semantics.Bioinformatics_base
+      include Biokepi_pipeline_edsl.Semantics.Bioinformatics_base
         with
           type 'a repr = var_count:int -> Biokepi_pipeline_edsl.To_dot.Tree.t
          with type 'a observation =

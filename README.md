@@ -30,9 +30,9 @@ To use the `master` branch you need also to track the `master` branch of Ketrew:
 
 To build locally:
 
-    omake
-    omake build-all  # To build also all the tests
-    omake doc  # To build the documentation, cf. _build/doc/index.html
+    make
+    make clean ; WITH_TESTS=true make  # To build also all the tests
+    make doc  # To build the documentation, then cf. _build/doc/index.html
 
 Usage
 -----

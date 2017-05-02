@@ -1,19 +1,25 @@
 opam-version: "1.2"
 name: "biokepi"
-version: "0.0.0-alpha"
-maintainer: "seb@mondet.org"
-authors: [ "Sebastien Mondet <seb@mondet.org>" ]
+maintainer: [ "Sebastien Mondet <seb@mondet.org>" ]
+authors : [
+  "Sebastien Mondet <seb@mondet.org>"
+  "Leonid Rozenberg <leonidr@gmail.com>"
+  "Arun Ahuja <aahuja11@gmail.com>"
+  "Jeff Hammerbacher <jeff.hammerbacher@gmail.com>"
+  "Isaac Hodes <isaachodes@gmail.com>"
+  "Bulent Arman Aksoy <arman@aksoy.org>"
+]
 license: "Apache-2.0"
 build: [
-  ["omake"]
-  ["omake" "install" "BINDIR=%{bin}%"]
-]
-remove: [
-  ["omake" "uninstall" "BINDIR=%{bin}%"]
+  [make "byte"]
+  [make "native"]
+  [make "META"]
+  [make "biokepi.install"]
 ]
 depends: [
+  "ocamlbuild" {build}
+  "solvuu-build" {build & >= "0.3.0"}
+  "ocamlfind" {build}
   "base-threads"
   "ketrew" {>= "2.0.0"}
-  "omake" {= "0.9.8.6-0.rc1" }
-  "ocamlfind"
 ]
