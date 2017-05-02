@@ -3,7 +3,7 @@
 set -e
 LIB_PACKAGES=$1
 
-OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread "
+OCAMLDOC_OPTIONS="-package  $LIB_PACKAGES -thread -I _build/src"
 
 mkdir -p _build/doc_src/
 

@@ -45,9 +45,6 @@ eval `opam config env`
 
 opam update
 
-# Cf. https://github.com/mirleft/ocaml-nocrypto/issues/104
-opam pin add oasis 0.4.6
-
 opam pin add ketrew https://github.com/hammerlab/ketrew.git
 
 echo 'ocamlfind list | grep lwt'
@@ -62,12 +59,15 @@ echo "Setting Warn-Error for the Travis test"
 export OCAMLPARAM="warn-error=A,_"
 
 # Also build all the tests:
-omake build-all
+export WITH_TESTS=true
+
+make
+
 # and run a few:
-_build/biokepi-edsl-input-json/biokepi-edsl-input-json.opt
-DEST_PATH=/tmp KHOST=/tmp _build/biokepi-test-all-downloads/biokepi-test-all-downloads.opt view rg
-DEST_PATH=/tmp KHOST=/tmp _build/biokepi-test-all-downloads/biokepi-test-all-downloads.opt view tools
-_build/biokepi-tests/biokepi-tests.opt
+./biokepi-edsl-input-json.byte
+DEST_PATH=/tmp KHOST=/tmp ./biokepi-test-all-downloads.byte view rg
+DEST_PATH=/tmp KHOST=/tmp ./biokepi-test-all-downloads.byte view tools
+./biokepi-tests.byte
 
 # We try the example
 cat > my_cluster.ml <<EOCAML
