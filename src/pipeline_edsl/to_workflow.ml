@@ -261,6 +261,7 @@ module Make (Config : Compiler_configuration)
     type 'a observation = File_type_specification.t
 = struct
   include File_type_specification
+
   module Tools = Biokepi_bfx_tools
   module KEDSL = Common.KEDSL
 
@@ -447,9 +448,10 @@ module Make (Config : Compiler_configuration)
       MHC_alleles (move (tf wf#product) wf#product#path wf)
     | Raw_file wf ->
       Raw_file (move (tf wf#product) wf#product#path wf)
-    | other -> failwith
-                 (sprintf "Cannot `save` %s."
-                    (File_type_specification.to_string other))
+    | Gz _ -> failwith "Cannot `save` Gz."
+    | List _ -> failwith "Cannot `save` List."
+    | Pair _ -> failwith "Cannot `save` Pair."
+    | Lambda _ -> failwith "Cannot `save` Lambda."
 
 
   let fastq
