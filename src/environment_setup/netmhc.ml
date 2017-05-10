@@ -110,8 +110,15 @@ let guess_folder_name tool_file_loc =
 (* 
   netMHC tools will be populating this folder,
   so this is an important "tmp" folder!
+
+  And it turns out that having this on a mounted
+  folder is not that effective since NetMHC
+  occasionaly fails to create/remove new folders
+  here if the resources are limited (e.g. NFS).
+  So make sure you know where your parent_dir is.
 *)
-let tmp_dir install_path = install_path // "tmp"
+let tmp_dir parent_dir = parent_dir // "tmp"
+let local_tmp_dir = tmp_dir "/"
 
 (* 
   NetMHC tools play nicely against Python 2.x
@@ -245,7 +252,7 @@ let default_netmhc_install
           shf "cd %s" tool_path &&
           chain (List.map ~f:fix_script env_setup) &&
           shf "chmod +x %s" binary_path &&
-          shf "mkdir -p %s" (tmp_dir install_path) &&
+          shf "mkdir -p %s" local_tmp_dir &&
           shf "mkdir -p %s" runner_folder &&
           create_netmhc_runner_cmd
             ~binary_name ~binary_path ~conda_env runner_path &&
@@ -257,7 +264,7 @@ let default_netmhc_install
     Program.(
       (* no need to init conda. Runner scripts will do that for us *)
       shf "export PATH=%s:$PATH" runner_folder &&
-      shf "export TMPDIR=%s" (tmp_dir install_path)
+      shf "export TMPDIR=%s" local_tmp_dir
     )
   in
   (Machine.Tool.create
@@ -266,13 +273,12 @@ let default_netmhc_install
 
 let guess_env_setup
     ~install_path
-    ?(tmp_dirname = "tmp")
     ?(home_env = "NMHOME")
     tool_file_loc =
   let folder_name = guess_folder_name tool_file_loc in
   [
     `ENV (home_env, install_path // folder_name);
-    `ENV ("TMPDIR", install_path // tmp_dirname);
+    `ENV ("TMPDIR", local_tmp_dir);
   ]
 
 let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
