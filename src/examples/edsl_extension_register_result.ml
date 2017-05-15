@@ -269,6 +269,7 @@ M*)
       (struct
         include Biokepi.EDSL.Compile.To_workflow.Defaults
         let work_dir = work_dir
+        let results_dir = Some (Filename.concat work_dir "results")
         let machine = machine
         let results_db_uri = sqlite_db
       end)
@@ -315,6 +316,7 @@ module My_cluster: sig
   val datasets_home : string
   val max_processors : int
   val work_dir : string
+  val results_dir : string option
 end
 ```
 

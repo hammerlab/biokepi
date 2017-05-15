@@ -58,7 +58,7 @@ module Make_serializer (How : sig
 
   let save ~name thing =
     fun ~var_count ->
-      function_call name (["name", string name])
+      function_call name (["save", string name])
 
   let fastq_or_gz
       name

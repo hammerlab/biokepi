@@ -233,7 +233,7 @@ open Biokepi_run_environment
 module type Compiler_configuration = sig
   val work_dir : string
   (** Directory where all work product done by the TTFI end up. *)
-  val results_dir : string
+  val results_dir : string option
   (** Directory where `save` files will end up. *)
 
   val machine : Machine.t
@@ -252,6 +252,7 @@ end
 module Defaults = struct
   let map_reduce_gatk_indel_realigner = true
   let input_files = `Link
+  let results_dir = None
 end
 
 
@@ -386,7 +387,9 @@ module Make (Config : Compiler_configuration)
       | other -> '_')
     in
     let path =
-      Config.results_dir // name
+      match Config.results_dir with
+      | None -> Config.work_dir // "results" // name
+      | Some r -> r
     in
     let move new_product old_path wf =
       let make =

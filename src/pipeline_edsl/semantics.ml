@@ -51,6 +51,9 @@ module type Bioinformatics_base = sig
     name : string ->
     'a repr ->
     'a repr
+  (** Tag a product of the EDSL as “interesting to be saved” (the meaning is
+      implementation dependent; when compiling to a Ketrew workflow this means
+      copying the file(s) to another directory. *)
 
   val fastq :
     sample_name : string ->
