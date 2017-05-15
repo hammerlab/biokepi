@@ -419,18 +419,18 @@ module Make (Config : Compiler_configuration)
       Topiary_result (move (tf wf#product) wf#product#path wf)
     | Vaxrank_result wf ->
       let vp =
-        Tools.Vaxrank.transform_vaxrank_product
+        Tools.Vaxrank.move_vaxrank_product
           ~output_folder_path:path wf#product
       in
       Vaxrank_result (move vp wf#product#output_folder_path wf)
     | Optitype_result wf ->
       let o =
-        Tools.Optitype.transform_optitype_product ~path wf#product
+        Tools.Optitype.move_optitype_product ~path wf#product
       in
       Optitype_result (move o wf#product#path wf)
     | Seq2hla_result wf ->
       let s =
-        Tools.Seq2HLA.transform_seq2hla_product ~path wf#product
+        Tools.Seq2HLA.move_seq2hla_product ~path wf#product
       in
       Seq2hla_result (move s wf#product#work_dir_path wf)
     | Fastqc_result wf ->

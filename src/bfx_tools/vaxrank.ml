@@ -153,7 +153,7 @@ type product = <
   pdf_report_path: string option;
   output_folder_path: string >
 
-let transform_vaxrank_product ?host ~output_folder_path vp =
+let move_vaxrank_product ?host ~output_folder_path vp =
   let open KEDSL in
   let open Option in
   let host = match host with

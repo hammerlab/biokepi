@@ -12,7 +12,7 @@ type product = <
   class2_expression_path: string;
   work_dir_path: string >
 
-let transform_seq2hla_product ?host ~path s =
+let move_seq2hla_product ?host ~path s =
   let host = match host with
   | None -> s#host
   | Some h -> h

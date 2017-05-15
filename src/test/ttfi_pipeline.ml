@@ -111,7 +111,7 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
           include Biokepi.EDSL.Compile.To_workflow.Defaults
           let processors = 42
           let work_dir = "/work/dir/"
-          let results_dir = "/result/dir"
+          let results_dir = Some "/result/dir"
           let machine =
             Biokepi.Setup.Build_machine.create
               "ssh://example.com/tmp/KT/"

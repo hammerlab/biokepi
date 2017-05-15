@@ -8,7 +8,7 @@ type product = <
   is_done : Ketrew_pure.Target.Condition.t option ;
   path: string >
 
-let transform_optitype_product ?host ~path o =
+let move_optitype_product ?host ~path o =
   let host = match host with
   | None -> o#host
   | Some h -> h
