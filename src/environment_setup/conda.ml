@@ -16,9 +16,16 @@ type conda_version_type = [
   | `Version of string
 ]
 
+type python_version_type = [
+  | `Python2
+  | `Python3
+  | `PythonCustom of string
+  | `PythonToolDependency of string
+]
+
 type conda_environment_type = {
   name: string;
-  python_version: [ `Python2 | `Python3 ];
+  python_version: python_version_type;
   channels: string list;
   base_packages: (string * conda_version_type) list;
   banned_packages: string list;
@@ -36,7 +43,9 @@ let setup_environment
   ?(python_version = `Python2)
   install_path
   name =
-  let channels = [ "bioconda"; "r" ] @ custom_channels in
+  let channels =
+    [ "conda-forge"; "defaults"; "r"; "bioconda" ] @ custom_channels
+  in
   {name; python_version; channels; base_packages; banned_packages; install_path; main_subdir; envs_subdir}
 
 let main_dir ~conda_env = conda_env.install_path // conda_env.main_subdir
@@ -46,6 +55,8 @@ let bin ~conda_env = commands ~conda_env "conda"
 let activate ~conda_env = commands ~conda_env "activate"
 let deactivate ~conda_env = commands ~conda_env "deactivate"
 let environment_path ~conda_env = envs_dir ~conda_env // conda_env.name
+let bin_in_conda_environment ~conda_env command =
+  (environment_path ~conda_env) // "bin" // command
 
 (* give a conda command. *)
 let com ~conda_env fmt =
@@ -77,10 +88,17 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
 
 let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open KEDSL in
+  let seed_package = 
+    match conda_env.python_version with 
+    | `Python2 -> "python=2"
+    | `Python3 -> "python=3"
+    | `PythonCustom v -> sprintf "python=%s" v
+    | `PythonToolDependency t -> t
+  in
   let create_env =
-    com ~conda_env "create -y -q --prefix %s python=%d"
+    com ~conda_env "create -y -q --prefix %s %s"
       (envs_dir ~conda_env // conda_env.name)
-      (match conda_env.python_version with `Python2 -> 2 | `Python3 -> 3)
+      seed_package
   in
   let install_package (package, version) =
     Program.(
@@ -99,9 +117,10 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
         `Self_identification ["conda"; "configuration"];
       ]
       Program.(
-        sh create_env
+        let config_cmd = shf "%s config --add channels %s" (bin ~conda_env) in
+        chain (List.map ~f:config_cmd conda_env.channels)
+        && sh create_env
         && shf "source %s %s" (activate ~conda_env) (envs_dir ~conda_env // conda_env.name)
-        && chain (List.map ~f:(shf "conda config --add channels %s") conda_env.channels)
         && chain (List.map ~f:install_package conda_env.base_packages)
         && chain (List.map ~f:force_rm_package conda_env.banned_packages)
       )
@@ -111,7 +130,8 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
     (single_file ~host (envs_dir ~conda_env // conda_env.name // "bin/conda")
      :> < is_done : Common.KEDSL.Condition.t option >)  in
   let name =
-    sprintf "Configure conda: %s" conda_env.name in
+    sprintf "Configure conda with %s: %s" seed_package conda_env.name
+  in
   workflow_node product ~make ~name ~edges
 
 

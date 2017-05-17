@@ -8,9 +8,6 @@ type install_source_type =
   | Package_Source of string * string
   | Package_Conda of string
 
-let bin_in_conda_environment ~conda_env command =
-  Conda.(environment_path ~conda_env) // "bin" // command
-
 let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
     ?check_bin ?version ?(python_version=`Python3)
     (installation:install_tool_type * install_source_type) =
@@ -37,7 +34,7 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
       (name ^ Option.value_map ~default:"" version ~f:(sprintf ".%s"))
   in
   let single_file_check id =
-    single_file ~host (bin_in_conda_environment ~conda_env id)
+    single_file ~host Conda.(bin_in_conda_environment ~conda_env id)
   in
   let exec_check =
     match check_bin with

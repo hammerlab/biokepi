@@ -561,6 +561,8 @@ let default_toolkit
       ~install_path:(install_tools_path // "biopam-kit") ();
     Python_package.default ~run_program ~host
       ~install_path: (install_tools_path // "python-tools") ();
+    Bioconda.default ~run_program ~host
+      ~install_path: (install_tools_path // "bioconda") ();
     Netmhc.default ~run_program ~host
       ~install_path: (install_tools_path // "netmhc-tools")
       ~netmhc_config: (netmhc_config ())
