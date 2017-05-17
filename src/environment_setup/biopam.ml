@@ -296,21 +296,7 @@ let seq2hla =
     ~witness:"seq2HLA" ~requires_conda:true
     ~package:"seq2HLA.2.2" (* we need to uppercase HLA for opam *)
     Machine.Tool.Default.seq2hla
-
-let optitype =
-  install_target ~witness:"OptiTypePipeline" Machine.Tool.Default.optitype
-    ~requires_conda:true
-    ~init_environment:KEDSL.Program.(
-        fun ~install_path ->
-          let name = Machine.Tool.(Default.optitype.Definition.name) in
-          let version = Machine.Tool.(Default.optitype.Definition.version) in
-          shf "export OPAMROOT=%s.%s"
-            (Opam.root_of_package name |> Opam.root ~install_path)
-            (match version with None -> "NOVERSION" | Some v -> v)
-          && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
-            (Opam.bin ~install_path)
-      )
-
+    
 let igvxml =
   install_target
     ~witness:"igvxml" ~test:test_version
@@ -339,7 +325,6 @@ let default :
     picard;
     bowtie;
     seq2hla;
-    optitype;
     igvxml;
     hlarp;
   ])

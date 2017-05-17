@@ -1106,14 +1106,19 @@ module Make (Config : Compiler_configuration)
     let work_dir =
       Name_file.in_directory Config.work_dir ~readable_suffix:"optitype.d" [
         fastq#product#escaped_sample_name;
-        (match how with `RNA -> "RNA" | `DNA -> "DNA");
+        (match how with `RNA -> "RNA" | `DNA -> "DNA-bwamem");
         fastq#product#fragment_id_forced;
       ]
     in
+    let run_name = fastq#product#escaped_sample_name in
     Optitype_result (
-      Tools.Optitype.hla_type
-        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
-        how
+      match how with 
+      | `DNA -> 
+        Tools.Optitype.dna_hla_type_with_bwamem
+          ~configuration:Tools.Bwa.Configuration.Mem.default
+          ~work_dir ~run_with ~fastq ~run_name
+      | `RNA -> 
+        Tools.Optitype.hla_type ~work_dir ~run_with ~fastq ~run_name `RNA
     )
 
   let gatk_haplotype_caller bam =

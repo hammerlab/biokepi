@@ -28,6 +28,7 @@ module Tool = struct
       sprintf "%s.%s" name (Option.value ~default:"NOVERSION" version)
     let to_string = to_opam_name
     let to_directory_name = to_opam_name
+    let version {name; version} = version
   end
   module Default = struct
     open Definition
@@ -54,7 +55,6 @@ module Tool = struct
     let mosaik = create "mosaik" ~version:"2.2.3"
     let kallisto = create "kallisto" ~version:"0.42.3"
     let bowtie = create "bowtie" ~version:"1.1.2"
-    let optitype = create "optitype" ~version:"1.0.0"
     let seq2hla = create "seq2hla" ~version:"2.2"
     let fastqc = create "fastqc" ~version:"0.11.5"
     let igvxml = create "igvxml" ~version:"0.1.0"

@@ -40,4 +40,3 @@ let default ~host ~run_program ~install_path () =
       ~check_bin:"OptiTypePipeline.py" Default.optitype;
     create_bioconda_tool ~host ~run_program ~install_path
       Default.picard;
-  ])
