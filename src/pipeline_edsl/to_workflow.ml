@@ -455,6 +455,7 @@ module Make (Config : Compiler_configuration)
     | List _ -> failwith "Cannot `save` List."
     | Pair _ -> failwith "Cannot `save` Pair."
     | Lambda _ -> failwith "Cannot `save` Lambda."
+    | _ -> failwith "Shouldn't get here: pattern match for `save` must be exhaustive."
 
 
   let fastq
