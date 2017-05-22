@@ -460,13 +460,16 @@ module Make (Config : Compiler_configuration)
       in
       Seq2hla_result (move ~from_path ~wf s)
     | Fastqc_result wf ->
-      let fqc =
-        let paths = List.map wf#product#paths
-            ~f:(fun p -> base_path // (Filename.basename p)) in
-        list_of_files paths
-      in
       let from_path =
         wf#product#paths |> List.hd_exn |> Filename.dirname |> canonicalize in
+      let fqc =
+        let paths = List.map wf#product#paths
+            ~f:(fun p ->
+                base_path
+                // (basename from_path)
+                // (basename p)) in
+        list_of_files paths
+      in
       Fastqc_result (move ~from_path ~wf fqc)
     | Cufflinks_result wf ->
       let from_path = wf#product#path in
