@@ -387,94 +387,100 @@ module Make (Config : Compiler_configuration)
       | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
       | other -> '_')
     in
-    let path =
+    let base_path =
       match Config.results_dir with
       | None -> Config.work_dir // "results" // name
       | Some r -> r // name
     in
-    let move new_product old_path wf =
+    let move ~to_path ~from_path ~wf product =
       let make =
         Machine.quick_run_program
           Config.machine
           Program.(
-            shf "mkdir -p %s" (Filename.dirname path)
-            && shf "cp -r %s %s" old_path path
+            shf "mkdir -p %s" (Filename.dirname to_path)
+            && shf "cp -r %s %s" from_path to_path
           )
       in
-      let name = sprintf "Saving: %s" name in
-      workflow_node new_product ~name ~make ~edges:[depends_on wf]
+      let name = sprintf "Saving \"%s\"" name in
+      workflow_node product ~name ~make ~edges:[depends_on wf]
     in
     let tf path = transform_single_file ~path in
     match thing with
     | Bam wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Bam (move (transform_bam ~path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Bam (move ~to_path ~from_path ~wf (transform_bam ~path:to_path wf#product))
     | Vcf wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Vcf (move (transform_vcf ~path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Vcf (move ~to_path ~from_path ~wf (transform_vcf ~path:to_path wf#product))
     | Gtf wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Gtf (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Gtf (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Flagstat_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Flagstat_result (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Flagstat_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Isovar_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Isovar_result (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Isovar_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Topiary_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Topiary_result (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Topiary_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Vaxrank_result wf ->
+      let from_path = wf#product#output_folder_path in
+      let to_path = base_path // basename from_path in
       let vp =
         Tools.Vaxrank.move_vaxrank_product
-          ~output_folder_path:path wf#product
+          ~output_folder_path:to_path wf#product
       in
-      Vaxrank_result (move vp wf#product#output_folder_path wf)
+      Vaxrank_result (move ~to_path ~from_path ~wf vp)
     | Optitype_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
       let o =
-        Tools.Optitype.move_optitype_product ~path wf#product
+        Tools.Optitype.move_optitype_product ~path:to_path wf#product
       in
-      Optitype_result (move o wf#product#path wf)
+      let from_path = wf#product#path in
+      Optitype_result (move ~to_path ~from_path ~wf o)
     | Seq2hla_result wf ->
+      let from_path = wf#product#work_dir_path in
+      let to_path = base_path // basename from_path in
       let s =
-        Tools.Seq2HLA.move_seq2hla_product ~path wf#product
+        Tools.Seq2HLA.move_seq2hla_product ~path:to_path wf#product
       in
-      Seq2hla_result (move s wf#product#work_dir_path wf)
+      Seq2hla_result (move ~to_path ~from_path ~wf s)
     | Fastqc_result wf ->
       let fqc =
         let paths = List.map wf#product#paths
-            ~f:(fun p -> path // (Filename.basename p)) in
+            ~f:(fun p -> base_path // (Filename.basename p)) in
         list_of_files paths
       in
-      Fastqc_result (move fqc path wf)
+      let from_path = (wf#product#paths |> List.hd_exn |> Filename.dirname) in
+      Fastqc_result (move ~to_path:base_path ~from_path ~wf fqc)
     | Cufflinks_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Cufflinks_result (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Cufflinks_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Bai wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Bai (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Bai (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Kallisto_result wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Kallisto_result (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Kallisto_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | MHC_alleles wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      MHC_alleles (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      MHC_alleles (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Raw_file wf ->
-      let orig = basename wf#product#path in
-      let path = path // orig in
-      Raw_file (move (tf path wf#product) orig wf)
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Raw_file (move ~to_path ~from_path ~wf (tf to_path wf#product))
     | Gz _ -> failwith "Cannot `save` Gz."
     | List _ -> failwith "Cannot `save` List."
     | Pair _ -> failwith "Cannot `save` Pair."
