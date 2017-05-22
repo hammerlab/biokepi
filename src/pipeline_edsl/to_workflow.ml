@@ -387,19 +387,25 @@ module Make (Config : Compiler_configuration)
       | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
       | other -> '_')
     in
+    let canonicalize path =
+      (* Remove the ending '/' from the path. This is so rsync syncs the directory itself +  *)
+      let suffix = "/" in
+      if Filename.check_suffix path suffix
+      then String.chop_suffix_exn ~suffix path
+      else path
+    in
     let base_path =
       match Config.results_dir with
       | None -> Config.work_dir // "results" // name
       | Some r -> r // name
     in
-    let move ~to_path ~from_path ~wf product =
+    let move ~from_path ~wf product =
       let make =
         Machine.quick_run_program
           Config.machine
           Program.(
             shf "mkdir -p %s" base_path
-            && shf "rsync -a %s %s" from_path to_path
-          )
+            && shf "rsync -a %s %s" from_path base_path)
       in
       let name = sprintf "Saving \"%s\"" name in
       workflow_node product ~name ~make ~edges:[depends_on wf]
@@ -409,35 +415,35 @@ module Make (Config : Compiler_configuration)
     | Bam wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Bam (move ~to_path ~from_path ~wf (transform_bam ~path:to_path wf#product))
+      Bam (move ~from_path ~wf (transform_bam ~path:to_path wf#product))
     | Vcf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Vcf (move ~to_path ~from_path ~wf (transform_vcf ~path:to_path wf#product))
+      Vcf (move ~from_path ~wf (transform_vcf ~path:to_path wf#product))
     | Gtf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Gtf (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Gtf (move ~from_path ~wf (tf to_path wf#product))
     | Flagstat_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Flagstat_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Flagstat_result (move ~from_path ~wf (tf to_path wf#product))
     | Isovar_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Isovar_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Isovar_result (move ~from_path ~wf (tf to_path wf#product))
     | Topiary_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Topiary_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Topiary_result (move ~from_path ~wf (tf to_path wf#product))
     | Vaxrank_result wf ->
-      let from_path = wf#product#output_folder_path in
+      let from_path = canonicalize wf#product#output_folder_path in
       let to_path = base_path // basename from_path in
       let vp =
         Tools.Vaxrank.move_vaxrank_product
           ~output_folder_path:to_path wf#product
       in
-      Vaxrank_result (move ~to_path ~from_path ~wf vp)
+      Vaxrank_result (move ~from_path ~wf vp)
     | Optitype_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
@@ -445,42 +451,43 @@ module Make (Config : Compiler_configuration)
         Tools.Optitype.move_optitype_product ~path:to_path wf#product
       in
       let from_path = wf#product#path in
-      Optitype_result (move ~to_path ~from_path ~wf o)
+      Optitype_result (move ~from_path ~wf o)
     | Seq2hla_result wf ->
-      let from_path = wf#product#work_dir_path in
+      let from_path = canonicalize wf#product#work_dir_path in
       let to_path = base_path // basename from_path in
       let s =
         Tools.Seq2HLA.move_seq2hla_product ~path:to_path wf#product
       in
-      Seq2hla_result (move ~to_path ~from_path ~wf s)
+      Seq2hla_result (move ~from_path ~wf s)
     | Fastqc_result wf ->
       let fqc =
         let paths = List.map wf#product#paths
             ~f:(fun p -> base_path // (Filename.basename p)) in
         list_of_files paths
       in
-      let from_path = (wf#product#paths |> List.hd_exn |> Filename.dirname) in
-      Fastqc_result (move ~to_path:base_path ~from_path ~wf fqc)
+      let from_path =
+        wf#product#paths |> List.hd_exn |> Filename.dirname |> canonicalize in
+      Fastqc_result (move ~from_path ~wf fqc)
     | Cufflinks_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Cufflinks_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Cufflinks_result (move ~from_path ~wf (tf to_path wf#product))
     | Bai wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Bai (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Bai (move ~from_path ~wf (tf to_path wf#product))
     | Kallisto_result wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Kallisto_result (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Kallisto_result (move ~from_path ~wf (tf to_path wf#product))
     | MHC_alleles wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      MHC_alleles (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      MHC_alleles (move ~from_path ~wf (tf to_path wf#product))
     | Raw_file wf ->
-      let from_path = wf#product#path in
+      let from_path = canonicalize wf#product#path in
       let to_path = base_path // basename from_path in
-      Raw_file (move ~to_path ~from_path ~wf (tf to_path wf#product))
+      Raw_file (move ~from_path ~wf (tf to_path wf#product))
     | Gz _ -> failwith "Cannot `save` Gz."
     | List _ -> failwith "Cannot `save` List."
     | Pair _ -> failwith "Cannot `save` Pair."
