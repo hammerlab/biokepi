@@ -382,6 +382,7 @@ module Make (Config : Compiler_configuration)
 
   let save ~name thing =
     let open KEDSL in
+    let basename = Filename.basename in
     let name = String.map name ~f:(function
       | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
       | other -> '_')
@@ -403,20 +404,32 @@ module Make (Config : Compiler_configuration)
       let name = sprintf "Saving: %s" name in
       workflow_node new_product ~name ~make ~edges:[depends_on wf]
     in
-    let tf = transform_single_file ~path in
+    let tf path = transform_single_file ~path in
     match thing with
     | Bam wf ->
-      Bam (move (transform_bam ~path wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Bam (move (transform_bam ~path wf#product) orig wf)
     | Vcf wf ->
-      Vcf (move (transform_vcf ~path wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Vcf (move (transform_vcf ~path wf#product) orig wf)
     | Gtf wf ->
-      Gtf (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Gtf (move (tf path wf#product) orig wf)
     | Flagstat_result wf ->
-      Flagstat_result (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Flagstat_result (move (tf path wf#product) orig wf)
     | Isovar_result wf ->
-      Isovar_result (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Isovar_result (move (tf path wf#product) orig wf)
     | Topiary_result wf ->
-      Topiary_result (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Topiary_result (move (tf path wf#product) orig wf)
     | Vaxrank_result wf ->
       let vp =
         Tools.Vaxrank.move_vaxrank_product
@@ -424,6 +437,8 @@ module Make (Config : Compiler_configuration)
       in
       Vaxrank_result (move vp wf#product#output_folder_path wf)
     | Optitype_result wf ->
+      let orig = basename wf#product#path in
+      let path = path // orig in
       let o =
         Tools.Optitype.move_optitype_product ~path wf#product
       in
@@ -441,15 +456,25 @@ module Make (Config : Compiler_configuration)
       in
       Fastqc_result (move fqc path wf)
     | Cufflinks_result wf ->
-      Cufflinks_result (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Cufflinks_result (move (tf path wf#product) orig wf)
     | Bai wf ->
-      Bai (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Bai (move (tf path wf#product) orig wf)
     | Kallisto_result wf ->
-      Kallisto_result (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Kallisto_result (move (tf path wf#product) orig wf)
     | MHC_alleles wf ->
-      MHC_alleles (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      MHC_alleles (move (tf path wf#product) orig wf)
     | Raw_file wf ->
-      Raw_file (move (tf wf#product) wf#product#path wf)
+      let orig = basename wf#product#path in
+      let path = path // orig in
+      Raw_file (move (tf path wf#product) orig wf)
     | Gz _ -> failwith "Cannot `save` Gz."
     | List _ -> failwith "Cannot `save` List."
     | Pair _ -> failwith "Cannot `save` Pair."
