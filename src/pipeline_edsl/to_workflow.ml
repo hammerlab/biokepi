@@ -389,7 +389,7 @@ module Make (Config : Compiler_configuration)
     let path =
       match Config.results_dir with
       | None -> Config.work_dir // "results" // name
-      | Some r -> r
+      | Some r -> r // name
     in
     let move new_product old_path wf =
       let make =
@@ -434,7 +434,6 @@ module Make (Config : Compiler_configuration)
       in
       Seq2hla_result (move s wf#product#work_dir_path wf)
     | Fastqc_result wf ->
-      let path = (wf#product#paths |> List.hd_exn |> Filename.dirname) in
       let fqc =
         let paths = List.map wf#product#paths
             ~f:(fun p -> path // (Filename.basename p)) in
