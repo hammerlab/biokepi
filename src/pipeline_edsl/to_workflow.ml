@@ -397,7 +397,8 @@ module Make (Config : Compiler_configuration)
         Machine.quick_run_program
           Config.machine
           Program.(
-            shf "rsync -a %s %s" from_path to_path
+            shf "mkdir -p %s" base_path
+            && shf "rsync -a %s %s" from_path to_path
           )
       in
       let name = sprintf "Saving \"%s\"" name in
