@@ -146,11 +146,43 @@ module Configuration = struct
 end
 
 type product = <
+  host: Ketrew_pure.Host.t;
   is_done : Ketrew_pure.Target.Condition.t option ;
   ascii_report_path : string option;
   xlsx_report_path: string option;
   pdf_report_path: string option;
   output_folder_path: string >
+
+let move_vaxrank_product ?host ~output_folder_path vp =
+  let open KEDSL in
+  let open Option in
+  let host = match host with
+  | None -> vp#host
+  | Some h -> h in
+  let sub path =
+    let base = String.chop_prefix_exn ~prefix:vp#output_folder_path path in
+    output_folder_path // base
+  in
+  let ascii_product = vp#ascii_report_path >>= fun p ->
+    return (single_file ~host (sub p)) in
+  let xlsx_product = vp#xlsx_report_path >>= fun p ->
+    return (single_file ~host (sub p)) in
+  let pdf_product = vp#pdf_report_path >>= fun p ->
+    return (single_file ~host (sub p)) in
+  let opt_path p = p >>= fun p -> return (p#path) in
+  object
+    method host = host
+    method is_done =
+      Some (`And
+              (List.filter_map ~f:(fun f ->
+                   let open Option in
+                   f >>= fun f -> f#is_done)
+                  [ascii_product; xlsx_product; pdf_product]))
+    method ascii_report_path = opt_path ascii_product
+    method xlsx_report_path = opt_path xlsx_product
+    method pdf_report_path = opt_path pdf_product
+    method output_folder_path = output_folder_path
+  end
 
 let run ~(run_with: Machine.t)
     ~configuration
@@ -209,6 +241,7 @@ let run ~(run_with: Machine.t)
   let product =
     let path_of f = Option.map f ~f:(fun f -> f#path) in
     object
+      method host = host
       method is_done =
         Some (`And
                 (List.filter_map ~f:(fun f ->

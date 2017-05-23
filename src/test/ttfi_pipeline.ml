@@ -111,6 +111,7 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
           include Biokepi.EDSL.Compile.To_workflow.Defaults
           let processors = 42
           let work_dir = "/work/dir/"
+          let results_dir = Some "/result/dir"
           let machine =
             Biokepi.Setup.Build_machine.create
               "ssh://example.com/tmp/KT/"
@@ -342,9 +343,12 @@ module Somatic_simplish(Bfx: Biokepi.EDSL.Semantics) = struct
     let vcfs =
       let normal, tumor = final_normal_bam, final_tumor_bam in
       Bfx.list [
-        Bfx.mutect ~normal ~tumor ();
-        Bfx.somaticsniper ~normal ~tumor ();
-        Bfx.strelka ~normal ~tumor ();
+        Bfx.mutect ~normal ~tumor ()
+        |> Bfx.save ~name:"Mutect VCF";
+        Bfx.somaticsniper ~normal ~tumor ()
+        |> Bfx.save ~name:"SS VCF";
+        Bfx.strelka ~normal ~tumor ()
+        |> Bfx.save ~name:"Strelka VCF";
       ] in
     Bfx.list [
       Bfx.to_unit vcfs;

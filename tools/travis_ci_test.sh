@@ -74,6 +74,7 @@ cat > my_cluster.ml <<EOCAML
 module My_cluster = struct
   let max_processors = 42
   let work_dir = "/work/dir/"
+  let results_dir = "/results/dir/"
   let datasets_home = "/datasets/"
   let machine =
     Biokepi.Setup.Build_machine.create "ssh://example.com/tmp/KT/"

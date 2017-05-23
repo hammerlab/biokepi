@@ -70,6 +70,9 @@ module Generic_optimizer
 
   let input_url u = fwd (Input.input_url u)
 
+  let save ~name thing =
+    fwd (Input.save ~name (bwd thing))
+
   let fastq ~sample_name ?fragment_id ~r1 ?r2 () =
     let r2 = Option.map ~f:bwd r2 in
     fwd (Input.fastq ~sample_name ?fragment_id ~r1:(bwd r1) ?r2 ())

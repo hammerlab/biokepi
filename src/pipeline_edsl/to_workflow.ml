@@ -231,20 +231,28 @@ end
 open Biokepi_run_environment
 
 module type Compiler_configuration = sig
-  val work_dir: string
-  val machine : Machine.t
-  val map_reduce_gatk_indel_realigner : bool
+  val work_dir : string
+  (** Directory where all work product done by the TTFI end up. *)
+  val results_dir : string option
+  (** Directory where `save` files will end up. *)
 
+  val machine : Machine.t
+  (** Biokepi machine used by the TTFI workflow. *)
+
+  val map_reduce_gatk_indel_realigner : bool
+  (** Whether or not to scatter-gather the indel-realigner results. *)
+
+  val input_files: [ `Copy | `Link | `Do_nothing ]
   (** What to do with input files: copy or link them to the work directory, or
       do nothing. Doing nothing means letting some tools like ["samtools sort"]
       write in the input-file's directory. *)
-  val input_files: [ `Copy | `Link | `Do_nothing ]
 end
 
 
 module Defaults = struct
   let map_reduce_gatk_indel_realigner = true
   let input_files = `Link
+  let results_dir = None
 end
 
 
@@ -254,6 +262,7 @@ module Make (Config : Compiler_configuration)
     type 'a observation = File_type_specification.t
 = struct
   include File_type_specification
+
   module Tools = Biokepi_bfx_tools
   module KEDSL = Common.KEDSL
 
@@ -370,6 +379,124 @@ module Make (Config : Compiler_configuration)
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
     end
+
+  let save ~name thing =
+    let open KEDSL in
+    let basename = Filename.basename in
+    let name = String.map name ~f:(function
+      | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
+      | other -> '_')
+    in
+    let canonicalize path =
+      (* Remove the ending '/' from the path. This is so rsync syncs the directory itself +  *)
+      let suffix = "/" in
+      if Filename.check_suffix path suffix
+      then String.chop_suffix_exn ~suffix path
+      else path
+    in
+    let base_path =
+      match Config.results_dir with
+      | None -> Config.work_dir // "results" // name
+      | Some r -> r // name
+    in
+    let move ~from_path ~wf product =
+      let make =
+        Machine.quick_run_program
+          Config.machine
+          Program.(
+            shf "mkdir -p %s" base_path
+            && shf "rsync -a %s %s" from_path base_path)
+      in
+      let name = sprintf "Saving \"%s\"" name in
+      workflow_node product ~name ~make ~edges:[depends_on wf]
+    in
+    let tf path = transform_single_file ~path in
+    match thing with
+    | Bam wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Bam (move ~from_path ~wf (transform_bam ~path:to_path wf#product))
+    | Vcf wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Vcf (move ~from_path ~wf (transform_vcf ~path:to_path wf#product))
+    | Gtf wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Gtf (move ~from_path ~wf (tf to_path wf#product))
+    | Flagstat_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Flagstat_result (move ~from_path ~wf (tf to_path wf#product))
+    | Isovar_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Isovar_result (move ~from_path ~wf (tf to_path wf#product))
+    | Topiary_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Topiary_result (move ~from_path ~wf (tf to_path wf#product))
+    | Vaxrank_result wf ->
+      let from_path = canonicalize wf#product#output_folder_path in
+      let to_path = base_path // basename from_path in
+      let vp =
+        Tools.Vaxrank.move_vaxrank_product
+          ~output_folder_path:to_path wf#product
+      in
+      Vaxrank_result (move ~from_path ~wf vp)
+    | Optitype_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      let o =
+        Tools.Optitype.move_optitype_product ~path:to_path wf#product
+      in
+      let from_path = wf#product#path in
+      Optitype_result (move ~from_path ~wf o)
+    | Seq2hla_result wf ->
+      let from_path = canonicalize wf#product#work_dir_path in
+      let to_path = base_path // basename from_path in
+      let s =
+        Tools.Seq2HLA.move_seq2hla_product ~path:to_path wf#product
+      in
+      Seq2hla_result (move ~from_path ~wf s)
+    | Fastqc_result wf ->
+      let from_path =
+        wf#product#paths |> List.hd_exn |> Filename.dirname |> canonicalize in
+      let fqc =
+        let paths = List.map wf#product#paths
+            ~f:(fun p ->
+                base_path
+                // (basename from_path)
+                // (basename p)) in
+        list_of_files paths
+      in
+      Fastqc_result (move ~from_path ~wf fqc)
+    | Cufflinks_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Cufflinks_result (move ~from_path ~wf (tf to_path wf#product))
+    | Bai wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Bai (move ~from_path ~wf (tf to_path wf#product))
+    | Kallisto_result wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      Kallisto_result (move ~from_path ~wf (tf to_path wf#product))
+    | MHC_alleles wf ->
+      let from_path = wf#product#path in
+      let to_path = base_path // basename from_path in
+      MHC_alleles (move ~from_path ~wf (tf to_path wf#product))
+    | Raw_file wf ->
+      let from_path = canonicalize wf#product#path in
+      let to_path = base_path // basename from_path in
+      Raw_file (move ~from_path ~wf (tf to_path wf#product))
+    | Gz _ -> failwith "Cannot `save` Gz."
+    | List _ -> failwith "Cannot `save` List."
+    | Pair _ -> failwith "Cannot `save` Pair."
+    | Lambda _ -> failwith "Cannot `save` Lambda."
+    | _ -> failwith "Shouldn't get here: pattern match for `save` must be exhaustive."
+
 
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =

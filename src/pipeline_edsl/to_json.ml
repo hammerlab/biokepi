@@ -30,7 +30,6 @@ let observe f = f () ~var_count:0
 
 let to_unit j = j
 
-
 let list l =
   fun ~var_count ->
     `List (List.map ~f:(fun a -> a ~var_count) l)
@@ -56,6 +55,10 @@ module Make_serializer (How : sig
     input_value "Input" [
       "URL", u;
     ]
+
+  let save ~name thing =
+    fun ~var_count ->
+      function_call name (["save", string name])
 
   let fastq_or_gz
       name

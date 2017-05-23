@@ -4,12 +4,36 @@ open Common
 
 
 type product = <
-    is_done : Ketrew_pure.Target.Condition.t option ;
-    class1_path : string;
-    class2_path: string;
-    class1_expression_path : string;
-    class2_expression_path: string;
-    work_dir_path: string >
+  host : Ketrew_pure.Host.t;
+  is_done : Ketrew_pure.Target.Condition.t option;
+  class1_path : string;
+  class2_path: string;
+  class1_expression_path : string;
+  class2_expression_path: string;
+  work_dir_path: string >
+
+let move_seq2hla_product ?host ~path s =
+  let host = match host with
+  | None -> s#host
+  | Some h -> h
+  in
+  let tp p =
+    let base = String.chop_prefix_exn ~prefix:s#work_dir_path p in
+    path // base
+  in
+  let class1 = KEDSL.single_file ~host (tp s#class1_path) in
+  let class2 = KEDSL.single_file ~host (tp s#class2_path) in
+  object
+    method host = host
+    method is_done =
+      Some (`And
+             (List.filter_map ~f:(fun f -> f#is_done) [class1; class2]))
+    method class1_path = class1#path
+    method class2_path = class2#path
+    method class1_expression_path = tp s#class1_expression_path
+    method class2_expression_path = tp s#class2_expression_path
+    method work_dir_path = path
+  end
 
 
 let hla_type
@@ -42,6 +66,7 @@ let hla_type
     let class1 = KEDSL.single_file ~host class1_path in
     let class2 = KEDSL.single_file ~host class2_path in
     object
+      method host = host
       method is_done =
         Some (`And
                 (List.filter_map ~f:(fun f -> f#is_done) [class1; class2]))
