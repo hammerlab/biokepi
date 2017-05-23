@@ -91,7 +91,7 @@ module Default = struct
 
   (* Used by both B37 and B37decoy *)
   let b37_dbsnp_url =
-    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/\
      b37/dbsnp_138.b37.vcf.gz"
   let b37_cosmic_url =
     "http://www.broadinstitute.org/cancer/cga/sites/default/files/\
@@ -107,7 +107,7 @@ module Default = struct
      polyphen-2.2.2-whess-2011_12.sqlite.bz2"
 
   let b37_known_indels_url =
-    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+    "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/\
       b37/Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
 
 
