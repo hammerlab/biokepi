@@ -501,22 +501,27 @@ let fastqc =
       ~init_program:add_to_dollar_path
       ~witness:(witness_file binary)
 
-let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
+let default_tool_location
+    msg
+    (): Workflow_utilities.Download.tool_file_location
+  =
   `Fail (sprintf "No location provided for %s" msg)
 
-let default_netmhc_locations (): Netmhc.netmhc_file_locations = Netmhc.({
-  netmhc=(default_tool_location "NetMHC" ());
-  netmhcpan=(default_tool_location "NetMHCpan" ());
-  pickpocket=(default_tool_location "PickPocket" ());
-  netmhccons=(default_tool_location "NetMHCcons" ());
-})
+let default_netmhc_config () = Netmhc.(
+  create_netmhc_config
+    ~netmhc_loc:(default_tool_location "NetMHC" ())
+    ~netmhcpan_loc:(default_tool_location "NetMHCpan" ())
+    ~pickpocket_loc:(default_tool_location "PickPocket" ())
+    ~netmhccons_loc:(default_tool_location "NetMHCcons" ())
+    ()
+)
 
 let default_toolkit
     ~run_program
     ~host ~install_tools_path
     ?(mutect_jar_location = default_tool_location "Mutect")
     ?(gatk_jar_location = default_tool_location "GATK")
-    ?(netmhc_tool_locations = default_netmhc_locations)
+    ?(netmhc_config = default_netmhc_config)
     () =
   let install installable =
     Installable_tool.render ~host installable ~install_tools_path ~run_program
@@ -558,5 +563,6 @@ let default_toolkit
       ~install_path: (install_tools_path // "python-tools") ();
     Netmhc.default ~run_program ~host
       ~install_path: (install_tools_path // "netmhc-tools")
-      ~files:(netmhc_tool_locations ()) ();
+      ~netmhc_config: (netmhc_config ())
+      ();
   ]

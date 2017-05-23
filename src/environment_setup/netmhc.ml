@@ -24,6 +24,38 @@ type netmhc_file_locations = {
   netmhccons: Workflow_utilities.Download.tool_file_location;
 }
 
+(* 
+  netMHC tools will be populating this folder,
+  so this is an important "tmp" folder!
+
+  And it turns out that having this on a mounted
+  folder is not that effective since NetMHC
+  occasionaly fails to create/remove new folders
+  here if the resources are limited (e.g. NFS).
+  So make sure you know where your parent_dir is.
+*)
+let local_tmp_dir = "/tmp/" (* default: /tmp *)
+
+type netmhc_config = {
+  netmhc_tmpdir: string;
+  netmhc_file_locations: netmhc_file_locations;
+}
+
+let create_netmhc_config
+    ?(netmhc_tmpdir=local_tmp_dir)
+    ~netmhc_loc ~netmhcpan_loc ~pickpocket_loc ~netmhccons_loc
+    ()
+  =
+{  
+  netmhc_tmpdir;
+  netmhc_file_locations={
+    netmhc=netmhc_loc;
+    netmhcpan=netmhcpan_loc;
+    pickpocket=pickpocket_loc;
+    netmhccons=netmhccons_loc;
+  }
+}
+
 (*
   The standard netMHC installation requires
   customizing some of the environment variables
@@ -108,12 +140,6 @@ let guess_folder_name tool_file_loc =
       loc
 
 (* 
-  netMHC tools will be populating this folder,
-  so this is an important "tmp" folder!
-*)
-let tmp_dir install_path = install_path // "tmp"
-
-(* 
   NetMHC tools play nicely against Python 2.x
   and are known to be problematic against Python 3.x.
   For better control, we are using a Conda environment
@@ -183,6 +209,7 @@ let create_netmhc_runner_cmd
 let default_netmhc_install
     ~(run_program : Machine.Make_fun.t) ~host ~install_path
     ~tool_file_loc ~binary_name ~example_data_file ~env_setup
+    ~tmpdir
     ?(depends=[]) 
     ?(data_folder_name="data") 
     ?(data_folder_dest=".") (* relative to the netMHC folder *)
@@ -245,7 +272,7 @@ let default_netmhc_install
           shf "cd %s" tool_path &&
           chain (List.map ~f:fix_script env_setup) &&
           shf "chmod +x %s" binary_path &&
-          shf "mkdir -p %s" (tmp_dir install_path) &&
+          shf "mkdir -p %s" tmpdir &&
           shf "mkdir -p %s" runner_folder &&
           create_netmhc_runner_cmd
             ~binary_name ~binary_path ~conda_env runner_path &&
@@ -257,7 +284,7 @@ let default_netmhc_install
     Program.(
       (* no need to init conda. Runner scripts will do that for us *)
       shf "export PATH=%s:$PATH" runner_folder &&
-      shf "export TMPDIR=%s" (tmp_dir install_path)
+      shf "export TMPDIR=%s" tmpdir
     )
   in
   (Machine.Tool.create
@@ -266,16 +293,19 @@ let default_netmhc_install
 
 let guess_env_setup
     ~install_path
-    ?(tmp_dirname = "tmp")
+    ~tmpdir
     ?(home_env = "NMHOME")
     tool_file_loc =
   let folder_name = guess_folder_name tool_file_loc in
   [
     `ENV (home_env, install_path // folder_name);
-    `ENV ("TMPDIR", install_path // tmp_dirname);
+    `ENV ("TMPDIR", tmpdir);
   ]
 
-let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
+let default ~run_program ~host ~install_path 
+    ~(netmhc_config:netmhc_config) ()
+  =
+  let files = netmhc_config.netmhc_file_locations in
   let netmhc_mj = guess_major_version files.netmhc in
   let is_old_netmhc =
     match netmhc_mj with
@@ -283,9 +313,11 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     | Some v -> (int_of_string (Char.escaped v)) < 4 
     | None -> true
   in
-  let netmhc_env = guess_env_setup ~install_path files.netmhc in
+  let tmpdir = netmhc_config.netmhc_tmpdir in
+  let netmhc_env = guess_env_setup ~install_path ~tmpdir files.netmhc in
   let older_netmhc =
-    default_netmhc_install ~run_program ~host ~install_path
+    default_netmhc_install ~run_program ~host
+    ~install_path ~tmpdir
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "SLA-10401/bl50/synlist") 
     ~env_setup:(
@@ -297,7 +329,8 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
     ~data_folder_dest:"etc"
   in
   let newer_netmhc = 
-    default_netmhc_install ~run_program ~host ~install_path
+    default_netmhc_install ~run_program ~host
+    ~install_path ~tmpdir
     ~tool_file_loc:files.netmhc ~binary_name:"netMHC"
     ~example_data_file:(Some "version") 
     ~env_setup:netmhc_env
@@ -309,16 +342,16 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
   in
   let (netmhc, netmhc_path, netmhc_install) = netmhc_install_func () in
   let (netmhcpan, netmhcpan_path, netmhcpan_install) =
-    default_netmhc_install ~run_program ~host ~install_path
+    default_netmhc_install ~run_program ~host ~install_path ~tmpdir
       ~tool_file_loc:files.netmhcpan ~binary_name:"netMHCpan"
       ~example_data_file:(Some "version")
-      ~env_setup:(guess_env_setup ~install_path files.netmhcpan) ()
+      ~env_setup:(guess_env_setup ~tmpdir ~install_path files.netmhcpan) ()
   in
   let (pickpocket, pickpocket_path, pickpocket_install) =
-    default_netmhc_install ~run_program ~host ~install_path
+    default_netmhc_install ~run_program ~host ~install_path ~tmpdir
       ~tool_file_loc:files.pickpocket ~binary_name:"PickPocket"
       ~example_data_file:None
-      ~env_setup:(guess_env_setup ~install_path files.pickpocket) ()
+      ~env_setup:(guess_env_setup ~tmpdir ~install_path files.pickpocket) ()
   in
   let cons_env =
     [`ENV ("NETMHC_env", netmhc_path);
@@ -326,11 +359,11 @@ let default ~run_program ~host ~install_path ~(files:netmhc_file_locations) () =
      `ENV ("PICKPOCKET_env", pickpocket_path);
     ] @ 
     (guess_env_setup
-      ~home_env:"NCHOME" ~install_path files.netmhccons
+      ~home_env:"NCHOME" ~install_path ~tmpdir files.netmhccons
     )
   in
   let (netmhccons, _, _) =
-    default_netmhc_install ~run_program ~host ~install_path
+    default_netmhc_install ~run_program ~host ~install_path ~tmpdir
       ~tool_file_loc:files.netmhccons ~binary_name:"netMHCcons"
       ~example_data_file:(Some "BLOSUM50")
       ~env_setup:cons_env
