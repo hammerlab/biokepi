@@ -254,6 +254,7 @@ let run ~(run_with: Machine.t)
       method output_folder_path = output_folder
     end
   in
+  let quoted_output_folder = Filename.quote output_folder in
   workflow_node
     product
     ~name
@@ -271,7 +272,8 @@ let run ~(run_with: Machine.t)
           Machine.Tool.(init vaxrank)
           && predictor_init
           && Pyensembl.(set_cache_dir_command ~run_with)
-          && shf "mkdir -p %s" (Filename.quote output_folder)
+          && shf "mkdir -p %s" quoted_output_folder
+          && shf "cd %s" quoted_output_folder
           && exec (["vaxrank"] @ arguments)
         )
     )
