@@ -3,9 +3,11 @@ open Common
 
 let create_bioconda_tool
     ~host ~(run_program : Machine.Make_fun.t) ~install_path
-    ?check_bin ?version
-    name =
+    ?check_bin tool_def =
   let open KEDSL in
+  let name, version =
+    Machine.Tool.Definition.(get_name tool_def, get_version tool_def)
+  in
   let conda_tool_def =
     match version with
     | None -> name
@@ -32,7 +34,7 @@ let create_bioconda_tool
       (* No need to install the tool, it should already be in the conda env *)
   in
   let init = Conda.init_env ~conda_env () in
-  Machine.Tool.create Machine.Tool.Definition.(create name) ~ensure ~init
+  Machine.Tool.create ~ensure ~init tool_def
 
 let default ~host ~run_program ~install_path () =
   Machine.Tool.(Kit.of_list [
@@ -42,4 +44,4 @@ let default ~host ~run_program ~install_path () =
       Default.picard;
     create_bioconda_tool ~host ~run_program ~install_path
       Default.seqtk;
-  ]
+  ])

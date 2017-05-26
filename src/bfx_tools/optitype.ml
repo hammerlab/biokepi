@@ -33,8 +33,10 @@ let move_optitype_product ?host ~path o =
 let hla_type ~work_dir ~run_with ~fastq ~run_name nt
   : product KEDSL.workflow_node
   =
-  let tool = Machine.(get_tool run_with Tool.Definition.(create "optitype")) in
-  let version = Machine.Tool.(Definition.version tool.definition) in
+  let tool = Machine.get_tool run_with Machine.Tool.Default.optitype in
+  let version = 
+    Machine.Tool.(Definition.get_version tool.definition)
+  in
   let optidata_path = 
     sprintf 
       "$CONDA_PREFIX/share/optitype-%s/"

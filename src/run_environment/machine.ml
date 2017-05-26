@@ -28,7 +28,8 @@ module Tool = struct
       sprintf "%s.%s" name (Option.value ~default:"NOVERSION" version)
     let to_string = to_opam_name
     let to_directory_name = to_opam_name
-    let version {name; version} = version
+    let get_version t = t.version
+    let get_name t = t.name
   end
   module Default = struct
     open Definition
@@ -55,12 +56,21 @@ module Tool = struct
     let mosaik = create "mosaik" ~version:"2.2.3"
     let kallisto = create "kallisto" ~version:"0.42.3"
     let bowtie = create "bowtie" ~version:"1.1.2"
-    let seq2hla = create "seq2hla" ~version:"2.2"
     let fastqc = create "fastqc" ~version:"0.11.5"
     let igvxml = create "igvxml" ~version:"0.1.0"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
     let samblaster = create "samblaster" ~version:"v.0.1.22"
     let delly2 = create "delly2" ~version:"0.7.7"
+    (* Bioconda *)
+    let optitype = create "optitype" ~version:"1.2.1-0"
+    let seqtk = create "seqtk" ~version:"1.2"
+    let seq2hla = create "seq2hla" ~version:"2.2"
+    (* PyPI packages *)
+    let pyensembl = create "pyensembl" ~version:"1.1.0"
+    let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"
+    let topiary = create "topiary" ~version:"1.2.1"
+    let vaxrank = create "vaxrank" ~version:"0.4.3"
+    let isovar = create "isovar" ~version:"0.1.3"
   end
 
   type t = {

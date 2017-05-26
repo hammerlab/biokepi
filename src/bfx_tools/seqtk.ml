@@ -10,7 +10,7 @@ let shift_phred_scores ~(run_with:Machine.t)
     ~output_folder
   =
   let open KEDSL in
-  let seqtk = Machine.(get_tool run_with Tool.Definition.(create "seqtk")) in
+  let seqtk = Machine.get_tool run_with Machine.Tool.Default.seqtk in
   let output_path rpath = 
     let fqr_basename =
         rpath |> Filename.basename |> Filename.chop_extension
