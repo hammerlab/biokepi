@@ -225,4 +225,7 @@ module Generic_optimizer
     fwd (Input.vaxrank ?configuration
            (List.map ~f:(fun v -> (bwd v)) vcfs)
            (bwd bam) predictor (bwd alleles))
+
+  let seqtk_shift_phred_scores fastq =
+    fwd (Input.seqtk_shift_phred_scores (bwd fastq))
 end

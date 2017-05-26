@@ -372,6 +372,9 @@ module Make_serializer (How : sig
     variant_caller "virmid"
       configuration.Tools.Virmid.Configuration.name
 
+  let seqtk_shift_phred_scores =
+    one_to_one "seqtk_shift_phred_scores" "default"
+
 end
 
 include Make_serializer (struct

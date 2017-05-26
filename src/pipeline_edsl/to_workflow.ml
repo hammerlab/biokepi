@@ -923,6 +923,20 @@ module Make (Config : Compiler_configuration)
         ~run_with ~input_bam ~output_bam
     )
 
+  let seqtk_shift_phred_scores fastq =
+    let input_fastq = get_fastq fastq in
+    let output_folder = 
+      Name_file.from_path input_fastq#product#sample_name
+        ~readable_suffix:"phred33-fastq" [ "seqtk"; ]
+    in
+    Fastq (
+      Tools.Seqtk.shift_phred_scores
+        ~run_with
+        ~output_postfix:".fastq"
+        ~input_fastq
+        ~output_folder:(Config.work_dir // output_folder)
+    )
+
   let seq2hla fq =
     let fastq = get_fastq fq in
     let r1 = KEDSL.read_1_file_node fastq in

@@ -324,5 +324,9 @@ module type Bioinformatics_base = sig
     [ `MHC_alleles ] repr ->
     [ `Vaxrank ] repr
 
+  val seqtk_shift_phred_scores:
+    [ `Fastq ] repr ->
+    [ `Fastq ] repr
+
 end
 
