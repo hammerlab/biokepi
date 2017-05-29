@@ -1,4 +1,3 @@
-
 open Biokepi_run_environment
 open Common
 
@@ -24,6 +23,24 @@ let move_optitype_product ?host ~path o =
     method path = path
   end
 
+let get_optitype_data_folder =
+  let tname, tversion =
+    let tool_def = Machine.Tool.Default.optitype in
+    Machine.Tool.Definition.(get_name tool_def, get_version tool_def)
+  in
+  sprintf "${CONDA_PREFIX}/share/%s-%s/"
+    tname (match tversion with None -> "*" | Some v -> v)
+
+(* copy sample config file and the required data over;
+   then, adjust the razers3 path in the config *)
+let prepare_optidata = 
+  let open KEDSL.Program in
+  let optidata_path = get_optitype_data_folder in
+  shf "cp -r %s/data ." optidata_path && (* HLA reference data *)
+  shf "cp -r %s/config.ini.example config.ini" optidata_path && 
+  sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
+
+  
 (**
    Run OptiType in [`RNA] or [`DNA] mode.
 
@@ -34,14 +51,6 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt
   : product KEDSL.workflow_node
   =
   let tool = Machine.get_tool run_with Machine.Tool.Default.optitype in
-  let version = 
-    Machine.Tool.(Definition.get_version tool.definition)
-  in
-  let optidata_path = 
-    sprintf 
-      "$CONDA_PREFIX/share/optitype-%s/"
-      (match version with Some v -> v | None -> "*")
-  in
   let r1_path, r2_path_opt = fastq#product#paths in
   let name = sprintf "optitype-%s" run_name in
   let make =
@@ -51,18 +60,13 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt
         Machine.Tool.init tool
         && exec ["mkdir"; "-p"; work_dir]
         && exec ["cd"; work_dir]
-        && shf "export OPTITYPE_DATA=%s" optidata_path
-        && sh "cp -r ${OPTITYPE_DATA}/data ." (* HLA reference data *)
-        && (* config example *)
-        sh "cp -r ${OPTITYPE_DATA}/config.ini.example config.ini"
-        && (* adjust config razers3 path *)
-        sh "sed -i.bak \"s|\\/path\\/to\\/razers3|$(which razers3)|g\" config.ini"
-        &&
-        shf "OptiTypePipeline.py --verbose -c ./config.ini --input %s %s %s -o %s "
-          (Filename.quote r1_path)
-          (Option.value_map ~default:"" r2_path_opt ~f:Filename.quote)
-          (match nt with | `DNA -> "--dna" | `RNA -> "--rna")
-          run_name)
+        && prepare_optidata
+        && shf "OptiTypePipeline.py --verbose -c ./config.ini \
+                --input %s %s %s -o %s"
+            (Filename.quote r1_path)
+            (Option.value_map ~default:"" r2_path_opt ~f:Filename.quote)
+            (match nt with | `DNA -> "--dna" | `RNA -> "--rna")
+            run_name)
   in
   let product =
     let host = Machine.as_host run_with in
@@ -86,7 +90,6 @@ let hla_type ~work_dir ~run_with ~fastq ~run_name nt
           (Workflow_utilities.Remove.directory ~run_with work_dir);
       ]
     )
-
 
 (*
   Optitype depends on alignment of reads onto the HLA-locus

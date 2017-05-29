@@ -150,9 +150,7 @@ let run ~(run_with: Machine.t)
   ~alleles_file
   ~output =
   let open KEDSL in
-  let topiary =
-    Machine.get_tool run_with Machine.Tool.Definition.(create "topiary")
-  in
+  let topiary = Machine.get_tool run_with Machine.Tool.Default.topiary in
   let predictor_tool = predictor_to_tool ~run_with predictor in
   let (predictor_edges, predictor_init) =
     match predictor_tool with

@@ -290,12 +290,6 @@ let bowtie =
   install_target
     ~witness:"bowtie" ~test:test_version
     Machine.Tool.Default.bowtie
-
-let seq2hla =
-  install_target
-    ~witness:"seq2HLA" ~requires_conda:true
-    ~package:"seq2HLA.2.2" (* we need to uppercase HLA for opam *)
-    Machine.Tool.Default.seq2hla
     
 let igvxml =
   install_target
@@ -324,7 +318,6 @@ let default :
     (List.map ~f:(provide ~run_program ~host ~install_path) [
     picard;
     bowtie;
-    seq2hla;
     igvxml;
     hlarp;
   ])

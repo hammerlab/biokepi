@@ -195,9 +195,7 @@ let run ~(run_with: Machine.t)
   =
   let open KEDSL in
   let host = Machine.(as_host run_with) in
-  let vaxrank =
-    Machine.get_tool run_with Machine.Tool.Definition.(create "vaxrank")
-  in
+  let vaxrank = Machine.get_tool run_with Machine.Tool.Default.vaxrank in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
   let predictor_tool = Topiary.(predictor_to_tool ~run_with predictor) in

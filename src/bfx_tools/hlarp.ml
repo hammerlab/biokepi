@@ -29,7 +29,9 @@ let run ~(run_with:Machine.t)
         && sh
           (if extract_alleles
            then sprintf
-               "awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\"\", $2); print $2}' %s \
+               "cat %s \
+                | grep -v '^2' \
+                | awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\"\", $2); print $2}' \
                 | tail -n +2 \
                 | sed \"s/'//\" > %s.tmp \
                 && mv %s.tmp %s"
