@@ -46,4 +46,6 @@ let default ~host ~run_program ~install_path () =
       Default.seqtk;
     create_bioconda_tool ~host ~run_program ~install_path
       ~check_bin:"seq2HLA" Default.seq2hla;
+    create_bioconda_tool ~host ~run_program ~install_path
+      ~check_bin:"snpEff" Default.snpeff;
   ])

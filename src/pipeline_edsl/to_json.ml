@@ -279,6 +279,9 @@ module Make_serializer (How : sig
   let vcf_annotate_polyphen =
     one_to_one "vcf_annotate_polyphen" "default"
 
+  let snpeff =
+    one_to_one "snpeff" "default"
+
   let isovar
       ?(configuration = Tools.Isovar.Configuration.default) vcf bam =
     fun ~(var_count : int) ->

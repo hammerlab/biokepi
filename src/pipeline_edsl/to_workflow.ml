@@ -1024,6 +1024,24 @@ module Make (Config : Compiler_configuration)
       Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
     )
 
+  let snpeff vcf =
+    let open KEDSL in
+    let v = get_vcf vcf in
+    let reference_build = v#product#reference_build in
+    let out_folder =
+      Name_file.in_directory ~readable_suffix:"snpeff" Config.work_dir
+        [ Filename.basename v#product#path; reference_build; ]
+    in
+    let snpeff_run =
+      Tools.Snpeff.annotate ~run_with ~reference_build ~input_vcf:v ~out_folder
+    in
+    Vcf (
+      workflow_node
+        (transform_vcf v#product ~path:(snpeff_run#product#path))
+        ~name:"Snpeff: fetch annotated VCF"
+        ~edges:[ depends_on snpeff_run; ]
+    )
+
   let isovar
       ?(configuration=Tools.Isovar.Configuration.default)
       vcf bam =

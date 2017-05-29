@@ -65,6 +65,7 @@ module Tool = struct
     let seqtk = create "seqtk" ~version:"1.2"
     let seq2hla = create "seq2hla" ~version:"2.2"
     let picard = create "picard" ~version:"2.9.2"
+    let snpeff = create "snpeff" ~version:"4.3.1m-0"
     (* PyPI packages *)
     let pyensembl = create "pyensembl" ~version:"1.1.0"
     let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"

@@ -303,6 +303,10 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr ->
     [ `Vcf ] repr
 
+  val snpeff:
+    [ `Vcf ] repr ->
+    [ `Vcf ] repr
+
   val isovar:
     ?configuration: Isovar.Configuration.t ->
     [ `Vcf ] repr ->

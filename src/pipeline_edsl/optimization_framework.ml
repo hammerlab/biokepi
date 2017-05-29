@@ -216,6 +216,9 @@ module Generic_optimizer
 
   let vcf_annotate_polyphen vcf =
     fwd (Input.vcf_annotate_polyphen (bwd vcf))
+
+  let snpeff vcf = fwd (Input.snpeff (bwd vcf))
+
   let isovar ?configuration vcf bam =
     fwd (Input.isovar ?configuration (bwd vcf) (bwd bam))
   let topiary ?configuration vcfs predictor alleles = 
