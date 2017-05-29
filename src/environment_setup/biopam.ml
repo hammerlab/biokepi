@@ -280,12 +280,6 @@ let provide ~run_program ~host ~install_path it =
 let test_version ~host path =
   KEDSL.Command.shell ~host (sprintf "%s --version" path)
 
-let picard =
-  install_target
-    ~tool_type:(`Library "PICARD_JAR")
-    ~witness:"picard.jar"
-    (Machine.Tool.Definition.create "picard" ~version:"1.128")
-
 let bowtie =
   install_target
     ~witness:"bowtie" ~test:test_version
@@ -316,7 +310,6 @@ let default :
   _ = fun ~run_program ~host ~install_path () ->
   Machine.Tool.Kit.of_list
     (List.map ~f:(provide ~run_program ~host ~install_path) [
-    picard;
     bowtie;
     igvxml;
     hlarp;

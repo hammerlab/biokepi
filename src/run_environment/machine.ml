@@ -42,7 +42,6 @@ module Tool = struct
     let bedtools = create "bedtools" ~version:"2.23.0"
     let somaticsniper = create "somaticsniper" ~version:"1.0.3"
     let varscan = create "varscan" ~version:"2.3.5"
-    let picard = create "picard" ~version:"1.127"
     let mutect = create "mutect" (* We don't know the versions of the users' GATKs *)
     let gatk = create "gatk" (* idem, because of their non-open-source licenses *)
     let strelka = create "strelka" ~version:"1.0.14"
@@ -65,6 +64,7 @@ module Tool = struct
     let optitype = create "optitype" ~version:"1.2.1-0"
     let seqtk = create "seqtk" ~version:"1.2"
     let seq2hla = create "seq2hla" ~version:"2.2"
+    let picard = create "picard" ~version:"2.9.2"
     (* PyPI packages *)
     let pyensembl = create "pyensembl" ~version:"1.1.0"
     let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"

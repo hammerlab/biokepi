@@ -389,16 +389,6 @@ let varscan =
     KEDSL.Program.(shf "export VARSCAN_JAR=%s/%s" path jar) in
   Installable_tool.make Machine.Tool.Default.varscan ~url ~init_program ~witness
 
-let picard =
-  let url =
-    "https://github.com/broadinstitute/picard/releases/download/1.127/\
-     picard-tools-1.127.zip"
-  in
-  let jar = "picard-tools-1.127" // "picard.jar" in
-  let init_program ~path = KEDSL.Program.(shf "export PICARD_JAR=%s/%s" path jar) in
-  Installable_tool.make Machine.Tool.Default.picard ~url ~init_program
-    ~witness:(witness_file jar)
-
 (**
    Mutect (and some other tools) are behind some web-login annoying thing:
    c.f. <http://www.broadinstitute.org/cancer/cga/mutect_download>
@@ -539,7 +529,6 @@ let default_toolkit
       install bedtools;
       install vcftools;
       install strelka;
-      install picard;
       install somaticsniper;
       install sambamba;
       install varscan;
