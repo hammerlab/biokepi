@@ -72,5 +72,5 @@ let default ~host ~run_program ~install_path () =
     create_python_tool ~host ~run_program ~install_path
       ~version:"1.2.1" (Pip, Package_PyPI "topiary");
     create_python_tool ~host ~run_program ~install_path
-      ~version:"0.4.3" (Pip, Package_PyPI "vaxrank");
+      ~version:"0.4.4" (Pip, Package_PyPI "vaxrank");
    ]
