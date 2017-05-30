@@ -960,14 +960,17 @@ module Make (Config : Compiler_configuration)
 
   let hlarp input =
     let hla_result, output_path =
-      let out o = Name_file.from_path o ~readable_suffix:"hlarp.csv" [] in
+      let out_path in_path = 
+        Name_file.from_path
+          in_path ~readable_suffix:"hlarp.csv" [ Filename.basename in_path; ]
+      in
       match input with
       | `Seq2hla v ->
         let v = get_seq2hla_result v in
-        `Seq2hla v, out v#product#work_dir_path
+        `Seq2hla v, out_path v#product#work_dir_path
       | `Optitype v ->
         let v = get_optitype_result v in
-        `Optitype v, out v#product#path
+        `Optitype v, out_path v#product#path
     in
     let soutput_path =
       Name_file.from_path output_path ~readable_suffix:"hlarp-sanitized.csv" []
@@ -1038,7 +1041,7 @@ module Make (Config : Compiler_configuration)
     Vcf (
       workflow_node
         (transform_vcf v#product ~path:(snpeff_run#product#path))
-        ~name:"Snpeff: fetch annotated VCF"
+        ~name:(sprintf "Fetch annotated VCF: %s" v#render#name) 
         ~edges:[ depends_on snpeff_run; ]
     )
 

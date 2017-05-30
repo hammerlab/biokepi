@@ -71,10 +71,14 @@ let predictor_to_tool ~run_with predictor =
 
 let sanitize_hlarp_out_for_mhctools ~run_with ~hlarp_result ~output_path = 
   let open KEDSL in
-  let name = "Extract and sanitize alleles for mhctools" in
+  let input_path = hlarp_result#product#path in
+  let name = 
+    sprintf
+      "Extract and sanitize alleles: %s"
+      (hlarp_result#render#name)
+  in
   let edges = [ depends_on hlarp_result; ] in
   let product = single_file ~host:(Machine.as_host run_with) output_path in
-  let input_path = hlarp_result#product#path in
   let tmp_path = output_path ^ ".tmp" in
   let make = Machine.(
     run_program run_with
@@ -85,7 +89,7 @@ let sanitize_hlarp_out_for_mhctools ~run_with ~hlarp_result ~output_path =
              | awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\"\", $2); print $2}' \
              | tail -n +2 \
              | sed \"s/'//\" > %s \
-             && mv %s.tmp %s"
+             && mv %s %s"
            input_path tmp_path tmp_path output_path
       )
     )
