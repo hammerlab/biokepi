@@ -959,10 +959,8 @@ module Make (Config : Compiler_configuration)
     )
 
   let hlarp input =
-    let out o =
-      Name_file.from_path o ~readable_suffix:"hlarp.csv" [] in
-    let hlarp = Tools.Hlarp.run ~run_with in
     let hla_result, output_path =
+      let out o = Name_file.from_path o ~readable_suffix:"hlarp.csv" [] in
       match input with
       | `Seq2hla v ->
         let v = get_seq2hla_result v in
@@ -971,10 +969,14 @@ module Make (Config : Compiler_configuration)
         let v = get_optitype_result v in
         `Optitype v, out v#product#path
     in
-    let res =
-      hlarp ~hla_result ~output_path ~extract_alleles:true
+    let soutput_path =
+      Name_file.from_path output_path ~readable_suffix:"hlarp-sanitized.csv" []
     in
-    MHC_alleles (res ())
+    let hlarp_result = Tools.Hlarp.run ~run_with ~hla_result ~output_path in
+    MHC_alleles (
+      Hla_utilities.sanitize_hlarp_out_for_mhctools 
+        ~run_with ~hlarp_result ~output_path:soutput_path
+    )
 
   let filter_to_region vcf bed =
     let vcf = get_vcf vcf in
@@ -1065,7 +1067,7 @@ module Make (Config : Compiler_configuration)
     let output_file =
       Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
         ([
-          Tools.Topiary.predictor_to_string predictor;
+          Hla_utilities.predictor_to_string predictor;
           Tools.Topiary.Configuration.name configuration;
           Filename.chop_extension (Filename.basename mhc#product#path);
         ] @ (List.map vs ~f:(fun v -> v#product#path)))
@@ -1100,7 +1102,7 @@ module Make (Config : Compiler_configuration)
       Name_file.in_directory ~readable_suffix:"vaxrank" Config.work_dir
         ([
           Tools.Vaxrank.Configuration.name configuration;
-          Tools.Topiary.predictor_to_string predictor;
+          Hla_utilities.predictor_to_string predictor;
           (Filename.chop_extension (Filename.basename mhc#product#path));
         ] @
           (List.map vcfs ~f:(fun v ->

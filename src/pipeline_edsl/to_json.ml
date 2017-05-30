@@ -1,5 +1,6 @@
 open Nonstd
 module Tools = Biokepi_bfx_tools
+module Hla_utils = Biokepi_run_environment.Hla_utilities
 
 type json = Yojson.Basic.json
 
@@ -297,7 +298,7 @@ module Make_serializer (How : sig
       function_call "topiary" ([
         "configuration", string Tools.Topiary.Configuration.(name configuration);
         "alleles", alleles ~var_count;
-        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "predictor", string Hla_utils.(predictor_to_string predictor);
       ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 
   let vaxrank
@@ -309,7 +310,7 @@ module Make_serializer (How : sig
       function_call "vaxrank" ([
         "configuration", string Tools.Vaxrank.Configuration.(name configuration);
         "alleles", alleles ~var_count;
-        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "predictor", string Hla_utils.(predictor_to_string predictor);
         "bam", bam_compiled;
       ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 

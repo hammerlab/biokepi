@@ -194,11 +194,12 @@ let run ~(run_with: Machine.t)
     ~output_folder
   =
   let open KEDSL in
+  let open Hla_utilities in
   let host = Machine.(as_host run_with) in
   let vaxrank = Machine.get_tool run_with Machine.Tool.Default.vaxrank in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate bam in
-  let predictor_tool = Topiary.(predictor_to_tool ~run_with predictor) in
+  let predictor_tool = Hla_utilities.(predictor_to_tool ~run_with predictor) in
   let (predictor_edges, predictor_init) =
     match predictor_tool with
     | Some (e, i) -> ([depends_on e;], i)
@@ -207,7 +208,7 @@ let run ~(run_with: Machine.t)
   let vcfs_arg = List.concat_map vcfs ~f:(fun v -> ["--vcf"; v#product#path]) in
   let bam_arg = ["--bam"; sorted_bam#product#path] in
   let predictor_arg =
-    ["--mhc-predictor"; (Topiary.predictor_to_string predictor)] in
+    ["--mhc-predictor"; (predictor_to_string predictor)] in
   let allele_arg = ["--mhc-alleles-file"; alleles_file#product#path] in
   let output_prefix = output_folder // "vaxrank-result" in
   let output_of switch kind suffix  =

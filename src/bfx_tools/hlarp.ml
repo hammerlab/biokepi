@@ -7,9 +7,8 @@ type hla_result = [
   ]
 
 let run ~(run_with:Machine.t)
-    ?(edges=[])
     ~(hla_result:hla_result)
-    ~output_path ~extract_alleles ()
+    ~output_path
   =
   let open KEDSL in
   let open Ketrew_pure.Target.Volume in
@@ -25,19 +24,10 @@ let run ~(run_with:Machine.t)
       ~requirements:[`Self_identification ["hlarp"]]
       Program.(
         Machine.Tool.init hlarp
-        && shf "hlarp %s %s > %s" subcommand hla_result_directory output_path
-        && sh
-          (if extract_alleles
-           then sprintf
-               "cat %s \
-                | grep -v '^2' \
-                | awk -F , '{ gsub(/^[ \t]+|[ \t]+$/,\"\", $2); print $2}' \
-                | tail -n +2 \
-                | sed \"s/'//\" > %s.tmp \
-                && mv %s.tmp %s"
-               output_path output_path output_path output_path
-           else "")) in
-  let edges = hla_result_dep :: edges @ [
+        && shf "hlarp %s %s > %s" subcommand hla_result_directory output_path)
+  in
+  let edges = [
+      hla_result_dep;
       depends_on (Machine.Tool.ensure hlarp);
       on_failure_activate
         (Workflow_utilities.Remove.file ~run_with output_path);
