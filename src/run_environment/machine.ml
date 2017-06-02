@@ -197,7 +197,23 @@ let create
    host; run_program; work_dir; max_processors}
 
 let name t = t.name
-let as_host t = t.host
+
+let as_host ?with_shell t =
+  match with_shell with
+  | None -> t.host
+  | Some shell ->
+    begin
+      let open Ketrew_pure in
+      let shell_key = "shell" in
+      let org_uri = Host.to_uri t.host in
+      let uri_no_shell = Uri.remove_query_param org_uri shell_key in
+      let uri_with_shell = 
+        let shell_str = sprintf "%s,-c" shell in (* as in `bash -c` *)
+        Uri.add_query_param uri_no_shell (shell_key, [shell_str;])
+      in
+      KEDSL.Host.parse (Uri.to_string uri_with_shell)
+    end
+
 let get_pyensembl_cache_dir t = t.pyensembl_cache_dir
 let get_reference_genome t = t.get_reference_genome
 let get_tool t tool =
