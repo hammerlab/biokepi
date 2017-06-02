@@ -196,6 +196,7 @@ let dna_hla_type_with_bwamem
         Program.(
           Machine.Tool.init bwa &&
           Machine.Tool.init samtools &&
+          shf "mkdir -p %s" bwa_wd &&
           sh filter_r1 && sh filter_r2
         )
     in
