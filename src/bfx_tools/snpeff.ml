@@ -24,26 +24,28 @@ let call_snpeff fmt = sprintf ("%s " ^^ fmt) ("snpEff -Xms4g")
 let prepare_annotation ~(run_with:Machine.t) ~reference_build =
   let open KEDSL in
   let snpeff = Machine.get_tool run_with Machine.Tool.Default.snpeff in
+  let host = Machine.as_host run_with in
   let dbname = get_snpeff_db_name ~run_with reference_build in
   let data_path = get_snpeff_data_folder ~run_with in
   let genome_data_path = data_path // dbname in
-  (* This .bin file is required for all genome annotations,
-   so is a good target to witness for us. *)
-  let witness_path = "/" // genome_data_path // "snpEffectPredictor.bin" in
-  let witness_file = single_file witness_path ~host:(Machine.as_host run_with) in
+  let witness_path = genome_data_path // "snpEffectPredictor.bin" in
+  let product =
+    Workflow_utilities.Variable_tool_paths.single_file 
+      ~host ~tool:snpeff witness_path
+  in
   let name = sprintf "Preparing snpEFF DB for %s" reference_build in
   let make =
     Machine.(run_program run_with
       ~requirements:[
         `Self_identification ["annotation"; "prep"; "snpeff"];
-        `Internet_access;
-      ]
+        `Internet_access; ]
       Program.(
-        Tool.init snpeff && sh (call_snpeff "download %s" dbname)
+        Machine.Tool.init snpeff &&
+        sh (call_snpeff "download %s" dbname)
       )
     )
   in
-  workflow_node ~name ~make witness_file
+  workflow_node ~name ~make product
     ~edges: [
       on_failure_activate (Remove.directory ~run_with genome_data_path);
       depends_on (Machine.Tool.ensure snpeff);
