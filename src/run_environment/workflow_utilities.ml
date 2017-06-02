@@ -388,16 +388,15 @@ module Vcftools = struct
 end
 
 module Variable_tool_paths = struct
-  let single_file ~host ~tool path =
+  let single_file ~run_with ~tool path =
     let open KEDSL in
-    let init = Machine.Tool.init tool in
-    let cmd_condition = 
-      Ketrew_pure.Program.to_single_shell_command
-        Program.(init && shf "test -e %s" path)
-    in
     let condition =
-      KEDSL.Command.shell ~host
-        (sprintf "bash -c %s" (Filename.quote cmd_condition))
+      let init = Machine.Tool.init tool in
+      let host = Machine.as_host ~with_shell:"bash" run_with in
+      let condition_cmd =
+        Ketrew_pure.Program.to_single_shell_command
+          Program.(init && shf "test -e %s" path)
+      in KEDSL.Command.shell ~host condition_cmd
     in
     object
       method is_done = Some (`Command_returns (condition, 0))

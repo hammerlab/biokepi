@@ -110,7 +110,6 @@ let dna_hla_type_with_bwamem
     ~work_dir ~run_with ~fastq ~run_name
   =
   let open KEDSL in
-  let host = Machine.(as_host run_with) in
   (* We need to pull in bwa mem and samtools to get some help *)
   let optitype = Machine.get_tool run_with Machine.Tool.Default.optitype in
   let bwa = Machine.get_tool run_with Machine.Tool.Default.bwa in
@@ -140,7 +139,7 @@ let dna_hla_type_with_bwamem
     in
     let product = 
       Workflow_utilities.Variable_tool_paths.single_file 
-        ~host ~tool:optitype (dna_hla_ref_path ^ ".bwt")
+        ~run_with ~tool:optitype (dna_hla_ref_path ^ ".bwt")
     in
     workflow_node product ~name ~make ~edges
   in

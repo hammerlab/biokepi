@@ -24,14 +24,13 @@ let call_snpeff fmt = sprintf ("%s " ^^ fmt) ("snpEff -Xms4g")
 let prepare_annotation ~(run_with:Machine.t) ~reference_build =
   let open KEDSL in
   let snpeff = Machine.get_tool run_with Machine.Tool.Default.snpeff in
-  let host = Machine.as_host run_with in
   let dbname = get_snpeff_db_name ~run_with reference_build in
   let data_path = get_snpeff_data_folder ~run_with in
   let genome_data_path = data_path // dbname in
   let witness_path = genome_data_path // "snpEffectPredictor.bin" in
   let product =
     Workflow_utilities.Variable_tool_paths.single_file 
-      ~host ~tool:snpeff witness_path
+      ~run_with ~tool:snpeff witness_path
   in
   let name = sprintf "Preparing snpEFF DB for %s" reference_build in
   let make =
