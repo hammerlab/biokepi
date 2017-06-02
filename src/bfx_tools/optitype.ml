@@ -134,6 +134,7 @@ let dna_hla_type_with_bwamem
         Program.(
           Machine.Tool.init bwa
           && Machine.Tool.init optitype
+          && shf "mkdir -p %s" bwa_wd
           && shf "bwa index %s" dna_hla_ref_path
         )
     in
