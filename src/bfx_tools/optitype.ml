@@ -170,7 +170,7 @@ let dna_hla_type_with_bwamem
           configuration.Configuration.Mem.gap_open_penalty
           configuration.Configuration.Mem.gap_extension_penalty
           configuration.Configuration.Mem.mismatch_penalty
-          (Filename.quote dna_hla_ref_path)
+          dna_hla_ref_path
           (Filename.quote fqpath))
       in
       let samtools_part =
