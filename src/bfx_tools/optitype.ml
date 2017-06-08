@@ -194,7 +194,6 @@ let dna_hla_type_with_bwamem
       Machine.run_big_program run_with ~name
         ~self_ids:["optitype"; "hla"; "dna"; "filtering"]
         Program.(
-          Machine.Tool.init optitype &&
           Machine.Tool.init bwa &&
           Machine.Tool.init samtools &&
           shf "mkdir -p %s" bwa_wd &&
