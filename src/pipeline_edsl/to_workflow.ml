@@ -30,6 +30,8 @@ module File_type_specification = struct
     | Bai: single_file workflow_node -> t
     | Kallisto_result: single_file workflow_node -> t
     | Cufflinks_result: single_file workflow_node -> t
+    | Cnvkit_result:
+        Biokepi_bfx_tools.Optitype.product workflow_node -> t
     | Raw_file: single_file workflow_node -> t
     | Gz: t -> t
     | List: t list -> t
@@ -59,6 +61,7 @@ module File_type_specification = struct
     | Bai _ -> "Bai"
     | Kallisto_result _ -> "Kallisto_result"
     | Cufflinks_result _ -> "Cufflinks_result"
+    | Cnvkit_result _ -> "Cnvkit_result"
     | Raw_file _ -> "Input_url"
     | Gz a -> sprintf "(gz %s)" (to_string a)
     | List l ->
@@ -161,6 +164,11 @@ module File_type_specification = struct
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
 
+  let get_cnvkit_result : t -> Biokepi_bfx_tools.Cnvkit.product workflow_node =
+    function
+    | Vaxrank_result v -> v
+    | o -> fail_get o "Cnvkit_result"
+
   let get_gz : t -> t = function
   | Gz v -> v
   | o -> fail_get o "Gz"
@@ -202,6 +210,7 @@ module File_type_specification = struct
     | Cufflinks_result wf -> one_depends_on wf
     | Bai wf -> one_depends_on wf
     | Kallisto_result wf -> one_depends_on wf
+    | Cnvkit_result wf -> one_depends_on wf
     | MHC_alleles wf -> one_depends_on wf
     | Raw_file w -> one_depends_on w
     | List l -> List.concat_map l ~f:as_dependency_edges
@@ -935,6 +944,29 @@ module Make (Config : Compiler_configuration)
         ~output_postfix:".fastq"
         ~input_fastq
         ~output_folder:(Config.work_dir // output_folder)
+    )
+
+  let cnvkit 
+      ?(region_size: Tools.Cnvkit.default_region_size)
+      ~normal_bams ~tumor_bams ~reference_build
+    =
+    let nbams = List.map ~f:get_bam normal_bams in
+    let tbams = List.map ~f:get_bam tumor_bams in
+    let run_name = 
+      let l = List.length in
+      sprintf "%d-normal-%d-tumor" (l nbams) (l tbams)
+    in
+    let output_folder =
+      Name_file.in_directory Config.work_dir
+        ~readable_suffix:"cnvkit" [ run_name; reference_build; region_size ]
+    in
+    Cnvkit_result (
+      Tools.Cnvkit.batch
+        ~normal_bams
+        ~tumor_bams
+        ~reference_build
+        ~run_name
+        ~output_folder
     )
 
   let seq2hla fq =

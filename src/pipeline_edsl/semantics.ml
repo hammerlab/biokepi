@@ -332,5 +332,13 @@ module type Bioinformatics_base = sig
     [ `Fastq ] repr ->
     [ `Fastq ] repr
 
+  val cnvkit:
+    ?region_size: int ->
+    normal: [ `Bam ] repr ->
+    tumor: [ `Bam ] repr ->
+    reference_build: string ->
+    unit ->
+    [ `Cnv_kit ] repr
+
 end
 
