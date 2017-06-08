@@ -164,10 +164,12 @@ module File_type_specification = struct
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
 
+(*
   let get_cnvkit_result : t -> Biokepi_bfx_tools.Cnvkit.product workflow_node =
     function
     | Vaxrank_result v -> v
     | o -> fail_get o "Cnvkit_result"
+*)
 
   let get_gz : t -> t = function
   | Gz v -> v
@@ -945,9 +947,9 @@ module Make (Config : Compiler_configuration)
         ~input_fastq
         ~output_folder:(Config.work_dir // output_folder)
     )
-
+(*
   let cnvkit 
-      ?(region_size: Tools.Cnvkit.default_region_size)
+      ?(region_size=Tools.Cnvkit.default_region_size)
       ~normal_bams ~tumor_bams ~reference_build
     =
     let nbams = List.map ~f:get_bam normal_bams in
@@ -958,7 +960,8 @@ module Make (Config : Compiler_configuration)
     in
     let output_folder =
       Name_file.in_directory Config.work_dir
-        ~readable_suffix:"cnvkit" [ run_name; reference_build; region_size ]
+        ~readable_suffix:"cnvkit" 
+          [ run_name; reference_build; string_of_int region_size ]
     in
     Cnvkit_result (
       Tools.Cnvkit.batch
@@ -968,6 +971,7 @@ module Make (Config : Compiler_configuration)
         ~run_name
         ~output_folder
     )
+  *)
 
   let seq2hla fq =
     let fastq = get_fastq fq in

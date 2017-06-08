@@ -331,7 +331,7 @@ module type Bioinformatics_base = sig
   val seqtk_shift_phred_scores:
     [ `Fastq ] repr ->
     [ `Fastq ] repr
-
+(*
   val cnvkit:
     ?region_size: int ->
     normal: [ `Bam ] repr ->
@@ -339,6 +339,7 @@ module type Bioinformatics_base = sig
     reference_build: string ->
     unit ->
     [ `Cnv_kit ] repr
+  *)
 
 end
 
