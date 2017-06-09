@@ -131,7 +131,8 @@ let dna_hla_type_with_bwamem
       Machine.run_big_program run_with ~name
         ~self_ids:["optitype"; "hla"; "dna"; "bwa index"]
         Program.(
-          Machine.Tool.init bwa
+          Machine.Tool.init optitype
+          && Machine.Tool.init bwa
           && Machine.Tool.init optitype
           && shf "mkdir -p %s" bwa_wd
           && shf "bwa index %s" dna_hla_ref_path
@@ -194,14 +195,16 @@ let dna_hla_type_with_bwamem
       Machine.run_big_program run_with ~name
         ~self_ids:["optitype"; "hla"; "dna"; "filtering"]
         Program.(
-          Machine.Tool.init bwa &&
-          Machine.Tool.init samtools &&
-          shf "mkdir -p %s" bwa_wd &&
-          sh filter_r1 && sh filter_r2
+          Machine.Tool.init optitype
+          && Machine.Tool.init bwa
+          && Machine.Tool.init samtools
+          && shf "mkdir -p %s" bwa_wd
+          && sh filter_r1 && sh filter_r2
         )
     in
     let product = transform_fastq_reads fastq#product out_r1 out_r2 in
     workflow_node product ~name ~make ~edges
   in
   (* Step 3: Run OptiType as usual on the new filtered down FASTQ(s) *)
-  hla_type ~work_dir ~run_with ~fastq:filter_hla_reads_wf ~run_name `DNA
+  let owd = work_dir // "optitype" in
+  hla_type ~work_dir:owd ~run_with ~fastq:filter_hla_reads_wf ~run_name `DNA
