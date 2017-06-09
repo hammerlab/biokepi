@@ -88,6 +88,7 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
 
 let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open KEDSL in
+  let open Program in
   let seed_package = 
     match conda_env.python_version with 
     | `Python2 -> "python=2"
@@ -101,14 +102,18 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
       seed_package
   in
   let install_package (package, version) =
-    Program.(
-      shf "conda install -y %s%s"
-        package
-        (match version with `Latest -> "" | `Version v -> "=" ^ v)
-    )
+    shf "conda install -y %s%s" package
+      (match version with `Latest -> "" | `Version v -> "=" ^ v)
   in
-  let force_rm_package package = 
-    Program.(shf "conda remove -y --force %s" package)
+  let force_rm_package package = shf "conda remove -y --force %s" package in
+  let configure_channels = 
+    let config_cmd = shf "%s config --add channels %s" (bin ~conda_env) in
+    chain (List.map ~f:config_cmd conda_env.channels)
+  in
+  let activate_env =
+    let activate_path = activate ~conda_env in
+    let abs_env_path = envs_dir ~conda_env // conda_env.name in
+    shf "source %s %s" activate_path abs_env_path
   in
   let make =
     run_program
@@ -117,10 +122,9 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
         `Self_identification ["conda"; "configuration"];
       ]
       Program.(
-        let config_cmd = shf "%s config --add channels %s" (bin ~conda_env) in
-        chain (List.map ~f:config_cmd conda_env.channels)
+        configure_channels
         && sh create_env
-        && shf "source %s %s" (activate ~conda_env) (envs_dir ~conda_env // conda_env.name)
+        && activate_env
         && chain (List.map ~f:install_package conda_env.base_packages)
         && chain (List.map ~f:force_rm_package conda_env.banned_packages)
       )
