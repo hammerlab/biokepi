@@ -419,6 +419,30 @@ let gatk_tool
   Machine.Tool.create tool ~ensure
     ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
 
+
+(* CIBERSORT is yet another utility that is not distributed through a
+   conventioal channel but it is rather is provided based on a per-case
+   approval process which is online: https://cibersort.stanford.edu/ 
+
+   Once approved, a previously disabled menu item shows up and let the
+   user download a ZIP archive that has a bunch of helper scripts and
+   data in it. Note that the archive is not leveled, so it expands into
+   the current directory as of v1.6. Also important to note that,
+   the team is rewriting the app in R but although they also allow
+   access to that script, it is still lacking the inference function.
+   Until that becomes mature, we will continue using the Java/Python/R
+   mish-mash version.
+*)
+let cibersort_tool
+    ~(run_program : Machine.Make_fun.t)
+    ~host ~install_tools_path loc =
+  let tool = Machine.Tool.Default.cibersort in 
+  let open KEDSL in
+  let install_path = install_tools_path // Tool_def.to_directory_name tool in
+
+
+
+
 (**
 
 Strelka is built from source but does not seem to build on MacOSX.

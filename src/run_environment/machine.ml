@@ -44,6 +44,7 @@ module Tool = struct
     let varscan = create "varscan" ~version:"2.3.5"
     let mutect = create "mutect" (* We don't know the versions of the users' GATKs *)
     let gatk = create "gatk" (* idem, because of their non-open-source licenses *)
+    let cibersort = create "cibersort" (* same story with gatk/mutect *)
     let strelka = create "strelka" ~version:"1.0.14"
     let virmid = create "virmid" ~version:"1.1.1"
     let muse = create "muse" ~version:"1.0b"
