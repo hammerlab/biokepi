@@ -448,12 +448,14 @@ let gatk_tool
    Until that becomes mature, we will continue using the Java/Python/R
    mish-mash version.
 *)
+(*
 let cibersort_tool
     ~(run_program : Machine.Make_fun.t)
     ~host ~install_tools_path loc =
   let tool = Machine.Tool.Default.cibersort in 
   let open KEDSL in
   let install_path = install_tools_path // Tool_def.to_directory_name tool in
+*)
 
 
 
