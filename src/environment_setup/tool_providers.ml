@@ -405,9 +405,24 @@ let mutect_tool
   let tool = Machine.Tool.Default.mutect in
   let open KEDSL in
   let install_path = install_tools_path // Tool_def.to_directory_name tool in
+  let conda_env = (* mutect doesn't run on Java; so need to provide Java 7 *)
+    Conda.(setup_environment 
+      ~python_version:`Python2
+      ~base_packages:[("java-jdk", `Version "7.0.91")]
+      install_path 
+      "mutect_env")
+  in
+  let conda_ensure = Conda.(configured ~run_program ~host ~conda_env) in
+  let conda_init = Conda.init_env ~conda_env () in
   let get_mutect = get_broad_jar ~run_program ~host ~install_path loc in
-  Machine.Tool.create tool ~ensure:get_mutect
-    ~init:Program.(shf "export mutect_HOME=%s" install_path)
+  let edges = [depends_on conda_ensure; depends_on get_mutect] in
+  let ensure =
+    workflow_node without_product ~name:"MuTect setup" ~edges
+  in
+  let init = 
+    Program.(conda_init && shf "export mutect_HOME=%s" install_path)
+  in
+  Machine.Tool.create tool ~ensure ~init
 
 let gatk_tool
     ~(run_program : Machine.Make_fun.t)
