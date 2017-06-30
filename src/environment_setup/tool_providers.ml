@@ -448,7 +448,7 @@ let gatk_tool
    Until that becomes mature, we will continue using the Java/Python/R
    mish-mash version.
 *)
-
+(*
 let cibersort_tool
     ~(run_program : Machine.Make_fun.t)
     ~host ~install_tools_path loc =
@@ -494,7 +494,7 @@ let cibersort_tool
       ~run_program ~host ~install_path loc
   in
   let edges = [depends_on conda_ensure; depends_on get_cibersort] in
-  let name "Installing CIBERSORT" in
+  let name ="Installing CIBERSORT" in
   let cibersort_jar = install_path // "CIBERSORT.jar" in
   let default_sig = install_path // "LM22.txt" in
   let products = list_of_files ~host [cibersort_jar; default_sig] in
@@ -517,7 +517,7 @@ let cibersort_tool
     Program.(conda_init && shf "export CIBERSORT_JAR=%s" cibersort_jar)
   in
   Machine.Tool.create cibersort ~ensure:ciber_install ~init ~make
-
+*)
 
 
 (**
