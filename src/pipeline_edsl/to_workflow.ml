@@ -169,17 +169,6 @@ module File_type_specification = struct
   | List v -> v
   | o -> fail_get o "List"
 
-
-  let pair a b = Pair (a, b)
-  let pair_first =
-    function
-    | Pair (a, _) -> a
-    | other -> fail_get other "Pair"
-  let pair_second =
-    function
-    | Pair (_, b) -> b
-    | other -> fail_get other "Pair"
-
   let to_deps_functions : (t -> workflow_edge list option) list ref = ref []
   let add_to_dependencies_edges_function f =
     to_deps_functions := f :: !to_deps_functions
@@ -261,7 +250,7 @@ module Make (Config : Compiler_configuration)
     with type 'a repr = File_type_specification.t and
     type 'a observation = File_type_specification.t
 = struct
-  include File_type_specification
+  open File_type_specification
 
   module Tools = Biokepi_bfx_tools
   module KEDSL = Common.KEDSL
@@ -288,6 +277,16 @@ module Make (Config : Compiler_configuration)
     | List l ->
       List (List.map ~f:(fun v -> apply f v) l)
     | _ -> assert false
+
+  let pair a b = Pair (a, b)
+  let pair_first =
+    function
+    | Pair (a, _) -> a
+    | other -> fail_get other "Pair"
+  let pair_second =
+    function
+    | Pair (_, b) -> b
+    | other -> fail_get other "Pair"
 
   let to_unit x = To_unit x
 
