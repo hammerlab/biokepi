@@ -120,7 +120,7 @@ module Run_test(Test_pipeline : TEST_PIPELINE) = struct
       let module Ketrew_pipeline = Test_pipeline(Workflow_compiler) in
       let workflow =
         Ketrew_pipeline.run ()
-        |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_unit_workflow
+        |> Biokepi.EDSL.Compile.To_workflow.get_workflow
           ~name:"Biokepi TTFI test top-level node"
       in
       ignore workflow
