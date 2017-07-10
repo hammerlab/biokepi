@@ -25,6 +25,7 @@ module Configuration = struct
     xlsx_report: bool;
     pdf_report: bool;
     ascii_report: bool;
+    debug_log: string;
     (* the rest *)
     parameters: (string * string) list;
   }
@@ -46,6 +47,7 @@ module Configuration = struct
     xlsx_report;
     pdf_report;
     ascii_report;
+    debug_log;
     parameters}: Yojson.Basic.json
     =
     `Assoc ([
@@ -66,6 +68,7 @@ module Configuration = struct
       "ascii_report", `Bool ascii_report;
       "pdf_report", `Bool pdf_report;
       "xlsx_report", `Bool xlsx_report;
+      "debug_log", `String debug_log;
       "parameters",
         `Assoc (List.map parameters ~f:(fun (a, b) -> a, `String b));
       ]
@@ -92,6 +95,7 @@ module Configuration = struct
     xlsx_report;
     pdf_report;
     ascii_report;
+    debug_log;
     parameters}
     =
     let soi = string_of_int in
@@ -141,6 +145,7 @@ module Configuration = struct
      xlsx_report = false;
      pdf_report = false;
      ascii_report = true;
+     debug_log = "vaxrank-debug.log";
      parameters = []}
   let name t = t.name
 end
@@ -151,6 +156,7 @@ type product = <
   ascii_report_path : string option;
   xlsx_report_path: string option;
   pdf_report_path: string option;
+  debug_log_path: string;
   output_folder_path: string >
 
 let move_vaxrank_product ?host ~output_folder_path vp =
@@ -181,6 +187,7 @@ let move_vaxrank_product ?host ~output_folder_path vp =
     method ascii_report_path = opt_path ascii_product
     method xlsx_report_path = opt_path xlsx_product
     method pdf_report_path = opt_path pdf_product
+    method debug_log_path = vp#debug_log_path
     method output_folder_path = output_folder_path
   end
 
@@ -225,6 +232,10 @@ let run ~(run_with: Machine.t)
     output_of configuration.Configuration.xlsx_report "xlsx" "xlsx" in
   let pdf_arg, pdf_product =
     output_of configuration.Configuration.pdf_report "pdf" "pdf" in
+  let debug_log_arg, debug_log_product =
+    let log_path = output_folder // configuration.Configuration.debug_log in
+    ["--log-path"; log_path], (KEDSL.single_file ~host log_path)
+  in
   let () =
     match ascii_product, xlsx_product, pdf_product with
     | None, None, None ->
@@ -233,7 +244,7 @@ let run ~(run_with: Machine.t)
     | _, _, _ -> () in
   let arguments =
     vcfs_arg @ bam_arg @ predictor_arg @ allele_arg (* input *)
-    @ xlsx_arg @ pdf_arg @ ascii_arg
+    @ xlsx_arg @ pdf_arg @ ascii_arg @debug_log_arg
     @ Configuration.render configuration (* other config *)
   in
   let name = "Vaxrank run" in
@@ -246,10 +257,14 @@ let run ~(run_with: Machine.t)
                 (List.filter_map ~f:(fun f ->
                      let open Option in
                      f >>= fun f -> f#is_done)
-                   [ascii_product; xlsx_product; pdf_product]))
+                   [ ascii_product;
+                     xlsx_product;
+                     pdf_product;
+                     (Some debug_log_product); ]))
       method ascii_report_path = path_of ascii_product
       method xlsx_report_path = path_of xlsx_product
       method pdf_report_path = path_of pdf_product
+      method debug_log_path = debug_log_product#path
       method output_folder_path = output_folder
     end
   in

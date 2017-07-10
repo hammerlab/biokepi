@@ -786,7 +786,7 @@ module Make (Config : Compiler_configuration)
         let concat_files ~read l =
           let result_path =
             Name_file.in_directory
-              Config.work_dir 
+              Config.work_dir
               ~readable_suffix:(
                 sprintf "%s-Read%d-Concat.fastq"
                   first_fastq#product#escaped_sample_name read) (
@@ -911,7 +911,7 @@ module Make (Config : Compiler_configuration)
   let picard_clean_bam bam =
     let input_bam = get_bam bam in
     let output_bam_path =
-      Name_file.from_path 
+      Name_file.from_path
         input_bam#product#path
         ~readable_suffix:"cleaned.bam"
         []
@@ -1109,7 +1109,7 @@ module Make (Config : Compiler_configuration)
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
       vcfs predictor alleles =
     let vs = List.map ~f:get_vcf vcfs in
-    let refs = 
+    let refs =
       vs |> List.map ~f:(fun v -> v#product#reference_build) |> List.dedup
     in
     let reference_build =
@@ -1122,7 +1122,7 @@ module Make (Config : Compiler_configuration)
     in
     let mhc = get_mhc_alleles alleles in
     let output_file =
-      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
+      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir
         ([
           Hla_utilities.predictor_to_string predictor;
           Tools.Topiary.Configuration.name configuration;
