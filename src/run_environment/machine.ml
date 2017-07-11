@@ -72,7 +72,7 @@ module Tool = struct
     let pyensembl = create "pyensembl" ~version:"1.1.0"
     let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"
     let topiary = create "topiary" ~version:"1.2.1"
-    let vaxrank = create "vaxrank" ~version:"0.4.4"
+    let vaxrank = create "vaxrank" ~version:"0.5.1"
     let isovar = create "isovar" ~version:"0.1.3"
   end
 
@@ -209,7 +209,7 @@ let as_host ?with_shell t =
       let shell_key = "shell" in
       let org_uri = Host.to_uri t.host in
       let uri_no_shell = Uri.remove_query_param org_uri shell_key in
-      let uri_with_shell = 
+      let uri_with_shell =
         let shell_str = sprintf "%s,-c" shell in (* as in `bash -c` *)
         Uri.add_query_param uri_no_shell (shell_key, [shell_str;])
       in
