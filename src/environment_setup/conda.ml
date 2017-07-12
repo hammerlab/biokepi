@@ -89,8 +89,8 @@ let installed ~(run_program : Machine.Make_fun.t) ~host ~conda_env =
 let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open KEDSL in
   let open Program in
-  let seed_package = 
-    match conda_env.python_version with 
+  let seed_package =
+    match conda_env.python_version with
     | `Python2 -> "python=2"
     | `Python3 -> "python=3"
     | `PythonCustom v -> sprintf "python=%s" v
@@ -106,14 +106,14 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
       (match version with `Latest -> "" | `Version v -> "=" ^ v)
   in
   let force_rm_package package = shf "conda remove -y --force %s" package in
-  let configure_channels = 
+  let configure_channels =
     let config_cmd = shf "%s config --add channels %s" (bin ~conda_env) in
     chain (List.map ~f:config_cmd conda_env.channels)
   in
   let activate_env =
     let activate_path = activate ~conda_env in
     let abs_env_path = envs_dir ~conda_env // conda_env.name in
-    shf "source %s %s" activate_path abs_env_path
+    shf ". %s %s" activate_path abs_env_path
   in
   let make =
     run_program
@@ -145,7 +145,7 @@ let init_env ~conda_env () =
      otherwise, activate the new one *)
   KEDSL.Program.(
     shf "[ ${CONDA_PREFIX-none} != \"%s\" ] \
-         && source %s %s \
+         && . %s %s \
          || echo 'Already in conda env: %s'"
       prefix (activate ~conda_env) prefix prefix
   )
@@ -154,7 +154,7 @@ let deactivate_env ~conda_env () =
   let prefix = (envs_dir ~conda_env // conda_env.name) in
   KEDSL.Program.(
     shf "[ ${CONDA_PREFIX-none} == \"%s\" ] \
-         && source %s \
+         && . %s \
          || echo 'Doing nothing. The conda env is not active: %s'"
       prefix (deactivate ~conda_env) prefix
   )
