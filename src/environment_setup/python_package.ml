@@ -10,7 +10,7 @@ type install_source_type =
   | Package_Source of tool_def_type * string
   | Package_Conda of tool_def_type
 
-type python_package_spec = 
+type python_package_spec =
   install_tool_type * install_source_type * (string option)
 
 
@@ -34,19 +34,22 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
   let conda_cmd ?version name =
     ["conda"; "install"; pkg_id ~sep:"=" ?version name]
   in
-  let tool, install_command, custom_bin =
+  let tool, install_command, custom_bin, base_packages =
     match package_spec with
-    | (Pip, Package_Source (tool, src), cbin) -> (tool, src_cmd ~src, cbin)
-    | (Pip, Package_PyPI tool, cbin) -> (tool, pypi_cmd, cbin)
-    | (Conda, Package_Conda tool, cbin) -> (tool, conda_cmd, cbin)
+    | (Pip, Package_Source (tool, src), cbin, pkgs)
+      -> (tool, src_cmd ~src, cbin, pkgs)
+    | (Pip, Package_PyPI tool, cbin, pkgs) -> (tool, pypi_cmd, cbin, pkgs)
+    | (Conda, Package_Conda tool, cbin, pkgs) -> (tool, conda_cmd, cbin, pkgs)
     | _ -> failwith "Installation type not supported."
   in
-  let name, version = 
+  let name, version =
     Machine.Tool.Definition.(get_name tool, get_version tool)
   in
   let main_subdir = name ^ "_conda_dir" in
   let conda_env =
-    Conda.setup_environment ~python_version ~main_subdir install_path
+    Conda.setup_environment
+      ~python_version ~base_packages
+      ~main_subdir install_path
       (name ^ Option.value_map ~default:"NOVERSION" version ~f:(sprintf ".%s"))
   in
   let single_file_check id =
@@ -78,19 +81,19 @@ let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
 
 
 (* Versions are part of the machine's default toolkit (see machine.ml) *)
-let default_python_packages = 
+let default_python_packages =
   let open Machine.Tool.Default in
-  [ 
-    (Pip, Package_PyPI pyensembl, None);
-    (Pip, Package_PyPI isovar, Some "isovar-protein-sequences.py");
-    (Pip, Package_PyPI vaxrank, None);
-    (Pip, Package_PyPI vcfannotatepolyphen, None);
-    (Pip, Package_PyPI topiary, None);
+  [
+    (Pip, Package_PyPI pyensembl, None, []);
+    (Pip, Package_PyPI isovar, Some "isovar-protein-sequences.py", []);
+    (Pip, Package_PyPI vaxrank, None, [ ("wktmltopdf", `Latest); ]);
+    (Pip, Package_PyPI vcfannotatepolyphen, None, []);
+    (Pip, Package_PyPI topiary, None, []);
   ]
 
 
 let default ~host ~run_program ~install_path () =
-  let pkg_to_tool pkg_spec = 
+  let pkg_to_tool pkg_spec =
     create_python_tool ~host ~run_program ~install_path pkg_spec
   in
   Machine.Tool.Kit.of_list (List.map ~f:pkg_to_tool default_python_packages)
