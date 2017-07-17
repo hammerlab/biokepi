@@ -535,7 +535,9 @@ let strelka =
     (* C.f. ftp://ftp.illumina.com/v1-branch/v1.0.14/README *)
     KEDSL.Program.(
       shf "./configure --prefix=%s" (path // "usr")
-      && sh "make && make install"
+      && sh "make"
+      && sh "chmod -R +rx bin.v2/"  (* it has weird access rights by default *)
+      && sh "make install"
     )
   in
   let init_program ~path =
