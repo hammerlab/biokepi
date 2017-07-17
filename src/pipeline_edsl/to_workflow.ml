@@ -920,7 +920,7 @@ module Make (Config : Compiler_configuration)
       begin match get_list (AF.get_file l) with
       | Fastq one :: [] ->
         Fastq one
-        |> AF.with_provenance "concat" ["element_1", AF.get_provenance l]
+        |> AF.with_provenance "concat" ["single-element", AF.get_provenance l]
       | Fastq first_fastq :: _ as lfq ->
         let fqs = List.map lfq ~f:get_fastq in
         let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
