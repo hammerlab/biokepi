@@ -261,6 +261,16 @@ module Provenance_description = struct
     string_arguments: (string * string) list;
     json_arguments: (string * Yojson.Basic.json) list;
   }
+  let rec to_yojson t : Yojson.Basic.json =
+    let fields =
+      List.concat [
+        List.map t.sub_tree_arguments ~f:(fun (k, v) -> k, to_yojson v);
+        List.map t.string_arguments ~f:(fun (k, v) -> k, `String v);
+        t.json_arguments;
+      ]
+    in
+    `Assoc (("node-name", `String t.name) :: fields)
+
 
 end
 module Annotated_file = struct
@@ -474,12 +484,23 @@ module Make (Config : Compiler_configuration)
       | Some r -> r // name
     in
     let move ~from_path ~wf product =
+      let json =
+        `Assoc [
+          "base-path", `String base_path;
+          "saved-from", `String from_path;
+          "provenance",
+          AF.get_provenance thing |> Provenance_description.to_yojson;
+        ]
+        |> Yojson.Basic.pretty_to_string
+      in
       let make =
         Machine.quick_run_program
           Config.machine
           Program.(
             shf "mkdir -p %s" base_path
-            && shf "rsync -a %s %s" from_path base_path)
+            && shf "rsync -a %s %s" from_path base_path
+            && shf "echo %s > %s.json" (Filename.quote json) base_path
+          )
       in
       let name = sprintf "Saving \"%s\"" name in
       workflow_node product ~name ~make ~edges:[depends_on wf]
