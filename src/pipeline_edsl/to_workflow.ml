@@ -287,6 +287,21 @@ module Annotated_file = struct
   let get_provenance t = t.provenance
 end
 
+module Saving_utilities = struct
+
+  (** Compute the base-path used by the [EDSL.save] function. *)
+  let base_path ?results_dir ~work_dir ~name () =
+    let name =
+      String.map name ~f:(function
+        | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
+        | other -> '_') in
+    match results_dir with
+    | None -> work_dir // "results" // name
+    | Some r -> r // name
+
+
+end
+
 open Biokepi_run_environment.Common.KEDSL
 let get_workflow :
   name: string ->
@@ -467,10 +482,6 @@ module Make (Config : Compiler_configuration)
   let save ~name thing =
     let open KEDSL in
     let basename = Filename.basename in
-    let name = String.map name ~f:(function
-      | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
-      | other -> '_')
-    in
     let canonicalize path =
       (* Remove the ending '/' from the path. This is so rsync syncs the directory itself +  *)
       let suffix = "/" in
@@ -479,10 +490,8 @@ module Make (Config : Compiler_configuration)
       else path
     in
     let base_path =
-      match Config.results_dir with
-      | None -> Config.work_dir // "results" // name
-      | Some r -> r // name
-    in
+      Saving_utilities.base_path
+        ?results_dir:Config.results_dir ~work_dir:Config.work_dir ~name () in
     let move ~from_path ~wf product =
       let json =
         `Assoc [
