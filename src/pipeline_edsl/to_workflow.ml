@@ -277,14 +277,23 @@ module Annotated_file = struct
   type t = {
     file: File_type_specification.t;
     provenance: Provenance_description.t;
+    functional: (t -> Provenance_description.t) option;
   }
-  let with_provenance ?(string_arguments = []) ?(json_arguments = [])
+  let with_provenance
+      ?functional
+      ?(string_arguments = []) ?(json_arguments = [])
       name arguments file =
-    {file;
-     provenance = {Provenance_description. name; sub_tree_arguments = arguments;
-                   string_arguments; json_arguments}}
+    {
+      file;
+      provenance = {
+        Provenance_description. name; sub_tree_arguments = arguments;
+        string_arguments; json_arguments};
+      functional;
+    }
   let get_file t = t.file
   let get_provenance t = t.provenance
+  let get_functional_provenance t =
+    t.functional |> Option.value_exn ~msg:"get_functional_provenance"
 end
 
 module Saving_utilities = struct
@@ -340,14 +349,15 @@ module Make (Config : Compiler_configuration)
         let annot = f (x |> AF.with_provenance "variable" []) in
         AF.get_file annot
       ) |> AF.with_provenance "lamda" []
+      ~functional:(fun x -> f x |> AF.get_provenance)
 
   let apply : ('a -> 'b) repr -> 'a repr -> 'b repr = fun f_repr x ->
-    let annot_f = AF.get_provenance f_repr in
+    let annot_f = AF.get_functional_provenance f_repr in
     let annot_x = AF.get_provenance x in
     match AF.get_file f_repr with
     | Lambda f ->
       f (AF.get_file x) |> AF.with_provenance "apply" [
-        "function", annot_f;
+        "function", annot_f x;
         "argument", annot_x;
       ]
     | _ -> assert false
@@ -361,13 +371,18 @@ module Make (Config : Compiler_configuration)
 
   let list_map : 'a list repr -> f:('a -> 'b) repr -> 'b list repr = fun l ~f ->
     let ann_l = AF.get_provenance l in
-    let ann_f = AF.get_provenance f in
+    (* let ann_f = AF.get_functional_provenance f in *)
     match AF.get_file l with
     | List l ->
-      List (List.map ~f:(fun v ->
-          apply f (v |> AF.with_provenance "X" []) |> AF.get_file
-        ) l)
-      |> AF.with_provenance "list-map" ["list", ann_l; "function", ann_f]
+      let applied_annotated =
+        List.map ~f:(fun v ->
+            apply f (v |> AF.with_provenance "X" [])) l in
+      let prov =
+        ("list", ann_l) ::
+        List.map applied_annotated ~f:(fun x -> "applied", AF.get_provenance x)
+      in
+      List (List.map applied_annotated ~f:AF.get_file)
+      |> AF.with_provenance "list-map" prov
     | _ -> assert false
 
   let pair a b =
