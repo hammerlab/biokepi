@@ -492,7 +492,7 @@ module Make (Config : Compiler_configuration)
     let base_path =
       Saving_utilities.base_path
         ?results_dir:Config.results_dir ~work_dir:Config.work_dir ~name () in
-    let move ~from_path ~wf product =
+    let move ?(and_gzip = false) ~from_path ~wf product =
       let json =
         `Assoc [
           "base-path", `String base_path;
@@ -508,6 +508,14 @@ module Make (Config : Compiler_configuration)
           Program.(
             shf "mkdir -p %s" base_path
             && shf "rsync -a %s %s" from_path base_path
+            && (
+              match and_gzip with
+              | true ->
+                shf "for f in $(find %s -type f) ; do \
+                     gzip --force --keep $f ; \
+                     done" base_path
+              | false -> sh "echo 'No GZipping Requested'"
+            )
             && shf "echo %s > %s.json" (Filename.quote json) base_path
           )
       in
@@ -523,7 +531,8 @@ module Make (Config : Compiler_configuration)
     | Vcf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Vcf (move ~from_path ~wf (transform_vcf ~path:to_path wf#product))
+      Vcf (move ~and_gzip:true ~from_path ~wf
+             (transform_vcf ~path:to_path wf#product))
     | Gtf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
