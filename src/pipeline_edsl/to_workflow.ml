@@ -1140,7 +1140,7 @@ module Make (Config : Compiler_configuration)
         config_print_reads.Tools.Gatk.Configuration.Print_reads.name;
       ]
       ~json_arguments:[
-        "bqst-configuration",
+        "bqsr-configuration",
         Tools.Gatk.Configuration.Bqsr.to_json config_bqsr;
         "print-reads-configuration",
         Tools.Gatk.Configuration.Print_reads.to_json config_print_reads;
