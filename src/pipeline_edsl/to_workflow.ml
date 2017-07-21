@@ -161,6 +161,15 @@ module File_type_specification = struct
     | Optitype_result v -> v
     | o -> fail_get o "Optitype_result"
 
+  let pair_fst =
+    function
+    | Pair (a, _) -> a
+    | other -> fail_get other "Pair-fst"
+  let pair_snd =
+    function
+    | Pair (_, b) -> b
+    | other -> fail_get other "Pair-snd"
+
   let get_gz : t -> t = function
   | Gz v -> v
   | o -> fail_get o "Gz"
@@ -168,17 +177,6 @@ module File_type_specification = struct
   let get_list : t -> t list = function
   | List v -> v
   | o -> fail_get o "List"
-
-
-  let pair a b = Pair (a, b)
-  let pair_first =
-    function
-    | Pair (a, _) -> a
-    | other -> fail_get other "Pair"
-  let pair_second =
-    function
-    | Pair (_, b) -> b
-    | other -> fail_get other "Pair"
 
   let to_deps_functions : (t -> workflow_edge list option) list ref = ref []
   let add_to_dependencies_edges_function f =
@@ -255,13 +253,84 @@ module Defaults = struct
   let results_dir = None
 end
 
+module Provenance_description = struct
+
+  type t = {
+    name: string;
+    sub_tree_arguments: (string * t) list;
+    string_arguments: (string * string) list;
+    json_arguments: (string * Yojson.Basic.json) list;
+  }
+  let rec to_yojson t : Yojson.Basic.json =
+    let fields =
+      List.concat [
+        List.map t.sub_tree_arguments ~f:(fun (k, v) -> k, to_yojson v);
+        List.map t.string_arguments ~f:(fun (k, v) -> k, `String v);
+        t.json_arguments;
+      ]
+    in
+    `Assoc (("node-name", `String t.name) :: fields)
+
+
+end
+module Annotated_file = struct
+  type t = {
+    file: File_type_specification.t;
+    provenance: Provenance_description.t;
+    functional: (t -> Provenance_description.t) option;
+  }
+  let with_provenance
+      ?functional
+      ?(string_arguments = []) ?(json_arguments = [])
+      name arguments file =
+    {
+      file;
+      provenance = {
+        Provenance_description. name; sub_tree_arguments = arguments;
+        string_arguments; json_arguments};
+      functional;
+    }
+  let get_file t = t.file
+  let get_provenance t = t.provenance
+  let get_functional_provenance t =
+    t.functional |> Option.value_exn ~msg:"get_functional_provenance"
+end
+
+module Saving_utilities = struct
+
+  (** Compute the base-path used by the [EDSL.save] function. *)
+  let base_path ?results_dir ~work_dir ~name () =
+    let name =
+      String.map name ~f:(function
+        | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
+        | other -> '_') in
+    match results_dir with
+    | None -> work_dir // "results" // name
+    | Some r -> r // name
+
+
+end
+
+open Biokepi_run_environment.Common.KEDSL
+let get_workflow :
+  name: string ->
+  Annotated_file.t ->
+  unknown_product workflow_node =
+  fun ~name f ->
+    let v = Annotated_file.get_file f in
+    workflow_node without_product
+      ~name ~edges:(File_type_specification.as_dependency_edges v)
+
+
 
 module Make (Config : Compiler_configuration)
     : Semantics.Bioinformatics_base
-    with type 'a repr = File_type_specification.t and
-    type 'a observation = File_type_specification.t
+    with type 'a repr = Annotated_file.t and
+    type 'a observation = Annotated_file.t
 = struct
-  include File_type_specification
+  open File_type_specification
+  (* open Annotated_file *)
+  module AF = Annotated_file
 
   module Tools = Biokepi_bfx_tools
   module KEDSL = Common.KEDSL
@@ -269,27 +338,71 @@ module Make (Config : Compiler_configuration)
   let failf fmt =
     ksprintf failwith fmt
 
-  type 'a repr = t
-  type 'a observation = 'a repr
+
+  type 'a repr = Annotated_file.t
+  type 'a observation = Annotated_file.t
 
   let observe : (unit -> 'a repr) -> 'a observation = fun f -> f ()
 
   let lambda : ('a repr -> 'b repr) -> ('a -> 'b) repr = fun f ->
-    Lambda f
+    Lambda (fun x ->
+        let annot = f (x |> AF.with_provenance "variable" []) in
+        AF.get_file annot
+      ) |> AF.with_provenance "lamda" []
+      ~functional:(fun x -> f x |> AF.get_provenance)
 
   let apply : ('a -> 'b) repr -> 'a repr -> 'b repr = fun f_repr x ->
-    match f_repr with
-    | Lambda f -> f x
+    let annot_f = AF.get_functional_provenance f_repr in
+    let annot_x = AF.get_provenance x in
+    match AF.get_file f_repr with
+    | Lambda f ->
+      f (AF.get_file x) |> AF.with_provenance "apply" [
+        "function", annot_f x;
+        "argument", annot_x;
+      ]
     | _ -> assert false
 
-  let list : 'a repr list -> 'a list repr = fun l -> List l
+  let list : 'a repr list -> 'a list repr =
+    fun l ->
+      let ann =
+        List.mapi
+          ~f:(fun i x -> sprintf "element_%d" i, AF.get_provenance x) l in
+      List (List.map l ~f:AF.get_file) |> AF.with_provenance "list" ann
+
   let list_map : 'a list repr -> f:('a -> 'b) repr -> 'b list repr = fun l ~f ->
-    match l with
+    let ann_l = AF.get_provenance l in
+    (* let ann_f = AF.get_functional_provenance f in *)
+    match AF.get_file l with
     | List l ->
-      List (List.map ~f:(fun v -> apply f v) l)
+      let applied_annotated =
+        List.map ~f:(fun v ->
+            apply f (v |> AF.with_provenance "X" [])) l in
+      let prov =
+        ("list", ann_l) ::
+        List.map applied_annotated ~f:(fun x -> "applied", AF.get_provenance x)
+      in
+      List (List.map applied_annotated ~f:AF.get_file)
+      |> AF.with_provenance "list-map" prov
     | _ -> assert false
 
-  let to_unit x = To_unit x
+  let pair a b =
+    Pair (AF.get_file a, AF.get_file b)
+    |> AF.with_provenance "pair" ["left", AF.get_provenance a;
+                                  "right", AF.get_provenance b]
+  let pair_first x =
+    match AF.get_file x with
+    | Pair (a, _) ->
+      a |> AF.with_provenance "pair-first" ["pair", AF.get_provenance x]
+    | other -> fail_get other "Pair"
+  let pair_second x =
+    match AF.get_file x with
+    | Pair (_, b) ->
+      b |> AF.with_provenance "pair-second" ["pair", AF.get_provenance x]
+    | other -> fail_get other "Pair"
+
+  let to_unit x =
+    To_unit (AF.get_file x)
+    |> AF.with_provenance "to-unit" ["argument", AF.get_provenance x]
 
   let host = Machine.as_host Config.machine
   let run_with = Config.machine
@@ -379,14 +492,11 @@ module Make (Config : Compiler_configuration)
     | Some other ->
       ksprintf failwith "URI scheme %S (in %s) NOT SUPPORTED" other url
     end
+    |> AF.with_provenance "input-url" ~string_arguments:["url", url] []
 
   let save ~name thing =
     let open KEDSL in
     let basename = Filename.basename in
-    let name = String.map name ~f:(function
-      | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' as c -> c
-      | other -> '_')
-    in
     let canonicalize path =
       (* Remove the ending '/' from the path. This is so rsync syncs the directory itself +  *)
       let suffix = "/" in
@@ -395,23 +505,40 @@ module Make (Config : Compiler_configuration)
       else path
     in
     let base_path =
-      match Config.results_dir with
-      | None -> Config.work_dir // "results" // name
-      | Some r -> r // name
-    in
-    let move ~from_path ~wf product =
+      Saving_utilities.base_path
+        ?results_dir:Config.results_dir ~work_dir:Config.work_dir ~name () in
+    let move ?(and_gzip = false) ~from_path ~wf product =
+      let json =
+        `Assoc [
+          "base-path", `String base_path;
+          "saved-from", `String from_path;
+          "provenance",
+          AF.get_provenance thing |> Provenance_description.to_yojson;
+        ]
+        |> Yojson.Basic.pretty_to_string
+      in
       let make =
         Machine.quick_run_program
           Config.machine
           Program.(
             shf "mkdir -p %s" base_path
-            && shf "rsync -a %s %s" from_path base_path)
+            && shf "rsync -a %s %s" from_path base_path
+            && (
+              match and_gzip with
+              | true ->
+                shf "for f in $(find %s -type f) ; do \
+                     gzip --force --keep $f ; \
+                     done" base_path
+              | false -> sh "echo 'No GZipping Requested'"
+            )
+            && shf "echo %s > %s.json" (Filename.quote json) base_path
+          )
       in
       let name = sprintf "Saving \"%s\"" name in
       workflow_node product ~name ~make ~edges:[depends_on wf]
     in
     let tf path = transform_single_file ~path in
-    match thing with
+    begin match AF.get_file thing with
     | Bam wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
@@ -419,7 +546,8 @@ module Make (Config : Compiler_configuration)
     | Vcf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
-      Vcf (move ~from_path ~wf (transform_vcf ~path:to_path wf#product))
+      Vcf (move ~and_gzip:true ~from_path ~wf
+             (transform_vcf ~path:to_path wf#product))
     | Gtf wf ->
       let from_path = wf#product#path in
       let to_path = base_path // basename from_path in
@@ -496,31 +624,41 @@ module Make (Config : Compiler_configuration)
     | Pair _ -> failwith "Cannot `save` Pair."
     | Lambda _ -> failwith "Cannot `save` Lambda."
     | _ -> failwith "Shouldn't get here: pattern match for `save` must be exhaustive."
-
+    end
+    |> AF.with_provenance "save"
+      ["product", AF.get_provenance thing]
+      ~string_arguments:["name", name]
 
   let fastq
       ~sample_name ?fragment_id ~r1 ?r2 () =
     Fastq (
       let open KEDSL in
-      let read1 = get_raw_file r1 in
-      let read2 = Option.map r2 ~f:get_raw_file in
+      let read1 = get_raw_file (AF.get_file r1) in
+      let read2 = Option.map r2 ~f:(fun r -> AF.get_file r |> get_raw_file) in
       fastq_node_of_single_file_nodes
         ?fragment_id ~host ~name:sample_name
         read1 read2
     )
+    |> AF.with_provenance "fastq"
+      (("r1", AF.get_provenance r1)
+       :: Option.value_map ~default:[] r2
+         ~f:(fun r -> ["r2", AF.get_provenance r]))
+      ~string_arguments:(
+        ("sample-name", sample_name)
+        :: Option.value_map fragment_id ~default:[]
+          ~f:(fun id -> ["fragment-id", id]))
 
   let fastq_gz
       ~sample_name ?fragment_id ~r1 ?r2 () =
-    Gz (
-      fastq
-        ~sample_name ?fragment_id ~r1 ?r2 ()
-    )
+    let fq = fastq ~sample_name ?fragment_id ~r1 ?r2 () in
+    Gz (AF.get_file fq)
+    |> AF.with_provenance "gz" ["fastq", AF.get_provenance fq]
 
   let bam ~sample_name ?sorting ~reference_build input =
     Bam (
       let open KEDSL in
       let host = Machine.as_host Config.machine in
-      let f = get_raw_file input in
+      let f = get_raw_file (AF.get_file input) in
       let bam =
         bam_file ~host ~name:sample_name
           ?sorting ~reference_build f#product#path in
@@ -529,14 +667,26 @@ module Make (Config : Compiler_configuration)
         ~name:(sprintf "Input-bam: %s" sample_name)
         ~edges:[depends_on f]
     )
+    |> AF.with_provenance "bam" ["file", AF.get_provenance input]
+      ~string_arguments:[
+        "sample-name", sample_name;
+        "sorting",
+        (match sorting with
+        | Some `Coordinate -> "coordinate"
+        | None -> "none"
+        | Some `Read_name -> "read-name");
+        "reference-build", reference_build;
+      ]
 
   let bed file =
-    Bed (get_raw_file file)
+    Bed (get_raw_file (AF.get_file file))
+    |> AF.with_provenance "bed" ["file", AF.get_provenance file]
 
   let mhc_alleles how =
     match how with
     | `File raw ->
-      MHC_alleles (get_raw_file raw)
+      MHC_alleles (get_raw_file (AF.get_file raw))
+      |> AF.with_provenance "mhc-alleles" ["file", AF.get_provenance raw]
     | `Names strlist ->
       let path =
         Name_file.in_directory ~readable_suffix:"MHC_allleles.txt"
@@ -559,37 +709,44 @@ module Make (Config : Compiler_configuration)
           )
       in
       MHC_alleles node
+      |> AF.with_provenance "mhc-allelles" []
+        ~string_arguments:(List.mapi strlist
+                             ~f:(fun i s -> sprintf "allele-%d" i, s))
 
   let index_bam bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let sorted_bam = Tools.Samtools.sort_bam_if_necessary ~run_with ~by:`Coordinate input_bam in
     Bai (
       Tools.Samtools.index_to_bai
         ~run_with ~check_sorted:true sorted_bam
-    )
+    ) |> AF.with_provenance "index-bam" ["bam", AF.get_provenance bam]
 
   let kallisto ~reference_build ?(bootstrap_samples=100) fastq =
-    let fastq = get_fastq fastq in
+    let fq = get_fastq (AF.get_file fastq) in
     let result_prefix =
       Name_file.in_directory ~readable_suffix:"kallisto" Config.work_dir [
-        fastq#product#escaped_sample_name;
+        fq#product#escaped_sample_name;
         sprintf "%d" bootstrap_samples;
         reference_build;
       ] in
     Kallisto_result (
       Tools.Kallisto.run
         ~reference_build
-        ~fastq ~run_with ~result_prefix ~bootstrap_samples
-    )
+        ~fastq:fq ~run_with ~result_prefix ~bootstrap_samples
+    ) |> AF.with_provenance "kallisto" ["fastq", AF.get_provenance fastq]
+      ~string_arguments:[
+        "reference-build", reference_build;
+        "bootstrap-samples", Int.to_string bootstrap_samples;
+      ]
 
   let delly2 ?(configuration=Tools.Delly2.Configuration.default)
       ~normal ~tumor () =
-    let normal = get_bam normal in
-    let tumor = get_bam tumor in
+    let normal_bam = get_bam (AF.get_file normal) in
+    let tumor_bam = get_bam (AF.get_file tumor) in
     let output_path =
       Name_file.in_directory ~readable_suffix:"-delly2.vcf" Config.work_dir [
-        normal#product#path;
-        tumor#product#path;
+        normal_bam#product#path;
+        tumor_bam#product#path;
         Tools.Delly2.Configuration.name configuration;
       ]
     in
@@ -597,15 +754,23 @@ module Make (Config : Compiler_configuration)
       Tools.Delly2.run_somatic
         ~configuration
         ~run_with
-        ~normal ~tumor
+        ~normal:normal_bam ~tumor:tumor_bam
         ~output_path:(output_path ^ ".bcf")
     in
     Vcf (Tools.Bcftools.bcf_to_vcf ~run_with
-           ~reference_build:normal#product#reference_build
+           ~reference_build:normal_bam#product#reference_build
            ~bcf output_path)
+    |> AF.with_provenance "delly2"
+      ["normal", AF.get_provenance normal; "tumor", AF.get_provenance tumor]
+      ~string_arguments:[
+        "configuration-name", Tools.Delly2.Configuration.name configuration;
+      ]
+      ~json_arguments:[
+        "configuration", Tools.Delly2.Configuration.to_json configuration;
+      ]
 
-  let cufflinks ?reference_build bam =
-    let bam = get_bam bam in
+  let cufflinks ?reference_build bamf =
+    let bam = get_bam (AF.get_file bamf) in
     let reference_build =
       match reference_build with
       | None -> bam#product#reference_build
@@ -619,11 +784,13 @@ module Make (Config : Compiler_configuration)
       Tools.Cufflinks.run
         ~reference_build ~bam ~run_with ~result_prefix
     )
+    |> AF.with_provenance "cufflinks" ["bam", AF.get_provenance bamf]
+      ~string_arguments:["reference-build", reference_build]
 
   let make_aligner
-      name ~make_workflow ~config_name
+      name ~make_workflow ~config_name ~config_to_json
       ~configuration ~reference_build fastq =
-    let freads = get_fastq fastq in
+    let freads = get_fastq (AF.get_file fastq) in
     let result_prefix =
       Name_file.in_directory ~readable_suffix:name Config.work_dir [
         config_name configuration;
@@ -635,11 +802,18 @@ module Make (Config : Compiler_configuration)
       make_workflow
         ~reference_build ~configuration ~result_prefix ~run_with freads
     )
+    |> AF.with_provenance name ["fastq", AF.get_provenance fastq]
+      ~string_arguments:[
+        "configuration-name", config_name configuration;
+        "reference-build", reference_build;
+      ]
+      ~json_arguments:["configuration", config_to_json configuration]
 
   let bwa_aln
       ?(configuration = Tools.Bwa.Configuration.Aln.default) =
     make_aligner "bwaaln" ~configuration
       ~config_name:Tools.Bwa.Configuration.Aln.name
+      ~config_to_json:Tools.Bwa.Configuration.Aln.to_json
       ~make_workflow:(
         fun
           ~reference_build
@@ -654,6 +828,7 @@ module Make (Config : Compiler_configuration)
       ?(configuration = Tools.Bwa.Configuration.Mem.default) =
     make_aligner "bwamem" ~configuration
       ~config_name:Tools.Bwa.Configuration.Mem.name
+      ~config_to_json:Tools.Bwa.Configuration.Mem.to_json
       ~make_workflow:(
         fun
           ~reference_build
@@ -668,7 +843,7 @@ module Make (Config : Compiler_configuration)
       ?(configuration = Tools.Bwa.Configuration.Mem.default)
       ~reference_build
       input =
-    let bwa_mem_opt input =
+    let bwa_mem_opt input annot =
       let result_prefix =
         Name_file.in_directory ~readable_suffix:"bwamemopt" Config.work_dir [
           Tools.Bwa.Configuration.Mem.name configuration;
@@ -678,18 +853,27 @@ module Make (Config : Compiler_configuration)
       Bam (
         Tools.Bwa.mem_align_to_bam
           ~configuration ~reference_build ~run_with ~result_prefix input
-      ) in
+      )
+      |> AF.with_provenance "bwa-mem-opt" ["input", annot]
+        ~string_arguments:[
+          "reference-build", reference_build;
+          "configuration-name", Tools.Bwa.Configuration.Mem.name configuration;
+        ]
+        ~json_arguments:[
+          "configuration", Tools.Bwa.Configuration.Mem.to_json configuration;
+        ]
+    in
     let of_input =
       function
       | `Fastq fastq ->
-        let fq = get_fastq fastq in
-        bwa_mem_opt (`Fastq fq)
+        let fq = get_fastq (AF.get_file fastq) in
+        bwa_mem_opt (`Fastq fq) (AF.get_provenance fastq)
       | `Fastq_gz fqz ->
-        let fq = get_gz fqz |> get_fastq in
-        bwa_mem_opt (`Fastq fq)
+        let fq = get_gz (AF.get_file fqz) |> get_fastq in
+        bwa_mem_opt (`Fastq fq) (AF.get_provenance fqz)
       | `Bam (b, p) ->
-        let bam = get_bam b in
-        bwa_mem_opt (`Bam (bam, `PE))
+        let bam = get_bam (AF.get_file b) in
+        bwa_mem_opt (`Bam (bam, `PE)) (AF.get_provenance b)
     in
     of_input input
 
@@ -698,6 +882,7 @@ module Make (Config : Compiler_configuration)
     make_aligner "star"
       ~configuration
       ~config_name:Tools.Star.Configuration.Align.name
+      ~config_to_json:Tools.Star.Configuration.Align.to_json
       ~make_workflow:(
         fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
           Tools.Star.align ~configuration ~reference_build
@@ -709,6 +894,7 @@ module Make (Config : Compiler_configuration)
     make_aligner "hisat"
       ~configuration
       ~config_name:Tools.Hisat.Configuration.name
+      ~config_to_json:Tools.Hisat.Configuration.to_json
       ~make_workflow:(
         fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
           Tools.Hisat.align ~configuration ~reference_build
@@ -720,13 +906,14 @@ module Make (Config : Compiler_configuration)
     make_aligner "mosaik"
       ~configuration:()
       ~config_name:(fun _ -> "default")
+      ~config_to_json:(fun _ -> `Assoc ["name", `String "default"])
       ~make_workflow:(
         fun ~reference_build ~configuration ~result_prefix ~run_with fastq ->
           Tools.Mosaik.align ~reference_build
             ~fastq ~result_prefix ~run_with ())
 
-  let gunzip:  t -> t = fun gz ->
-    let inside = get_gz gz in
+  let gunzip:  Annotated_file.t -> Annotated_file.t = fun gz ->
+    let inside = get_gz (AF.get_file gz) in
     begin match inside with
     | Fastq f ->
       let make_result_path read =
@@ -753,6 +940,7 @@ module Make (Config : Compiler_configuration)
           ?fragment_id:f#product#fragment_id
           fastq_r1 fastq_r2
       )
+      |> AF.with_provenance "gunzip" ["fastq-gz", AF.get_provenance gz]
     | other ->
       ksprintf failwith "To_workflow.gunzip: non-FASTQ input not implemented"
     end
@@ -760,11 +948,12 @@ module Make (Config : Compiler_configuration)
   let gunzip_concat gzl =
     ksprintf failwith "To_workflow.gunzip_concat: not implemented"
 
-  let concat : t -> t =
+  let concat : Annotated_file.t -> Annotated_file.t =
     fun l ->
-      let l = get_list l in
-      begin match l with
-      | Fastq one :: [] -> Fastq one
+      begin match get_list (AF.get_file l) with
+      | Fastq one :: [] ->
+        Fastq one
+        |> AF.with_provenance "concat" ["single-element", AF.get_provenance l]
       | Fastq first_fastq :: _ as lfq ->
         let fqs = List.map lfq ~f:get_fastq in
         let r1s = List.map fqs ~f:(KEDSL.read_1_file_node) in
@@ -795,6 +984,7 @@ module Make (Config : Compiler_configuration)
             ~fragment_id:"edsl-concat"
             read_1 read_2
         )
+        |> AF.with_provenance "concat" ["fastq-list", AF.get_provenance l]
       | other ->
         ksprintf failwith "To_workflow.concat: not implemented"
       end
@@ -805,9 +995,11 @@ module Make (Config : Compiler_configuration)
       ?(uncompressed_bam_output = false)
       ?(compress_level_one = false)
       ?(combine_rg_headers = false)
-      ?(combine_pg_headers = false) =
-    function
-    | List [ one_bam ] -> one_bam
+      ?(combine_pg_headers = false) bam_list =
+    match AF.get_file bam_list with
+    | List [ one_bam ] ->
+      one_bam |> AF.with_provenance "merge-bams"
+        ["pass-through", AF.get_provenance bam_list]
     | List bam_files ->
       let bams = List.map bam_files ~f:get_bam in
       let output_path =
@@ -824,22 +1016,35 @@ module Make (Config : Compiler_configuration)
              ~combine_pg_headers
              ~run_with
              bams output_path)
+      |> AF.with_provenance "merge-bams"
+        ["bam-list", AF.get_provenance bam_list]
+        ~string_arguments:[
+          "delete-input-on-success", string_of_bool delete_input_on_success;
+          "attach-rg-tag", string_of_bool attach_rg_tag;
+          "uncompressed-bam-output", string_of_bool uncompressed_bam_output;
+          "compress-level-one", string_of_bool compress_level_one;
+          "combine-rg-headers", string_of_bool combine_rg_headers;
+          "combine-pg-headers", string_of_bool combine_pg_headers;
+        ]
     | other ->
       fail_get other "To_workflow.merge_bams: not a list of bams?"
 
   let stringtie ?(configuration = Tools.Stringtie.Configuration.default) bamt =
-    let bam = get_bam bamt in
+    let bam = get_bam (AF.get_file bamt) in
     let result_prefix =
       Name_file.from_path bam#product#path ~readable_suffix:"stringtie" [
         configuration.Tools.Stringtie.Configuration.name;
       ] in
     Gtf (Tools.Stringtie.run ~configuration ~bam ~result_prefix ~run_with ())
+    |> AF.with_provenance "stringtie" ["bam", AF.get_provenance bamt]
+      ~string_arguments:["configuration-name",
+                         configuration.Tools.Stringtie.Configuration.name]
+      ~json_arguments:["configuration",
+                       Tools.Stringtie.Configuration.to_json configuration]
 
   let indel_realigner_function:
-    type a. ?configuration: _ -> a KEDSL.bam_or_bams -> a =
-    fun
-      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner)
-      on_what ->
+    type a. configuration: _ -> a KEDSL.bam_or_bams -> a =
+    fun ~configuration on_what ->
       match Config.map_reduce_gatk_indel_realigner with
       | true ->
         Tools.Gatk.indel_realigner_map_reduce ~run_with ~compress:false
@@ -848,20 +1053,43 @@ module Make (Config : Compiler_configuration)
         Tools.Gatk.indel_realigner ~run_with ~compress:false
           ~configuration on_what
 
-  let gatk_indel_realigner ?configuration bam =
-    let input_bam = get_bam bam in
-    Bam (indel_realigner_function ?configuration (KEDSL.Single_bam input_bam))
+  let indel_realigner_provenance ~configuration t_arguments product =
+    let config_indel, config_target = configuration in
+    AF.with_provenance "gatk-indel-realigner" t_arguments product
+      ~string_arguments:[
+        "indel-realigner-configuration-name",
+        config_indel.Tools.Gatk.Configuration.Indel_realigner.name;
+        "target-creator-configuration-name",
+        config_target.Tools.Gatk.Configuration.Realigner_target_creator.name;
+      ]
+      ~json_arguments:[
+        "indel-realigner-configuration",
+        Tools.Gatk.Configuration.Indel_realigner.to_json config_indel;
+        "target-creator-configuration",
+        Tools.Gatk.Configuration.Realigner_target_creator.to_json config_target;
+      ]
 
-  let gatk_indel_realigner_joint ?configuration bam_pair =
-    let bam1 = bam_pair |> pair_first |> get_bam in
-    let bam2 = bam_pair |> pair_second |> get_bam in
+  let gatk_indel_realigner
+      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner)
+      bam =
+    let input_bam = get_bam (AF.get_file bam) in
+    Bam (indel_realigner_function ~configuration (KEDSL.Single_bam input_bam))
+    |> indel_realigner_provenance ~configuration ["bam", AF.get_provenance bam]
+
+
+  let gatk_indel_realigner_joint
+      ?(configuration = Tools.Gatk.Configuration.default_indel_realigner)
+      bam_pair =
+    let bam1 = (AF.get_file bam_pair) |> pair_fst |> get_bam in
+    let bam2 = (AF.get_file bam_pair) |> pair_snd |> get_bam in
     let bam_list_node =
       indel_realigner_function (KEDSL.Bam_workflow_list [bam1; bam2])
-        ?configuration
-    in
+        ~configuration in
     begin match KEDSL.explode_bam_list_node bam_list_node with
     | [realigned_normal; realigned_tumor] ->
-      pair (Bam realigned_normal) (Bam realigned_tumor)
+      Pair (Bam realigned_normal, Bam realigned_tumor)
+      |> indel_realigner_provenance ~configuration
+        ["bam-pair", AF.get_provenance bam_pair]
     | other ->
       failf "Gatk.indel_realigner did not return the correct list \
              of length 2 (tumor, normal): it gave %d bams"
@@ -870,7 +1098,7 @@ module Make (Config : Compiler_configuration)
 
   let picard_mark_duplicates
       ?(configuration = Tools.Picard.Mark_duplicates_settings.default) bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let output_bam =
       (* We assume that the settings do not impact the actual result. *)
       Name_file.from_path input_bam#product#path
@@ -878,10 +1106,12 @@ module Make (Config : Compiler_configuration)
     Bam (
       Tools.Picard.mark_duplicates ~settings:configuration
         ~run_with ~input_bam output_bam
-    )
+    )|> AF.with_provenance "picard-mark-duplicates"
+      ["bam", AF.get_provenance bam]
+        
 
   let picard_reorder_sam ?mem_param ?reference_build bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let reference_build_param =
       match reference_build with
       | None -> input_bam#product#reference_build
@@ -896,9 +1126,11 @@ module Make (Config : Compiler_configuration)
         ?mem_param ?reference_build
         ~run_with ~input_bam output_bam_path
     )
+    |> AF.with_provenance "picard-reorder-sam" ["bam", AF.get_provenance bam]
+      ~string_arguments:["reference-build", reference_build_param]
 
   let picard_clean_bam bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let output_bam_path =
       Name_file.from_path 
         input_bam#product#path
@@ -908,9 +1140,10 @@ module Make (Config : Compiler_configuration)
     Bam (
       Tools.Picard.clean_bam ~run_with input_bam output_bam_path
     )
+    |> AF.with_provenance "picard-clean-bam" ["bam", AF.get_provenance bam]
 
   let gatk_bqsr ?(configuration = Tools.Gatk.Configuration.default_bqsr) bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let output_bam =
       let (bqsr, preads) = configuration in
       Name_file.from_path input_bam#product#path
@@ -918,13 +1151,28 @@ module Make (Config : Compiler_configuration)
         bqsr.Tools.Gatk.Configuration.Bqsr.name;
         preads.Tools.Gatk.Configuration.Print_reads.name;
       ] in
+    let config_bqsr, config_print_reads = configuration in
     Bam (
       Tools.Gatk.base_quality_score_recalibrator ~configuration
         ~run_with ~input_bam ~output_bam
     )
+    |> AF.with_provenance "gatk-bqsr" ["bam", AF.get_provenance bam]
+      ~string_arguments:[
+        "bqsr-configuration-name",
+        config_bqsr.Tools.Gatk.Configuration.Bqsr.name;
+        "print-reads-configuration-name",
+        config_print_reads.Tools.Gatk.Configuration.Print_reads.name;
+      ]
+      ~json_arguments:[
+        "bqsr-configuration",
+        Tools.Gatk.Configuration.Bqsr.to_json config_bqsr;
+        "print-reads-configuration",
+        Tools.Gatk.Configuration.Print_reads.to_json config_print_reads;
+      ]
+                         
 
   let seq2hla fq =
-    let fastq = get_fastq fq in
+    let fastq = get_fastq (AF.get_file fq) in
     let r1 = KEDSL.read_1_file_node fastq in
     let r2 =
       match KEDSL.read_2_file_node fastq with
@@ -943,76 +1191,87 @@ module Make (Config : Compiler_configuration)
       Tools.Seq2HLA.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~r1 ~r2
     )
+    |> AF.with_provenance "seq2hla" ["fastq", AF.get_provenance fq]
 
   let hlarp input =
     let out o =
       Name_file.from_path o ~readable_suffix:"hlarp.csv" [] in
     let hlarp = Tools.Hlarp.run ~run_with in
-    let hla_result, output_path =
+    let hla_result, output_path, prov_argument =
       match input with
       | `Seq2hla v ->
-        let v = get_seq2hla_result v in
-        `Seq2hla v, out v#product#work_dir_path
+        let r = get_seq2hla_result (AF.get_file v) in
+        `Seq2hla r, out r#product#work_dir_path, ("seq2hla", AF.get_provenance v)
       | `Optitype v ->
-        let v = get_optitype_result v in
-        `Optitype v, out v#product#path
+        let r = get_optitype_result (AF.get_file v) in
+        `Optitype r, out r#product#path, ("optitype", AF.get_provenance v)
     in
     let res =
-      hlarp ~hla_result ~output_path ~extract_alleles:true
-    in
+      hlarp ~hla_result ~output_path ~extract_alleles:true in
     MHC_alleles (res ())
+    |> AF.with_provenance "hlarp" [prov_argument]
 
   let filter_to_region vcf bed =
-    let vcf = get_vcf vcf in
-    let bed = get_bed bed in
+    let vcff = get_vcf (AF.get_file vcf) in
+    let bedf = get_bed (AF.get_file bed) in
     let output =
-      Name_file.from_path vcf#product#path ~readable_suffix:"_intersect.vcf"
-        [Filename.basename bed#product#path |> Filename.chop_extension]
+      Name_file.from_path vcff#product#path ~readable_suffix:"_intersect.vcf"
+        [Filename.basename bedf#product#path |> Filename.chop_extension]
     in
     Vcf (Tools.Bedtools.intersect
-           ~primary:vcf ~intersect_with:[bed]
+           ~primary:vcff ~intersect_with:[bedf]
            ~run_with output)
+    |> AF.with_provenance "filter-to-region" ["vcf", AF.get_provenance vcf;
+                                              "bed", AF.get_provenance bed]
 
-  let bam_left_align ~reference_build bam =
-    let bam = get_bam bam in
+  let bam_left_align ~reference_build bamf =
+    let bam = get_bam (AF.get_file bamf) in
     let output =
       Name_file.from_path bam#product#path ~readable_suffix:"_left-aligned.bam"
         [Filename.basename bam#product#path] in
     Bam (Tools.Freebayes.bam_left_align ~reference_build ~bam ~run_with output)
+    |> AF.with_provenance "bam-left-align" ["bam", AF.get_provenance bamf]
+      ~string_arguments:["reference-build", reference_build]
 
-  let sambamba_filter ~filter bam =
-    let bam = get_bam bam in
+  let sambamba_filter ~filter bami =
+    let bam = get_bam (AF.get_file bami) in
     let output =
       Name_file.from_path bam#product#path ~readable_suffix:"_filtered.bam"
         [Filename.basename bam#product#path; Tools.Sambamba.Filter.to_string filter] in
     Bam (Tools.Sambamba.view ~bam ~run_with ~filter output)
+    |> AF.with_provenance "sambamba-filter" ["bam", AF.get_provenance bami]
+      (** The filter's [to_json] function is just for now the identity: *)
+      ~json_arguments:["filter", (filter :> Yojson.Basic.json)]
 
   let fastqc fq =
-    let fastq = get_fastq fq in
+    let fastq = get_fastq (AF.get_file fq) in
     let output_folder =
       Name_file.in_directory ~readable_suffix:"fastqc_result" Config.work_dir [
         fastq#product#escaped_sample_name;
         fastq#product#fragment_id_forced;
       ] in
     Fastqc_result (Tools.Fastqc.run ~run_with ~fastq ~output_folder)
+    |> AF.with_provenance "fastqc" ["fastq", AF.get_provenance fq]
 
-  let flagstat bam =
-    let bam = get_bam bam in
+  let flagstat bami =
+    let bam = get_bam (AF.get_file bami) in
     Flagstat_result (Tools.Samtools.flagstat ~run_with bam)
+    |> AF.with_provenance "flagstat" ["bam", AF.get_provenance bami]
 
   let vcf_annotate_polyphen vcf =
-    let v = get_vcf vcf in
+    let v = get_vcf (AF.get_file vcf) in
     let output_vcf = (Filename.chop_extension v#product#path) ^ "_polyphen.vcf" in
     let reference_build = v#product#reference_build in
     Vcf (
       Tools.Vcfannotatepolyphen.run ~run_with ~reference_build ~vcf:v ~output_vcf
     )
+    |> AF.with_provenance "vcf-annotate-polyphen" ["vcf", AF.get_provenance vcf]
 
   let isovar
       ?(configuration=Tools.Isovar.Configuration.default)
       vcf bam =
-    let v = get_vcf vcf in
-    let b = get_bam bam in
+    let v = get_vcf (AF.get_file vcf) in
+    let b = get_bam (AF.get_file bam) in
     let reference_build =
       if v#product#reference_build = b#product#reference_build
       then v#product#reference_build
@@ -1032,10 +1291,19 @@ module Make (Config : Compiler_configuration)
       Tools.Isovar.run ~configuration ~run_with ~reference_build
         ~vcf:v ~bam:b ~output_file
     )
+    |> AF.with_provenance "isovar" ["vcf", AF.get_provenance vcf;
+                                    "bam", AF.get_provenance bam]
+      ~string_arguments:[
+        "reference-build", reference_build;
+        "configuration-name", Tools.Isovar.Configuration.name configuration;
+      ]
+      ~json_arguments:[
+        "configuration", Tools.Isovar.Configuration.to_json configuration;
+      ]
 
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
       vcfs predictor alleles =
-    let vs = List.map ~f:get_vcf vcfs in
+    let vs = List.map ~f:(fun x -> AF.get_file x |> get_vcf) vcfs in
     let refs = 
       vs |> List.map ~f:(fun v -> v#product#reference_build) |> List.dedup
     in
@@ -1047,7 +1315,7 @@ module Make (Config : Compiler_configuration)
       else
         List.nth_exn refs 0
     in
-    let mhc = get_mhc_alleles alleles in
+    let mhc = get_mhc_alleles (AF.get_file alleles) in
     let output_file =
       Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
         ([
@@ -1063,25 +1331,37 @@ module Make (Config : Compiler_configuration)
         ~alleles_file:mhc
         ~output:(`CSV output_file)
     )
+    |> AF.with_provenance "topiary"
+      (("alleles", AF.get_provenance alleles)
+       :: List.mapi vcfs ~f:(fun i v -> sprintf "vcf_%d" i, AF.get_provenance v))
+      ~string_arguments:[
+        "predictor", Tools.Topiary.predictor_to_string predictor;
+        "configuration-name",
+        Tools.Topiary.Configuration.name configuration;
+      ]
+      ~json_arguments:[
+        "configuration",
+        Tools.Topiary.Configuration.to_json configuration;
+      ]
 
   let vaxrank
       ?(configuration=Tools.Vaxrank.Configuration.default)
       vcfs bam predictor alleles =
-    let vcfs = List.map ~f:get_vcf vcfs in
-    let b = get_bam bam in
+    let vs = List.map ~f:(fun x -> AF.get_file x |> get_vcf) vcfs in
+    let b = get_bam (AF.get_file bam) in
     let reference_build =
-      if List.exists vcfs ~f:(fun v ->
+      if List.exists vs ~f:(fun v ->
           v#product#reference_build <> b#product#reference_build)
       then
         ksprintf failwith "VCFs and Bam do not agree on their reference build: \
                            bam: %s Vs vcfs: %s"
           b#product#reference_build
-          (List.map vcfs ~f:(fun v -> v#product#reference_build)
+          (List.map vs ~f:(fun v -> v#product#reference_build)
            |> String.concat ~sep:", ")
       else
         b#product#reference_build
     in
-    let mhc = get_mhc_alleles alleles in
+    let mhc = get_mhc_alleles (AF.get_file alleles) in
     let outdir =
       Name_file.in_directory ~readable_suffix:"vaxrank" Config.work_dir
         ([
@@ -1089,24 +1369,38 @@ module Make (Config : Compiler_configuration)
           Tools.Topiary.predictor_to_string predictor;
           (Filename.chop_extension (Filename.basename mhc#product#path));
         ] @
-          (List.map vcfs ~f:(fun v ->
+          (List.map vs ~f:(fun v ->
                (Filename.chop_extension (Filename.basename v#product#path))))
         )
     in
     Vaxrank_result (
       Tools.Vaxrank.run
         ~configuration ~run_with
-        ~reference_build ~vcfs ~bam:b ~predictor
+        ~reference_build ~vcfs:vs ~bam:b ~predictor
         ~alleles_file:mhc
         ~output_folder:outdir
     )
+    |> AF.with_provenance "vaxrank"
+      (("alleles", AF.get_provenance alleles)
+       :: ("bam", AF.get_provenance bam)
+       :: List.mapi vcfs ~f:(fun i v -> sprintf "vcf_%d" i, AF.get_provenance v))
+      ~string_arguments:[
+        "predictor", Tools.Topiary.predictor_to_string predictor;
+        "configuration-name",
+        Tools.Vaxrank.Configuration.name configuration;
+      ]
+      ~json_arguments:[
+        "configuration",
+        Tools.Vaxrank.Configuration.to_json configuration;
+      ]
 
   let optitype how fq =
-    let fastq = get_fastq fq in
+    let fastq = get_fastq (AF.get_file fq) in
+    let intput_type = match how with `RNA -> "RNA" | `DNA -> "DNA" in
     let work_dir =
       Name_file.in_directory Config.work_dir ~readable_suffix:"optitype.d" [
         fastq#product#escaped_sample_name;
-        (match how with `RNA -> "RNA" | `DNA -> "DNA");
+        intput_type;
         fastq#product#fragment_id_forced;
       ]
     in
@@ -1114,36 +1408,41 @@ module Make (Config : Compiler_configuration)
       Tools.Optitype.hla_type
         ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
         how
-    )
+    ) |> AF.with_provenance "optitype" ["fastq", AF.get_provenance fq]
+      ~string_arguments:["input-type", intput_type]
 
   let gatk_haplotype_caller bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let result_prefix =
       Filename.chop_extension input_bam#product#path ^ sprintf "_gatkhaplo" in
     Vcf (
       Tools.Gatk.haplotype_caller ~run_with
         ~input_bam ~result_prefix `Map_reduce
-    )
+    ) |> AF.with_provenance "gatk-haplotype-caller" ["bam", AF.get_provenance bam]
 
   let bam_to_fastq ?fragment_id how bam =
-    let input_bam = get_bam bam in
+    let input_bam = get_bam (AF.get_file bam) in
     let sample_type = match how with `SE -> `Single_end | `PE -> `Paired_end in
+    let sample_type_str = match how with `PE -> "PE" | `SE -> "SE" in
     let output_prefix =
       Config.work_dir
       // sprintf "%s-b2fq-%s"
         Filename.(chop_extension (basename input_bam#product#path))
-        (match how with `PE -> "PE" | `SE -> "SE")
+        sample_type_str
     in
     Fastq (
       Tools.Picard.bam_to_fastq ~run_with ~sample_type
         ~output_prefix input_bam
-    )
+    ) |> AF.with_provenance "bam-to-fastq" ["bam", AF.get_provenance bam]
+      ~string_arguments:(("sample-type", sample_type_str)
+                         :: Option.value_map ~default:[] fragment_id
+                           ~f:(fun fi -> ["fragment-id", fi]))
 
   let somatic_vc
-      name confname default_conf runfun
+      name confname confjson default_conf runfun
       ?configuration ~normal ~tumor () =
-    let normal_bam = get_bam normal in
-    let tumor_bam = get_bam tumor in
+    let normal_bam = get_bam (AF.get_file normal) in
+    let tumor_bam = get_bam (AF.get_file tumor) in
     let configuration = Option.value configuration ~default:default_conf in
     let result_prefix =
       Name_file.from_path tumor_bam#product#path
@@ -1157,11 +1456,19 @@ module Make (Config : Compiler_configuration)
       runfun
         ~configuration ~run_with
         ~normal:normal_bam ~tumor:tumor_bam ~result_prefix
-    )
+    ) |> AF.with_provenance name ["normal", AF.get_provenance normal;
+                                  "tumor", AF.get_provenance tumor]
+      ~string_arguments:[
+        "configuration-name", confname configuration;
+      ]
+      ~json_arguments:[
+        "configuration", confjson configuration;
+      ]
 
   let mutect =
     somatic_vc "mutect"
       Tools.Mutect.Configuration.name
+      Tools.Mutect.Configuration.to_json
       Tools.Mutect.Configuration.default
       (fun
         ~configuration ~run_with
@@ -1172,6 +1479,7 @@ module Make (Config : Compiler_configuration)
   let mutect2 =
     somatic_vc "mutect2"
       Tools.Gatk.Configuration.Mutect2.name
+      Tools.Gatk.Configuration.Mutect2.to_json
       Tools.Gatk.Configuration.Mutect2.default
       (fun
         ~configuration ~run_with
@@ -1184,6 +1492,7 @@ module Make (Config : Compiler_configuration)
   let somaticsniper =
     somatic_vc "somaticsniper"
       Tools.Somaticsniper.Configuration.name
+      Tools.Somaticsniper.Configuration.to_json
       Tools.Somaticsniper.Configuration.default
       (fun
         ~configuration ~run_with
@@ -1194,6 +1503,7 @@ module Make (Config : Compiler_configuration)
   let strelka =
     somatic_vc "strelka"
       Tools.Strelka.Configuration.name
+      Tools.Strelka.Configuration.to_json
       Tools.Strelka.Configuration.default
       (fun
         ~configuration ~run_with
@@ -1202,9 +1512,16 @@ module Make (Config : Compiler_configuration)
           ~configuration ~normal ~tumor ~run_with ~result_prefix ())
 
   let varscan_somatic ?adjust_mapq =
-    somatic_vc "varscan_somatic" (fun () ->
+    somatic_vc "varscan_somatic"
+      (fun () ->
         sprintf "Amq%s"
           (Option.value_map adjust_mapq ~default:"N" ~f:Int.to_string))
+      (fun () ->
+         `Assoc [
+           "adjust-mapq", 
+           Option.value_map adjust_mapq
+             ~default:(`String "None") ~f:(fun i -> `Int i)
+         ])
       ()
       (fun
         ~configuration ~run_with
@@ -1216,6 +1533,7 @@ module Make (Config : Compiler_configuration)
   let muse =
     somatic_vc "muse"
       Tools.Muse.Configuration.name
+      Tools.Muse.Configuration.to_json
       (Tools.Muse.Configuration.default `WGS)
       (fun
         ~configuration ~run_with
@@ -1227,6 +1545,7 @@ module Make (Config : Compiler_configuration)
   let virmid =
     somatic_vc "virmid"
       Tools.Virmid.Configuration.name
+      Tools.Virmid.Configuration.to_json
       Tools.Virmid.Configuration.default
       (fun
         ~configuration ~run_with
