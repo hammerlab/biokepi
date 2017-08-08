@@ -173,7 +173,7 @@ module Default = struct
     (* Release 87 *)
     let b38_url =
       "ftp://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/dna/\
-       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.87.gtf.gz" in
