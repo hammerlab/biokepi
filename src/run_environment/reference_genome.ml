@@ -172,7 +172,8 @@ module Default = struct
   let b38 =
     (* Release 87 *)
     let b38_url =
-      "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/b38.fasta" in
+      "ftp://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/dna/\
+       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.87.gtf.gz" in
