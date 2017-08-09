@@ -172,7 +172,8 @@ module Default = struct
   let b38 =
     (* Release 87 *)
     let b38_url =
-      "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/b38.fasta" in
+      "http://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/dna/\
+       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
     let gtf_b38_url =
       "http://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/\
        Homo_sapiens.GRCh38.87.gtf.gz" in
@@ -186,7 +187,7 @@ module Default = struct
       ~ensembl:87
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
-      ~fasta:Location.(url b38_url|> gunzip)
+      ~fasta:Location.(url b38_url |> gunzip)
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
       ~dbsnp:Location.(url dbsnp_url |> gunzip)
       ~cdna:Location.(url cdna_b38_url |> gunzip)
