@@ -181,7 +181,7 @@ module Default = struct
       "http://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
     let dbsnp_url =
-      "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b149_GRCh38p7/VCF/common_all_20161122.vcf.gz" in
+      "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/common_all_20170710.vcf.gz" in
     create Name.b38
       ~species:human
       ~ensembl:87
