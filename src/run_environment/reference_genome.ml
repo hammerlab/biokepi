@@ -156,7 +156,7 @@ module Default = struct
       ~snpeff_name:"GRCh37.75"
 
   let hg38 =
-    (* Release 79 *)
+    (* Release 87 *)
     let hg38_url =
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.fasta.gz" in
     let dbsnp_hg38 =
@@ -165,7 +165,7 @@ module Default = struct
       "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/hg38/hg38bundle/Homo_sapiens_assembly38.known_indels.vcf.gz" in
     create Name.hg38
       ~species:human
-      ~ensembl:79
+      ~ensembl:87
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_hg_family
       ~fasta:Location.(url hg38_url|> gunzip)
@@ -174,23 +174,24 @@ module Default = struct
       ~snpeff_name:"GRCh38.86"
 
   let b38 =
-    (* Release 79 *)
+    (* Release 87 *)
     let b38_url =
-      "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/b38.fasta" in
+      "http://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/dna/\
+       Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz" in
     let gtf_b38_url =
-      "http://ftp.ensembl.org/pub/release-79/gtf/homo_sapiens/\
-       Homo_sapiens.GRCh38.79.gtf.gz" in
+      "http://ftp.ensembl.org/pub/release-87/gtf/homo_sapiens/\
+       Homo_sapiens.GRCh38.87.gtf.gz" in
     let cdna_b38_url =
-      "http://ftp.ensembl.org/pub/release-79/fasta/homo_sapiens/cdna/\
+      "http://ftp.ensembl.org/pub/release-87/fasta/homo_sapiens/cdna/\
        Homo_sapiens.GRCh38.cdna.all.fa.gz" in
     let dbsnp_url =
-      "ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b149_GRCh38p7/VCF/common_all_20161122.vcf.gz" in
+      "http://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b150_GRCh38p7/VCF/common_all_20170710.vcf.gz" in
     create Name.b38
       ~species:human
-      ~ensembl:79
+      ~ensembl:87
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
-      ~fasta:Location.(url b38_url|> gunzip)
+      ~fasta:Location.(url b38_url |> gunzip)
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
       ~dbsnp:Location.(url dbsnp_url |> gunzip)
       ~cdna:Location.(url cdna_b38_url |> gunzip)

@@ -72,8 +72,8 @@ module Tool = struct
     let pyensembl = create "pyensembl" ~version:"1.1.0"
     let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"
     let topiary = create "topiary" ~version:"1.2.1"
-    let vaxrank = create "vaxrank" ~version:"0.5.1"
-    let isovar = create "isovar" ~version:"0.1.3"
+    let vaxrank = create "vaxrank" ~version:"0.6.0"
+    let isovar = create "isovar" ~version:"0.7.0"
   end
 
   type t = {

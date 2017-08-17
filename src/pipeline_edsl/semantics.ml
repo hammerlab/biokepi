@@ -50,7 +50,7 @@ module type Bioinformatics_base = sig
   val save :
     name : string ->
     'a repr ->
-    'a repr
+    [ `Saved of 'a ] repr
   (** Tag a product of the EDSL as “interesting to be saved” (the meaning is
       implementation dependent; when compiling to a Ketrew workflow this means
       copying the file(s) to another directory. *)

@@ -420,8 +420,7 @@ let mutect_tool
     workflow_node without_product ~name:"MuTect setup" ~edges
   in
   let init =
-    Program.(conda_init && shf "export mutect_HOME=%s" install_path)
-  in
+    Program.(conda_init && shf "export mutect_HOME=%s" install_path) in
   Machine.Tool.create tool ~ensure ~init
 
 let gatk_tool

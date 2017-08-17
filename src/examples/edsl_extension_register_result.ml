@@ -177,8 +177,9 @@ module To_workflow_with_register
      end)
 = struct
   include Biokepi.EDSL.Compile.To_workflow.Make(Config)
-  open Biokepi.EDSL.Compile.To_workflow.File_type_specification
-  let register : type a . string -> t -> t = fun metadata x ->
+  open Biokepi.EDSL.Compile.To_workflow
+  let register
+    : type a . string -> Annotated_file.t -> Annotated_file.t = fun metadata x ->
     let make_node any_node =
       let registration =
         let path = any_node#product#path in
@@ -203,9 +204,13 @@ module To_workflow_with_register
       in
       new_node
     in
-    match x with
-    | Bam wf -> Bam (make_node wf)
-    | Vcf wf -> Vcf (make_node wf)
+    let provenance = Annotated_file.get_provenance x in
+    let open  File_type_specification in
+    match Annotated_file.get_file x with
+    | Bam wf ->
+      Bam (make_node wf) |> Annotated_file.with_provenance "register" ["bam", provenance]
+    | Vcf wf ->
+      Vcf (make_node wf) |> Annotated_file.with_provenance "register" ["vcf", provenance]
     | other -> failwith "To_workflow.register non-{Bam or Vcf}: not implemented"
 end
 (*M
@@ -278,7 +283,8 @@ M*)
   let workflow =
     Ketrew_pipeline.run ~normal ~tumor
   in
-  workflow |> Biokepi.EDSL.Compile.To_workflow.File_type_specification.get_vcf
+  workflow
+  |> Biokepi.EDSL.Compile.To_workflow.get_workflow ~name:"Test Registration"
 
 (*M
 ### Submitting The Workflow
