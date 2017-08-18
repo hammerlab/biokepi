@@ -407,7 +407,7 @@ let mutect_tool
   let install_path = install_tools_path // Tool_def.to_directory_name tool in
   let conda_env = (* mutect doesn't run on Java; so need to provide Java 7 *)
     Conda.(setup_environment
-      ~python_version:`Python2
+      ~python_version:`Python_2
       ~base_packages:[("java-jdk", `Version "7.0.91")]
       install_path
       "mutect_env")

@@ -1,10 +1,10 @@
 open Biokepi_run_environment
 
 type python_version_type = [
-  | `Python2
-  | `Python3
-  | `PythonCustom of string
-  | `PythonToolDependency of string
+  | `Python_2
+  | `Python_3
+  | `Python_custom of string
+  | `Python_tool_dependency of string
 ]
 
 type conda_version_type = [

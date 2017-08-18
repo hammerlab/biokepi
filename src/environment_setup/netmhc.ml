@@ -153,7 +153,7 @@ let guess_folder_name tool_file_loc =
 
 let netmhc_conda_env install_path =
   Conda.(setup_environment
-    ~python_version:`Python2
+    ~python_version:`Python_2
     install_path
     "netmhc_conda")
 

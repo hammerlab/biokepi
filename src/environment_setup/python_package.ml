@@ -15,7 +15,7 @@ type python_package_spec =
 
 
 let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
-    ?check_bin ?(python_version=`Python3) package_spec =
+    ?check_bin ?(python_version=`Python_3) package_spec =
   let open KEDSL in
   let pkg_id ?version ~sep name =
     match version with

@@ -17,10 +17,10 @@ type conda_version_type = [
 ]
 
 type python_version_type = [
-  | `Python2
-  | `Python3
-  | `PythonCustom of string
-  | `PythonToolDependency of string
+  | `Python_2
+  | `Python_3
+  | `Python_custom of string
+  | `Python_tool_dependency of string
 ]
 
 type conda_environment_type = {
@@ -40,7 +40,7 @@ let setup_environment
   ?(banned_packages = [])
   ?(main_subdir = "conda_dir")
   ?(envs_subdir = "envs")
-  ?(python_version = `Python2)
+  ?(python_version = `Python_2)
   install_path
   name =
   let channels =
@@ -91,10 +91,10 @@ let configured ~conda_env ~(run_program : Machine.Make_fun.t) ~host =
   let open Program in
   let seed_package =
     match conda_env.python_version with
-    | `Python2 -> "python=2"
-    | `Python3 -> "python=3"
-    | `PythonCustom v -> sprintf "python=%s" v
-    | `PythonToolDependency t -> t
+    | `Python_2 -> "python=2"
+    | `Python_3 -> "python=3"
+    | `Python_custom v -> sprintf "python=%s" v
+    | `Python_tool_dependency t -> t
   in
   let create_env =
     com ~conda_env "create -y -q --prefix %s %s"

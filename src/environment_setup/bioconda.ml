@@ -14,7 +14,7 @@ let create_bioconda_tool
     | Some v -> sprintf "%s=%s" name v
   in
   let main_subdir = name ^ "_conda_dir" in
-  let python_version = Conda.(`PythonToolDependency conda_tool_def) in
+  let python_version = Conda.(`Python_tool_dependency conda_tool_def) in
   let conda_env =
     Conda.setup_environment ~python_version ~main_subdir install_path
       (name ^ Option.value_map ~default:"" version ~f:(sprintf ".%s"))

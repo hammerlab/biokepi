@@ -106,7 +106,7 @@ let get_conda_env =
     ]
     (* see https://github.com/ContinuumIO/anaconda-issues/issues/152#issuecomment-225214743 *)
     ~banned_packages: [ "readline"; "ncurses" ] 
-    ~python_version:`Python2
+    ~python_version:`Python_2
 
 (* Hide the messy logic of calling opam in here. This should not be exported
    and use the Biopam functions directly.*)
