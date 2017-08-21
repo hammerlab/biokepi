@@ -535,7 +535,7 @@ let strelka =
     KEDSL.Program.(
       shf "./configure --prefix=%s" (path // "usr")
       && sh "make"
-      && sh "chmod -R +rx bin.v2/"  (* it has weird access rights by default *)
+      && sh "chmod -R a+rx ./*"  (* it has weird access rights by default *)
       && sh "make install"
     )
   in
