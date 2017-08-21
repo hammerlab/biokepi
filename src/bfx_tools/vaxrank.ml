@@ -157,9 +157,10 @@ type product = <
   xlsx_report_path: string option;
   pdf_report_path: string option;
   debug_log_path: string;
-  output_folder_path: string >
+  output_folder_path: string;
+>
 
-let move_vaxrank_product ?host ~output_folder_path vp =
+let move_vaxrank_product ?host ~output_folder_path (vp : product) : product =
   let open KEDSL in
   let open Option in
   let host = match host with
@@ -175,6 +176,7 @@ let move_vaxrank_product ?host ~output_folder_path vp =
     return (single_file ~host (sub p)) in
   let pdf_product = vp#pdf_report_path >>= fun p ->
     return (single_file ~host (sub p)) in
+  let debug_log_product = single_file ~host (sub vp#debug_log_path) in
   let opt_path p = p >>= fun p -> return (p#path) in
   object
     method host = host
@@ -183,11 +185,12 @@ let move_vaxrank_product ?host ~output_folder_path vp =
               (List.filter_map ~f:(fun f ->
                    let open Option in
                    f >>= fun f -> f#is_done)
-                  [ascii_product; xlsx_product; pdf_product]))
+                  [ascii_product; xlsx_product;
+                   pdf_product; Some debug_log_product]))
     method ascii_report_path = opt_path ascii_product
     method xlsx_report_path = opt_path xlsx_product
     method pdf_report_path = opt_path pdf_product
-    method debug_log_path = vp#debug_log_path
+    method debug_log_path = debug_log_product#path
     method output_folder_path = output_folder_path
   end
 
