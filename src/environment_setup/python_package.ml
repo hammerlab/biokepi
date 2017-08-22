@@ -3,74 +3,97 @@ open Common
 
 type install_tool_type = Pip | Conda
 
-type install_source_type =
-  | Package_PyPI of string
-  | Package_Source of string * string
-  | Package_Conda of string
+type tool_def_type = Machine.Tool.Definition.t
 
-let bin_in_conda_environment ~conda_env command =
-  Conda.(environment_path ~conda_env) // "bin" // command
+type install_source_type =
+  | Package_PyPI of tool_def_type
+  | Package_Source of tool_def_type * string
+  | Package_Conda of tool_def_type
+
+type python_package_spec =
+  install_tool_type * install_source_type * (string option)
+
 
 let create_python_tool ~host ~(run_program : Machine.Make_fun.t) ~install_path
-    ?check_bin ?version ?(python_version=`Python3)
-    (installation:install_tool_type * install_source_type) =
+    ?check_bin ?(python_version=`Python_3) package_spec =
   let open KEDSL in
-  let versionize ?version ~sep name = match version with
+  let pkg_id ?version ~sep name =
+    match version with
     | None -> name
     | Some v -> name ^ sep ^ v
   in
-  let install_command, name =
-    match installation with
-    | (Pip, Package_PyPI pname) ->
-      ["pip"; "install"; versionize ?version ~sep:"==" pname], pname
-    | (Pip, Package_Source (pname, source)) ->
-      ["pip"; "install"; source], pname
-    | (Conda, Package_Conda pname) ->
-      ["conda"; "install"; "-y"; versionize ?version ~sep:"=" pname], pname
-    | (Conda, Package_PyPI pname) ->
-      ["conda"; "skeleton"; "pypi"; pname], pname
+  let describe_source ?version name =
+    sprintf " # source code for: %s" (pkg_id ~sep:"=" ?version name)
+  in
+  let src_cmd ~src ?version name =
+    ["pip"; "install"; src; describe_source ?version name]
+  in
+  let pypi_cmd ?version name =
+    ["pip"; "install"; pkg_id ~sep:"==" ?version name]
+  in
+  let conda_cmd ?version name =
+    ["conda"; "install"; pkg_id ~sep:"=" ?version name]
+  in
+  let tool, install_command, custom_bin, base_packages =
+    match package_spec with
+    | (Pip, Package_Source (tool, src), cbin, pkgs)
+      -> (tool, src_cmd ~src, cbin, pkgs)
+    | (Pip, Package_PyPI tool, cbin, pkgs) -> (tool, pypi_cmd, cbin, pkgs)
+    | (Conda, Package_Conda tool, cbin, pkgs) -> (tool, conda_cmd, cbin, pkgs)
     | _ -> failwith "Installation type not supported."
+  in
+  let name, version =
+    Machine.Tool.Definition.(get_name tool, get_version tool)
   in
   let main_subdir = name ^ "_conda_dir" in
   let conda_env =
-    Conda.setup_environment ~python_version ~main_subdir install_path
-      (name ^ Option.value_map ~default:"" version ~f:(sprintf ".%s"))
+    Conda.setup_environment
+      ~python_version ~base_packages
+      ~main_subdir install_path
+      (name ^ Option.value_map ~default:"NOVERSION" version ~f:(sprintf ".%s"))
   in
   let single_file_check id =
-    single_file ~host (bin_in_conda_environment ~conda_env id)
+    single_file ~host Conda.(bin_in_conda_environment ~conda_env id)
   in
   let exec_check =
-    match check_bin with
+    match custom_bin with
     | None -> single_file_check name
-    | Some s -> single_file_check s
+    | Some cb -> single_file_check cb
   in
   let ensure =
     workflow_node exec_check
       ~name:("Installing Python tool: " ^ name)
       ~edges:[ depends_on Conda.(configured ~run_program ~host ~conda_env) ]
-      ~make:(run_program
-        ~requirements:[
-          `Internet_access; `Self_identification ["python"; "installation"]
-        ]
-        Program.(
-          Conda.init_env ~conda_env ()
-          && exec install_command)
-        )
+      ~make:(
+        run_program
+          ~requirements:[
+            `Internet_access;
+            `Self_identification ["python"; "installation"];
+          ]
+          Program.(
+            Conda.init_env ~conda_env ()
+            && exec (install_command ?version name)
+          )
+      )
   in
   let init = Conda.init_env ~conda_env () in
-  Machine.Tool.create Machine.Tool.Definition.(create name) ~ensure ~init
+  Machine.Tool.create ~init ~ensure tool
+
+
+(* Versions are part of the machine's default toolkit (see machine.ml) *)
+let default_python_packages =
+  let open Machine.Tool.Default in
+  [
+    (Pip, Package_PyPI pyensembl, None, []);
+    (Pip, Package_PyPI isovar, Some "isovar-protein-sequences.py", []);
+    (Pip, Package_PyPI vaxrank, None, [ ("wktmltopdf", `Latest); ]);
+    (Pip, Package_PyPI vcfannotatepolyphen, None, []);
+    (Pip, Package_PyPI topiary, None, []);
+  ]
+
 
 let default ~host ~run_program ~install_path () =
-   Machine.Tool.Kit.of_list [
-    create_python_tool ~host ~run_program ~install_path
-      ~version:"1.1.0" (Pip, Package_PyPI "pyensembl");
-    create_python_tool ~host ~run_program ~install_path
-      ~version:"0.1.2" (Pip, Package_PyPI "vcf-annotate-polyphen");
-    create_python_tool ~host ~run_program ~install_path
-      ~version:"0.7.0" ~check_bin:"isovar-protein-sequences.py"
-      (Pip, Package_PyPI "isovar");
-    create_python_tool ~host ~run_program ~install_path
-      ~version:"1.2.1" (Pip, Package_PyPI "topiary");
-    create_python_tool ~host ~run_program ~install_path
-      ~version:"0.6.0" (Pip, Package_PyPI "vaxrank");
-   ]
+  let pkg_to_tool pkg_spec =
+    create_python_tool ~host ~run_program ~install_path pkg_spec
+  in
+  Machine.Tool.Kit.of_list (List.map ~f:pkg_to_tool default_python_packages)

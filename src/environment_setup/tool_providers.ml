@@ -389,16 +389,6 @@ let varscan =
     KEDSL.Program.(shf "export VARSCAN_JAR=%s/%s" path jar) in
   Installable_tool.make Machine.Tool.Default.varscan ~url ~init_program ~witness
 
-let picard =
-  let url =
-    "https://github.com/broadinstitute/picard/releases/download/1.127/\
-     picard-tools-1.127.zip"
-  in
-  let jar = "picard-tools-1.127" // "picard.jar" in
-  let init_program ~path = KEDSL.Program.(shf "export PICARD_JAR=%s/%s" path jar) in
-  Installable_tool.make Machine.Tool.Default.picard ~url ~init_program
-    ~witness:(witness_file jar)
-
 (**
    Mutect (and some other tools) are behind some web-login annoying thing:
    c.f. <http://www.broadinstitute.org/cancer/cga/mutect_download>
@@ -416,10 +406,10 @@ let mutect_tool
   let open KEDSL in
   let install_path = install_tools_path // Tool_def.to_directory_name tool in
   let conda_env = (* mutect doesn't run on Java; so need to provide Java 7 *)
-    Conda.(setup_environment 
-      ~python_version:`Python2
+    Conda.(setup_environment
+      ~python_version:`Python_2
       ~base_packages:[("java-jdk", `Version "7.0.91")]
-      install_path 
+      install_path
       "mutect_env")
   in
   let conda_ensure = Conda.(configured ~run_program ~host ~conda_env) in
@@ -429,9 +419,8 @@ let mutect_tool
   let ensure =
     workflow_node without_product ~name:"MuTect setup" ~edges
   in
-  let init = 
-    Program.(conda_init && shf "export mutect_HOME=%s" install_path)
-  in
+  let init =
+    Program.(conda_init && shf "export mutect_HOME=%s" install_path) in
   Machine.Tool.create tool ~ensure ~init
 
 let gatk_tool
@@ -443,6 +432,7 @@ let gatk_tool
   let ensure = get_broad_jar ~run_program ~host ~install_path loc in
   Machine.Tool.create tool ~ensure
     ~init:Program.(shf "export GATK_JAR=%s" ensure#product#path)
+
 
 (**
 
@@ -459,7 +449,9 @@ let strelka =
     (* C.f. ftp://ftp.illumina.com/v1-branch/v1.0.14/README *)
     KEDSL.Program.(
       shf "./configure --prefix=%s" (path // "usr")
-      && sh "make && make install"
+      && sh "make"
+      && sh "chmod -R a+rx ./*"  (* it has weird access rights by default *)
+      && sh "make install"
     )
   in
   let init_program ~path =
@@ -554,7 +546,6 @@ let default_toolkit
       install bedtools;
       install vcftools;
       install strelka;
-      install picard;
       install somaticsniper;
       install sambamba;
       install varscan;
@@ -576,6 +567,8 @@ let default_toolkit
       ~install_path:(install_tools_path // "biopam-kit") ();
     Python_package.default ~run_program ~host
       ~install_path: (install_tools_path // "python-tools") ();
+    Bioconda.default ~run_program ~host
+      ~install_path: (install_tools_path // "bioconda") ();
     Netmhc.default ~run_program ~host
       ~install_path: (install_tools_path // "netmhc-tools")
       ~netmhc_config: (netmhc_config ())

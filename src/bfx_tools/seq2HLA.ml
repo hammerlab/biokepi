@@ -39,10 +39,6 @@ let move_seq2hla_product ?host ~path s =
 let hla_type
     ~work_dir ~run_with ~r1 ~r2 ~run_name : product KEDSL.workflow_node =
   let tool = Machine.get_tool run_with Machine.Tool.Default.seq2hla in
-  (* Why quote this here? Seems like it easy to create a bug,
-     why not enforce this at node construction ?*)
-  let r1pt = Filename.quote r1#product#path in
-  let r2pt = Filename.quote r2#product#path in
   let name = sprintf "seq2HLA-%s" run_name in
   let host = Machine.as_host run_with in
   let processors = Machine.max_processors run_with in
@@ -52,7 +48,9 @@ let hla_type
                      && exec ["mkdir"; "-p"; work_dir]
                      && exec ["cd"; work_dir]
                      && shf "seq2HLA -1 %s -2 %s -r %s -p %d"
-                       r1pt r2pt run_name processors)
+                          (Filename.quote r1#product#path)
+                          (Filename.quote r2#product#path)
+                          run_name processors)
   in
   let class1_path =
     work_dir // (sprintf "%s-ClassI.HLAgenotype4digits" run_name) in

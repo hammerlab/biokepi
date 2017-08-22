@@ -964,7 +964,7 @@ module Make (Config : Compiler_configuration)
         let concat_files ~read l =
           let result_path =
             Name_file.in_directory
-              Config.work_dir 
+              Config.work_dir
               ~readable_suffix:(
                 sprintf "%s-Read%d-Concat.fastq"
                   first_fastq#product#escaped_sample_name read) (
@@ -1132,7 +1132,7 @@ module Make (Config : Compiler_configuration)
   let picard_clean_bam bam =
     let input_bam = get_bam (AF.get_file bam) in
     let output_bam_path =
-      Name_file.from_path 
+      Name_file.from_path
         input_bam#product#path
         ~readable_suffix:"cleaned.bam"
         []
@@ -1171,6 +1171,22 @@ module Make (Config : Compiler_configuration)
       ]
                          
 
+  let seqtk_shift_phred_scores fastq =
+    let input_fastq = get_fastq (AF.get_file fastq) in
+    let output_folder = 
+      Name_file.from_path input_fastq#product#sample_name
+        ~readable_suffix:"phred33-fastq" [ "seqtk"; ]
+    in
+    Fastq (
+      Tools.Seqtk.shift_phred_scores
+        ~run_with
+        ~output_postfix:".fastq"
+        ~input_fastq
+        ~output_folder:(Config.work_dir // output_folder)
+    )
+    |> AF.with_provenance "seqtk-shift-phred-scores"
+      ["fastq", AF.get_provenance fastq]
+
   let seq2hla fq =
     let fastq = get_fastq (AF.get_file fq) in
     let r1 = KEDSL.read_1_file_node fastq in
@@ -1206,10 +1222,8 @@ module Make (Config : Compiler_configuration)
         let r = get_optitype_result (AF.get_file v) in
         `Optitype r, out r#product#path, ("optitype", AF.get_provenance v)
     in
-    let res =
-      hlarp ~hla_result ~output_path ~extract_alleles:true in
-    MHC_alleles (res ())
-    |> AF.with_provenance "hlarp" [prov_argument]
+    let res = hlarp ~hla_result ~output_path in
+    MHC_alleles res |> AF.with_provenance "hlarp" [prov_argument]
 
   let filter_to_region vcf bed =
     let vcff = get_vcf (AF.get_file vcf) in
@@ -1267,6 +1281,25 @@ module Make (Config : Compiler_configuration)
     )
     |> AF.with_provenance "vcf-annotate-polyphen" ["vcf", AF.get_provenance vcf]
 
+  let snpeff vcf =
+    let open KEDSL in
+    let v = get_vcf (AF.get_file vcf) in
+    let reference_build = v#product#reference_build in
+    let out_folder =
+      Name_file.in_directory ~readable_suffix:"snpeff" Config.work_dir
+        [ Filename.basename v#product#path; reference_build; ]
+    in
+    let snpeff_run =
+      Tools.Snpeff.annotate ~run_with ~reference_build ~input_vcf:v ~out_folder
+    in
+    Vcf (
+      workflow_node
+        (transform_vcf v#product ~path:(snpeff_run#product#path))
+        ~name:(sprintf "Fetch annotated VCF: %s" v#render#name) 
+        ~edges:[ depends_on snpeff_run; ]
+    )
+    |> AF.with_provenance "snpeff" ["vcf", AF.get_provenance vcf]
+
   let isovar
       ?(configuration=Tools.Isovar.Configuration.default)
       vcf bam =
@@ -1304,7 +1337,7 @@ module Make (Config : Compiler_configuration)
   let topiary ?(configuration=Tools.Topiary.Configuration.default)
       vcfs predictor alleles =
     let vs = List.map ~f:(fun x -> AF.get_file x |> get_vcf) vcfs in
-    let refs = 
+    let refs =
       vs |> List.map ~f:(fun v -> v#product#reference_build) |> List.dedup
     in
     let reference_build =
@@ -1317,9 +1350,9 @@ module Make (Config : Compiler_configuration)
     in
     let mhc = get_mhc_alleles (AF.get_file alleles) in
     let output_file =
-      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir 
+      Name_file.in_directory ~readable_suffix:"topiary.tsv" Config.work_dir
         ([
-          Tools.Topiary.predictor_to_string predictor;
+          Hla_utilities.predictor_to_string predictor;
           Tools.Topiary.Configuration.name configuration;
           Filename.chop_extension (Filename.basename mhc#product#path);
         ] @ (List.map vs ~f:(fun v -> v#product#path)))
@@ -1335,7 +1368,7 @@ module Make (Config : Compiler_configuration)
       (("alleles", AF.get_provenance alleles)
        :: List.mapi vcfs ~f:(fun i v -> sprintf "vcf_%d" i, AF.get_provenance v))
       ~string_arguments:[
-        "predictor", Tools.Topiary.predictor_to_string predictor;
+        "predictor", Hla_utilities.predictor_to_string predictor;
         "configuration-name",
         Tools.Topiary.Configuration.name configuration;
       ]
@@ -1366,7 +1399,7 @@ module Make (Config : Compiler_configuration)
       Name_file.in_directory ~readable_suffix:"vaxrank" Config.work_dir
         ([
           Tools.Vaxrank.Configuration.name configuration;
-          Tools.Topiary.predictor_to_string predictor;
+          Hla_utilities.predictor_to_string predictor;
           (Filename.chop_extension (Filename.basename mhc#product#path));
         ] @
           (List.map vs ~f:(fun v ->
@@ -1385,7 +1418,7 @@ module Make (Config : Compiler_configuration)
        :: ("bam", AF.get_provenance bam)
        :: List.mapi vcfs ~f:(fun i v -> sprintf "vcf_%d" i, AF.get_provenance v))
       ~string_arguments:[
-        "predictor", Tools.Topiary.predictor_to_string predictor;
+        "predictor", Hla_utilities.predictor_to_string predictor;
         "configuration-name",
         Tools.Vaxrank.Configuration.name configuration;
       ]
@@ -1404,10 +1437,15 @@ module Make (Config : Compiler_configuration)
         fastq#product#fragment_id_forced;
       ]
     in
+    let run_name = fastq#product#escaped_sample_name in
     Optitype_result (
-      Tools.Optitype.hla_type
-        ~work_dir ~run_with ~run_name:fastq#product#escaped_sample_name ~fastq
-        how
+      match how with 
+      | `DNA -> 
+        Tools.Optitype.dna_hla_type_with_bwamem
+          ~configuration:Tools.Bwa.Configuration.Mem.default
+          ~work_dir ~run_with ~fastq ~run_name
+      | `RNA -> 
+        Tools.Optitype.hla_type ~work_dir ~run_with ~fastq ~run_name `RNA
     ) |> AF.with_provenance "optitype" ["fastq", AF.get_provenance fq]
       ~string_arguments:["input-type", intput_type]
 

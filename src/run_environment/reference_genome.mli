@@ -52,6 +52,7 @@ module Specification : sig
     cdna : Location.t option;
     whess : Location.t option;
     major_contigs : string list option;
+    snpeff_name : string option;
   }
   val create :
     ?metadata:string ->
@@ -65,6 +66,7 @@ module Specification : sig
     ?cdna:Location.t ->
     ?whess:Location.t ->
     ?major_contigs:string list ->
+    ?snpeff_name:string ->
     string ->
     t
   module Default :
@@ -129,6 +131,7 @@ val known_indels_path_exn : t -> string
 val gtf_path_exn : t -> string
 val cdna_path_exn : t -> string
 val whess_path_exn : t -> string
+val snpeff_name_exn: t -> string
 
 val major_contigs : t -> Region.t list
 (** {5 Targets} *)

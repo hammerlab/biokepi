@@ -190,6 +190,20 @@ module KEDSL = struct
           | other -> '_')
     end
 
+  let transform_fastq_reads
+      ?name ?fragment_id
+      (fq_reads: fastq_reads) r1 r2_opt
+    : fastq_reads
+    = 
+    fastq_reads 
+      ~host:fq_reads#r1#host
+      ~name:(match name with Some n -> n | None -> fq_reads#sample_name)
+      ?fragment_id:(
+        match fragment_id with
+        | Some fi -> fi
+        | None -> fq_reads#fragment_id)
+      r1 r2_opt
+
   let read_1_file_node (fq : fastq_reads workflow_node) =
     let product = fq#product#r1 in
     workflow_node product

@@ -28,6 +28,8 @@ module Tool = struct
       sprintf "%s.%s" name (Option.value ~default:"NOVERSION" version)
     let to_string = to_opam_name
     let to_directory_name = to_opam_name
+    let get_version t = t.version
+    let get_name t = t.name
   end
   module Default = struct
     open Definition
@@ -40,7 +42,6 @@ module Tool = struct
     let bedtools = create "bedtools" ~version:"2.23.0"
     let somaticsniper = create "somaticsniper" ~version:"1.0.3"
     let varscan = create "varscan" ~version:"2.3.5"
-    let picard = create "picard" ~version:"1.127"
     let mutect = create "mutect" (* We don't know the versions of the users' GATKs *)
     let gatk = create "gatk" (* idem, because of their non-open-source licenses *)
     let strelka = create "strelka" ~version:"1.0.14"
@@ -54,13 +55,23 @@ module Tool = struct
     let mosaik = create "mosaik" ~version:"2.2.3"
     let kallisto = create "kallisto" ~version:"0.42.3"
     let bowtie = create "bowtie" ~version:"1.1.2"
-    let optitype = create "optitype" ~version:"1.0.0"
-    let seq2hla = create "seq2hla" ~version:"2.2"
     let fastqc = create "fastqc" ~version:"0.11.5"
     let igvxml = create "igvxml" ~version:"0.1.0"
     let hlarp = create "hlarp" ~version:"biokepi-branch"
     let samblaster = create "samblaster" ~version:"v.0.1.22"
     let delly2 = create "delly2" ~version:"0.7.7"
+    (* Bioconda *)
+    let optitype = create "optitype" ~version:"1.2.1-0"
+    let seqtk = create "seqtk" ~version:"1.2"
+    let seq2hla = create "seq2hla" ~version:"2.2"
+    let picard = create "picard" ~version:"2.9.2"
+    let snpeff = create "snpeff" ~version:"4.3.1m-0"
+    (* PyPI packages *)
+    let pyensembl = create "pyensembl" ~version:"1.1.0"
+    let vcfannotatepolyphen = create "vcf-annotate-polyphen" ~version:"0.1.2"
+    let topiary = create "topiary" ~version:"1.2.1"
+    let vaxrank = create "vaxrank" ~version:"0.6.0"
+    let isovar = create "isovar" ~version:"0.7.0"
   end
 
   type t = {
@@ -186,7 +197,23 @@ let create
    host; run_program; work_dir; max_processors}
 
 let name t = t.name
-let as_host t = t.host
+
+let as_host ?with_shell t =
+  match with_shell with
+  | None -> t.host
+  | Some shell ->
+    begin
+      let open Ketrew_pure in
+      let shell_key = "shell" in
+      let org_uri = Host.to_uri t.host in
+      let uri_no_shell = Uri.remove_query_param org_uri shell_key in
+      let uri_with_shell =
+        let shell_str = sprintf "%s,-c" shell in (* as in `bash -c` *)
+        Uri.add_query_param uri_no_shell (shell_key, [shell_str;])
+      in
+      KEDSL.Host.parse (Uri.to_string uri_with_shell)
+    end
+
 let get_pyensembl_cache_dir t = t.pyensembl_cache_dir
 let get_reference_genome t = t.get_reference_genome
 let get_tool t tool =

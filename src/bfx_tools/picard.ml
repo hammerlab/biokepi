@@ -7,14 +7,14 @@ module Remove = Workflow_utilities.Remove
 
 let create_dict ~(run_with:Machine.t) fasta =
   let open KEDSL in
-  let picard_create_dict =
-    Machine.get_tool run_with Machine.Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let src = fasta#product#path in
   let dest = sprintf "%s.%s" (Filename.chop_suffix src ".fasta") "dict" in
-  let program =
-    Program.(Machine.Tool.(init picard_create_dict) &&
-             shf "java -jar $PICARD_JAR CreateSequenceDictionary R= %s O= %s"
-               (Filename.quote src) (Filename.quote dest)) in
+  let program = Program.(
+    Machine.Tool.(init picard) &&
+    shf "picard CreateSequenceDictionary R= %s O= %s"
+      (Filename.quote src) (Filename.quote dest))
+  in
   let name = sprintf "picard-create-dict-%s" Filename.(basename src) in
   let make =
     Machine.run_stream_processor run_with program ~name
@@ -22,7 +22,7 @@ let create_dict ~(run_with:Machine.t) fasta =
   let host = Machine.(as_host run_with) in
   workflow_node (single_file dest ~host) ~name ~make
     ~edges:[
-      depends_on fasta; depends_on Machine.Tool.(ensure picard_create_dict);
+      depends_on fasta; depends_on Machine.Tool.(ensure picard);
       on_failure_activate (Remove.file ~run_with dest);
     ]
 
@@ -54,11 +54,10 @@ let sort_vcf ~(run_with:Machine.t) ?(sequence_dict) input_vcf =
     | None -> []
     | Some d -> [depends_on d]
   in
-  let program =
-    Program.(Machine.Tool.(init picard) &&
-             (shf "java -jar $PICARD_JAR SortVcf %s I= %s O= %s"
-                sequence_dict_opt
-                (Filename.quote src) (Filename.quote dest)))
+  let program = Program.(
+    Machine.Tool.(init picard) &&
+    shf "picard SortVcf %s I= %s O= %s"
+      sequence_dict_opt (Filename.quote src) (Filename.quote dest))
   in
   let host = Machine.(as_host run_with) in
   let make =
@@ -101,7 +100,7 @@ module Mark_duplicates_settings = struct
              MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP=%d \
              MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=%d \
              SORTING_COLLECTION_SIZE_RATIO=%f \
-             java %s -Djava.io.tmpdir=%s "
+             picard %s -Djava.io.tmpdir=%s "
       tmp_dir
       t.max_sequences_for_disk_read_ends_map
       t.max_file_handles_for_read_ends_map
@@ -117,24 +116,25 @@ let mark_duplicates
     ?(settings = Mark_duplicates_settings.default)
     ~(run_with: Machine.t) ~input_bam output_bam_path =
   let open KEDSL in
-  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let metrics_path =
     sprintf "%s.%s" (Filename.chop_suffix output_bam_path ".bam") ".metrics" in
   let sorted_bam =
     Samtools.sort_bam_if_necessary ~run_with input_bam ~by:`Coordinate in
-  let program =
-    let java_call =
-      let default_tmp_dir =
-        Filename.chop_extension output_bam_path ^ ".tmpdir" in
-      Mark_duplicates_settings.to_java_shell_call ~default_tmp_dir settings in
-    Program.(Machine.Tool.(init picard_jar) &&
-             shf "%s -jar $PICARD_JAR MarkDuplicates \
-                  VALIDATION_STRINGENCY=LENIENT \
-                  INPUT=%s OUTPUT=%s METRICS_FILE=%s"
-               java_call
-               (Filename.quote sorted_bam#product#path)
-               (Filename.quote output_bam_path)
-               metrics_path) in
+  let default_tmp_dir = Filename.chop_extension output_bam_path ^ ".tmpdir" in
+  let java_call = 
+    Mark_duplicates_settings.to_java_shell_call ~default_tmp_dir settings
+  in
+  let program = Program.(
+    Machine.Tool.(init picard) &&
+    shf "%s MarkDuplicates \
+         VALIDATION_STRINGENCY=LENIENT \
+         INPUT=%s OUTPUT=%s METRICS_FILE=%s"
+      java_call
+      (Filename.quote sorted_bam#product#path)
+      (Filename.quote output_bam_path)
+      metrics_path)
+  in
   let name =
     sprintf "picard-markdups-%s" Filename.(basename input_bam#product#path) in
   let make =
@@ -145,7 +145,7 @@ let mark_duplicates
     ~name ~make
     ~edges:[
       depends_on sorted_bam;
-      depends_on Machine.Tool.(ensure picard_jar);
+      depends_on Machine.Tool.(ensure picard);
       on_failure_activate (Remove.file ~run_with output_bam_path);
       on_failure_activate (Remove.file ~run_with metrics_path);
     ]
@@ -155,7 +155,7 @@ let reorder_sam
     ?reference_build ~input_bam output_bam_path
   =
   let open KEDSL in
-  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let tmp_dir =
     Filename.chop_extension output_bam_path ^ ".tmpdir" in
   let input_bam_path = input_bam#product#path in
@@ -176,11 +176,9 @@ let reorder_sam
       | Some m -> sprintf "-Xmx%s" m
       in
       Program.(
-        (Machine.Tool.init picard_jar) &&
-        shf "java %s \
-             -Djava.io.tmpdir=%s \
-             -jar $PICARD_JAR ReorderSam \
-             I=%s O=%s R=%s"
+        (Machine.Tool.init picard) &&
+        shf "picard %s -Djava.io.tmpdir=%s \
+             ReorderSam I=%s O=%s R=%s"
           mem
           tmp_dir
           (Filename.quote input_bam_path)
@@ -198,7 +196,7 @@ let reorder_sam
     ~name ~make ~edges:[
     depends_on input_bam;
     depends_on fasta;
-    depends_on Machine.Tool.(ensure picard_jar);
+    depends_on Machine.Tool.(ensure picard);
     on_failure_activate (Remove.file ~run_with output_bam_path);
   ]
 
@@ -221,12 +219,12 @@ let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
       let r1 = sprintf "%s.fastq" output_prefix in
       ([sprintf "FASTQ=%s" r1], r1, None)
   in
-  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let program =
     Program.(
-      Machine.Tool.(init picard_jar) &&
+      Machine.Tool.(init picard) &&
       shf "mkdir -p %s" (r1 |> Filename.dirname |> Filename.quote)
-      && shf "java -jar $PICARD_JAR SamToFastq INPUT=%s %s"
+      && shf "picard SamToFastq INPUT=%s %s"
         (Filename.quote sorted_bam#product#path)
         (String.concat ~sep:" " fastq_output_options)
     ) in
@@ -242,7 +240,7 @@ let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
        | None -> list)
       [
         depends_on sorted_bam;
-        depends_on Machine.Tool.(ensure picard_jar);
+        depends_on Machine.Tool.(ensure picard);
         on_failure_activate (Remove.file ~run_with r1);
       ]
   in
@@ -252,14 +250,14 @@ let bam_to_fastq ~run_with ~sample_type ~output_prefix input_bam =
 
 let clean_bam ~run_with input_bam output_bam_path =
   let open KEDSL in
-  let picard_jar = Machine.get_tool run_with Machine.Tool.Default.picard in
+  let picard = Machine.get_tool run_with Machine.Tool.Default.picard in
   let input_path = input_bam#product#path in
   let name = sprintf "picard-cleansam-%s" Filename.(basename input_path) in
   workflow_node (transform_bam input_bam#product output_bam_path)
     ~name
     ~edges:([
       depends_on input_bam;
-      depends_on Machine.Tool.(ensure picard_jar);
+      depends_on Machine.Tool.(ensure picard);
       on_failure_activate (Remove.file ~run_with output_bam_path);
     ])
     ~make:(
@@ -267,8 +265,8 @@ let clean_bam ~run_with input_bam output_bam_path =
         ~name
         run_with
         Program.(
-          Machine.Tool.(init picard_jar) &&
-          shf "java -jar $PICARD_JAR CleanSam INPUT=%s OUTPUT=%s"
+          Machine.Tool.(init picard) &&
+          shf "picard CleanSam INPUT=%s OUTPUT=%s"
             (Filename.quote input_path)
             (Filename.quote output_bam_path)
         )

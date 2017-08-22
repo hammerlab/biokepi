@@ -1,5 +1,12 @@
 open Biokepi_run_environment
 
+type python_version_type = [
+  | `Python_2
+  | `Python_3
+  | `Python_custom of string
+  | `Python_tool_dependency of string
+]
+
 type conda_version_type = [
   | `Latest
   | `Version of string
@@ -7,7 +14,7 @@ type conda_version_type = [
 
 type conda_environment_type = private {
   name: string; (* name of the environment *)
-  python_version: [ `Python2 | `Python3 ];
+  python_version: python_version_type;
   channels: string list; (* supported installation channels *)
   base_packages: (string * conda_version_type) list; (* defualt installations *)
   banned_packages: string list; (* packages to be removed after initial setup *)
@@ -23,7 +30,7 @@ val setup_environment :
   ?banned_packages: string list ->
   ?main_subdir: string ->
   ?envs_subdir: string ->
-  ?python_version: [ `Python2 | `Python3 ] ->
+  ?python_version: python_version_type ->
   string ->
   string ->
   conda_environment_type
@@ -50,4 +57,11 @@ val deactivate_env :
 (** This is the absolute path to the environment folder **)
 val environment_path : 
   conda_env: conda_environment_type -> 
+  string
+
+(** A helper method to construct expected path of a binary (command)
+    given a conda environment **)
+val bin_in_conda_environment :
+  conda_env: conda_environment_type ->
+  string ->
   string

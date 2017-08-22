@@ -33,6 +33,7 @@ module Specification = struct
     cdna: Location.t option;
     whess: Location.t option;
     major_contigs: string list option;
+    snpeff_name: string option;
   }
 
   let create
@@ -47,6 +48,7 @@ module Specification = struct
       ?cdna
       ?whess
       ?major_contigs
+      ?snpeff_name
       name = {
     name;
     ensembl;
@@ -60,6 +62,7 @@ module Specification = struct
     cdna;
     whess;
     major_contigs;
+    snpeff_name;
   }
 
 module Default = struct
@@ -105,11 +108,9 @@ module Default = struct
   let b37_whess_url =
     "ftp://genetics.bwh.harvard.edu/pph2/whess/\
      polyphen-2.2.2-whess-2011_12.sqlite.bz2"
-
   let b37_known_indels_url =
     "https://storage.googleapis.com/hammerlab-biokepi-data/raw_data/\
      Mills_and_1000G_gold_standard.indels.b37.vcf.gz"
-
 
   let human = "homo sapiens"
   let mouse = "mus musculus"
@@ -133,6 +134,7 @@ module Default = struct
       ~exome_gtf:Location.(url b37_exome_gtf_url |> gunzip)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
+      ~snpeff_name:"GRCh37.75"
 
   let b37decoy =
     create Name.b37decoy
@@ -151,6 +153,7 @@ module Default = struct
       ~cosmic:Location.(url b37_cosmic_url)
       ~cdna:Location.(url b37_cdna_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
+      ~snpeff_name:"GRCh37.75"
 
   let hg38 =
     (* Release 87 *)
@@ -168,6 +171,7 @@ module Default = struct
       ~fasta:Location.(url hg38_url|> gunzip)
       ~dbsnp:Location.(url dbsnp_hg38 |> gunzip)
       ~known_indels:Location.(url known_indels_hg38 |> gunzip)
+      ~snpeff_name:"GRCh38.86"
 
   let b38 =
     (* Release 87 *)
@@ -191,6 +195,7 @@ module Default = struct
       ~exome_gtf:Location.(url gtf_b38_url |> gunzip)
       ~dbsnp:Location.(url dbsnp_url |> gunzip)
       ~cdna:Location.(url cdna_b38_url |> gunzip)
+      ~snpeff_name:"GRCh38.86"
 
   let hg18 =
     let hg18_url =
@@ -226,6 +231,7 @@ module Default = struct
       ~dbsnp:Location.(url dbsnp_hg19_url |> gunzip)
       ~known_indels:Location.(url known_indels_hg19_url |> gunzip)
       ~whess:Location.(url b37_whess_url |> bunzip2)
+      ~snpeff_name:"hg19"
 
   let mm10 =
     let mm10_url =
@@ -255,6 +261,7 @@ module Default = struct
         )
       ~exome_gtf:Location.(url gene_annotations_gtf |> gunzip)
       ~cdna:Location.(url cdna_mm10_url |> gunzip)
+      ~snpeff_name:"mm10"
 
 end
 
@@ -283,6 +290,10 @@ let create ?cosmic ?dbsnp ?known_indels ?gtf ?cdna ?whess specification location
 let name t = t.specification.Specification.name
 let ensembl t = t.specification.Specification.ensembl
 let species t = t.specification.Specification.species
+let snpeff_name_exn t = 
+  Option.value_exn 
+    ~msg:(sprintf "%s: no snpEff name" (name t))
+    t.specification.Specification.snpeff_name
 let path t = t.location#product#path
 let cosmic_path_exn t =
   let msg = sprintf "cosmic_path_exn of %s" (name t) in

@@ -385,5 +385,22 @@ module Vcftools = struct
       ~make_product
       ~host ~vcftools ~run_program ?more_edges ~vcfs:[src] ~final_vcf:dest
       "vcf-sort -c"
-
 end
+
+module Variable_tool_paths = struct
+  let single_file ~run_with ~tool path =
+    let open KEDSL in
+    let condition =
+      let init = Machine.Tool.init tool in
+      let host = Machine.as_host ~with_shell:"bash" run_with in
+      let condition_cmd =
+        Ketrew_pure.Program.to_single_shell_command
+          Program.(init && shf "test -e %s" path)
+      in KEDSL.Command.shell ~host condition_cmd
+    in
+    object
+      method is_done = Some (`Command_returns (condition, 0))
+    end
+end
+
+

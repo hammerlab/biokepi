@@ -23,6 +23,7 @@ let of_specification
     cdna;
     whess;
     major_contigs;
+    snpeff_name;
   } = specification in
   let dest_file f = destination_path // name // f in
   let rec compile_location filename =

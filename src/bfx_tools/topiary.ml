@@ -6,51 +6,6 @@ type output_type = [
   | `CSV of string
 ]
 
-type predictor_type = [
-  | `NetMHC
-  | `NetMHCpan
-  | `NetMHCIIpan
-  | `NetMHCcons
-  | `Random
-  | `SMM
-  | `SMM_PMBEC
-  | `NetMHCpan_IEDB
-  | `NetMHCcons_IEDB
-  | `SMM_IEDB
-  | `SMM_PMBEC_IEDB
-]
-
-let predictor_to_string = function
-  | `NetMHC -> "netmhc"
-  | `NetMHCpan -> "netmhcpan"
-  | `NetMHCIIpan -> "netmhciipan"
-  | `NetMHCcons -> "netmhccons"
-  | `Random -> "random"
-  | `SMM -> "smm"
-  | `SMM_PMBEC -> "smm-pmbec"
-  | `NetMHCpan_IEDB -> "netmhcpan-iedb"
-  | `NetMHCcons_IEDB -> "netmhccons-iedb"
-  | `SMM_IEDB -> "smm-iedb"
-  | `SMM_PMBEC_IEDB -> "smm-pmbec-iedb"
-
-let predictor_to_tool ~run_with predictor =
-  let get_tool t =
-    let tool =
-      Machine.get_tool
-        run_with
-        Machine.Tool.Definition.(create t)
-    in
-    let ensure = Machine.Tool.(ensure tool) in
-    let init = Machine.Tool.(init tool) in
-    (ensure, init)
-  in
-  match predictor with
-  | `NetMHC -> Some (get_tool "netMHC")
-  | `NetMHCpan -> Some (get_tool "netMHCpan")
-  | `NetMHCIIpan -> Some (get_tool "netMHCIIpan")
-  | `NetMHCcons -> Some (get_tool "netMHCcons")
-  | _ -> None
-
 module Configuration = struct
 
   type t = {
@@ -150,9 +105,8 @@ let run ~(run_with: Machine.t)
   ~alleles_file
   ~output =
   let open KEDSL in
-  let topiary =
-    Machine.get_tool run_with Machine.Tool.Definition.(create "topiary")
-  in
+  let open Hla_utilities in
+  let topiary = Machine.get_tool run_with Machine.Tool.Default.topiary in
   let predictor_tool = predictor_to_tool ~run_with predictor in
   let (predictor_edges, predictor_init) =
     match predictor_tool with

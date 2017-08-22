@@ -303,6 +303,10 @@ module type Bioinformatics_base = sig
     [ `Vcf ] repr ->
     [ `Vcf ] repr
 
+  val snpeff:
+    [ `Vcf ] repr ->
+    [ `Vcf ] repr
+
   val isovar:
     ?configuration: Isovar.Configuration.t ->
     [ `Vcf ] repr ->
@@ -312,7 +316,7 @@ module type Bioinformatics_base = sig
   val topiary:
     ?configuration: Topiary.Configuration.t ->
     [ `Vcf ] repr list ->
-    Topiary.predictor_type ->
+    Biokepi_run_environment.Hla_utilities.predictor_type ->
     [ `MHC_alleles ] repr ->
     [ `Topiary ] repr
 
@@ -320,9 +324,13 @@ module type Bioinformatics_base = sig
     ?configuration: Vaxrank.Configuration.t ->
     [ `Vcf ] repr list ->
     [ `Bam ] repr ->
-    Topiary.predictor_type ->
+    Biokepi_run_environment.Hla_utilities.predictor_type ->
     [ `MHC_alleles ] repr ->
     [ `Vaxrank ] repr
+
+  val seqtk_shift_phred_scores:
+    [ `Fastq ] repr ->
+    [ `Fastq ] repr
 
 end
 

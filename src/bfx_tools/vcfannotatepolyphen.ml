@@ -3,9 +3,9 @@ open Common
 
 let run ~(run_with: Machine.t) ~reference_build ~vcf ~output_vcf =
   let open KEDSL in
-  let vap_tool =
-    Machine.get_tool run_with
-      Machine.Tool.Definition.(create "vcf-annotate-polyphen") in
+  let vap_tool = 
+    Machine.get_tool run_with Machine.Tool.Default.vcfannotatepolyphen
+  in
   let whessdb = Machine.(get_reference_genome run_with reference_build)
     |> Reference_genome.whess_exn
   in

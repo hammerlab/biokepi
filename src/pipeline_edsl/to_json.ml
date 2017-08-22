@@ -1,5 +1,6 @@
 open Nonstd
 module Tools = Biokepi_bfx_tools
+module Hla_utils = Biokepi_run_environment.Hla_utilities
 
 type json = Yojson.Basic.json
 
@@ -278,6 +279,9 @@ module Make_serializer (How : sig
   let vcf_annotate_polyphen =
     one_to_one "vcf_annotate_polyphen" "default"
 
+  let snpeff =
+    one_to_one "snpeff" "default"
+
   let isovar
       ?(configuration = Tools.Isovar.Configuration.default) vcf bam =
     fun ~(var_count : int) ->
@@ -297,7 +301,7 @@ module Make_serializer (How : sig
       function_call "topiary" ([
         "configuration", string Tools.Topiary.Configuration.(name configuration);
         "alleles", alleles ~var_count;
-        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "predictor", string Hla_utils.(predictor_to_string predictor);
       ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 
   let vaxrank
@@ -309,7 +313,7 @@ module Make_serializer (How : sig
       function_call "vaxrank" ([
         "configuration", string Tools.Vaxrank.Configuration.(name configuration);
         "alleles", alleles ~var_count;
-        "predictor", string Tools.Topiary.(predictor_to_string predictor);
+        "predictor", string Hla_utils.(predictor_to_string predictor);
         "bam", bam_compiled;
       ] @ (List.mapi ~f:(fun i v -> (sprintf "vcf%d" i, v)) vcfs_compiled))
 
@@ -371,6 +375,9 @@ module Make_serializer (How : sig
   let virmid ?(configuration = Tools.Virmid.Configuration.default) =
     variant_caller "virmid"
       configuration.Tools.Virmid.Configuration.name
+
+  let seqtk_shift_phred_scores =
+    one_to_one "seqtk_shift_phred_scores" "default"
 
 end
 

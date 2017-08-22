@@ -18,9 +18,7 @@ let set_cache_dir_command ~(run_with: Machine.t) =
 
 let cache_genome ~(run_with: Machine.t) ~reference_build =
   let open KEDSL in
-  let pyensembl =
-    Machine.get_tool run_with Machine.Tool.Definition.(create "pyensembl")
-  in
+  let pyensembl = Machine.get_tool run_with Machine.Tool.Default.pyensembl in
   let genome = Machine.(get_reference_genome run_with reference_build) in
   let ensembl_release = genome |> Reference_genome.ensembl in
   let species = genome |> Reference_genome.species in

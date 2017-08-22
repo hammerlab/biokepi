@@ -106,7 +106,7 @@ let get_conda_env =
     ]
     (* see https://github.com/ContinuumIO/anaconda-issues/issues/152#issuecomment-225214743 *)
     ~banned_packages: [ "readline"; "ncurses" ] 
-    ~python_version:`Python2
+    ~python_version:`Python_2
 
 (* Hide the messy logic of calling opam in here. This should not be exported
    and use the Biopam functions directly.*)
@@ -280,37 +280,11 @@ let provide ~run_program ~host ~install_path it =
 let test_version ~host path =
   KEDSL.Command.shell ~host (sprintf "%s --version" path)
 
-let picard =
-  install_target
-    ~tool_type:(`Library "PICARD_JAR")
-    ~witness:"picard.jar"
-    (Machine.Tool.Definition.create "picard" ~version:"1.128")
-
 let bowtie =
   install_target
     ~witness:"bowtie" ~test:test_version
     Machine.Tool.Default.bowtie
-
-let seq2hla =
-  install_target
-    ~witness:"seq2HLA" ~requires_conda:true
-    ~package:"seq2HLA.2.2" (* we need to uppercase HLA for opam *)
-    Machine.Tool.Default.seq2hla
-
-let optitype =
-  install_target ~witness:"OptiTypePipeline" Machine.Tool.Default.optitype
-    ~requires_conda:true
-    ~init_environment:KEDSL.Program.(
-        fun ~install_path ->
-          let name = Machine.Tool.(Default.optitype.Definition.name) in
-          let version = Machine.Tool.(Default.optitype.Definition.version) in
-          shf "export OPAMROOT=%s.%s"
-            (Opam.root_of_package name |> Opam.root ~install_path)
-            (match version with None -> "NOVERSION" | Some v -> v)
-          && shf "export OPTITYPE_DATA=$(%s config var lib)/optitype"
-            (Opam.bin ~install_path)
-      )
-
+    
 let igvxml =
   install_target
     ~witness:"igvxml" ~test:test_version
@@ -336,10 +310,7 @@ let default :
   _ = fun ~run_program ~host ~install_path () ->
   Machine.Tool.Kit.of_list
     (List.map ~f:(provide ~run_program ~host ~install_path) [
-    picard;
     bowtie;
-    seq2hla;
-    optitype;
     igvxml;
     hlarp;
   ])

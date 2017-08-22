@@ -30,9 +30,7 @@ let run ~(run_with: Machine.t)
   ~configuration
   ~reference_build ~vcf ~bam ~output_file =
   let open KEDSL in
-  let isovar_tool =
-    Machine.get_tool run_with Machine.Tool.Definition.(create "isovar")
-  in
+  let isovar_tool = Machine.get_tool run_with Machine.Tool.Default.isovar in
   let genome = Machine.(get_reference_genome run_with reference_build)
     |> Reference_genome.name
   in
