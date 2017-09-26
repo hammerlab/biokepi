@@ -122,7 +122,7 @@ module Default = struct
       ~metadata:"Provided by the Biokepi library"
       ~major_contigs:major_contigs_b37
       ~fasta:Location.(
-          url "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/2.8/\
+          url "ftp://gsapubftp-anonymous@ftp.broadinstitute.org/bundle/\
                b37/human_g1k_v37.fasta.gz"
           |> gunzip)
       ~dbsnp:Location.(url b37_dbsnp_url |> gunzip)
