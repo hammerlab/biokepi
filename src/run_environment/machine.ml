@@ -72,6 +72,7 @@ module Tool = struct
     let topiary = create "topiary" ~version:"1.2.1"
     let vaxrank = create "vaxrank" ~version:"0.6.0"
     let isovar = create "isovar" ~version:"0.7.0"
+    let cmdstan = create "cmdstan" ~version:"2.14.0"
   end
 
   type t = {
