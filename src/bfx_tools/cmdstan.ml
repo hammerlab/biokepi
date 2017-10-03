@@ -46,6 +46,7 @@ let stan_summary_node ~model_output_csv ~summary_csv
   ~(run_with : Machine.t)
   =
   let open KEDSL in
+  let cmdstan = Machine.get_tool run_with Machine.Tool.Default.cmdstan in
   workflow_node (single_file summary_csv ~host:(Machine.as_host run_with))
     ~name:("stansummary " ^ model_output_csv ^ " to " ^ summary_csv)
     ~edges: [
