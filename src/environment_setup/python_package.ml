@@ -86,7 +86,7 @@ let default_python_packages =
   [
     (Pip, Package_PyPI pyensembl, None, []);
     (Pip, Package_PyPI isovar, Some "isovar-protein-sequences.py", []);
-    (Pip, Package_PyPI vaxrank, None, [ ("wktmltopdf", `Latest); ]);
+    (Pip, Package_PyPI vaxrank, None, [ ("wkhtmltopdf", `Latest); ]);
     (Pip, Package_PyPI vcfannotatepolyphen, None, []);
     (Pip, Package_PyPI topiary, None, []);
   ]
