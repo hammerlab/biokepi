@@ -180,6 +180,17 @@ end
 
 let add_to_dollar_path ~path = KEDSL.Program.shf "export PATH=%s:$PATH" path
 
+let make_and_copy_dir dir =
+  fun ~path -> KEDSL.Program.(
+      shf "echo %s" path
+      && sh "make"
+      && sh "cd .."
+      && shf "cp -r %s %s" dir path)
+let make_and_copy_contents =
+  fun ~path -> KEDSL.Program.(
+      shf "echo %s" path
+      && sh "make build"
+      && shf "cp -r * %s" path)
 let make_and_copy_bin bin =
   fun ~path -> KEDSL.Program.(
       sh "make" && shf "cp %s %s" bin path)
@@ -191,6 +202,14 @@ let witness_list l =
   fun ~host ~path ->
     KEDSL.list_of_files ~host (List.map l ~f:(fun bin -> path // bin))
     |> fun p -> object method is_done = p#is_done end
+
+let cmdstan =
+  Installable_tool.make
+    Machine.Tool.Default.cmdstan
+    ~url:"https://github.com/stan-dev/cmdstan/releases/download/v2.15.0/cmdstan-2.15.0.zip"
+    ~install_program:(make_and_copy_contents)
+    ~init_program:(fun ~path -> KEDSL.Program.(shf "cd %s" path))
+    ~witness:(witness_file "bin/stanc")
 
 let bwa =
   Installable_tool.make
@@ -508,10 +527,7 @@ let fastqc =
       ~init_program:add_to_dollar_path
       ~witness:(witness_file binary)
 
-let default_tool_location
-    msg
-    (): Workflow_utilities.Download.tool_file_location
-  =
+let default_tool_location msg (): Workflow_utilities.Download.tool_file_location =
   `Fail (sprintf "No location provided for %s" msg)
 
 let default_netmhc_config () = Netmhc.(
@@ -562,6 +578,7 @@ let default_toolkit
       install samblaster;
       install_git freebayes;
       install delly2;
+      install cmdstan;
     ];
     Biopam.default ~run_program ~host
       ~install_path:(install_tools_path // "biopam-kit") ();
